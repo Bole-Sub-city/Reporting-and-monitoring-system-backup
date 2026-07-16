@@ -1,0 +1,9 @@
+/* Only custom animations — everything else is Tailwind */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-rise {
+  animation: rise-in 0.9s ease both;
+}
