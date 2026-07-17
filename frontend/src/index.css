@@ -9,3 +9,62 @@
   margin: 0;
   text-align: left;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-navy-950: #0b1930;
+  --color-navy-900: #0f2340;
+  --color-navy-800: #152d52;
+  --color-gold-400: #fde047;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #b8941f;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    font-family: var(--font-sans);
+    background-color: var(--color-navy-950);
+    color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+}
+
+@layer utilities {
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #fde047 0%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-gold-glow {
+    box-shadow:
+      0 0 20px rgba(212, 175, 55, 0.35),
+      0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+
+  .logo-glow {
+    filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.15));
+  }
+}
