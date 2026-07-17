@@ -1,4 +1,4 @@
-import Logo from '../ui/Logo'
+import Logo from "../ui/Logo";
 
 export default function AuthLayout({ children }) {
   return (
@@ -15,7 +15,7 @@ export default function AuthLayout({ children }) {
             Adama, Oromia
           </p>
           <h1 className="mt-2 font-serif text-3xl font-semibold text-gold-gradient sm:text-4xl">
-            Buusaa Gonofaa
+            Adamaa Bole Sub-City Administration
           </h1>
           <p className="mt-2 max-w-md text-sm text-slate-300">
             Reporting &amp; Monitoring System
@@ -25,5 +25,5 @@ export default function AuthLayout({ children }) {
         {children}
       </main>
     </div>
-  )
+  );
 }
