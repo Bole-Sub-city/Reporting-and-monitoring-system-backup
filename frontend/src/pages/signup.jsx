@@ -7,78 +7,78 @@ import Input from '../components/ui/Input'
 import { ROLE_OPTIONS } from '../constants/roles'
 
 export default function Signup() {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const initialRole = searchParams.get('role') || ''
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get("role") || "";
 
-  const [selectedRole, setSelectedRole] = useState(initialRole)
+  const [selectedRole, setSelectedRole] = useState(initialRole);
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  })
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedRoleLabel = useMemo(
     () => ROLE_OPTIONS.find((role) => role.id === selectedRole)?.label,
     [selectedRole],
-  )
+  );
 
   const validate = () => {
-    const nextErrors = {}
+    const nextErrors = {};
 
     if (!selectedRole) {
-      nextErrors.role = 'Please select your role.'
+      nextErrors.role = "Please select your role.";
     }
 
     if (!formData.fullName.trim()) {
-      nextErrors.fullName = 'Full name is required.'
+      nextErrors.fullName = "Full name is required.";
     }
 
     if (!formData.email.trim()) {
-      nextErrors.email = 'Email is required.'
+      nextErrors.email = "Email is required.";
     }
 
     if (!formData.password) {
-      nextErrors.password = 'Password is required.'
+      nextErrors.password = "Password is required.";
     } else if (formData.password.length < 6) {
-      nextErrors.password = 'Password must be at least 6 characters.'
+      nextErrors.password = "Password must be at least 6 characters.";
     }
 
     if (formData.password !== formData.confirmPassword) {
-      nextErrors.confirmPassword = 'Passwords do not match.'
+      nextErrors.confirmPassword = "Passwords do not match.";
     }
 
-    setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
-  }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
   const handleChange = (event) => {
-    const { name, value } = event.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
-    if (!validate()) return
+    event.preventDefault();
+    if (!validate()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Prototype: account requests may require admin approval later
-    await new Promise((resolve) => setTimeout(resolve, 700))
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
-    navigate('/login', {
+    navigate("/login", {
       state: {
         message: `Account request submitted for ${selectedRoleLabel}. An administrator will review your registration.`,
         role: selectedRole,
       },
-    })
+    });
 
-    setIsSubmitting(false)
-  }
+    setIsSubmitting(false);
+  };
 
   return (
     <AuthLayout>
@@ -97,8 +97,8 @@ export default function Signup() {
               roles={ROLE_OPTIONS}
               selectedRole={selectedRole}
               onSelect={(role) => {
-                setSelectedRole(role)
-                setErrors((prev) => ({ ...prev, role: '' }))
+                setSelectedRole(role);
+                setErrors((prev) => ({ ...prev, role: "" }));
               }}
               error={errors.role}
             />
@@ -154,16 +154,21 @@ export default function Signup() {
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting…' : 'Create account'}
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting…" : "Create account"}
             </Button>
           </form>
 
           <div className="mt-8 border-t border-white/10 pt-6 text-center">
             <p className="text-sm text-slate-400">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
-                to={selectedRole ? `/login?role=${selectedRole}` : '/login'}
+                to={selectedRole ? `/login?role=${selectedRole}` : "/login"}
                 className="font-medium text-gold-400 underline-offset-4 hover:text-gold-500 hover:underline"
               >
                 Log in
@@ -172,6 +177,7 @@ export default function Signup() {
           </div>
         </div>
       </div>
+        </div>
+      </div>
     </AuthLayout>
   )
-}

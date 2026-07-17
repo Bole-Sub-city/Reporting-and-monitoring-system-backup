@@ -42,6 +42,19 @@
   }
 }
 
+@layer base {
+  /* Override browser autofill white background on inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 999px #0f2340 inset !important;
+    box-shadow: 0 0 0 999px #0f2340 inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    caret-color: #f8fafc;
+  }
+}
+
 @layer utilities {
   .text-gold-gradient {
     background: linear-gradient(135deg, #fde047 0%, #d4af37 100%);

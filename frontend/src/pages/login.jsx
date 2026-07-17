@@ -10,7 +10,7 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const [selectedRole, setSelectedRole] = useState(searchParams.get('role') || '')
+  const [selectedRole, setSelectedRole] = useState(searchParams.get('role') || 'admin')
   const [notice, setNotice] = useState(location.state?.message || '')
   const [formData, setFormData] = useState({ phone: '', password: '' })
   const [errors, setErrors] = useState({})
@@ -57,8 +57,14 @@ export default function Login() {
     const dashboardPath = ROLE_DASHBOARD_PATHS[selectedRole]
     navigate(dashboardPath, {
       state: {
-        role: selectedRole,
-        phone: formData.phone,
+        role:     selectedRole,
+        phone:    formData.phone,
+        // These will come from the backend later;
+        // passed forward so the dashboard can display user info
+        name:     formData.phone,
+        woreda:   'Woreda',
+        subcity:  'Sub-city',
+        initials: formData.phone.replace(/\D/g, '').slice(-2) || 'WD',
       },
     })
 
