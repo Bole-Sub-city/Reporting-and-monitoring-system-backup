@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from '../pages/home'
 import Login from '../pages/login'
-import Signup from '../pages/signup'
 import AdminDashboard from '../pages/admindashboard'
 import SubCityDashboard from '../pages/subcitydashboard'
 import WoRedaDashboard from '../pages/woredadashboard'
@@ -25,7 +24,6 @@ export default function AppRoutes() {
       {/* Public */}
       <Route path="/"      element={<Home />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
 
       {/* Role dashboards — login redirects here based on selected role */}
       <Route path="/admin/dashboard"    element={<AdminDashboard />} />
