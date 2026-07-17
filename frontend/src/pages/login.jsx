@@ -102,7 +102,7 @@ export default function Login() {
               onChange={handleRoleChange}
               error={errors.role}
             >
-              <option value="" disabled>
+              <option value="" disabled hidden>
                 Choose a role
               </option>
               {ROLE_OPTIONS.map((role) => (

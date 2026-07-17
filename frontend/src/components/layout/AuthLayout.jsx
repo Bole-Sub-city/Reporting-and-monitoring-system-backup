@@ -15,7 +15,7 @@ export default function AuthLayout({ children }) {
             Adama, Oromia
           </p>
           <h1 className="mt-2 font-serif text-3xl font-semibold text-gold-gradient sm:text-4xl">
-            Buusaa Gonofaa
+          Adama Bole Sub-City Administration 
           </h1>
           <p className="mt-2 max-w-md text-sm text-slate-300">
             Reporting &amp; Monitoring System

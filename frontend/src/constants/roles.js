@@ -14,7 +14,7 @@ export const ROLE_OPTIONS = [
   {
     id: ROLES.SUB_CITY,
     label: 'Sub-city',
-    description: 'Submit and track reports for your sub-city office.',
+    description: 'track reports for your sub-city office.',
     icon: 'building',
   },
   {
