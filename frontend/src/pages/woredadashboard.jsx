@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
 import { submitBuusaaReport } from "../api/reportApi";
+import { submitAnnualPlan, fetchMyPlan, fetchSummary } from "../api/planApi";
 
 // ── SVG Icons ─────────────────────────────────────────────────
 function DashboardIcon() {
@@ -161,6 +162,37 @@ function SubmitIcon() {
     </svg>
   );
 }
+function PlanIcon() {
+  return (
+    <svg
+      className="w-5 h-5 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+    >
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <line x1="9" y1="12" x2="15" y2="12" />
+      <line x1="9" y1="16" x2="13" y2="16" />
+    </svg>
+  );
+}
+function AnalysisIcon() {
+  return (
+    <svg
+      className="w-5 h-5 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+    >
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
 function ChevronIcon({ open }) {
   return (
     <svg
@@ -188,8 +220,22 @@ function CollapseIcon({ collapsed }) {
     </svg>
   );
 }
+function LockIcon() {
+  return (
+    <svg
+      className="w-4 h-4 inline-block ml-1"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
 
-// ── Buusaa Gonofaa report fields ──────────────────────────────
+// ── Constants ─────────────────────────────────────────────────
 const BUUSAA_FIELDS = [
   {
     name: "hubannooUummuu",
@@ -205,19 +251,19 @@ const BUUSAA_FIELDS = [
   },
   {
     name: "buuusiJirataa",
-    label: "Buusi Jiraataa",
+    label: "Buusii Jiraataa",
     required: true,
     type: "number",
   },
   {
     name: "buuusiDaldalaa",
-    label: "Buusi Daldalaa",
+    label: "Buusii Daldalaa",
     required: true,
     type: "number",
   },
   {
     name: "buuusiDaldalaaFiGumaataa",
-    label: "Buusi Daldalaa fi Gumaataa",
+    label: "Buusii Daldalaa fi Gumaataa",
     required: true,
     type: "number",
   },
@@ -233,12 +279,12 @@ const BUUSAA_FIELDS = [
     required: false,
     type: "number",
   },
-  { name: "zayitii", label: "Zayitii", required: false, type: "float" },
+  { name: "zayitii", label: "Zayitii", required: false, type: "number" },
   {
     name: "sukkaara",
     label: "Sukkaara",
     required: false,
-    type: "float",
+    type: "number",
     fullWidth: true,
   },
 ];
@@ -249,11 +295,58 @@ const REPORT_TYPES = [
   "Monthly Report — Gabaasa Ji'aa",
 ];
 
-function todayStr() {
-  return new Date().toISOString().split("T")[0];
-}
+// Plan fields with their display info and matching summary key
+const PLAN_FIELDS = [
+  {
+    key: "hubannoo_uummuu",
+    planKey: "hubannoo_uummuu_target",
+    label: "Hubannoo Uummuu",
+    description: "Awareness targets",
+    color: "#7c3aed",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-200",
+    textColor: "text-purple-700",
+  },
+  {
+    key: "horannaa_misensaa",
+    planKey: "horannaa_misensaa_target",
+    label: "Horannaa Misensaa",
+    description: "Member enrollment targets",
+    color: "#059669",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+    textColor: "text-green-700",
+  },
+  {
+    key: "buusi_jirataa",
+    planKey: "buusii_jirataa_target",
+    label: "Buusii Jirataa",
+    description: "Household beneficiary targets",
+    color: "#2563eb",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+    textColor: "text-blue-700",
+  },
+  {
+    key: "buusi_daldalaa",
+    planKey: "buusi_daldalaa_target",
+    label: "Buusii Daldalaa Sadarkaa B",
+    description: "Business beneficiary targets",
+    color: "#d97706",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-200",
+    textColor: "text-amber-700",
+  },
+];
 
-// ── Works sub-items ───────────────────────────────────────────
+const PERIODS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "annual", label: "Annual" },
+];
+
 const WORKS = [
   {
     id: "buusaa",
@@ -281,9 +374,494 @@ const WORKS = [
   },
 ];
 
-// ── Reusable placeholder submit page ─────────────────────────
+function todayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
+// Partition annual target to the given period
+function partitionTarget(annual, period) {
+  if (!annual) return 0;
+  const divisors = {
+    daily: 365,
+    weekly: 52,
+    monthly: 12,
+    quarterly: 4,
+    annual: 1,
+  };
+  return Math.round(annual / (divisors[period] || 1));
+}
+
+// ── Pure SVG Ring Chart — no external library ─────────────────
+function RingChart({ actual, target, color, label, description }) {
+  const pct =
+    target > 0 ? Math.min(Math.round((actual / target) * 100), 100) : 0;
+  const size = 140;
+  const strokeWidth = 14;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference - (pct / 100) * circumference;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col items-center shadow-sm">
+      <p className="text-sm font-bold text-gray-700 mb-0.5 text-center">
+        {label}
+      </p>
+      <p className="text-xs text-gray-400 mb-3 text-center">{description}</p>
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+          {/* Background track */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="#f3f4f6"
+            strokeWidth={strokeWidth}
+          />
+          {/* Progress arc */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            style={{ transition: "stroke-dashoffset 0.7s ease" }}
+          />
+        </svg>
+        {/* Centre text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span
+            className="text-2xl font-extrabold leading-none"
+            style={{ color }}
+          >
+            {pct}%
+          </span>
+          <span className="text-xs text-gray-400 mt-1">done</span>
+        </div>
+      </div>
+      <div className="mt-4 w-full space-y-1">
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>Actual</span>
+          <span className="font-semibold text-gray-800">
+            {actual.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>Target (period)</span>
+          <span className="font-semibold text-gray-800">
+            {target.toLocaleString()}
+          </span>
+        </div>
+        <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+          <div
+            className="h-1.5 rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, backgroundColor: color }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Annual Plan Form / View ───────────────────────────────────
+function AnnualPlanSection({ u }) {
+  const [plan, setPlan] = useState(null); // null = not loaded
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    hubannoo_uummuu_target: "",
+    horannaa_misensaa_target: "",
+    buusi_jirataa_target: "",
+    buusi_daldalaa_target: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const year = new Date().getFullYear();
+
+  useEffect(() => {
+    fetchMyPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChange = (e) =>
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setSaving(true);
+    try {
+      await submitAnnualPlan({
+        hubannoo_uummuu_target: Number(form.hubannoo_uummuu_target),
+        horannaa_misensaa_target: Number(form.horannaa_misensaa_target),
+        buusi_jirataa_target: Number(form.buusi_jirataa_target),
+        buusi_daldalaa_target: Number(form.buusi_daldalaa_target),
+      });
+      setSuccess("Annual plan saved and locked successfully.");
+      const d = await fetchMyPlan();
+      setPlan(d.plan);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to save plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-gray-800">Annual Plan</h1>
+        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+          {year}
+        </span>
+      </div>
+      <p className="text-gray-500 text-sm mb-6">
+        Set your yearly targets for each category. Once submitted, the plan is{" "}
+        <strong>locked</strong> and cannot be changed.
+      </p>
+
+      {/* Already submitted — show locked view */}
+      {plan ? (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <div
+            className="px-6 py-4 flex items-center gap-3 border-b border-gray-100"
+            style={{
+              background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+            }}
+          >
+            <PlanIcon />
+            <div>
+              <p className="text-white font-bold text-base">
+                Annual Plan — {year} <LockIcon />
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {u.name} · {u.woreda} · Read-only
+              </p>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {PLAN_FIELDS.map(
+                ({ planKey, label, bgColor, borderColor, textColor }) => (
+                  <div
+                    key={planKey}
+                    className={`rounded-xl border ${borderColor} ${bgColor} px-5 py-4`}
+                  >
+                    <p
+                      className={`text-xs font-bold uppercase tracking-wide ${textColor} mb-1`}
+                    >
+                      {label}
+                    </p>
+                    <p className="text-3xl font-extrabold text-gray-800">
+                      {(plan[planKey] ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Annual target</p>
+                  </div>
+                ),
+              )}
+            </div>
+            <div className="mt-5 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+              <svg
+                className="w-5 h-5 text-green-600 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 12l2 2 4-4" />
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              <p className="text-green-700 text-sm font-medium">
+                Plan is locked. Contact your administrator if changes are
+                needed.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Not yet submitted — show form */
+        <form onSubmit={handleSubmit}>
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-4">
+            <div
+              className="px-6 py-4 border-b border-gray-100"
+              style={{
+                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              }}
+            >
+              <p className="text-white font-bold text-base">
+                Enter Annual Targets — {year}
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {u.name} · {u.woreda}
+              </p>
+            </div>
+            <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {PLAN_FIELDS.map(
+                ({ planKey, label, description, borderColor }) => (
+                  <div key={planKey}>
+                    <label className="block text-gray-700 text-sm font-medium mb-1">
+                      {label} <span className="text-red-500">*</span>
+                    </label>
+                    <p className="text-xs text-gray-400 mb-1.5">
+                      {description}
+                    </p>
+                    <input
+                      type="number"
+                      name={planKey}
+                      value={form[planKey]}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      placeholder="Enter annual target"
+                      className={`w-full border ${borderColor} rounded-xl px-3 py-2.5 text-sm
+                      text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300
+                      focus:border-transparent placeholder-gray-400 transition-all`}
+                    />
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-700 text-sm">
+              {success}
+            </div>
+          )}
+          <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
+            <p className="text-gray-400 text-xs">
+              ⚠ Once submitted, this plan <strong>cannot be edited</strong>.
+            </p>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-60
+                text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
+            >
+              <PlanIcon />
+              {saving ? "Saving..." : "Submit & Lock Plan"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// ── Analysis Section ──────────────────────────────────────────
+function AnalysisSection() {
+  const [period, setPeriod] = useState("monthly");
+  const [plan, setPlan] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Load plan once
+  useEffect(() => {
+    fetchMyPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null));
+  }, []);
+
+  // Load summary whenever period changes
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    fetchSummary(period)
+      .then((d) => setSummary(d.summary))
+      .catch(() => setError("Failed to load summary data."))
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  const noPlan = !plan;
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Work Analysis</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Comparing actual performance against partitioned plan targets
+          </p>
+        </div>
+        {/* Period selector */}
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {noPlan && (
+        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-amber-500 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-amber-700 text-sm">
+            No annual plan set. Please submit your Annual Plan first to see
+            targets in the charts.
+          </p>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      ) : (
+        <>
+          {/* Period info banner */}
+          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
+              {PERIODS.find((p) => p.value === period)?.label} View
+            </span>
+            <span className="text-purple-400 text-xs">—</span>
+            <span className="text-purple-600 text-xs">
+              Targets are auto-partitioned from the annual plan
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
+              const annualTarget = plan ? (plan[planKey] ?? 0) : 0;
+              const periodTarget = partitionTarget(annualTarget, period);
+              const actual = summary ? (summary[key] ?? 0) : 0;
+              return (
+                <RingChart
+                  key={key}
+                  actual={actual}
+                  target={periodTarget}
+                  color={color}
+                  label={label}
+                  description={description}
+                />
+              );
+            })}
+          </div>
+
+          {/* Summary table */}
+          <div className="mt-6 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">
+                {PERIODS.find((p) => p.value === period)?.label} Summary Table
+              </p>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {[
+                    "Category",
+                    "Annual Target",
+                    "Period Target",
+                    "Actual",
+                    "% Complete",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
+                  const annualTarget = plan ? (plan[planKey] ?? 0) : 0;
+                  const periodTarget = partitionTarget(annualTarget, period);
+                  const actual = summary ? (summary[key] ?? 0) : 0;
+                  const pct =
+                    periodTarget > 0
+                      ? Math.min(Math.round((actual / periodTarget) * 100), 100)
+                      : 0;
+                  return (
+                    <tr
+                      key={key}
+                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-5 py-3 font-medium text-gray-800">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                          />
+                          {label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-gray-600">
+                        {annualTarget.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 text-gray-600">
+                        {periodTarget.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-gray-800">
+                        {actual.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                          style={{
+                            backgroundColor: `${color}22`,
+                            color,
+                          }}
+                        >
+                          {pct}%
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Placeholder submit ────────────────────────────────────────
 function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
-  const [submitted, setSubmitted] = useState(false);
   return (
     <div>
       <div className="flex items-center gap-3 mb-5">
@@ -297,9 +875,7 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
           {title} — Submit Report
         </h1>
       </div>
-      <div
-        className={`bg-white rounded-xl border border-gray-200 px-6 py-12 flex flex-col items-center justify-center text-center`}
-      >
+      <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 flex flex-col items-center justify-center text-center">
         <div
           className={`w-16 h-16 rounded-full ${color} flex items-center justify-center mb-4`}
         >
@@ -321,7 +897,7 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
   );
 }
 
-// ── Buusaa Gonofaa full submit form ───────────────────────────
+// ── Buusaa Gonofaa submit form ────────────────────────────────
 function BuusaaSubmitForm({ u }) {
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
   const [form, setForm] = useState({});
@@ -333,37 +909,25 @@ function BuusaaSubmitForm({ u }) {
     setForm({});
     setYaada("");
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       await submitBuusaaReport({
         report_type: reportType,
         report_date: todayStr(),
-
         hubannoo_uummuu: Number(form.hubannooUummuu || 0),
-
         horannaa_misensaa: Number(form.hojiiwwanMootummaa || 0),
-
         buusi_jirataa: Number(form.buuusiJirataa || 0),
-
         buusi_daldalaa: Number(form.buuusiDaldalaa || 0),
-
         buusi_daldalaa_fi_gumaataa: Number(form.buuusiDaldalaaFiGumaataa || 0),
-
         gumaata_midhaani: Number(form.gumaataMootummaa || 0),
-
         nyaata_barataa: Number(form.nyaataBarataa || 0),
-
         zayitii: Number(form.zayitii || 0),
-
         sukkaara: Number(form.sukkaara || 0),
-
         yaada_gudinaa: yaada,
       });
-
       alert("Report submitted successfully.");
-
       handleClear();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to submit report.");
@@ -379,19 +943,11 @@ function BuusaaSubmitForm({ u }) {
             Complete all required fields and submit before the deadline
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 border border-gray-300 text-gray-600
-                           px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all"
-        >
+        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all">
           <HistoryIcon /> History
         </button>
       </div>
-
-      {/* Report type + period */}
-      <div
-        className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5
-                      flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-      >
+      <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
           <p className="text-gray-600 text-sm font-medium mb-1.5">
             Report Type
@@ -399,9 +955,7 @@ function BuusaaSubmitForm({ u }) {
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm
-                       text-gray-800 bg-white focus:outline-none focus:ring-2
-                       focus:ring-purple-300 focus:border-transparent"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -416,8 +970,6 @@ function BuusaaSubmitForm({ u }) {
           <p className="text-amber-600 text-xs mt-0.5">⏰ Deadline: —</p>
         </div>
       </div>
-
-      {/* Form */}
       <form onSubmit={handleSubmit}>
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
           <div
@@ -448,9 +1000,8 @@ function BuusaaSubmitForm({ u }) {
                   required={required}
                   placeholder="0"
                   min="0"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm
-                             text-gray-800 bg-gray-50 focus:outline-none focus:ring-2
-                             focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50
+                    focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all"
                 />
               </div>
             ))}
@@ -463,10 +1014,8 @@ function BuusaaSubmitForm({ u }) {
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Enter Yaada Gudinaa"
                 rows={4}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm
-                           text-gray-800 bg-gray-50 focus:outline-none focus:ring-2
-                           focus:ring-purple-300 focus:border-transparent
-                           placeholder-gray-400 transition-all resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50
+                  focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all resize-none"
               />
             </div>
           </div>
@@ -479,16 +1028,13 @@ function BuusaaSubmitForm({ u }) {
             <button
               type="button"
               onClick={handleClear}
-              className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg
-                         text-sm font-medium hover:bg-gray-50 transition-all"
+              className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
             >
               Clear Form
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700
-                         text-white px-5 py-2.5 rounded-lg text-sm font-semibold
-                         transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -499,7 +1045,7 @@ function BuusaaSubmitForm({ u }) {
   );
 }
 
-// ── Work section overview page (shows 4 cards with Submit buttons) ──
+// ── Works overview ────────────────────────────────────────────
 function WorksOverview({ u, onSelect }) {
   return (
     <div>
@@ -525,13 +1071,12 @@ function WorksOverview({ u, onSelect }) {
               {id === "buusaa"
                 ? "Buusaa Gonofaa daily, weekly and monthly reports"
                 : id === "revenue"
-                ? "Revenue collection and financial reports"
-                : `${label} — content coming soon`}
+                  ? "Revenue collection and financial reports"
+                  : `${label} — content coming soon`}
             </p>
             <button
               onClick={() => onSelect(id)}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white
-                         px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -545,7 +1090,7 @@ function WorksOverview({ u, onSelect }) {
 // ─────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
-export default function WoRedaDashboard({ user }) {
+export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
 
@@ -567,18 +1112,17 @@ export default function WoRedaDashboard({ user }) {
 
   const [activeNav, setActiveNav] = useState("dashboard");
   const [worksOpen, setWorksOpen] = useState(true);
-  const [activeWork, setActiveWork] = useState(null); // null = overview, else "buusaa"|"revenue"|"work1"|"work2"
+  const [activeWork, setActiveWork] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
 
   const sideW = collapsed ? "w-16" : "w-60";
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     navigate("/");
   };
 
-  // label shown in top bar
   const topLabel = () => {
     if (activeNav === "works") {
       if (!activeWork) return "Works";
@@ -588,6 +1132,8 @@ export default function WoRedaDashboard({ user }) {
       {
         dashboard: "Dashboard",
         history: "Report History",
+        plan: "Annual Plan",
+        analysis: "Work Analysis",
         announcements: "Announcements",
         profile: "Profile & Settings",
       }[activeNav] ?? ""
@@ -604,11 +1150,7 @@ export default function WoRedaDashboard({ user }) {
           setActiveWork(null);
         }}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all
-          ${
-            active
-              ? "bg-green-600 text-white"
-              : "text-white/70 hover:bg-white/10 hover:text-white"
-          }`}
+          ${active ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
       >
         <Icon />
         {!collapsed && <span className="truncate">{label}</span>}
@@ -621,7 +1163,7 @@ export default function WoRedaDashboard({ user }) {
       className="flex h-screen max-h-screen bg-[#f0f2f5] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
       style={{ position: "fixed", inset: 0 }}
     >
-      {/* ════════ SIDEBAR ════════ */}
+      {/* ════ SIDEBAR ════ */}
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
         style={{
@@ -650,7 +1192,7 @@ export default function WoRedaDashboard({ user }) {
           {navBtn("dashboard", "Dashboard", DashboardIcon)}
           {navBtn("history", "Report History", HistoryIcon)}
 
-          {/* Works collapsible group */}
+          {/* Works collapsible */}
           <div>
             <button
               onClick={() => {
@@ -659,11 +1201,7 @@ export default function WoRedaDashboard({ user }) {
                 setActiveWork(null);
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all
-                ${
-                  activeNav === "works"
-                    ? "bg-green-600 text-white"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
+                ${activeNav === "works" ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
             >
               <WorksIcon />
               {!collapsed && (
@@ -673,8 +1211,6 @@ export default function WoRedaDashboard({ user }) {
                 </>
               )}
             </button>
-
-            {/* Sub-items */}
             {!collapsed && worksOpen && (
               <div className="ml-4 border-l border-white/10 pl-2 py-1 space-y-0.5">
                 {WORKS.map(({ id, label, icon: Icon }) => {
@@ -687,11 +1223,7 @@ export default function WoRedaDashboard({ user }) {
                         setActiveWork(id);
                       }}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
-                        ${
-                          active
-                            ? "bg-white/15 text-white"
-                            : "text-white/60 hover:bg-white/10 hover:text-white"
-                        }`}
+                        ${active ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
                     >
                       <Icon />
                       <span className="truncate">{label}</span>
@@ -702,6 +1234,10 @@ export default function WoRedaDashboard({ user }) {
             )}
           </div>
 
+          {/* Annual Plan & Analysis */}
+          {navBtn("plan", "Annual Plan", PlanIcon)}
+          {navBtn("analysis", "Work Analysis", AnalysisIcon)}
+
           {navBtn("announcements", "Announcements", AnnouncementsIcon)}
           {navBtn("profile", "Profile & Settings", ProfileIcon)}
         </nav>
@@ -710,16 +1246,14 @@ export default function WoRedaDashboard({ user }) {
         <div className="border-t border-white/10 py-2 flex-shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-white/60
-             hover:text-white hover:bg-white/10 text-sm transition-all"
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-white/60 hover:text-white hover:bg-white/10 text-sm transition-all"
           >
             <LogoutIcon />
             {!collapsed && <span>Logout</span>}
           </button>
           <button
             onClick={() => setCollapsed((p) => !p)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-white/50
-                       hover:text-white hover:bg-white/10 text-sm transition-all"
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-white/50 hover:text-white hover:bg-white/10 text-sm transition-all"
           >
             <CollapseIcon collapsed={collapsed} />
             {!collapsed && <span>Collapse</span>}
@@ -727,7 +1261,7 @@ export default function WoRedaDashboard({ user }) {
         </div>
       </aside>
 
-      {/* ════════ MAIN ════════ */}
+      {/* ════ MAIN ════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
@@ -740,10 +1274,7 @@ export default function WoRedaDashboard({ user }) {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             <div className="flex items-center gap-2">
-              <div
-                className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center
-                              text-white text-xs font-bold flex-shrink-0"
-              >
+              <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {u.initials}
               </div>
               <div className="text-left hidden sm:block">
@@ -796,7 +1327,6 @@ export default function WoRedaDashboard({ user }) {
                   </div>
                 ))}
               </div>
-              {/* Quick access to Works */}
               <h2 className="text-base font-semibold text-gray-700 mb-3">
                 Quick Submit
               </h2>
@@ -809,8 +1339,7 @@ export default function WoRedaDashboard({ user }) {
                       setActiveWork(id);
                       setWorksOpen(true);
                     }}
-                    className="bg-white rounded-xl border border-gray-200 px-4 py-5 flex flex-col items-center
-                               hover:shadow-md transition-all hover:-translate-y-0.5 text-center"
+                    className="bg-white rounded-xl border border-gray-200 px-4 py-5 flex flex-col items-center hover:shadow-md transition-all hover:-translate-y-0.5 text-center"
                   >
                     <div
                       className={`w-10 h-10 rounded-full ${color} flex items-center justify-center mb-3`}
@@ -870,13 +1399,8 @@ export default function WoRedaDashboard({ user }) {
           {/* WORKS */}
           {activeNav === "works" && (
             <>
-              {/* Overview — all 4 cards */}
               {!activeWork && <WorksOverview u={u} onSelect={setActiveWork} />}
-
-              {/* Buusaa Gonofaa — full form */}
               {activeWork === "buusaa" && <BuusaaSubmitForm u={u} />}
-
-              {/* Revenue — placeholder */}
               {activeWork === "revenue" && (
                 <PlaceholderSubmit
                   title="Revenue"
@@ -886,8 +1410,6 @@ export default function WoRedaDashboard({ user }) {
                   onBack={() => setActiveWork(null)}
                 />
               )}
-
-              {/* Work Area 1 — placeholder */}
               {activeWork === "work1" && (
                 <PlaceholderSubmit
                   title="Work Area 1"
@@ -897,8 +1419,6 @@ export default function WoRedaDashboard({ user }) {
                   onBack={() => setActiveWork(null)}
                 />
               )}
-
-              {/* Work Area 2 — placeholder */}
               {activeWork === "work2" && (
                 <PlaceholderSubmit
                   title="Work Area 2"
@@ -910,6 +1430,12 @@ export default function WoRedaDashboard({ user }) {
               )}
             </>
           )}
+
+          {/* ANNUAL PLAN */}
+          {activeNav === "plan" && <AnnualPlanSection u={u} />}
+
+          {/* WORK ANALYSIS */}
+          {activeNav === "analysis" && <AnalysisSection />}
 
           {/* ANNOUNCEMENTS */}
           {activeNav === "announcements" && (
