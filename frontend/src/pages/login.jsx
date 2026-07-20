@@ -1,86 +1,91 @@
-import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import AuthLayout from '../components/layout/AuthLayout'
-import Button from '../components/ui/Button'
-import Input from '../components/ui/Input'
-import Select from '../components/ui/Select'
-import { ROLE_OPTIONS, ROLE_DASHBOARD_PATHS } from '../constants/roles'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import AuthLayout from "../components/layout/AuthLayout";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import api from "../api/api";
 
 export default function Login() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [searchParams] = useSearchParams()
-  const [selectedRole, setSelectedRole] = useState(searchParams.get('role') || 'admin')
-  const [notice, setNotice] = useState(location.state?.message || '')
-  const [formData, setFormData] = useState({ phone: '', password: '' })
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (location.state?.role) {
-      setSelectedRole(location.state.role)
-    }
-  }, [location.state?.role])
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
-    const nextErrors = {}
+    const nextErrors = {};
 
-    if (!selectedRole) {
-      nextErrors.role = 'Please select your role.'
-    }
-
-    if (!formData.phone.trim()) {
-      nextErrors.phone = 'Phone number is required.'
-    } else if (!/^[\d\s+()-]{7,20}$/.test(formData.phone.trim())) {
-      nextErrors.phone = 'Enter a valid phone number.'
+    if (!formData.username.trim()) {
+      nextErrors.username = "Username is required.";
     }
 
     if (!formData.password) {
-      nextErrors.password = 'Password is required.'
-    } else if (formData.password.length < 6) {
-      nextErrors.password = 'Password must be at least 6 characters.'
+      nextErrors.password = "Password is required.";
     }
 
-    setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
-  }
+    setErrors(nextErrors);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    if (!validateForm()) return
-
-    setIsSubmitting(true)
-
-    await new Promise((resolve) => setTimeout(resolve, 600))
-
-    const dashboardPath = ROLE_DASHBOARD_PATHS[selectedRole]
-    navigate(dashboardPath, {
-      state: {
-        role:     selectedRole,
-        phone:    formData.phone,
-        // These will come from the backend later;
-        // passed forward so the dashboard can display user info
-        name:     formData.phone,
-        woreda:   'Woreda',
-        subcity:  'Sub-city',
-        initials: formData.phone.replace(/\D/g, '').slice(-2) || 'WD',
-      },
-    })
-
-    setIsSubmitting(false)
-  }
+    return Object.keys(nextErrors).length === 0;
+  };
 
   const handleChange = (event) => {
-    const { name, value } = event.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
+    const { name, value } = event.target;
 
-  const handleRoleChange = (event) => {
-    setSelectedRole(event.target.value)
-    setErrors((prev) => ({ ...prev, role: '' }))
-  }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    setServerError("");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await api.post("/auth/login", {
+        username: formData.username,
+        password: formData.password,
+      });
+
+      localStorage.setItem("token", response.data.token);
+
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      const role = response.data.user.role;
+
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (role === "sub-city") {
+        navigate("/sub-city/dashboard");
+      } else if (role === "wereda") {
+        navigate("/wereda/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (err) {
+      setServerError(
+        err.response?.data?.message || "Invalid username or password."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <AuthLayout>
@@ -89,45 +94,28 @@ export default function Login() {
           <h2 className="text-center font-serif text-2xl font-semibold text-gold-gradient">
             Sign in to your account
           </h2>
+
           <p className="mt-2 text-center text-sm text-slate-400">
             Enter your credentials to access your dashboard.
           </p>
 
-          {notice && (
-            <p className="mt-4 rounded-xl border border-gold-500/30 bg-gold-500/10 px-4 py-3 text-center text-sm text-gold-400">
-              {notice}
+          {serverError && (
+            <p className="mt-4 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300">
+              {serverError}
             </p>
           )}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
-            <Select
-              id="role"
-              name="role"
-              label="Select your role"
-              value={selectedRole}
-              onChange={handleRoleChange}
-              error={errors.role}
-            >
-              <option value="" disabled hidden>
-                Choose a role
-              </option>
-              {ROLE_OPTIONS.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.label}
-                </option>
-              ))}
-            </Select>
-
             <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              label="Phone number"
-              placeholder="Enter your phone number"
-              value={formData.phone}
+              id="username"
+              name="username"
+              type="text"
+              label="Username"
+              placeholder="Enter username"
+              value={formData.username}
               onChange={handleChange}
-              error={errors.phone}
-              autoComplete="tel"
+              error={errors.username}
+              autoComplete="username"
             />
 
             <Input
@@ -148,11 +136,11 @@ export default function Login() {
               className="w-full pt-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
+              {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
         </div>
       </div>
     </AuthLayout>
-  )
+  );
 }

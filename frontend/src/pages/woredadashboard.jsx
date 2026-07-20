@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
+import { submitBuusaaReport } from "../api/reportApi";
 
 // ── SVG Icons ─────────────────────────────────────────────────
 function DashboardIcon() {
@@ -331,10 +333,41 @@ function BuusaaSubmitForm({ u }) {
     setForm({});
     setYaada("");
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Report submitted!");
-    handleClear();
+
+    try {
+      await submitBuusaaReport({
+        report_type: reportType,
+        report_date: todayStr(),
+
+        hubannoo_uummuu: Number(form.hubannooUummuu || 0),
+
+        horannaa_misensaa: Number(form.hojiiwwanMootummaa || 0),
+
+        buusi_jirataa: Number(form.buuusiJirataa || 0),
+
+        buusi_daldalaa: Number(form.buuusiDaldalaa || 0),
+
+        buusi_daldalaa_fi_gumaataa: Number(form.buuusiDaldalaaFiGumaataa || 0),
+
+        gumaata_midhaani: Number(form.gumaataMootummaa || 0),
+
+        nyaata_barataa: Number(form.nyaataBarataa || 0),
+
+        zayitii: Number(form.zayitii || 0),
+
+        sukkaara: Number(form.sukkaara || 0),
+
+        yaada_gudinaa: yaada,
+      });
+
+      alert("Report submitted successfully.");
+
+      handleClear();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to submit report.");
+    }
   };
 
   return (
@@ -380,9 +413,7 @@ function BuusaaSubmitForm({ u }) {
             Reporting Period
           </p>
           <p className="text-2xl font-bold text-gray-800">{todayStr()}</p>
-          <p className="text-amber-600 text-xs mt-0.5">
-            ⏰ Deadline: —
-          </p>
+          <p className="text-amber-600 text-xs mt-0.5">⏰ Deadline: —</p>
         </div>
       </div>
 
@@ -494,8 +525,8 @@ function WorksOverview({ u, onSelect }) {
               {id === "buusaa"
                 ? "Buusaa Gonofaa daily, weekly and monthly reports"
                 : id === "revenue"
-                  ? "Revenue collection and financial reports"
-                  : `${label} — content coming soon`}
+                ? "Revenue collection and financial reports"
+                : `${label} — content coming soon`}
             </p>
             <button
               onClick={() => onSelect(id)}
@@ -515,12 +546,24 @@ function WorksOverview({ u, onSelect }) {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
 export default function WoRedaDashboard({ user }) {
-  const u = user || {
-    name: "Biruk Haile",
-    woreda: "Woreda 08",
-    subcity: "Kirkos",
-    initials: "BH",
-  };
+  const navigate = useNavigate();
+  const loggedUser = JSON.parse(localStorage.getItem("user"));
+
+  const u = loggedUser
+    ? {
+        name: loggedUser.username,
+        role: loggedUser.role,
+        woreda: "Woreda 08",
+        subcity: "Adama Bole",
+        initials: loggedUser.username.substring(0, 2).toUpperCase(),
+      }
+    : {
+        name: "Guest",
+        role: "wereda",
+        woreda: "Woreda 08",
+        subcity: "Adama Bole",
+        initials: "GU",
+      };
 
   const [activeNav, setActiveNav] = useState("dashboard");
   const [worksOpen, setWorksOpen] = useState(true);
@@ -528,6 +571,12 @@ export default function WoRedaDashboard({ user }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const sideW = collapsed ? "w-16" : "w-60";
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    navigate("/");
+  };
 
   // label shown in top bar
   const topLabel = () => {
@@ -555,7 +604,11 @@ export default function WoRedaDashboard({ user }) {
           setActiveWork(null);
         }}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all
-          ${active ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+          ${
+            active
+              ? "bg-green-600 text-white"
+              : "text-white/70 hover:bg-white/10 hover:text-white"
+          }`}
       >
         <Icon />
         {!collapsed && <span className="truncate">{label}</span>}
@@ -564,8 +617,10 @@ export default function WoRedaDashboard({ user }) {
   };
 
   return (
-    <div className="flex h-screen max-h-screen bg-[#f0f2f5] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
-      style={{ position: 'fixed', inset: 0 }}>
+    <div
+      className="flex h-screen max-h-screen bg-[#f0f2f5] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
+      style={{ position: "fixed", inset: 0 }}
+    >
       {/* ════════ SIDEBAR ════════ */}
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
@@ -604,7 +659,11 @@ export default function WoRedaDashboard({ user }) {
                 setActiveWork(null);
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all
-                ${activeNav === "works" ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+                ${
+                  activeNav === "works"
+                    ? "bg-green-600 text-white"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
             >
               <WorksIcon />
               {!collapsed && (
@@ -628,7 +687,11 @@ export default function WoRedaDashboard({ user }) {
                         setActiveWork(id);
                       }}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all
-                        ${active ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+                        ${
+                          active
+                            ? "bg-white/15 text-white"
+                            : "text-white/60 hover:bg-white/10 hover:text-white"
+                        }`}
                     >
                       <Icon />
                       <span className="truncate">{label}</span>
@@ -646,8 +709,9 @@ export default function WoRedaDashboard({ user }) {
         {/* Bottom */}
         <div className="border-t border-white/10 py-2 flex-shrink-0">
           <button
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-white/60
-                             hover:text-white hover:bg-white/10 text-sm transition-all"
+             hover:text-white hover:bg-white/10 text-sm transition-all"
           >
             <LogoutIcon />
             {!collapsed && <span>Logout</span>}
@@ -686,7 +750,7 @@ export default function WoRedaDashboard({ user }) {
                 <p className="text-gray-800 text-sm font-semibold leading-tight">
                   {u.name}
                 </p>
-                <p className="text-gray-500 text-xs">Woreda</p>
+                <p className="text-gray-500 text-xs capitalize">{u.role}</p>
               </div>
             </div>
           </div>
@@ -705,10 +769,26 @@ export default function WoRedaDashboard({ user }) {
               </p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
-                  { label: "Total Submitted", value: "—", color: "bg-purple-50 border-purple-200 text-purple-700" },
-                  { label: "Pending Review",  value: "—", color: "bg-amber-50 border-amber-200 text-amber-700"   },
-                  { label: "Approved",        value: "—", color: "bg-green-50 border-green-200 text-green-700"   },
-                  { label: "Rejected",        value: "—", color: "bg-red-50 border-red-200 text-red-700"         },
+                  {
+                    label: "Total Submitted",
+                    value: "—",
+                    color: "bg-purple-50 border-purple-200 text-purple-700",
+                  },
+                  {
+                    label: "Pending Review",
+                    value: "—",
+                    color: "bg-amber-50 border-amber-200 text-amber-700",
+                  },
+                  {
+                    label: "Approved",
+                    value: "—",
+                    color: "bg-green-50 border-green-200 text-green-700",
+                  },
+                  {
+                    label: "Rejected",
+                    value: "—",
+                    color: "bg-red-50 border-red-200 text-red-700",
+                  },
                 ].map(({ label, value, color }) => (
                   <div key={label} className={`rounded-xl border p-5 ${color}`}>
                     <p className="text-2xl font-bold">{value}</p>
@@ -749,19 +829,35 @@ export default function WoRedaDashboard({ user }) {
           {/* REPORT HISTORY */}
           {activeNav === "history" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-5">Report History</h1>
+              <h1 className="text-2xl font-bold text-gray-800 mb-5">
+                Report History
+              </h1>
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      {["Date","Section","Report Type","Status","Action"].map((h) => (
-                        <th key={h} className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-wide">{h}</th>
+                      {[
+                        "Date",
+                        "Section",
+                        "Report Type",
+                        "Status",
+                        "Action",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-wide"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">
+                      <td
+                        colSpan={5}
+                        className="px-5 py-10 text-center text-gray-400 text-sm"
+                      >
                         No reports submitted yet.
                       </td>
                     </tr>
@@ -818,7 +914,9 @@ export default function WoRedaDashboard({ user }) {
           {/* ANNOUNCEMENTS */}
           {activeNav === "announcements" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-5">Announcements</h1>
+              <h1 className="text-2xl font-bold text-gray-800 mb-5">
+                Announcements
+              </h1>
               <div className="bg-white rounded-xl border border-gray-200 px-5 py-10 text-center">
                 <p className="text-gray-400 text-sm">No announcements yet.</p>
               </div>
@@ -846,7 +944,7 @@ export default function WoRedaDashboard({ user }) {
                 <div className="space-y-4">
                   {[
                     { label: "Full Name", value: u.name },
-                    { label: "Role", value: "Woreda Officer" },
+                    { label: "Role", value: u.role },
                     { label: "Woreda", value: u.woreda },
                     { label: "Sub-city", value: u.subcity },
                   ].map(({ label, value }) => (

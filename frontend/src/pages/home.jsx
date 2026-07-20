@@ -4,7 +4,6 @@ import logo from "../assets/logo.jpg";
 function Home() {
   return (
     <div className="min-h-screen bg-[#0a1628] text-white font-['DM_Sans',system-ui,sans-serif]">
-
       {/* ── Login button – floats top-right ── */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-end px-6 py-5 pointer-events-none">
         <nav className="pointer-events-auto">
@@ -19,9 +18,11 @@ function Home() {
       </header>
 
       {/* ── Hero ── */}
-      <section className="min-h-screen flex items-center justify-center text-center px-4 relative overflow-hidden"
+      <section
+        className="min-h-screen flex items-center justify-center text-center px-4 relative overflow-hidden"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 40%, #1a3060 0%, #0d1f3c 45%, #070f1e 100%)"
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 40%, #1a3060 0%, #0d1f3c 45%, #070f1e 100%)",
         }}
       >
         {/* bottom vignette */}
@@ -44,7 +45,7 @@ function Home() {
 
           {/* Title */}
           <h1 className="font-['Fraunces',Georgia,serif] text-4xl md:text-6xl font-bold leading-tight text-[#d4af62] mb-4">
-            Bulchiinsa Kutaa magaalaa Adaamaa Boolee
+            Bulchiinsa Kutaa Magaalaa Adaamaa Boolee
           </h1>
 
           {/* Subtitle */}
@@ -80,12 +81,15 @@ function Home() {
         id="about"
         className="py-20 border-t border-[#c9a84c]/15"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 40%, #1a3060 0%, #0d1f3c 45%, #070f1e 100%)"
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 40%, #1a3060 0%, #0d1f3c 45%, #070f1e 100%)",
         }}
       >
         <div className="max-w-3xl mx-auto px-6">
-          <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
-                         border-l-4 border-[#c9a84c] pl-4 mb-5">
+          <h2
+            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
+                         border-l-4 border-[#c9a84c] pl-4 mb-5"
+          >
             Bulchiinsa Kutaa magaalaa Adaamaa Booleetiif kan qophaa'e
           </h2>
           <p className="text-[#9aafc7] text-base leading-relaxed">
@@ -99,12 +103,15 @@ function Home() {
         id="about2"
         className="py-20 border-t border-[#c9a84c]/15"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 40%, #152b50 0%, #0a1a30 50%, #060d1c 100%)"
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 40%, #152b50 0%, #0a1a30 50%, #060d1c 100%)",
         }}
       >
         <div className="max-w-3xl mx-auto px-6">
-          <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
-                         border-l-4 border-[#c9a84c] pl-4 mb-5">
+          <h2
+            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
+                         border-l-4 border-[#c9a84c] pl-4 mb-5"
+          >
             Bussaa Gonofaa
           </h2>
           <p className="text-[#9aafc7] text-base leading-relaxed mb-10">
@@ -112,14 +119,16 @@ function Home() {
             hundaa'uun caasaa mootummaa Naannoo Oromiyaa keessatti lubbuu dhala
             namaa baraaruu fi jireenya lammiilee sababa adda addaan rakkatan
             salphisuuf hundaa'e dha. Caasaan kun aadaa wal-gargaarsa Oromoo
-            durii guutuu biyyattii keessatti beekamu irratti
-            hundaa'uun, Balaawwan Ittisuu fi Qophaa'ummaa, Gargaarsa Hatattamaa
+            durii guutuu biyyattii keessatti beekamu irratti hundaa'uun,
+            Balaawwan Ittisuu fi Qophaa'ummaa, Gargaarsa Hatattamaa
             Qaqqabsiisuu, Deeggarsa Buqqaatotaa (IDPs), Sagantaa Nyaata Mana
             Barumsaa fi Hawaasa Of-dandachisuu.
           </p>
 
-          <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
-                         border-l-4 border-[#c9a84c] pl-4 mb-5">
+          <h2
+            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#d4af62]
+                         border-l-4 border-[#c9a84c] pl-4 mb-5"
+          >
             Revenue
           </h2>
           <p className="text-[#9aafc7] text-base leading-relaxed">
@@ -132,7 +141,6 @@ function Home() {
       <footer className="bg-[#0a1628] border-t border-[#c9a84c]/20 py-6 text-center text-[#9aafc7] text-sm">
         Busaa Gonofaa Reporting System &middot; Adama, Oromia
       </footer>
-
     </div>
   );
 }
