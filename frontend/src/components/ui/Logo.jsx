@@ -1,4 +1,4 @@
-import logo from '../../assets/logo.jpg'
+import logo from '../../assets/adamalogo.png'
 
 export default function Logo({ size = 'lg', className = '' }) {
   const sizes = {
@@ -8,18 +8,10 @@ export default function Logo({ size = 'lg', className = '' }) {
   }
 
   return (
-    <div
-      className={[
-        'logo-glow overflow-hidden rounded-full border border-white/10 bg-white',
-        sizes[size],
-        className,
-      ].join(' ')}
-    >
-      <img
-        src={logo}
-        alt="Buusaa Gonofaa logo"
-        className="h-full w-full object-contain"
-      />
-    </div>
+    <img
+      src={logo}
+      alt="Adama City Administration logo"
+      className={['rounded-full object-cover', sizes[size], className].join(' ')}
+    />
   )
 }

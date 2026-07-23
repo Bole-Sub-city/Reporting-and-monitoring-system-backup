@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/adamalogo.png";
 import { submitBuusaaReport, submitCarraaHojiiReport, submitQonnaReport, submitRevenueReport } from "../api/reportApi";
-import { submitAnnualPlan, fetchMyPlan, fetchSummary } from "../api/planApi";
+import { submitAnnualPlan, fetchMyPlan, fetchSummary, fetchSummaryByDateRange } from "../api/planApi";
+import adamaLogo from "../assets/adamalogo.png";
 
 function DashboardIcon() {
   return (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>);
@@ -60,7 +61,7 @@ const BUUSAA_FIELDS = [
   { name: "hubannooUummuu", label: "Hubannoo Uummuu", required: true, type: "number" },
   { name: "hojiiwwanMootummaa", label: "Horannaa Misensaa", required: true, type: "number" },
   { name: "buuusiJirataa", label: "Buusii Jiraataa", required: true, type: "number" },
-  { name: "buuusiDaldalaa", label: "Buusii Daldalaa", required: true, type: "number" },
+  { name: "buuusiDaldalaa", label: "Buusii Daldalaa Sadarka B", required: true, type: "number" },
   { name: "buuusiDaldalaaFiGumaataa", label: "Buusii Daldalaa fi Gumaataa", required: true, type: "number" },
   { name: "gumaataMootummaa", label: "Gumaata Midhaani", required: true, type: "number" },
   { name: "nyaataBarataa", label: "Nyaata Barataa", required: false, type: "number" },
@@ -77,7 +78,28 @@ const PLAN_FIELDS = [
 const PERIODS = [
   { value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "annual", label: "Annual" },
+  { value: "custom", label: "Custom Date Range" },
 ];
+
+// Afaan Oromo months with their approximate Gregorian date ranges
+// Each month is ~30 days; start dates are approximate Gregorian equivalents
+const OROMO_MONTHS = [
+  { name: "Adoolessa",    gregStart: "07-08" },
+  { name: "Hagayya",      gregStart: "08-07" },
+  { name: "Fulbaana",     gregStart: "09-06" },
+  { name: "Onkololeessa", gregStart: "10-06" },
+  { name: "Sadaasa",      gregStart: "11-05" },
+  { name: "Mudde",        gregStart: "12-05" },
+  { name: "Amajjii",      gregStart: "01-04" },
+  { name: "Guraandhala",  gregStart: "02-03" },
+  { name: "Bitooteessa",  gregStart: "03-05" },
+  { name: "Ebla",         gregStart: "04-04" },
+  { name: "Caamsaa",      gregStart: "05-04" },
+  { name: "Waxabajjii",   gregStart: "06-03" },
+];
+
+// Generate day options 1-30
+const OROMO_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 const CARRAA_HOJII_FIELDS = [
   { name: "qusannaa", label: "Qusannnaa", required: true, type: "number" },
   { name: "liqii", label: "Liqii", required: true, type: "number" },
@@ -223,70 +245,201 @@ function AnnualPlanSection({ u }) {
   );
 }
 
+// Convert an Oromo month name + day + year to a Gregorian ISO date string
+function oromoToGregorian(monthName, day, year) {
+  const month = OROMO_MONTHS.find((m) => m.name === monthName);
+  if (!month) return null;
+  // Parse the base Gregorian date for this month in the given year
+  const [mm, dd] = month.gregStart.split("-").map(Number);
+  // Amajjii-Waxabajjii fall in the next Gregorian year relative to Ethiopian year start
+  const gregYear = (mm <= 6) ? year + 1 : year;
+  const base = new Date(gregYear, mm - 1, dd);
+  base.setDate(base.getDate() + (day - 1));
+  return base.toISOString().split("T")[0];
+}
+
 function AnalysisSection() {
-  const [period, setPeriod] = useState("monthly");
-  const [plan, setPlan] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [period, setPeriod]         = useState("monthly");
+  const [plan, setPlan]             = useState(null);
+  const [summary, setSummary]       = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState("");
+
+  // Custom date range state
+  const currentYear = new Date().getFullYear();
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay]     = useState(1);
+  const [endMonth, setEndMonth]     = useState("Adoolessa");
+  const [endDay, setEndDay]         = useState(30);
+  const [customYear, setCustomYear] = useState(currentYear - 1); // Ethiopian fiscal year start
+  const [customSummary, setCustomSummary] = useState(null);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError]     = useState("");
+  const [customRange, setCustomRange]     = useState(null); // { from, to } labels
+
   useEffect(() => { fetchMyPlan().then((d) => setPlan(d.plan)).catch(() => setPlan(null)); }, []);
+
   useEffect(() => {
+    if (period === "custom") return;
     setLoading(true); setError("");
-    fetchSummary(period).then((d) => setSummary(d.summary)).catch(() => setError("Failed to load summary data.")).finally(() => setLoading(false));
+    fetchSummary(period)
+      .then((d) => setSummary(d.summary))
+      .catch(() => setError("Failed to load summary data."))
+      .finally(() => setLoading(false));
   }, [period]);
+
+  const handleGenerateReport = async () => {
+    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
+    const dateTo   = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
+    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    setCustomLoading(true); setCustomError(""); setCustomSummary(null);
+    try {
+      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
+      setCustomSummary(d.summary);
+      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
+    } catch {
+      setCustomError("Failed to load custom range data.");
+    } finally {
+      setCustomLoading(false);
+    }
+  };
+
+  const isCustom    = period === "custom";
+  const activeSummary = isCustom ? customSummary : summary;
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+
   return (
     <div>
+      {/* Header row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div><h1 className="text-2xl font-bold text-gray-800">Work Analysis</h1><p className="text-gray-500 text-sm mt-0.5">Comparing actual performance against partitioned plan targets</p></div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Work Analysis</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Comparing actual performance against partitioned plan targets</p>
+        </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
-          <select value={period} onChange={(e) => setPeriod(e.target.value)} className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer">
+          <select value={period} onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer">
             {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
         </div>
       </div>
+
+      {/* No plan warning */}
       {!plan && (
         <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
           <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
           <p className="text-amber-700 text-sm">No annual plan set. Please submit your Annual Plan first to see targets in the charts.</p>
         </div>
       )}
-      {loading ? (
-        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">{error}</div>
-      ) : (
-        <>
-          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">{PERIODS.find((p) => p.value === period)?.label} View</span>
-            <span className="text-purple-400 text-xs">—</span>
-            <span className="text-purple-600 text-xs">Targets are auto-partitioned from the annual plan</span>
+
+      {/* ── Custom Date Range picker ── */}
+      {isCustom && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-gray-700 mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            {/* Ethiopian fiscal year */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Fiscal Year (starts Adoolessa)</label>
+              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000" max="2100"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+            </div>
+            {/* Start */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Start Date</label>
+              <div className="flex gap-2">
+                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            {/* End */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">End Date</label>
+              <div className="flex gap-2">
+                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
+          {customError && <p className="text-red-600 text-sm mb-3">{customError}</p>}
+          <button onClick={handleGenerateReport} disabled={customLoading}
+            className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+            <AnalysisIcon />{customLoading ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      )}
+
+      {/* ── Standard period loading ── */}
+      {!isCustom && loading ? (
+        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>
+      ) : !isCustom && error ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">{error}</div>
+      ) : isCustom && customLoading ? (
+        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" /></div>
+      ) : isCustom && !customSummary ? null : (
+        <>
+          {/* Period label banner */}
+          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
+              {isCustom && customRange
+                ? `${customRange.from} — ${customRange.to}`
+                : `${periodLabel} View`}
+            </span>
+            {!isCustom && <><span className="text-purple-400 text-xs">—</span><span className="text-purple-600 text-xs">Targets are auto-partitioned from the annual plan</span></>}
+          </div>
+
+          {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
               const at = plan ? (plan[planKey] ?? 0) : 0;
-              const pt = partitionTarget(at, period);
-              const ac = summary ? (summary[key] ?? 0) : 0;
+              const pt = isCustom ? 0 : partitionTarget(at, period);
+              const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
               return <RingChart key={key} actual={ac} target={pt} color={color} label={label} description={description} />;
             })}
           </div>
+
+          {/* Summary table */}
           <div className="mt-6 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50"><p className="text-sm font-semibold text-gray-700">{PERIODS.find((p) => p.value === period)?.label} Summary Table</p></div>
+            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">
+                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Summary Table`}
+              </p>
+            </div>
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-gray-100">{["Category","Annual Target","Period Target","Actual","% Complete"].map((h) => (<th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>))}</tr></thead>
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {["Category", isCustom ? "Total Actual" : "Annual Target", isCustom ? "—" : "Period Target", "Actual", "% Complete"].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
                 {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
-                  const at = plan ? (plan[planKey] ?? 0) : 0;
-                  const pt = partitionTarget(at, period);
-                  const ac = summary ? (summary[key] ?? 0) : 0;
+                  const at  = plan ? (plan[planKey] ?? 0) : 0;
+                  const pt  = isCustom ? 0 : partitionTarget(at, period);
+                  const ac  = activeSummary ? (activeSummary[key] ?? 0) : 0;
                   const pct = pt > 0 ? Math.min(Math.round((ac / pt) * 100), 100) : 0;
                   return (
                     <tr key={key} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3 font-medium text-gray-800"><span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />{label}</span></td>
-                      <td className="px-5 py-3 text-gray-600">{at.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-gray-600">{pt.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-gray-600">{isCustom ? "—" : at.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-gray-600">{isCustom ? "—" : pt.toLocaleString()}</td>
                       <td className="px-5 py-3 font-semibold text-gray-800">{ac.toLocaleString()}</td>
-                      <td className="px-5 py-3"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${color}22`, color }}>{pct}%</span></td>
+                      <td className="px-5 py-3">{isCustom ? "—" : <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${color}22`, color }}>{pct}%</span>}</td>
                     </tr>
                   );
                 })}
@@ -560,7 +713,7 @@ export default function WoRedaDashboard() {
       {/* ════ SIDEBAR ════ */}
       <aside className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`} style={{ background: "linear-gradient(180deg,#1e1456 0%,#16103d 100%)" }}>
         <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10 flex-shrink-0">
-          <img src={logo} alt="logo" className="w-9 h-9 rounded-full object-cover flex-shrink-0 border-2 border-white/20" />
+          <img src={logo} alt="logo" className="w-9 h-9 rounded-full object-contain bg-white flex-shrink-0 p-0.5" />
           {!collapsed && <div className="overflow-hidden"><p className="text-white font-bold text-sm leading-tight truncate">{u.woreda}</p><p className="text-white/50 text-xs">Oromiyaa</p></div>}
         </div>
         <nav className="flex-1 py-3 overflow-y-auto">

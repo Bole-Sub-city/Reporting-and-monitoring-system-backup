@@ -21,3 +21,12 @@ export const fetchSummary = async (period = "annual") => {
   const res = await api.get(`/plans/summary?period=${period}`, authHeader());
   return res.data; // { summary: {...}, period, from, to }
 };
+
+/** Fetch actual work sums for a custom Gregorian date range */
+export const fetchSummaryByDateRange = async (dateFrom, dateTo) => {
+  const res = await api.get(
+    `/plans/summary?period=custom&date_from=${dateFrom}&date_to=${dateTo}`,
+    authHeader()
+  );
+  return res.data; // { summary: {...}, period, from, to }
+};
