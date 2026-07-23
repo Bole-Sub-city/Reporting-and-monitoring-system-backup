@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/adamalogo.png";
 
 function Home() {
   return (
@@ -34,7 +34,7 @@ function Home() {
             <img
               src={logo}
               alt="Buusaa Gonofaa logo"
-              className="w-32 h-32 rounded-full object-cover border-4 border-[#c9a84c]/40 shadow-2xl"
+              className="w-32 h-32 rounded-full object-cover shadow-2xl"
             />
           </div>
 
