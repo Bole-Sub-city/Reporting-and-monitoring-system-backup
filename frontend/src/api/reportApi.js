@@ -64,3 +64,21 @@ export const fetchReportHistory = async (filters = {}) => {
 
   return response.data;
 };
+
+// Get Carraa Hojii reports for user
+export const getCarraaHojiiReports = async (userId) => {
+  const token = localStorage.getItem("token");
+  const response = await api.get(`/reports/carraa-hojii/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Get Qonna reports for user
+export const getQonnaReports = async (userId) => {
+  const token = localStorage.getItem("token");
+  const response = await api.get(`/reports/qonna/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
