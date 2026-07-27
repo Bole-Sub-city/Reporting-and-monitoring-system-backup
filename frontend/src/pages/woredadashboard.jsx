@@ -1268,15 +1268,8 @@ function BuusaaSubmitForm({ u }) {
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
       <div className="flex items-start justify-between mb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
-            Complete all required fields and submit before the deadline
-          </p>
-        </div>
-        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all">
-          <HistoryIcon /> History
-        </button>
+        <div><h1 className="text-2xl font-bold text-gray-800">Submit Report</h1><p className="text-gray-500 text-sm mt-0.5">Complete all required fields and submit before the deadline</p></div>
+        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all"><HistoryIcon /> History</button>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
