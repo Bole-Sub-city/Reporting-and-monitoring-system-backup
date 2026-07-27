@@ -64,14 +64,14 @@ export default function Login() {
       });
 
       localStorage.setItem("token", response.data.token);
-
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       const role = response.data.user.role;
 
+      // Redirect based on role – supports both "sub-city" and "subcity"
       if (role === "admin") {
         navigate("/admin/dashboard");
-      } else if (role === "sub-city") {
+      } else if (role === "sub-city" || role === "subcity") {
         navigate("/sub-city/dashboard");
       } else if (role === "wereda") {
         navigate("/wereda/dashboard");
@@ -80,7 +80,7 @@ export default function Login() {
       }
     } catch (err) {
       setServerError(
-        err.response?.data?.message || "Invalid username or password."
+        err.response?.data?.message || "Invalid username or password.",
       );
     } finally {
       setIsSubmitting(false);
