@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import {
@@ -438,17 +438,41 @@ const QONNA_FIELDS = [
   { name: "kanniissa", label: "Kanniissa", required: true, type: "number" },
 ];
 const REVENUE_FIELDS = [
+  { name: "galiiIdilee", label: "Galii Idilee", required: true, type: "number" },
+  { name: "galiiManaQophessaa", label: "Galii Mana Qophessaa", required: true, type: "number" },
+];
+
+// Revenue categories and their sources
+const REVENUE_CATEGORIES = [
   {
-    name: "galiiIdilee",
-    label: "Galii Idilee",
-    required: true,
-    type: "number",
+    id: "manaQophessaa",
+    label: "Mana Qophessaa",
+    color: "#7c3aed",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-200",
+    textColor: "text-purple-700",
+    sources: [
+      "Lizii",
+      "Kiraa",
+      "Baaxii fi Gooroo",
+      "Kiraa Mana Daldalaa",
+      "Kiraa Mana Jireenyaa",
+      "Other",
+    ],
   },
   {
-    name: "galiiManaQophessaa",
-    label: "Galii Mana Qophessaa",
-    required: true,
-    type: "number",
+    id: "idilee",
+    label: "Idilee",
+    color: "#0369a1",
+    bgColor: "bg-sky-50",
+    borderColor: "border-sky-200",
+    textColor: "text-sky-700",
+    sources: [
+      "Idilee Madda Galii 1 (Placeholder)",
+      "Idilee Madda Galii 2 (Placeholder)",
+      "Idilee Madda Galii 3 (Placeholder)",
+      "Idilee Madda Galii 4 (Placeholder)",
+    ],
   },
 ];
 const WORKS = [
@@ -473,6 +497,7 @@ const WORKS = [
   {
     id: "revenue",
     label: "Revenue Collection",
+    sidebarLabel: "Galii Sassaabu",
     icon: RevenueIcon,
     color: "bg-amber-100 text-amber-600",
   },
@@ -1515,6 +1540,661 @@ function GenericSubmitForm({
   );
 }
 
+
+// ─── Revenue Submit Form ──────────────────────────────────────────────────────
+function RevenueSubmitForm({ u }) {
+  const [tab, setTab] = useState("submit"); // "submit" | "history"
+
+  // ── Submit tab state ──
+  const [category, setCategory] = useState(REVENUE_CATEGORIES[0].id);
+  const [source, setSource] = useState(REVENUE_CATEGORIES[0].sources[0]);
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(todayStr());
+  const [entries, setEntries] = useState([]);
+  const [entryError, setEntryError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // ── History tab state ──
+  const [hDate, setHDate] = useState(todayStr());
+  const [hCategory, setHCategory] = useState("");
+  const [hSource, setHSource] = useState("");
+
+  const catObj = REVENUE_CATEGORIES.find((c) => c.id === category);
+
+  const handleCategoryChange = (val) => {
+    setCategory(val);
+    const cat = REVENUE_CATEGORIES.find((c) => c.id === val);
+    setSource(cat.sources[0]);
+    setEntryError("");
+  };
+
+  const handleAddEntry = () => {
+    if (!amount || Number(amount) <= 0) {
+      setEntryError("Enter a valid amount greater than zero.");
+      return;
+    }
+    if (!date) { setEntryError("Select a date."); return; }
+    setEntryError("");
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        category: catObj.label,
+        categoryId: category,
+        source,
+        amount: Number(amount),
+        date,
+      },
+    ]);
+    setAmount("");
+    setDate(todayStr());
+  };
+
+  const handleRemoveEntry = (id) =>
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+
+  const total = entries.reduce((sum, e) => sum + e.amount, 0);
+
+  const handleSubmitReport = async () => {
+    if (entries.length === 0) {
+      setEntryError("Add at least one entry before submitting.");
+      return;
+    }
+    setSubmitting(true);
+    setEntryError("");
+    try {
+      await submitRevenueReport({ entries, total, report_date: todayStr() });
+      setEntries([]);
+      setShowModal(true);
+    } catch (err) {
+      setEntryError(err.response?.data?.message || "Failed to submit report.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Client-side filter against the current session's submitted entries
+  const filteredHistory = entries.filter((e) => {
+    const matchDate = !hDate || e.date === hDate;
+    const matchCat = !hCategory || e.categoryId === hCategory;
+    const matchSrc = !hSource || e.source === hSource;
+    return matchDate && matchCat && matchSrc;
+  });
+  const historyTotal = filteredHistory.reduce((s, e) => s + e.amount, 0);
+
+  return (
+    <div>
+      {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+
+      {/* Page header + tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Galii Sassaabuu</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{u.woreda} &middot; {u.subcity}</p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 self-start sm:self-auto">
+          {[{id:"submit",label:"Submit Revenue"},{id:"history",label:"Revenue History"}].map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-white shadow text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── SUBMIT TAB ── */}
+      {tab === "submit" && (
+        <div className="space-y-5">
+
+          {/* Steps 1+2 side by side — combo boxes */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Step 1 — Gosa Galii (Category) */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+                style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
+                <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                <p className="text-sm font-semibold text-white">Gosa Galii</p>
+              </div>
+              <div className="px-5 py-4">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Gosa Galii filadhu</label>
+                <select
+                  value={category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+                >
+                  {REVENUE_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-2">
+                  Filatame: <span className="font-semibold text-[#1e1456]">{catObj.label}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 — Madda Galii (Source) */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+                style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
+                <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                <p className="text-sm font-semibold text-white">
+                  Madda Galii <span className="font-normal text-white/70 ml-1">({catObj.label})</span>
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Madda Galii filadhu</label>
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+                >
+                  {catObj.sources.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-2">
+                  Filatame: <span className="font-semibold text-[#1e1456]">{source}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 — Entry */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
+              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+              <p className="text-sm font-semibold text-white">Galii Galchi</p>
+              {entries.length > 0 && (
+                <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">{entries.length} galame</span>
+              )}
+            </div>
+            <div className="px-5 py-4">
+              {/* Context reminder badges */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: catObj.color }} />
+                  {catObj.label}
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+                  {source}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Baasii Galii (ETB) <span className="text-red-500">*</span></label>
+                  <input type="number" min="0" step="0.01" value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
+                    placeholder="0.00"
+                    className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Guyyaa <span className="text-red-500">*</span></label>
+                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+                    className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400" />
+                </div>
+                <div className="flex items-end">
+                  <button onClick={handleAddEntry}
+                    className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
+                    style={{ backgroundColor: "#1e1456" }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Add Entry
+                  </button>
+                </div>
+              </div>
+
+              {entryError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <p className="text-red-600 text-xs font-medium">{entryError}</p>
+                </div>
+              )}
+
+              {/* Always-visible entries table */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Galmeewwan Galame</p>
+                  {entries.length > 0 && (
+                    <span className="text-xs font-bold text-[#1e1456] bg-[#f0f4ff] border border-[#d4af37] px-2.5 py-0.5 rounded-full">
+                      Walii Galii: ETB {total.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                {entries.length === 0 ? (
+                  <div className="px-5 py-8 text-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-2 text-gray-400">
+                      <RevenueIcon />
+                    </div>
+                    <p className="text-gray-400 text-sm">No entries yet. Fill in the fields above and click "Add Entry".</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>{["Gosa Galii","Madda Galii","Baasii (ETB)","Guyyaa",""].map((h) => (
+                        <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                      ))}</tr>
+                    </thead>
+                    <tbody>
+                      {entries.map((e) => (
+                        <tr key={e.id} className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors">
+                          <td className="px-4 py-2.5">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: REVENUE_CATEGORIES.find((c) => c.id === e.categoryId)?.color ?? "#6b7280" }} />
+                              <span className="text-gray-700 font-medium">{e.category}</span>
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-gray-600">{e.source}</td>
+                          <td className="px-4 py-2.5 font-semibold text-gray-800">{e.amount.toLocaleString()}</td>
+                          <td className="px-4 py-2.5 text-gray-500 text-xs">{e.date}</td>
+                          <td className="px-4 py-2.5">
+                            <button onClick={() => handleRemoveEntry(e.id)}
+                              className="text-red-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium px-2 py-0.5 rounded transition-all">
+                              Haqi
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
+                        <td colSpan={2} className="px-4 py-3 font-bold text-[#1e1456] text-sm">Walii Galii</td>
+                        <td className="px-4 py-3 font-extrabold text-[#1e1456] text-base">ETB {total.toLocaleString()}</td>
+                        <td colSpan={2} />
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Submit footer */}
+          {entries.length > 0 && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 px-5 py-4 shadow-sm">
+              <div>
+                <p className="text-gray-800 text-sm font-semibold">
+                  {entries.length} {entries.length === 1 ? "entry" : "entries"} ready to submit
+                </p>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  Total: <strong className="text-gray-800">ETB {total.toLocaleString()}</strong>
+                </p>
+              </div>
+              <button onClick={handleSubmitReport} disabled={submitting}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm">
+                <SubmitIcon />
+                {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── HISTORY TAB ── */}
+      {tab === "history" && (
+        <div className="space-y-4">
+          {/* Search filters */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
+              <HistoryIcon />
+              <p className="text-sm font-semibold text-white">Search Revenue Records</p>
+            </div>
+            <div className="px-5 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Date</label>
+                  <input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Revenue Category</label>
+                  <select value={hCategory} onChange={(e) => { setHCategory(e.target.value); setHSource(""); }}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+                    <option value="" className="text-gray-800 bg-white">All Categories</option>
+                    {REVENUE_CATEGORIES.map((c) => <option key={c.id} value={c.id} className="text-gray-800 bg-white">{c.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Revenue Source</label>
+                  <select value={hSource} onChange={(e) => setHSource(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+                    <option value="" className="text-gray-800 bg-white">All Sources</option>
+                    {(hCategory ? REVENUE_CATEGORIES.find((c) => c.id === hCategory)?.sources : REVENUE_CATEGORIES.flatMap((c) => c.sources))
+                      ?.filter((v, i, a) => a.indexOf(v) === i)
+                      .map((s) => <option key={s} value={s} className="text-gray-800 bg-white">{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Day total summary card */}
+          {hDate && (
+            <div className="rounded-2xl px-5 py-4 flex items-center justify-between shadow-md"
+              style={{ background: "linear-gradient(135deg,#1e1456 0%,#2d1f7a 100%)" }}>
+              <div>
+                <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-0.5">Total Revenue — {hDate}</p>
+                <p className="text-3xl font-extrabold text-white">ETB {historyTotal.toLocaleString()}</p>
+                <p className="text-white/60 text-xs mt-0.5">
+                  {filteredHistory.length} {filteredHistory.length === 1 ? "record" : "records"} found
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white">
+                <RevenueIcon />
+              </div>
+            </div>
+          )}
+
+          {/* Records table */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-700">
+                Revenue Records
+                {filteredHistory.length > 0 && (
+                  <span className="ml-2 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{filteredHistory.length}</span>
+                )}
+              </p>
+            </div>
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-gray-100">
+                {["Category", "Source", "Amount (ETB)", "Date"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {filteredHistory.length === 0 ? (
+                  <tr><td colSpan={4} className="px-5 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><HistoryIcon /></div>
+                      <p className="text-gray-400 text-sm">No records found for the selected filters.</p>
+                    </div>
+                  </td></tr>
+                ) : (
+                  <>
+                    {filteredHistory.map((e) => {
+                      const cat = REVENUE_CATEGORIES.find((c) => c.id === e.categoryId);
+                      return (
+                        <tr key={e.id} className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors">
+                          <td className="px-5 py-3">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color ?? "#6b7280" }} />
+                              <span className="font-medium text-gray-800">{e.category}</span>
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-gray-600">{e.source}</td>
+                          <td className="px-5 py-3 font-semibold text-gray-800">{e.amount.toLocaleString()}</td>
+                          <td className="px-5 py-3 text-gray-500 text-xs">{e.date}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
+                      <td colSpan={2} className="px-5 py-3 font-bold text-[#1e1456] text-sm">Total</td>
+                      <td className="px-5 py-3 font-extrabold text-[#1e1456]">ETB {historyTotal.toLocaleString()}</td>
+                      <td />
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Revenue Analytics ────────────────────────────────────────────────────────
+const REVENUE_CHART_FIELDS = [
+  { key: "mana_qophessaa", label: "Mana Qophessaa", description: "Mana Qophessaa category total", color: "#7c3aed" },
+  { key: "idilee",         label: "Idilee",          description: "Idilee category total",          color: "#0369a1" },
+  { key: "total",          label: "Total Revenue",   description: "Combined all categories",         color: "#059669" },
+];
+
+// Simple bar chart — better than ring charts for revenue (no target, just totals)
+function RevenueBarChart({ fields, summary }) {
+  const max = Math.max(...fields.map((f) => summary ? (summary[f.key] ?? 0) : 0), 1);
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+        <p className="text-sm font-semibold text-gray-700">Revenue by Category</p>
+      </div>
+      <div className="px-5 py-5 space-y-4">
+        {fields.map(({ key, label, color }) => {
+          const val = summary ? (summary[key] ?? 0) : 0;
+          const pct = max > 0 ? Math.round((val / max) * 100) : 0;
+          return (
+            <div key={key}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  {label}
+                </span>
+                <span className="text-sm font-bold text-gray-800">ETB {val.toLocaleString()}</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3">
+                <div className="h-3 rounded-full transition-all duration-700"
+                  style={{ width: `${pct}%`, backgroundColor: color }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RevenueAnalysis() {
+  const [period, setPeriod] = useState("monthly");
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const currentYear = new Date().getFullYear();
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay] = useState(1);
+  const [endMonth, setEndMonth] = useState("Adoolessa");
+  const [endDay, setEndDay] = useState(30);
+  const [customYear, setCustomYear] = useState(currentYear - 1);
+  const [customSummary, setCustomSummary] = useState(null);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState("");
+  const [customRange, setCustomRange] = useState(null);
+
+  useEffect(() => {
+    if (period === "custom") return;
+    setLoading(true); setError("");
+    fetchSummary(period)
+      .then((d) => setSummary(d.summary))
+      .catch(() => setError("Failed to load revenue data."))
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  const handleGenerateReport = async () => {
+    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
+    const dateTo   = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
+    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    setCustomLoading(true); setCustomError(""); setCustomSummary(null);
+    try {
+      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
+      setCustomSummary(d.summary);
+      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
+    } catch { setCustomError("Failed to load custom range data."); }
+    finally { setCustomLoading(false); }
+  };
+
+  const isCustom = period === "custom";
+  const activeSummary = isCustom ? customSummary : summary;
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Revenue Analysis</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Revenue totals by category and time period</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select value={period} onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer">
+            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Custom date picker */}
+      {isCustom && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-gray-700 mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Fiscal Year (starts Adoolessa)</label>
+              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000" max="2100"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Start Date</label>
+              <div className="flex gap-2">
+                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">End Date</label>
+              <div className="flex gap-2">
+                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          {customError && <p className="text-red-600 text-sm mb-3">{customError}</p>}
+          <button onClick={handleGenerateReport} disabled={customLoading}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+            <AnalysisIcon />{customLoading ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      )}
+
+      {/* Loading / error */}
+      {(!isCustom && loading) || (isCustom && customLoading) ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+        </div>
+      ) : (!isCustom && error) ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">{error}</div>
+      ) : (isCustom && !customSummary) ? null : (
+        <>
+          {/* Period banner */}
+          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
+              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+            </span>
+          </div>
+
+          {/* Summary stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+            {REVENUE_CHART_FIELDS.map(({ key, label, color }) => {
+              const val = activeSummary ? (activeSummary[key] ?? 0) : 0;
+              return (
+                <div key={key} className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+                  </div>
+                  <p className="text-2xl font-extrabold text-gray-800">ETB {val.toLocaleString()}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bar chart */}
+          <RevenueBarChart fields={REVENUE_CHART_FIELDS} summary={activeSummary} />
+
+          {/* By-source breakdown table */}
+          {activeSummary?.by_source && Object.keys(activeSummary.by_source).length > 0 && (
+            <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+              <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+                <p className="text-sm font-semibold text-gray-700">
+                  {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel}`} — By Revenue Source
+                </p>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-gray-100">
+                  {["Revenue Source","Total (ETB)"].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {Object.entries(activeSummary.by_source)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([src, val]) => (
+                      <tr key={src} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-3 font-medium text-gray-800">{src}</td>
+                        <td className="px-5 py-3 font-semibold text-gray-800">{val.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Summary table */}
+          <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700">
+                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Revenue Summary`}
+              </p>
+            </div>
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-gray-100">
+                {["Category","Total (ETB)"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {REVENUE_CHART_FIELDS.map(({ key, label, color }) => {
+                  const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+                  return (
+                    <tr key={key} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3 font-medium text-gray-800">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />{label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-gray-800">{ac.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+
 function WorksOverview({ u, onSelect }) {
   return (
     <div>
@@ -1523,7 +2203,7 @@ function WorksOverview({ u, onSelect }) {
         {u.woreda} &middot; {u.subcity} — select a section to submit a report
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {WORKS.map(({ id, label, icon: Icon, color }) => (
+        {WORKS.map(({ id, label, sidebarLabel, icon: Icon, color }) => (
           <div
             key={id}
             className="bg-white rounded-xl border border-gray-200 px-6 py-7 flex flex-col items-center text-center"
@@ -1534,7 +2214,7 @@ function WorksOverview({ u, onSelect }) {
               <Icon />
             </div>
             <h2 className="font-semibold text-gray-800 text-base mb-1">
-              {label}
+              {sidebarLabel ?? label}
             </h2>
             <p className="text-gray-400 text-xs mb-5">
               {id === "buusaa"
@@ -1676,7 +2356,7 @@ export default function WoRedaDashboard() {
             </button>
             {!collapsed && worksOpen && (
               <div className="ml-4 border-l border-white/10 pl-2 py-1 space-y-0.5">
-                {WORKS.map(({ id, label, icon: Icon }) => {
+                {WORKS.map(({ id, label, sidebarLabel, icon: Icon }) => {
                   const isExp = expandedWork === id;
                   const isPlanActive =
                     activeNav === "works" && activeWork === `${id}:plan`;
@@ -1696,7 +2376,7 @@ export default function WoRedaDashboard() {
                       >
                         <Icon />
                         <span className="flex-1 truncate text-left">
-                          {label}
+                          {sidebarLabel ?? label}
                         </span>
                         <ChevronIcon open={isExp || anySubActive} />
                       </button>
@@ -1820,7 +2500,7 @@ export default function WoRedaDashboard() {
                 Quick Submit
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {WORKS.map(({ id, label, icon: Icon, color }) => (
+                {WORKS.map(({ id, label, sidebarLabel, icon: Icon, color }) => (
                   <button
                     key={id}
                     onClick={() => {
@@ -1837,7 +2517,7 @@ export default function WoRedaDashboard() {
                       <Icon />
                     </div>
                     <p className="text-xs font-semibold text-gray-700">
-                      {label}
+                      {sidebarLabel ?? label}
                     </p>
                   </button>
                 ))}
@@ -1905,6 +2585,7 @@ export default function WoRedaDashboard() {
               }
               if (sub === "analysis") {
                 if (wid === "buusaa") return <AnalysisSection />;
+                if (wid === "revenue") return <RevenueAnalysis />;
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
               }
               if (wid === "buusaa") return <BuusaaSubmitForm u={u} />;
@@ -1928,16 +2609,7 @@ export default function WoRedaDashboard() {
                     headerColor="linear-gradient(90deg,#065f46 0%,#059669 100%)"
                   />
                 );
-              if (wid === "revenue")
-                return (
-                  <GenericSubmitForm
-                    u={u}
-                    fields={REVENUE_FIELDS}
-                    submitFn={submitRevenueReport}
-                    title="Revenue Collection"
-                    headerColor="linear-gradient(90deg,#92400e 0%,#d97706 100%)"
-                  />
-                );
+              if (wid === "revenue") return <RevenueSubmitForm u={u} />;
               return (
                 <PlaceholderSubmit
                   title={work?.label}

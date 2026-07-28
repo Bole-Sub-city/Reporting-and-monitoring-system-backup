@@ -53,6 +53,12 @@
     -webkit-text-fill-color: #f8fafc !important;
     caret-color: #f8fafc;
   }
+
+  /* Ensure native select/option elements use system colors so text is always readable */
+  select option {
+    background-color: #ffffff;
+    color: #1f2937;
+  }
 }
 
 @layer utilities {
