@@ -261,6 +261,48 @@ const getQonnaReports = async (req, res) => {
   }
 };
 
+// ─── Revenue report ──────────────────────────────────────────────────────────
+const submitRevenueReport = async (req, res) => {
+  try {
+    const { entries, total, report_date } = req.body;
+
+    // Get logged‑in user from request (set by authMiddleware)
+    const user = req.user;
+    const username = user?.username || "anonymous";
+
+    // Build rows for Supabase
+    const rows = entries.map((entry) => ({
+      username,
+      gosa_galii: entry.category,
+      madda_galii: entry.source,
+      baasii: entry.amount,
+      guyyaa: entry.date,
+      report_date,
+    }));
+
+    const { error } = await supabase.from("revenue_entries").insert(rows);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res
+        .status(500)
+        .json({ message: error.message || "Failed to submit revenue report." });
+    }
+
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Revenue report submitted successfully.",
+      });
+  } catch (error) {
+    console.error("Revenue submit error:", error);
+    res
+      .status(500)
+      .json({ message: error.message || "Internal server error." });
+  }
+};
+
 module.exports = {
   createReport,
   submitBuusaaReport,
@@ -269,4 +311,5 @@ module.exports = {
   submitQonnaReport,
   getCarraaHojiiReports,
   getQonnaReports,
+  submitRevenueReport, // <-- new export
 };
