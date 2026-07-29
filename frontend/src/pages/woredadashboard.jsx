@@ -496,7 +496,7 @@ const WORKS = [
   },
   {
     id: "revenue",
-    label: "Revenue Collection",
+    label: "Galii Sassaabu",
     sidebarLabel: "Galii Sassaabu",
     icon: RevenueIcon,
     color: "bg-amber-100 text-amber-600",
@@ -1543,9 +1543,7 @@ function GenericSubmitForm({
 
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 function RevenueSubmitForm({ u }) {
-  const [tab, setTab] = useState("submit"); // "submit" | "history"
-
-  // ── Submit tab state ──
+  // ── Submit state ──
   const [category, setCategory] = useState(REVENUE_CATEGORIES[0].id);
   const [source, setSource] = useState(REVENUE_CATEGORIES[0].sources[0]);
   const [amount, setAmount] = useState("");
@@ -1554,11 +1552,6 @@ function RevenueSubmitForm({ u }) {
   const [entryError, setEntryError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
-  // ── History tab state ──
-  const [hDate, setHDate] = useState(todayStr());
-  const [hCategory, setHCategory] = useState("");
-  const [hSource, setHSource] = useState("");
 
   const catObj = REVENUE_CATEGORIES.find((c) => c.id === category);
 
@@ -1614,38 +1607,19 @@ function RevenueSubmitForm({ u }) {
     }
   };
 
-  // Client-side filter against the current session's submitted entries
-  const filteredHistory = entries.filter((e) => {
-    const matchDate = !hDate || e.date === hDate;
-    const matchCat = !hCategory || e.categoryId === hCategory;
-    const matchSrc = !hSource || e.source === hSource;
-    return matchDate && matchCat && matchSrc;
-  });
-  const historyTotal = filteredHistory.reduce((s, e) => s + e.amount, 0);
-
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
 
-      {/* Page header + tabs */}
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Galii Sassaabuu</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{u.woreda} &middot; {u.subcity}</p>
-        </div>
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 self-start sm:self-auto">
-          {[{id:"submit",label:"Submit Revenue"},{id:"history",label:"Revenue History"}].map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-white shadow text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
-              {t.label}
-            </button>
-          ))}
+          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Galii-Complete all required fields</p>
         </div>
       </div>
 
-      {/* ── SUBMIT TAB ── */}
-      {tab === "submit" && (
-        <div className="space-y-5">
+      <div className="space-y-5">
 
           {/* Steps 1+2 side by side — combo boxes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1769,9 +1743,7 @@ function RevenueSubmitForm({ u }) {
                 </div>
                 {entries.length === 0 ? (
                   <div className="px-5 py-8 text-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-2 text-gray-400">
-                      <RevenueIcon />
-                    </div>
+                   
                     <p className="text-gray-400 text-sm">No entries yet. Fill in the fields above and click "Add Entry".</p>
                   </div>
                 ) : (
@@ -1833,118 +1805,6 @@ function RevenueSubmitForm({ u }) {
             </div>
           )}
         </div>
-      )}
-
-      {/* ── HISTORY TAB ── */}
-      {tab === "history" && (
-        <div className="space-y-4">
-          {/* Search filters */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
-              style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
-              <HistoryIcon />
-              <p className="text-sm font-semibold text-white">Search Revenue Records</p>
-            </div>
-            <div className="px-5 py-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Date</label>
-                  <input type="date" value={hDate} onChange={(e) => setHDate(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Revenue Category</label>
-                  <select value={hCategory} onChange={(e) => { setHCategory(e.target.value); setHSource(""); }}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
-                    <option value="" className="text-gray-800 bg-white">All Categories</option>
-                    {REVENUE_CATEGORIES.map((c) => <option key={c.id} value={c.id} className="text-gray-800 bg-white">{c.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Revenue Source</label>
-                  <select value={hSource} onChange={(e) => setHSource(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
-                    <option value="" className="text-gray-800 bg-white">All Sources</option>
-                    {(hCategory ? REVENUE_CATEGORIES.find((c) => c.id === hCategory)?.sources : REVENUE_CATEGORIES.flatMap((c) => c.sources))
-                      ?.filter((v, i, a) => a.indexOf(v) === i)
-                      .map((s) => <option key={s} value={s} className="text-gray-800 bg-white">{s}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Day total summary card */}
-          {hDate && (
-            <div className="rounded-2xl px-5 py-4 flex items-center justify-between shadow-md"
-              style={{ background: "linear-gradient(135deg,#1e1456 0%,#2d1f7a 100%)" }}>
-              <div>
-                <p className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-0.5">Total Revenue — {hDate}</p>
-                <p className="text-3xl font-extrabold text-white">ETB {historyTotal.toLocaleString()}</p>
-                <p className="text-white/60 text-xs mt-0.5">
-                  {filteredHistory.length} {filteredHistory.length === 1 ? "record" : "records"} found
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-white">
-                <RevenueIcon />
-              </div>
-            </div>
-          )}
-
-          {/* Records table */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
-              <p className="text-sm font-semibold text-gray-700">
-                Revenue Records
-                {filteredHistory.length > 0 && (
-                  <span className="ml-2 bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{filteredHistory.length}</span>
-                )}
-              </p>
-            </div>
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-gray-100">
-                {["Category", "Source", "Amount (ETB)", "Date"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {filteredHistory.length === 0 ? (
-                  <tr><td colSpan={4} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><HistoryIcon /></div>
-                      <p className="text-gray-400 text-sm">No records found for the selected filters.</p>
-                    </div>
-                  </td></tr>
-                ) : (
-                  <>
-                    {filteredHistory.map((e) => {
-                      const cat = REVENUE_CATEGORIES.find((c) => c.id === e.categoryId);
-                      return (
-                        <tr key={e.id} className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors">
-                          <td className="px-5 py-3">
-                            <span className="inline-flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat?.color ?? "#6b7280" }} />
-                              <span className="font-medium text-gray-800">{e.category}</span>
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-gray-600">{e.source}</td>
-                          <td className="px-5 py-3 font-semibold text-gray-800">{e.amount.toLocaleString()}</td>
-                          <td className="px-5 py-3 text-gray-500 text-xs">{e.date}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
-                      <td colSpan={2} className="px-5 py-3 font-bold text-[#1e1456] text-sm">Total</td>
-                      <td className="px-5 py-3 font-extrabold text-[#1e1456]">ETB {historyTotal.toLocaleString()}</td>
-                      <td />
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -2037,7 +1897,7 @@ function RevenueAnalysis() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Revenue Analysis</h1>
+          <h1 className="text-2xl font-bold text-gray-800"> Work Analysis</h1>
           <p className="text-gray-500 text-sm mt-0.5">Revenue totals by category and time period</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
@@ -2200,7 +2060,7 @@ function WorksOverview({ u, onSelect }) {
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-1">Works</h1>
       <p className="text-gray-500 text-sm mb-6">
-        {u.woreda} &middot; {u.subcity} — select a section to submit a report
+        select a section to submit a report
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {WORKS.map(({ id, label, sidebarLabel, icon: Icon, color }) => (
@@ -2247,14 +2107,14 @@ export default function WoRedaDashboard() {
     ? {
         name: loggedUser.username,
         role: loggedUser.role,
-        woreda: "Woreda 08",
+        woreda: "Woreda 01",
         subcity: "Adama Bole",
         initials: loggedUser.username.substring(0, 2).toUpperCase(),
       }
     : {
         name: "Guest",
         role: "wereda",
-        woreda: "Woreda 08",
+        woreda: "Woreda 01",
         subcity: "Adama Bole",
         initials: "GU",
       };
@@ -2278,7 +2138,7 @@ export default function WoRedaDashboard() {
       const [wid, sub] = activeWork.split(":");
       const wl = WORKS.find((w) => w.id === wid)?.label ?? "Works";
       if (sub === "plan") return `${wl} — Annual Plan`;
-      if (sub === "analysis") return `${wl} — Work Analysis`;
+      if (sub === "analysis") return "Work Analysis";
       return wl;
     }
     return (
@@ -2465,7 +2325,7 @@ export default function WoRedaDashboard() {
                 Dashboard
               </h1>
               <p className="text-gray-500 text-sm mb-6">
-                Welcome back, {u.name} — {u.woreda}
+                Welcome back, {u.name}
               </p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
