@@ -1854,6 +1854,11 @@ function RevenueAnalysis() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Annual summary — fixed "till today" view, fetched once on mount
+  const [annualSummary, setAnnualSummary] = useState(null);
+  const [annualLoading, setAnnualLoading] = useState(false);
+
   const currentYear = new Date().getFullYear();
   const [startMonth, setStartMonth] = useState("Adoolessa");
   const [startDay, setStartDay] = useState(1);
@@ -1864,6 +1869,15 @@ function RevenueAnalysis() {
   const [customLoading, setCustomLoading] = useState(false);
   const [customError, setCustomError] = useState("");
   const [customRange, setCustomRange] = useState(null);
+
+  // Fetch annual once on mount — always shows current year running totals
+  useEffect(() => {
+    setAnnualLoading(true);
+    fetchSummary("annual")
+      .then((d) => setAnnualSummary(d.summary))
+      .catch(() => setAnnualSummary(null))
+      .finally(() => setAnnualLoading(false));
+  }, []);
 
   useEffect(() => {
     if (period === "custom") return;
@@ -1964,33 +1978,44 @@ function RevenueAnalysis() {
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">{error}</div>
       ) : (isCustom && !customSummary) ? null : (
         <>
-          {/* Period banner */}
-          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+          {/* ── Section 1: Annual / Till Today ── */}
+          <div className="mb-7">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Current Year — Till Today</h2>
+              <span className="text-xs text-gray-400">Annual running totals</span>
+            </div>
+            {annualLoading ? (
+              <div className="flex items-center justify-center h-24">
+                <div className="w-6 h-6 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {REVENUE_CHART_FIELDS.map(({ key, label, color }) => (
+                  <div key={key} className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+                    </div>
+                    <p className="text-2xl font-extrabold text-gray-800">
+                      ETB {(annualSummary ? (annualSummary[key] ?? 0) : 0).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Section 2: Filtered Period Breakdown ── */}
+          <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
             <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
               {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
             </span>
           </div>
 
-          {/* Summary stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-            {REVENUE_CHART_FIELDS.map(({ key, label, color }) => {
-              const val = activeSummary ? (activeSummary[key] ?? 0) : 0;
-              return (
-                <div key={key} className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
-                  </div>
-                  <p className="text-2xl font-extrabold text-gray-800">ETB {val.toLocaleString()}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Bar chart */}
+          {/* Bar chart — filtered */}
           <RevenueBarChart fields={REVENUE_CHART_FIELDS} summary={activeSummary} />
 
-          {/* By-source breakdown table */}
+          {/* By-source breakdown table — filtered */}
           {activeSummary?.by_source && Object.keys(activeSummary.by_source).length > 0 && (
             <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
@@ -2018,36 +2043,6 @@ function RevenueAnalysis() {
             </div>
           )}
 
-          {/* Summary table */}
-          <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700">
-                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Revenue Summary`}
-              </p>
-            </div>
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-gray-100">
-                {["Category","Total (ETB)"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr></thead>
-              <tbody>
-                {REVENUE_CHART_FIELDS.map(({ key, label, color }) => {
-                  const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
-                  return (
-                    <tr key={key} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-3 font-medium text-gray-800">
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />{label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 font-semibold text-gray-800">{ac.toLocaleString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </>
       )}
     </div>
