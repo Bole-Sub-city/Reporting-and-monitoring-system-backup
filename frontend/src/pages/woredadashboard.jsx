@@ -8,10 +8,10 @@ import {
   submitRevenueReport,
 } from "../api/reportApi";
 import {
-  submitAnnualPlan,
   fetchMyPlan,
   fetchSummary,
   fetchSummaryByDateRange,
+  fetchWeredaPlan,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 
@@ -341,7 +341,7 @@ const PLAN_FIELDS = [
   },
   {
     key: "buusi_jirataa",
-    planKey: "buusii_jirataa_target",
+    planKey: "buusi_jirataa_target",
     label: "Buusii Jirataa",
     description: "Household beneficiary targets",
     color: "#2563eb",
@@ -438,8 +438,18 @@ const QONNA_FIELDS = [
   { name: "kanniissa", label: "Kanniissa", required: true, type: "number" },
 ];
 const REVENUE_FIELDS = [
-  { name: "galiiIdilee", label: "Galii Idilee", required: true, type: "number" },
-  { name: "galiiManaQophessaa", label: "Galii Mana Qophessaa", required: true, type: "number" },
+  {
+    name: "galiiIdilee",
+    label: "Galii Idilee",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "galiiManaQophessaa",
+    label: "Galii Mana Qophessaa",
+    required: true,
+    type: "number",
+  },
 ];
 
 // Revenue categories and their sources
@@ -585,51 +595,22 @@ function RingChart({ actual, target, color, label, description }) {
 function AnnualPlanSection({ u }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    hubannoo_uummuu_target: "",
-    horannaa_misensaa_target: "",
-    buusi_jirataa_target: "",
-    buusi_daldalaa_target: "",
-  });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const year = new Date().getFullYear();
+
   useEffect(() => {
-    fetchMyPlan()
+    fetchWeredaPlan()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null))
       .finally(() => setLoading(false));
   }, []);
-  const handleChange = (e) =>
-    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setSaving(true);
-    try {
-      await submitAnnualPlan({
-        hubannoo_uummuu_target: Number(form.hubannoo_uummuu_target),
-        horannaa_misensaa_target: Number(form.horannaa_misensaa_target),
-        buusi_jirataa_target: Number(form.buusi_jirataa_target),
-        buusi_daldalaa_target: Number(form.buusi_daldalaa_target),
-      });
-      setSuccess("Annual plan saved and locked successfully.");
-      const d = await fetchMyPlan();
-      setPlan(d.plan);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to save plan.");
-    } finally {
-      setSaving(false);
-    }
-  };
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
         <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
       </div>
     );
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
@@ -639,9 +620,9 @@ function AnnualPlanSection({ u }) {
         </span>
       </div>
       <p className="text-gray-500 text-sm mb-6">
-        Set your yearly targets for each category. Once submitted, the plan is{" "}
-        <strong>locked</strong> and cannot be changed.
+        {u.woreda} · Targets set by the sub-city office. Read-only.
       </p>
+
       {plan ? (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div
@@ -681,89 +662,37 @@ function AnnualPlanSection({ u }) {
                 ),
               )}
             </div>
-            <div className="mt-5 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <div className="mt-5 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
               <svg
-                className="w-5 h-5 text-green-600 flex-shrink-0"
+                className="w-5 h-5 text-blue-500 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
                 viewBox="0 0 24 24"
               >
-                <path d="M9 12l2 2 4-4" />
                 <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4M12 16h.01" />
               </svg>
-              <p className="text-green-700 text-sm font-medium">
-                Plan is locked. Contact your administrator if changes are
-                needed.
+              <p className="text-blue-700 text-sm">
+                These targets were assigned by your sub-city office. Contact
+                them if you believe the numbers are incorrect.
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-4">
-            <div
-              className="px-6 py-4 border-b border-gray-100"
-              style={{
-                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
-              }}
-            >
-              <p className="text-white font-bold text-base">
-                Enter Annual Targets — {year}
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">
-                {u.name} · {u.woreda}
-              </p>
-            </div>
-            <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {PLAN_FIELDS.map(
-                ({ planKey, label, description, borderColor }) => (
-                  <div key={planKey}>
-                    <label className="block text-gray-700 text-sm font-medium mb-1">
-                      {label} <span className="text-red-500">*</span>
-                    </label>
-                    <p className="text-xs text-gray-400 mb-1.5">
-                      {description}
-                    </p>
-                    <input
-                      type="number"
-                      name={planKey}
-                      value={form[planKey]}
-                      onChange={handleChange}
-                      required
-                      min="0"
-                      placeholder="Enter annual target"
-                      className={`w-full border ${borderColor} rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all`}
-                    />
-                  </div>
-                ),
-              )}
-            </div>
+        <div className="bg-white rounded-2xl border border-gray-200 px-6 py-14 flex flex-col items-center text-center shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-3 text-amber-400">
+            <PlanIcon />
           </div>
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-green-700 text-sm">
-              {success}
-            </div>
-          )}
-          <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-            <p className="text-gray-400 text-xs">
-              ⚠ Once submitted, this plan <strong>cannot be edited</strong>.
-            </p>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
-            >
-              <PlanIcon />
-              {saving ? "Saving..." : "Submit & Lock Plan"}
-            </button>
-          </div>
-        </form>
+          <p className="text-gray-700 font-semibold mb-1">
+            No Plan Assigned Yet
+          </p>
+          <p className="text-gray-400 text-sm max-w-xs">
+            Your sub-city office hasn't saved an annual plan for {year} yet.
+            Once they do, your targets will appear here automatically.
+          </p>
+        </div>
       )}
     </div>
   );
@@ -1293,8 +1222,15 @@ function BuusaaSubmitForm({ u }) {
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
       <div className="flex items-start justify-between mb-5">
-        <div><h1 className="text-2xl font-bold text-gray-800">Submit Report</h1><p className="text-gray-500 text-sm mt-0.5">Complete all required fields and submit before the deadline</p></div>
-        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all"><HistoryIcon /> History</button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Complete all required fields and submit before the deadline
+          </p>
+        </div>
+        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all">
+          <HistoryIcon /> History
+        </button>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
@@ -1540,7 +1476,6 @@ function GenericSubmitForm({
   );
 }
 
-
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 function RevenueSubmitForm({ u }) {
   // ── Submit state ──
@@ -1567,7 +1502,10 @@ function RevenueSubmitForm({ u }) {
       setEntryError("Enter a valid amount greater than zero.");
       return;
     }
-    if (!date) { setEntryError("Select a date."); return; }
+    if (!date) {
+      setEntryError("Select a date.");
+      return;
+    }
     setEntryError("");
     setEntries((prev) => [
       ...prev,
@@ -1615,214 +1553,354 @@ function RevenueSubmitForm({ u }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Galii-Complete all required fields</p>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Galii-Complete all required fields
+          </p>
         </div>
       </div>
 
       <div className="space-y-5">
-
-          {/* Steps 1+2 side by side — combo boxes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Step 1 — Gosa Galii (Category) */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
-                style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
-                <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
-                <p className="text-sm font-semibold text-white">Gosa Galii</p>
-              </div>
-              <div className="px-5 py-4">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Gosa Galii filadhu</label>
-                <select
-                  value={category}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
-                >
-                  {REVENUE_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.label}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-2">
-                  Filatame: <span className="font-semibold text-[#1e1456]">{catObj.label}</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Step 2 — Madda Galii (Source) */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
-                style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
-                <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
-                <p className="text-sm font-semibold text-white">
-                  Madda Galii <span className="font-normal text-white/70 ml-1">({catObj.label})</span>
-                </p>
-              </div>
-              <div className="px-5 py-4">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Madda Galii filadhu</label>
-                <select
-                  value={source}
-                  onChange={(e) => setSource(e.target.value)}
-                  className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
-                >
-                  {catObj.sources.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-2">
-                  Filatame: <span className="font-semibold text-[#1e1456]">{source}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3 — Entry */}
+        {/* Steps 1+2 side by side — combo boxes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Step 1 — Gosa Galii (Category) */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
-              style={{ background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)" }}>
-              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
-              <p className="text-sm font-semibold text-white">Galii Galchi</p>
-              {entries.length > 0 && (
-                <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">{entries.length} galame</span>
-              )}
+            <div
+              className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              style={{
+                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              }}
+            >
+              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                1
+              </span>
+              <p className="text-sm font-semibold text-white">Gosa Galii</p>
             </div>
             <div className="px-5 py-4">
-              {/* Context reminder badges */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: catObj.color }} />
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Gosa Galii filadhu
+              </label>
+              <select
+                value={category}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+              >
+                {REVENUE_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-2">
+                Filatame:{" "}
+                <span className="font-semibold text-[#1e1456]">
                   {catObj.label}
                 </span>
-                <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
-                  {source}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Baasii Galii (ETB) <span className="text-red-500">*</span></label>
-                  <input type="number" min="0" step="0.01" value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
-                    placeholder="0.00"
-                    className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Guyyaa <span className="text-red-500">*</span></label>
-                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                    className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400" />
-                </div>
-                <div className="flex items-end">
-                  <button onClick={handleAddEntry}
-                    className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
-                    style={{ backgroundColor: "#1e1456" }}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Add Entry
-                  </button>
-                </div>
-              </div>
-
-              {entryError && (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
-                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <p className="text-red-600 text-xs font-medium">{entryError}</p>
-                </div>
-              )}
-
-              {/* Always-visible entries table */}
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Galmeewwan Galame</p>
-                  {entries.length > 0 && (
-                    <span className="text-xs font-bold text-[#1e1456] bg-[#f0f4ff] border border-[#d4af37] px-2.5 py-0.5 rounded-full">
-                      Walii Galii: ETB {total.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-                {entries.length === 0 ? (
-                  <div className="px-5 py-8 text-center">
-                   
-                    <p className="text-gray-400 text-sm">No entries yet. Fill in the fields above and click "Add Entry".</p>
-                  </div>
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                      <tr>{["Gosa Galii","Madda Galii","Baasii (ETB)","Guyyaa",""].map((h) => (
-                        <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                      ))}</tr>
-                    </thead>
-                    <tbody>
-                      {entries.map((e) => (
-                        <tr key={e.id} className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors">
-                          <td className="px-4 py-2.5">
-                            <span className="inline-flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: REVENUE_CATEGORIES.find((c) => c.id === e.categoryId)?.color ?? "#6b7280" }} />
-                              <span className="text-gray-700 font-medium">{e.category}</span>
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-gray-600">{e.source}</td>
-                          <td className="px-4 py-2.5 font-semibold text-gray-800">{e.amount.toLocaleString()}</td>
-                          <td className="px-4 py-2.5 text-gray-500 text-xs">{e.date}</td>
-                          <td className="px-4 py-2.5">
-                            <button onClick={() => handleRemoveEntry(e.id)}
-                              className="text-red-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium px-2 py-0.5 rounded transition-all">
-                              Haqi
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
-                        <td colSpan={2} className="px-4 py-3 font-bold text-[#1e1456] text-sm">Walii Galii</td>
-                        <td className="px-4 py-3 font-extrabold text-[#1e1456] text-base">ETB {total.toLocaleString()}</td>
-                        <td colSpan={2} />
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              </p>
             </div>
           </div>
 
-          {/* Submit footer */}
-          {entries.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 px-5 py-4 shadow-sm">
-              <div>
-                <p className="text-gray-800 text-sm font-semibold">
-                  {entries.length} {entries.length === 1 ? "entry" : "entries"} ready to submit
-                </p>
-                <p className="text-gray-500 text-xs mt-0.5">
-                  Total: <strong className="text-gray-800">ETB {total.toLocaleString()}</strong>
-                </p>
-              </div>
-              <button onClick={handleSubmitReport} disabled={submitting}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm">
-                <SubmitIcon />
-                {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
-              </button>
+          {/* Step 2 — Madda Galii (Source) */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div
+              className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              style={{
+                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              }}
+            >
+              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                2
+              </span>
+              <p className="text-sm font-semibold text-white">
+                Madda Galii{" "}
+                <span className="font-normal text-white/70 ml-1">
+                  ({catObj.label})
+                </span>
+              </p>
             </div>
-          )}
+            <div className="px-5 py-4">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Madda Galii filadhu
+              </label>
+              <select
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+              >
+                {catObj.sources.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-2">
+                Filatame:{" "}
+                <span className="font-semibold text-[#1e1456]">{source}</span>
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* Step 3 — Entry */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+            style={{
+              background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+            }}
+          >
+            <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              3
+            </span>
+            <p className="text-sm font-semibold text-white">Galii Galchi</p>
+            {entries.length > 0 && (
+              <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
+                {entries.length} galame
+              </span>
+            )}
+          </div>
+          <div className="px-5 py-4">
+            {/* Context reminder badges */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: catObj.color }}
+                />
+                {catObj.label}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+                {source}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Baasii Galii (ETB) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
+                  placeholder="0.00"
+                  className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Guyyaa <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleAddEntry}
+                  className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
+                  style={{ backgroundColor: "#1e1456" }}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    viewBox="0 0 24 24"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add Entry
+                </button>
+              </div>
+            </div>
+
+            {entryError && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+                <svg
+                  className="w-4 h-4 text-red-500 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <p className="text-red-600 text-xs font-medium">{entryError}</p>
+              </div>
+            )}
+
+            {/* Always-visible entries table */}
+            <div className="rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Galmeewwan Galame
+                </p>
+                {entries.length > 0 && (
+                  <span className="text-xs font-bold text-[#1e1456] bg-[#f0f4ff] border border-[#d4af37] px-2.5 py-0.5 rounded-full">
+                    Walii Galii: ETB {total.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {entries.length === 0 ? (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-gray-400 text-sm">
+                    No entries yet. Fill in the fields above and click "Add
+                    Entry".
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      {[
+                        "Gosa Galii",
+                        "Madda Galii",
+                        "Baasii (ETB)",
+                        "Guyyaa",
+                        "",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries.map((e) => (
+                      <tr
+                        key={e.id}
+                        className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors"
+                      >
+                        <td className="px-4 py-2.5">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor:
+                                  REVENUE_CATEGORIES.find(
+                                    (c) => c.id === e.categoryId,
+                                  )?.color ?? "#6b7280",
+                              }}
+                            />
+                            <span className="text-gray-700 font-medium">
+                              {e.category}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-600">
+                          {e.source}
+                        </td>
+                        <td className="px-4 py-2.5 font-semibold text-gray-800">
+                          {e.amount.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-500 text-xs">
+                          {e.date}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <button
+                            onClick={() => handleRemoveEntry(e.id)}
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium px-2 py-0.5 rounded transition-all"
+                          >
+                            Haqi
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
+                      <td
+                        colSpan={2}
+                        className="px-4 py-3 font-bold text-[#1e1456] text-sm"
+                      >
+                        Walii Galii
+                      </td>
+                      <td className="px-4 py-3 font-extrabold text-[#1e1456] text-base">
+                        ETB {total.toLocaleString()}
+                      </td>
+                      <td colSpan={2} />
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Submit footer */}
+        {entries.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 px-5 py-4 shadow-sm">
+            <div>
+              <p className="text-gray-800 text-sm font-semibold">
+                {entries.length} {entries.length === 1 ? "entry" : "entries"}{" "}
+                ready to submit
+              </p>
+              <p className="text-gray-500 text-xs mt-0.5">
+                Total:{" "}
+                <strong className="text-gray-800">
+                  ETB {total.toLocaleString()}
+                </strong>
+              </p>
+            </div>
+            <button
+              onClick={handleSubmitReport}
+              disabled={submitting}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
+            >
+              <SubmitIcon />
+              {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // ─── Revenue Analytics ────────────────────────────────────────────────────────
 const REVENUE_CHART_FIELDS = [
-  { key: "mana_qophessaa", label: "Mana Qophessaa", description: "Mana Qophessaa category total", color: "#7c3aed" },
-  { key: "idilee",         label: "Idilee",          description: "Idilee category total",          color: "#0369a1" },
-  { key: "total",          label: "Total Revenue",   description: "Combined all categories",         color: "#059669" },
+  {
+    key: "mana_qophessaa",
+    label: "Mana Qophessaa",
+    description: "Mana Qophessaa category total",
+    color: "#7c3aed",
+  },
+  {
+    key: "idilee",
+    label: "Idilee",
+    description: "Idilee category total",
+    color: "#0369a1",
+  },
+  {
+    key: "total",
+    label: "Total Revenue",
+    description: "Combined all categories",
+    color: "#059669",
+  },
 ];
 
 // Simple bar chart — better than ring charts for revenue (no target, just totals)
 function RevenueBarChart({ fields, summary }) {
-  const max = Math.max(...fields.map((f) => summary ? (summary[f.key] ?? 0) : 0), 1);
+  const max = Math.max(
+    ...fields.map((f) => (summary ? (summary[f.key] ?? 0) : 0)),
+    1,
+  );
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
-        <p className="text-sm font-semibold text-gray-700">Revenue by Category</p>
+        <p className="text-sm font-semibold text-gray-700">
+          Revenue by Category
+        </p>
       </div>
       <div className="px-5 py-5 space-y-4">
         {fields.map(({ key, label, color }) => {
@@ -1832,14 +1910,21 @@ function RevenueBarChart({ fields, summary }) {
             <div key={key}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
                   {label}
                 </span>
-                <span className="text-sm font-bold text-gray-800">ETB {val.toLocaleString()}</span>
+                <span className="text-sm font-bold text-gray-800">
+                  ETB {val.toLocaleString()}
+                </span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3">
-                <div className="h-3 rounded-full transition-all duration-700"
-                  style={{ width: `${pct}%`, backgroundColor: color }} />
+                <div
+                  className="h-3 rounded-full transition-all duration-700"
+                  style={{ width: `${pct}%`, backgroundColor: color }}
+                />
               </div>
             </div>
           );
@@ -1881,7 +1966,8 @@ function RevenueAnalysis() {
 
   useEffect(() => {
     if (period === "custom") return;
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     fetchSummary(period)
       .then((d) => setSummary(d.summary))
       .catch(() => setError("Failed to load revenue data."))
@@ -1890,16 +1976,30 @@ function RevenueAnalysis() {
 
   const handleGenerateReport = async () => {
     const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo   = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
-    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
-    setCustomLoading(true); setCustomError(""); setCustomSummary(null);
+    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) {
+      setCustomError("Invalid date selection.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      setCustomError("Start date must be before end date.");
+      return;
+    }
+    setCustomLoading(true);
+    setCustomError("");
+    setCustomSummary(null);
     try {
       const d = await fetchSummaryByDateRange(dateFrom, dateTo);
       setCustomSummary(d.summary);
-      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
-    } catch { setCustomError("Failed to load custom range data."); }
-    finally { setCustomLoading(false); }
+      setCustomRange({
+        from: `${startMonth} ${startDay}`,
+        to: `${endMonth} ${endDay}`,
+      });
+    } catch {
+      setCustomError("Failed to load custom range data.");
+    } finally {
+      setCustomLoading(false);
+    }
   };
 
   const isCustom = period === "custom";
@@ -1912,13 +2012,26 @@ function RevenueAnalysis() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800"> Work Analysis</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Revenue totals by category and time period</p>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Revenue totals by category and time period
+          </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
-          <select value={period} onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
-            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer">
-            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          <select
+            value={period}
+            onChange={(e) => {
+              setPeriod(e.target.value);
+              setCustomSummary(null);
+              setCustomRange(null);
+            }}
+            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -1926,45 +2039,92 @@ function RevenueAnalysis() {
       {/* Custom date picker */}
       {isCustom && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-gray-700 mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <p className="text-sm font-semibold text-gray-700 mb-4">
+            Select Custom Date Range (Afaan Oromo Calendar)
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Fiscal Year (starts Adoolessa)</label>
-              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000" max="2100"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Fiscal Year (starts Adoolessa)
+              </label>
+              <input
+                type="number"
+                value={customYear}
+                onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000"
+                max="2100"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Start Date
+              </label>
               <div className="flex gap-2">
-                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={startMonth}
+                  onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={startDay}
+                  onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">End Date</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                End Date
+              </label>
               <div className="flex gap-2">
-                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={endMonth}
+                  onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={endDay}
+                  onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
-          {customError && <p className="text-red-600 text-sm mb-3">{customError}</p>}
-          <button onClick={handleGenerateReport} disabled={customLoading}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
-            <AnalysisIcon />{customLoading ? "Generating..." : "Generate Report"}
+          {customError && (
+            <p className="text-red-600 text-sm mb-3">{customError}</p>
+          )}
+          <button
+            onClick={handleGenerateReport}
+            disabled={customLoading}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
+            <AnalysisIcon />
+            {customLoading ? "Generating..." : "Generate Report"}
           </button>
         </div>
       )}
@@ -1974,15 +2134,21 @@ function RevenueAnalysis() {
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
         </div>
-      ) : (!isCustom && error) ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">{error}</div>
-      ) : (isCustom && !customSummary) ? null : (
+      ) : !isCustom && error ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+          {error}
+        </div>
+      ) : isCustom && !customSummary ? null : (
         <>
           {/* ── Section 1: Annual / Till Today ── */}
           <div className="mb-7">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Current Year — Till Today</h2>
-              <span className="text-xs text-gray-400">Annual running totals</span>
+              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                Current Year — Till Today
+              </h2>
+              <span className="text-xs text-gray-400">
+                Annual running totals
+              </span>
             </div>
             {annualLoading ? (
               <div className="flex items-center justify-center h-24">
@@ -1991,13 +2157,25 @@ function RevenueAnalysis() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {REVENUE_CHART_FIELDS.map(({ key, label, color }) => (
-                  <div key={key} className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
+                  <div
+                    key={key}
+                    className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4"
+                  >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {label}
+                      </p>
                     </div>
                     <p className="text-2xl font-extrabold text-gray-800">
-                      ETB {(annualSummary ? (annualSummary[key] ?? 0) : 0).toLocaleString()}
+                      ETB{" "}
+                      {(annualSummary
+                        ? (annualSummary[key] ?? 0)
+                        : 0
+                      ).toLocaleString()}
                     </p>
                   </div>
                 ))}
@@ -2008,47 +2186,68 @@ function RevenueAnalysis() {
           {/* ── Section 2: Filtered Period Breakdown ── */}
           <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
             <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+              {isCustom && customRange
+                ? `${customRange.from} — ${customRange.to}`
+                : `${periodLabel} View`}
             </span>
           </div>
 
           {/* Bar chart — filtered */}
-          <RevenueBarChart fields={REVENUE_CHART_FIELDS} summary={activeSummary} />
+          <RevenueBarChart
+            fields={REVENUE_CHART_FIELDS}
+            summary={activeSummary}
+          />
 
           {/* By-source breakdown table — filtered */}
-          {activeSummary?.by_source && Object.keys(activeSummary.by_source).length > 0 && (
-            <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-                <p className="text-sm font-semibold text-gray-700">
-                  {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel}`} — By Revenue Source
-                </p>
+          {activeSummary?.by_source &&
+            Object.keys(activeSummary.by_source).length > 0 && (
+              <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+                  <p className="text-sm font-semibold text-gray-700">
+                    {isCustom && customRange
+                      ? `${customRange.from} — ${customRange.to}`
+                      : `${periodLabel}`}{" "}
+                    — By Revenue Source
+                  </p>
+                </div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {["Revenue Source", "Total (ETB)"].map((h) => (
+                        <th
+                          key={h}
+                          className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(activeSummary.by_source)
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([src, val]) => (
+                        <tr
+                          key={src}
+                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-5 py-3 font-medium text-gray-800">
+                            {src}
+                          </td>
+                          <td className="px-5 py-3 font-semibold text-gray-800">
+                            {val.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-100">
-                  {["Revenue Source","Total (ETB)"].map((h) => (
-                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {Object.entries(activeSummary.by_source)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([src, val]) => (
-                      <tr key={src} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                        <td className="px-5 py-3 font-medium text-gray-800">{src}</td>
-                        <td className="px-5 py-3 font-semibold text-gray-800">{val.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
+            )}
         </>
       )}
     </div>
   );
 }
-
 
 function WorksOverview({ u, onSelect }) {
   return (

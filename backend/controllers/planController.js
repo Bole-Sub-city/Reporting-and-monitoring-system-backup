@@ -115,7 +115,7 @@ const getSummary = async (req, res) => {
     let query = supabase
       .from("buusaa_reports")
       .select(
-        "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, buusi_daldalaa, report_date"
+        "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, buusi_daldalaa, report_date",
       )
       .eq("user_id", user_id)
       .gte("report_date", from)
@@ -146,4 +146,123 @@ const getSummary = async (req, res) => {
   }
 };
 
-module.exports = { createPlan, getMyPlan, getSummary };
+// Maps frontend woreda IDs (w1–w4) to their Supabase table names
+const WEREDA_TABLE_MAP = {
+  w1: "annual_plan_wereda_1",
+  w2: "annual_plan_wereda_2",
+  w3: "annual_plan_wereda_3",
+  w4: "annual_plan_wereda_4",
+};
+
+// Maps wereda usernames to their frontend IDs so the wereda dashboard
+// knows which table to read from
+const USERNAME_TO_WEREDA_ID = {
+  wereda01: "w1",
+  wereda02: "w2",
+  wereda03: "w3",
+  wereda04: "w4",
+};
+
+/**
+ * POST /api/plans/subcity
+ * Called by the subcity dashboard "Save Plan" button.
+ * Receives { plan: { hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, buusi_daldalaa },
+ *            weights: { w1, w2, w3, w4 } }
+ * Computes each wereda's proportional share and upserts a row into the
+ * corresponding annual_plan_wereda_N table.
+ */
+const saveSubcityPlan = async (req, res) => {
+  try {
+    const { plan, weights } = req.body;
+
+    if (!plan || !weights) {
+      return res
+        .status(400)
+        .json({ message: "plan and weights are required." });
+    }
+
+    const year = new Date().getFullYear();
+
+    const totalWeight = ["w1", "w2", "w3", "w4"].reduce(
+      (s, id) => s + Number(weights[id] || 0),
+      0,
+    );
+
+    const share = (woredaId, categoryTotal) => {
+      const w = Number(weights[woredaId] || 0);
+      if (totalWeight === 0 || w === 0)
+        return Math.round(Number(categoryTotal || 0) / 4);
+      return Math.round((w / totalWeight) * Number(categoryTotal || 0));
+    };
+
+    const errors = [];
+
+    for (const wId of ["w1", "w2", "w3", "w4"]) {
+      const tableName = WEREDA_TABLE_MAP[wId];
+      const row = {
+        year,
+        hubannoo_uummuu_target: share(wId, plan.hubannoo_uummuu),
+        horannaa_misensaa_target: share(wId, plan.horannaa_misensaa),
+        buusi_jirataa_target: share(wId, plan.buusi_jirataa),
+        buusi_daldalaa_target: share(wId, plan.buusi_daldalaa),
+      };
+
+      // Upsert: overwrite existing row for the same year so subcity can
+      // update the plan freely. conflict_target = year column.
+      const { error } = await supabase
+        .from(tableName)
+        .upsert([row], { onConflict: "year" });
+
+      if (error) errors.push(`${tableName}: ${error.message}`);
+    }
+
+    if (errors.length) {
+      return res.status(400).json({ message: errors.join(" | ") });
+    }
+
+    res.status(200).json({ message: "Plan saved to all 4 wereda tables." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/wereda-plan
+ * Called by the wereda dashboard to fetch its own plan (read-only).
+ * Identifies the correct table from the logged-in user's username.
+ */
+const getWeredaPlan = async (req, res) => {
+  try {
+    const username = req.user.username;
+    const wId = USERNAME_TO_WEREDA_ID[username];
+
+    if (!wId) {
+      return res
+        .status(403)
+        .json({ message: "Not a recognised wereda account." });
+    }
+
+    const tableName = WEREDA_TABLE_MAP[wId];
+    const year = new Date().getFullYear();
+
+    const { data, error } = await supabase
+      .from(tableName)
+      .select("*")
+      .eq("year", year)
+      .maybeSingle();
+
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  createPlan,
+  getMyPlan,
+  getSummary,
+  saveSubcityPlan,
+  getWeredaPlan,
+};
