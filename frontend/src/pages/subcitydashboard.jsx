@@ -5,10 +5,10 @@ import { saveSubcityPlan } from "../api/planApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const WOREDAS = [
-  { id: "w1", name: "Woreda 1" },
-  { id: "w2", name: "Woreda 2" },
-  { id: "w3", name: "Woreda 3" },
-  { id: "w4", name: "Woreda 4" },
+  { id: "w1", name: "Aanaa Gooroo" },
+  { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+  { id: "w3", name: "Aanaa Dhakaa Adii" },
+  { id: "w4", name: "Aanaa Andoodee" },
 ];
 
 const PLAN_FIELDS = [
@@ -319,7 +319,7 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Step 1 — Woreda Weights
+              EnterWoreda Weights
             </p>
             <p className="text-white/60 text-xs mt-0.5">
               Enter a weight for each woreda (e.g. population). The system uses
@@ -405,7 +405,7 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Step 2 — Subcity Annual Totals
+              Enter Subcity Annual Totals
             </p>
             <p className="text-white/60 text-xs mt-0.5">
               Total targets for the whole subcity
@@ -442,7 +442,7 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-700">
-                Allocation Preview — Proportional Distribution
+                Allocation Preview Proportional Distribution
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -608,7 +608,7 @@ function ReportsPage({ plan, weights }) {
           }}
         >
           <p className="text-sm font-semibold text-white">
-            {woreda.name} — Submitted Reports
+            {woreda.name}  Submitted Reports
           </p>
           <p className="text-white/60 text-xs mt-0.5">
             Live data will appear here once the backend endpoint is connected.
