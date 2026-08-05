@@ -324,40 +324,40 @@ const PLAN_FIELDS = [
     planKey: "hubannoo_uummuu_target",
     label: "Hubannoo Uummuu",
     description: "Awareness targets",
-    color: "#7c3aed",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-200",
-    textColor: "text-purple-700",
+    color: "#0f766e",
+    bgColor: "bg-[#f0fdf9]",
+    borderColor: "border-[#99f6e4]",
+    textColor: "text-[#0f766e]",
   },
   {
     key: "horannaa_misensaa",
     planKey: "horannaa_misensaa_target",
     label: "Horannaa Misensaa",
     description: "Member enrollment targets",
-    color: "#059669",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-    textColor: "text-green-700",
+    color: "#1e40af",
+    bgColor: "bg-[#eff6ff]",
+    borderColor: "border-[#bfdbfe]",
+    textColor: "text-[#1e40af]",
   },
   {
     key: "buusi_jirataa",
     planKey: "buusi_jirataa_target",
     label: "Buusii Jirataa",
     description: "Household beneficiary targets",
-    color: "#2563eb",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-    textColor: "text-blue-700",
+    color: "#475569",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#475569]",
   },
   {
     key: "buusi_daldalaa",
     planKey: "buusi_daldalaa_target",
     label: "Buusii Daldalaa Sadarkaa B",
     description: "Business beneficiary targets",
-    color: "#d97706",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    textColor: "text-amber-700",
+    color: "#64748b",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#64748b]",
   },
 ];
 const PERIODS = [
@@ -457,10 +457,10 @@ const REVENUE_CATEGORIES = [
   {
     id: "manaQophessaa",
     label: "Mana Qophessaa",
-    color: "#7c3aed",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-200",
-    textColor: "text-purple-700",
+    color: "#0f766e",
+    bgColor: "bg-[#f0fdf9]",
+    borderColor: "border-[#99f6e4]",
+    textColor: "text-[#0f766e]",
     sources: [
       "Lizii",
       "Kiraa",
@@ -473,10 +473,10 @@ const REVENUE_CATEGORIES = [
   {
     id: "idilee",
     label: "Idilee",
-    color: "#0369a1",
-    bgColor: "bg-sky-50",
-    borderColor: "border-sky-200",
-    textColor: "text-sky-700",
+    color: "#1e40af",
+    bgColor: "bg-[#eff6ff]",
+    borderColor: "border-[#bfdbfe]",
+    textColor: "text-[#1e40af]",
     sources: [
       "Idilee Madda Galii 1 (Placeholder)",
       "Idilee Madda Galii 2 (Placeholder)",
@@ -490,26 +490,26 @@ const WORKS = [
     id: "buusaa",
     label: "Buusaa Gonofaa",
     icon: BuusaaIcon,
-    color: "bg-purple-100 text-purple-600",
+    color: "bg-[#eef4fb] text-[#1a3a5c]",
   },
   {
     id: "carraaHojii",
     label: "Carraa Hojii Uummuu",
     icon: JobsIcon,
-    color: "bg-blue-100 text-blue-600",
+    color: "bg-[#eff6ff] text-[#1e40af]",
   },
   {
     id: "qonna",
     label: "Qonna",
     icon: AgricultureIcon,
-    color: "bg-green-100 text-green-600",
+    color: "bg-[#f0fdf9] text-[#0f766e]",
   },
   {
     id: "revenue",
     label: "Galii Sassaabu",
     sidebarLabel: "Galii Sassaabu",
     icon: RevenueIcon,
-    color: "bg-amber-100 text-amber-600",
+    color: "bg-[#f8fafc] text-[#475569]",
   },
 ];
 function todayStr() {
@@ -530,11 +530,11 @@ function RingChart({ actual, target, color, label, description }) {
     circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col items-center shadow-sm">
-      <p className="text-sm font-bold text-gray-700 mb-0.5 text-center">
+    <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 flex flex-col items-center shadow-sm">
+      <p className="text-sm font-bold text-[#334155] mb-0.5 text-center">
         {label}
       </p>
-      <p className="text-xs text-gray-400 mb-3 text-center">{description}</p>
+      <p className="text-xs text-[#94a3b8] mb-3 text-center">{description}</p>
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
           <circle
@@ -565,23 +565,23 @@ function RingChart({ actual, target, color, label, description }) {
           >
             {pct}%
           </span>
-          <span className="text-xs text-gray-400 mt-1">done</span>
+          <span className="text-xs text-[#94a3b8] mt-1">done</span>
         </div>
       </div>
       <div className="mt-4 w-full space-y-1">
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-[#64748b]">
           <span>Actual</span>
-          <span className="font-semibold text-gray-800">
+          <span className="font-semibold text-[#1e293b]">
             {actual.toLocaleString()}
           </span>
         </div>
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs text-[#64748b]">
           <span>Target (period)</span>
-          <span className="font-semibold text-gray-800">
+          <span className="font-semibold text-[#1e293b]">
             {target.toLocaleString()}
           </span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+        <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-2">
           <div
             className="h-1.5 rounded-full transition-all duration-700"
             style={{ width: `${pct}%`, backgroundColor: color }}
@@ -607,28 +607,28 @@ function AnnualPlanSection({ u }) {
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
       </div>
     );
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-gray-800">Annual Plan</h1>
-        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
+        <span className="bg-[#eef4fb] text-[#1a3a5c] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-[#dce8f4]">
           {year}
         </span>
       </div>
-      <p className="text-gray-500 text-sm mb-6">
+      <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} · Targets set by the sub-city office. Read-only.
       </p>
 
       {plan ? (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
-            className="px-6 py-4 flex items-center gap-3 border-b border-gray-100"
+            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
             }}
           >
             <PlanIcon />
@@ -654,17 +654,17 @@ function AnnualPlanSection({ u }) {
                     >
                       {label}
                     </p>
-                    <p className="text-3xl font-extrabold text-gray-800">
+                    <p className="text-3xl font-extrabold text-[#1e293b]">
                       {(plan[planKey] ?? 0).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Annual target</p>
+                    <p className="text-xs text-[#64748b] mt-1">Annual target</p>
                   </div>
                 ),
               )}
             </div>
-            <div className="mt-5 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+            <div className="mt-5 flex items-center gap-2 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3">
               <svg
-                className="w-5 h-5 text-blue-500 flex-shrink-0"
+                className="w-5 h-5 text-[#1a3a5c] flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
@@ -673,7 +673,7 @@ function AnnualPlanSection({ u }) {
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 8v4M12 16h.01" />
               </svg>
-              <p className="text-blue-700 text-sm">
+              <p className="text-[#1a3a5c] text-sm">
                 These targets were assigned by your sub-city office. Contact
                 them if you believe the numbers are incorrect.
               </p>
@@ -681,14 +681,14 @@ function AnnualPlanSection({ u }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 px-6 py-14 flex flex-col items-center text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-3 text-amber-400">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-[#f4f6f9] flex items-center justify-center mb-3 text-amber-400">
             <PlanIcon />
           </div>
-          <p className="text-gray-700 font-semibold mb-1">
+          <p className="text-[#334155] font-semibold mb-1">
             No Plan Assigned Yet
           </p>
-          <p className="text-gray-400 text-sm max-w-xs">
+          <p className="text-[#94a3b8] text-sm max-w-xs">
             Your sub-city office hasn't saved an annual plan for {year} yet.
             Once they do, your targets will appear here automatically.
           </p>
@@ -783,12 +783,12 @@ function AnalysisSection() {
       {/* Header row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Work Analysis</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
             Comparing actual performance against partitioned plan targets
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
           <select
             value={period}
@@ -797,7 +797,7 @@ function AnalysisSection() {
               setCustomSummary(null);
               setCustomRange(null);
             }}
-            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer"
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
               <option key={p.value} value={p.value}>
@@ -810,7 +810,7 @@ function AnalysisSection() {
 
       {/* No plan warning */}
       {!plan && (
-        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+        <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
           <svg
             className="w-5 h-5 text-amber-500 flex-shrink-0"
             fill="none"
@@ -822,7 +822,7 @@ function AnalysisSection() {
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-amber-700 text-sm">
+          <p className="text-[#1a3a5c] text-sm">
             No annual plan set. Please submit your Annual Plan first to see
             targets in the charts.
           </p>
@@ -831,14 +831,14 @@ function AnalysisSection() {
 
       {/* ── Custom Date Range picker ── */}
       {isCustom && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-gray-700 mb-4">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-[#334155] mb-4">
             Select Custom Date Range (Afaan Oromo Calendar)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             {/* Ethiopian fiscal year */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 Fiscal Year (starts Adoolessa)
               </label>
               <input
@@ -847,19 +847,19 @@ function AnalysisSection() {
                 onChange={(e) => setCustomYear(Number(e.target.value))}
                 min="2000"
                 max="2100"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
               />
             </div>
             {/* Start */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 Start Date
               </label>
               <div className="flex gap-2">
                 <select
                   value={startMonth}
                   onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_MONTHS.map((m) => (
                     <option key={m.name} value={m.name}>
@@ -870,7 +870,7 @@ function AnalysisSection() {
                 <select
                   value={startDay}
                   onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_DAYS.map((d) => (
                     <option key={d} value={d}>
@@ -882,14 +882,14 @@ function AnalysisSection() {
             </div>
             {/* End */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 End Date
               </label>
               <div className="flex gap-2">
                 <select
                   value={endMonth}
                   onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_MONTHS.map((m) => (
                     <option key={m.name} value={m.name}>
@@ -900,7 +900,7 @@ function AnalysisSection() {
                 <select
                   value={endDay}
                   onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_DAYS.map((d) => (
                     <option key={d} value={d}>
@@ -912,12 +912,12 @@ function AnalysisSection() {
             </div>
           </div>
           {customError && (
-            <p className="text-red-600 text-sm mb-3">{customError}</p>
+            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
           )}
           <button
             onClick={handleGenerateReport}
             disabled={customLoading}
-            className="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="flex items-center gap-2 bg-[#1e4976] hover:bg-[#122840] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
           >
             <AnalysisIcon />
             {customLoading ? "Generating..." : "Generate Report"}
@@ -928,29 +928,29 @@ function AnalysisSection() {
       {/* ── Standard period loading ── */}
       {!isCustom && loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
         </div>
       ) : !isCustom && error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
       ) : isCustom && customLoading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
         </div>
       ) : isCustom && !customSummary ? null : (
         <>
           {/* Period label banner */}
-          <div className="mb-5 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
+          <div className="mb-5 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
               {isCustom && customRange
                 ? `${customRange.from} — ${customRange.to}`
                 : `${periodLabel} View`}
             </span>
             {!isCustom && (
               <>
-                <span className="text-purple-400 text-xs">—</span>
-                <span className="text-purple-600 text-xs">
+                <span className="text-[#1a3a5c] text-xs">—</span>
+                <span className="text-[#1a3a5c] text-xs">
                   Targets are auto-partitioned from the annual plan
                 </span>
               </>
@@ -977,9 +977,9 @@ function AnalysisSection() {
           </div>
 
           {/* Summary table */}
-          <div className="mt-6 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700">
+          <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+              <p className="text-sm font-semibold text-[#334155]">
                 {isCustom && customRange
                   ? `${customRange.from} — ${customRange.to} Summary`
                   : `${periodLabel} Summary Table`}
@@ -987,7 +987,7 @@ function AnalysisSection() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
+                <tr className="border-b border-[#f1f5f9]">
                   {[
                     "Category",
                     isCustom ? "Total Actual" : "Annual Target",
@@ -997,7 +997,7 @@ function AnalysisSection() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
                     >
                       {h}
                     </th>
@@ -1014,9 +1014,9 @@ function AnalysisSection() {
                   return (
                     <tr
                       key={key}
-                      className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                      className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
                     >
-                      <td className="px-5 py-3 font-medium text-gray-800">
+                      <td className="px-5 py-3 font-medium text-[#1e293b]">
                         <span className="flex items-center gap-2">
                           <span
                             className="w-2 h-2 rounded-full flex-shrink-0"
@@ -1025,13 +1025,13 @@ function AnalysisSection() {
                           {label}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-gray-600">
+                      <td className="px-5 py-3 text-[#64748b]">
                         {isCustom ? "—" : at.toLocaleString()}
                       </td>
-                      <td className="px-5 py-3 text-gray-600">
+                      <td className="px-5 py-3 text-[#64748b]">
                         {isCustom ? "—" : pt.toLocaleString()}
                       </td>
-                      <td className="px-5 py-3 font-semibold text-gray-800">
+                      <td className="px-5 py-3 font-semibold text-[#1e293b]">
                         {ac.toLocaleString()}
                       </td>
                       <td className="px-5 py-3">
@@ -1064,29 +1064,29 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
       <div className="flex items-center gap-3 mb-5">
         <button
           onClick={onBack}
-          className="text-gray-400 hover:text-gray-700 text-sm"
+          className="text-[#94a3b8] hover:text-[#334155] text-sm"
         >
           ← Back
         </button>
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-bold text-[#1e293b]">
           {title} — Submit Report
         </h1>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 flex flex-col items-center justify-center text-center">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
         <div
           className={`w-16 h-16 rounded-full ${color} flex items-center justify-center mb-4`}
         >
           <Icon />
         </div>
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">
+        <h2 className="text-lg font-semibold text-[#334155] mb-2">
           {title} Report Form
         </h2>
-        <p className="text-gray-400 text-sm max-w-sm mb-6">
+        <p className="text-[#94a3b8] text-sm max-w-sm mb-6">
           The submission form for <strong>{title}</strong> is under development.
           <br />
           It will be available here for <strong>{u.woreda}</strong>.
         </p>
-        <span className="inline-block bg-amber-100 text-amber-700 text-xs font-semibold px-4 py-2 rounded-full">
+        <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-4 py-2 rounded-full">
           Coming Soon
         </span>
       </div>
@@ -1097,24 +1097,24 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
 function PlaceholderAnnualPlan({ title, u }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-1">
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
         {title} — Annual Plan
       </h1>
-      <p className="text-gray-500 text-sm mb-6">
+      <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} &middot; {u.subcity}
       </p>
-      <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-4">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 rounded-full bg-[#eef4fb] text-[#64748b] flex items-center justify-center mb-4">
           <PlanIcon />
         </div>
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">
+        <h2 className="text-lg font-semibold text-[#334155] mb-2">
           Annual Plan
         </h2>
-        <p className="text-gray-400 text-sm max-w-sm mb-6">
+        <p className="text-[#94a3b8] text-sm max-w-sm mb-6">
           The annual plan for <strong>{title}</strong> will be managed here —
           targets and progress tracking for <strong>{u.woreda}</strong>.
         </p>
-        <span className="inline-block bg-amber-100 text-amber-700 text-xs font-semibold px-4 py-2 rounded-full">
+        <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-4 py-2 rounded-full">
           Coming Soon
         </span>
       </div>
@@ -1125,20 +1125,20 @@ function PlaceholderAnnualPlan({ title, u }) {
 function PlaceholderAnalysis({ title, u }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-1">
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
         {title} — Work Analysis
       </h1>
-      <p className="text-gray-500 text-sm mb-6">
+      <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} &middot; {u.subcity}
       </p>
-      <div className="bg-white rounded-xl border border-gray-200 px-6 py-12 flex flex-col items-center justify-center text-center">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
         <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
           <AnalysisIcon />
         </div>
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">
+        <h2 className="text-lg font-semibold text-[#334155] mb-2">
           Work Analysis
         </h2>
-        <p className="text-gray-400 text-sm max-w-sm mb-6">
+        <p className="text-[#94a3b8] text-sm max-w-sm mb-6">
           Performance analytics for <strong>{title}</strong> will be shown here
           — charts, trends, and targets for <strong>{u.woreda}</strong>.
         </p>
@@ -1153,10 +1153,10 @@ function PlaceholderAnalysis({ title, u }) {
 function SuccessModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl px-10 py-10 flex flex-col items-center gap-4 min-w-[320px] animate-fade-in">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl px-10 py-10 flex flex-col items-center gap-4 min-w-[320px] animate-fade-in">
+        <div className="w-20 h-20 rounded-full bg-[#f0faf4] flex items-center justify-center">
           <svg
-            className="w-10 h-10 text-green-600"
+            className="w-10 h-10 text-[#166534]"
             fill="none"
             stroke="currentColor"
             strokeWidth={2.5}
@@ -1169,13 +1169,13 @@ function SuccessModal({ onClose }) {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-gray-800">Report Submitted</h2>
-        <p className="text-gray-500 text-sm text-center">
+        <h2 className="text-xl font-bold text-[#1e293b]">Report Submitted</h2>
+        <p className="text-[#64748b] text-sm text-center">
           Your report has been submitted successfully.
         </p>
         <button
           onClick={onClose}
-          className="mt-2 bg-green-600 hover:bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          className="mt-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
         >
           OK
         </button>
@@ -1223,24 +1223,24 @@ function BuusaaSubmitForm({ u }) {
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
             Complete all required fields and submit before the deadline
           </p>
         </div>
-        <button className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 transition-all">
+        <button className="flex items-center gap-2 border border-gray-300 text-[#64748b] px-4 py-2 rounded-lg text-sm hover:bg-[#f4f6f9] transition-all">
           <HistoryIcon /> History
         </button>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
-          <p className="text-gray-600 text-sm font-medium mb-1.5">
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">
             Report Type
           </p>
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -1248,19 +1248,19 @@ function BuusaaSubmitForm({ u }) {
           </select>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-[10px] font-bold tracking-widest text-amber-600 uppercase mb-1">
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
             Reporting Period
           </p>
-          <p className="text-2xl font-bold text-gray-800">{todayStr()}</p>
-          <p className="text-amber-600 text-xs mt-0.5">⏰ Deadline: —</p>
+          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
+          <p className="text-[#64748b] text-xs mt-0.5">⏰ Deadline: —</p>
         </div>
       </div>
       <form onSubmit={handleSubmit}>
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden mb-5">
           <div
             className="px-5 py-4"
             style={{
-              background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
             }}
           >
             <p className="text-white font-bold text-base">Gabaasa Guyyaa</p>
@@ -1274,7 +1274,7 @@ function BuusaaSubmitForm({ u }) {
                 key={name}
                 className={fullWidth ? "sm:col-span-2 sm:w-1/2" : ""}
               >
-                <label className="block text-gray-700 text-sm font-medium mb-1.5">
+                <label className="block text-[#334155] text-sm font-medium mb-1.5">
                   {label} {required && <span className="text-red-500">*</span>}
                 </label>
                 <input
@@ -1285,12 +1285,12 @@ function BuusaaSubmitForm({ u }) {
                   required={required}
                   placeholder="0"
                   min="0"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all"
                 />
               </div>
             ))}
             <div className="sm:col-span-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1.5">
+              <label className="block text-[#334155] text-sm font-medium mb-1.5">
                 Yaada Gudinaa
               </label>
               <textarea
@@ -1298,26 +1298,26 @@ function BuusaaSubmitForm({ u }) {
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Enter Yaada Gudinaa"
                 rows={4}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
               />
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-          <p className="text-gray-400 text-xs">
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">
             Fields marked <span className="text-red-500">*</span> are required
           </p>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleClear}
-              className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
             >
               Clear Form
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -1333,7 +1333,7 @@ function GenericSubmitForm({
   fields,
   submitFn,
   title,
-  headerColor = "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+  headerColor = "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
 }) {
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
   const [form, setForm] = useState({});
@@ -1375,21 +1375,21 @@ function GenericSubmitForm({
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
             {title} — complete all required fields
           </p>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
-          <p className="text-gray-600 text-sm font-medium mb-1.5">
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">
             Report Type
           </p>
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -1397,15 +1397,15 @@ function GenericSubmitForm({
           </select>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-[10px] font-bold tracking-widest text-amber-600 uppercase mb-1">
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
             Reporting Period
           </p>
-          <p className="text-2xl font-bold text-gray-800">{todayStr()}</p>
-          <p className="text-amber-600 text-xs mt-0.5">⏰ Deadline: —</p>
+          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
+          <p className="text-[#64748b] text-xs mt-0.5">⏰ Deadline: —</p>
         </div>
       </div>
       <form onSubmit={handleSubmit}>
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden mb-5">
           <div className="px-5 py-4" style={{ background: headerColor }}>
             <p className="text-white font-bold text-base">{title}</p>
             <p className="text-white/60 text-xs mt-0.5">
@@ -1415,7 +1415,7 @@ function GenericSubmitForm({
           <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
             {fields.map(({ name, label, required, type }) => (
               <div key={name}>
-                <label className="block text-gray-700 text-sm font-medium mb-1.5">
+                <label className="block text-[#334155] text-sm font-medium mb-1.5">
                   {label} {required && <span className="text-red-500">*</span>}
                 </label>
                 <input
@@ -1426,12 +1426,12 @@ function GenericSubmitForm({
                   required={required}
                   placeholder="0"
                   min="0"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all"
                 />
               </div>
             ))}
             <div className="sm:col-span-2">
-              <label className="block text-gray-700 text-sm font-medium mb-1.5">
+              <label className="block text-[#334155] text-sm font-medium mb-1.5">
                 Yaada Gudinaa
               </label>
               <textarea
@@ -1439,32 +1439,32 @@ function GenericSubmitForm({
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Enter Yaada Gudinaa"
                 rows={4}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent placeholder-gray-400 transition-all resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
               />
             </div>
           </div>
         </div>
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+          <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
             {error}
           </div>
         )}
-        <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-          <p className="text-gray-400 text-xs">
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">
             Fields marked <span className="text-red-500">*</span> are required
           </p>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleClear}
-              className="border border-gray-300 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
             >
               Clear Form
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon />
               {saving ? "Submitting..." : "Submit Report"}
@@ -1552,8 +1552,8 @@ function RevenueSubmitForm({ u }) {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Submit Report</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
             Galii-Complete all required fields
           </p>
         </div>
@@ -1563,11 +1563,11 @@ function RevenueSubmitForm({ u }) {
         {/* Steps 1+2 side by side — combo boxes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Step 1 — Gosa Galii (Category) */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
-              className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
               style={{
-                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+                background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
               }}
             >
               <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -1576,13 +1576,13 @@ function RevenueSubmitForm({ u }) {
               <p className="text-sm font-semibold text-white">Gosa Galii</p>
             </div>
             <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
                 Gosa Galii filadhu
               </label>
               <select
                 value={category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c] cursor-pointer"
               >
                 {REVENUE_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -1590,9 +1590,9 @@ function RevenueSubmitForm({ u }) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-[#94a3b8] mt-2">
                 Filatame:{" "}
-                <span className="font-semibold text-[#1e1456]">
+                <span className="font-semibold text-[#1a3a5c]">
                   {catObj.label}
                 </span>
               </p>
@@ -1600,11 +1600,11 @@ function RevenueSubmitForm({ u }) {
           </div>
 
           {/* Step 2 — Madda Galii (Source) */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
-              className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+              className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
               style={{
-                background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+                background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
               }}
             >
               <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -1618,13 +1618,13 @@ function RevenueSubmitForm({ u }) {
               </p>
             </div>
             <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+              <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
                 Madda Galii filadhu
               </label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                className="w-full border-2 border-[#d4af37] rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 cursor-pointer"
+                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c] cursor-pointer"
               >
                 {catObj.sources.map((s) => (
                   <option key={s} value={s}>
@@ -1632,20 +1632,20 @@ function RevenueSubmitForm({ u }) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-[#94a3b8] mt-2">
                 Filatame:{" "}
-                <span className="font-semibold text-[#1e1456]">{source}</span>
+                <span className="font-semibold text-[#1a3a5c]">{source}</span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Step 3 — Entry */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
-            className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
+            className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
             style={{
-              background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
+              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
             }}
           >
             <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -1661,21 +1661,21 @@ function RevenueSubmitForm({ u }) {
           <div className="px-5 py-4">
             {/* Context reminder badges */}
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-3 py-1 rounded-full">
                 <span
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: catObj.color }}
                 />
                 {catObj.label}
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-[#f0f4ff] text-[#1e1456] border border-[#d4af37] text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-3 py-1 rounded-full">
                 {source}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
                   Baasii Galii (ETB) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1686,25 +1686,25 @@ function RevenueSubmitForm({ u }) {
                   onChange={(e) => setAmount(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
                   placeholder="0.00"
-                  className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
                   Guyyaa <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full border-2 border-[#d4af37] rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400"
+                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={handleAddEntry}
                   className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
-                  style={{ backgroundColor: "#1e1456" }}
+                  style={{ backgroundColor: "#1a3a5c" }}
                 >
                   <svg
                     className="w-4 h-4"
@@ -1722,7 +1722,7 @@ function RevenueSubmitForm({ u }) {
             </div>
 
             {entryError && (
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+              <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-lg px-3 py-2 mb-3">
                 <svg
                   className="w-4 h-4 text-red-500 flex-shrink-0"
                   fill="none"
@@ -1734,32 +1734,32 @@ function RevenueSubmitForm({ u }) {
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <p className="text-red-600 text-xs font-medium">{entryError}</p>
+                <p className="text-[#dc2626] text-xs font-medium">{entryError}</p>
               </div>
             )}
 
             {/* Always-visible entries table */}
-            <div className="rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <div className="rounded-xl border border-[#e2e8f0] overflow-hidden">
+              <div className="px-4 py-2.5 bg-[#f4f6f9] border-b border-[#f1f5f9] flex items-center justify-between">
+                <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Galmeewwan Galame
                 </p>
                 {entries.length > 0 && (
-                  <span className="text-xs font-bold text-[#1e1456] bg-[#f0f4ff] border border-[#d4af37] px-2.5 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] px-2.5 py-0.5 rounded-full">
                     Walii Galii: ETB {total.toLocaleString()}
                   </span>
                 )}
               </div>
               {entries.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-[#94a3b8] text-sm">
                     No entries yet. Fill in the fields above and click "Add
                     Entry".
                   </p>
                 </div>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                  <thead className="bg-[#f4f6f9] border-b border-[#f1f5f9]">
                     <tr>
                       {[
                         "Gosa Galii",
@@ -1770,7 +1770,7 @@ function RevenueSubmitForm({ u }) {
                       ].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                          className="text-left px-4 py-2.5 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
                         >
                           {h}
                         </th>
@@ -1781,7 +1781,7 @@ function RevenueSubmitForm({ u }) {
                     {entries.map((e) => (
                       <tr
                         key={e.id}
-                        className="border-b border-gray-50 hover:bg-[#f0f4ff]/50 transition-colors"
+                        className="border-b border-gray-50 hover:bg-[#eef4fb]/50 transition-colors"
                       >
                         <td className="px-4 py-2.5">
                           <span className="inline-flex items-center gap-1.5">
@@ -1794,38 +1794,38 @@ function RevenueSubmitForm({ u }) {
                                   )?.color ?? "#6b7280",
                               }}
                             />
-                            <span className="text-gray-700 font-medium">
+                            <span className="text-[#334155] font-medium">
                               {e.category}
                             </span>
                           </span>
                         </td>
-                        <td className="px-4 py-2.5 text-gray-600">
+                        <td className="px-4 py-2.5 text-[#64748b]">
                           {e.source}
                         </td>
-                        <td className="px-4 py-2.5 font-semibold text-gray-800">
+                        <td className="px-4 py-2.5 font-semibold text-[#1e293b]">
                           {e.amount.toLocaleString()}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-500 text-xs">
+                        <td className="px-4 py-2.5 text-[#64748b] text-xs">
                           {e.date}
                         </td>
                         <td className="px-4 py-2.5">
                           <button
                             onClick={() => handleRemoveEntry(e.id)}
-                            className="text-red-400 hover:text-red-600 hover:bg-red-50 text-xs font-medium px-2 py-0.5 rounded transition-all"
+                            className="text-red-400 hover:text-[#dc2626] hover:bg-[#fef2f2] text-xs font-medium px-2 py-0.5 rounded transition-all"
                           >
                             Haqi
                           </button>
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-[#f0f4ff] border-t-2 border-[#d4af37]">
+                    <tr className="bg-[#f4f6f9] border-t border-[#e2e8f0]">
                       <td
                         colSpan={2}
-                        className="px-4 py-3 font-bold text-[#1e1456] text-sm"
+                        className="px-4 py-3 font-bold text-[#1a3a5c] text-sm"
                       >
                         Walii Galii
                       </td>
-                      <td className="px-4 py-3 font-extrabold text-[#1e1456] text-base">
+                      <td className="px-4 py-3 font-extrabold text-[#1a3a5c] text-base">
                         ETB {total.toLocaleString()}
                       </td>
                       <td colSpan={2} />
@@ -1839,15 +1839,15 @@ function RevenueSubmitForm({ u }) {
 
         {/* Submit footer */}
         {entries.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 px-5 py-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 shadow-sm">
             <div>
-              <p className="text-gray-800 text-sm font-semibold">
+              <p className="text-[#1e293b] text-sm font-semibold">
                 {entries.length} {entries.length === 1 ? "entry" : "entries"}{" "}
                 ready to submit
               </p>
-              <p className="text-gray-500 text-xs mt-0.5">
+              <p className="text-[#64748b] text-xs mt-0.5">
                 Total:{" "}
-                <strong className="text-gray-800">
+                <strong className="text-[#1e293b]">
                   ETB {total.toLocaleString()}
                 </strong>
               </p>
@@ -1855,7 +1855,7 @@ function RevenueSubmitForm({ u }) {
             <button
               onClick={handleSubmitReport}
               disabled={submitting}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
             >
               <SubmitIcon />
               {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
@@ -1873,19 +1873,19 @@ const REVENUE_CHART_FIELDS = [
     key: "mana_qophessaa",
     label: "Mana Qophessaa",
     description: "Mana Qophessaa category total",
-    color: "#7c3aed",
+    color: "#0f766e",
   },
   {
     key: "idilee",
     label: "Idilee",
     description: "Idilee category total",
-    color: "#0369a1",
+    color: "#1e40af",
   },
   {
     key: "total",
     label: "Total Revenue",
     description: "Combined all categories",
-    color: "#059669",
+    color: "#1a3a5c",
   },
 ];
 
@@ -1896,9 +1896,9 @@ function RevenueBarChart({ fields, summary }) {
     1,
   );
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
-        <p className="text-sm font-semibold text-gray-700">
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#f1f5f9]">
+        <p className="text-sm font-semibold text-[#334155]">
           Revenue by Category
         </p>
       </div>
@@ -1909,18 +1909,18 @@ function RevenueBarChart({ fields, summary }) {
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <span className="flex items-center gap-2 text-sm font-medium text-[#334155]">
                   <span
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: color }}
                   />
                   {label}
                 </span>
-                <span className="text-sm font-bold text-gray-800">
+                <span className="text-sm font-bold text-[#1e293b]">
                   ETB {val.toLocaleString()}
                 </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="w-full bg-[#f1f5f9] rounded-full h-3">
                 <div
                   className="h-3 rounded-full transition-all duration-700"
                   style={{ width: `${pct}%`, backgroundColor: color }}
@@ -2011,12 +2011,12 @@ function RevenueAnalysis() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800"> Work Analysis</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold text-[#1e293b]"> Work Analysis</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
             Revenue totals by category and time period
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm">
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
           <select
             value={period}
@@ -2025,7 +2025,7 @@ function RevenueAnalysis() {
               setCustomSummary(null);
               setCustomRange(null);
             }}
-            className="text-sm text-gray-700 font-medium bg-transparent focus:outline-none cursor-pointer"
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
               <option key={p.value} value={p.value}>
@@ -2038,13 +2038,13 @@ function RevenueAnalysis() {
 
       {/* Custom date picker */}
       {isCustom && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-gray-700 mb-4">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-[#334155] mb-4">
             Select Custom Date Range (Afaan Oromo Calendar)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 Fiscal Year (starts Adoolessa)
               </label>
               <input
@@ -2053,18 +2053,18 @@ function RevenueAnalysis() {
                 onChange={(e) => setCustomYear(Number(e.target.value))}
                 min="2000"
                 max="2100"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 Start Date
               </label>
               <div className="flex gap-2">
                 <select
                   value={startMonth}
                   onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_MONTHS.map((m) => (
                     <option key={m.name} value={m.name}>
@@ -2075,7 +2075,7 @@ function RevenueAnalysis() {
                 <select
                   value={startDay}
                   onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_DAYS.map((d) => (
                     <option key={d} value={d}>
@@ -2086,14 +2086,14 @@ function RevenueAnalysis() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
                 End Date
               </label>
               <div className="flex gap-2">
                 <select
                   value={endMonth}
                   onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_MONTHS.map((m) => (
                     <option key={m.name} value={m.name}>
@@ -2104,7 +2104,7 @@ function RevenueAnalysis() {
                 <select
                   value={endDay}
                   onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 >
                   {OROMO_DAYS.map((d) => (
                     <option key={d} value={d}>
@@ -2116,12 +2116,12 @@ function RevenueAnalysis() {
             </div>
           </div>
           {customError && (
-            <p className="text-red-600 text-sm mb-3">{customError}</p>
+            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
           )}
           <button
             onClick={handleGenerateReport}
             disabled={customLoading}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
           >
             <AnalysisIcon />
             {customLoading ? "Generating..." : "Generate Report"}
@@ -2132,10 +2132,10 @@ function RevenueAnalysis() {
       {/* Loading / error */}
       {(!isCustom && loading) || (isCustom && customLoading) ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
         </div>
       ) : !isCustom && error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
       ) : isCustom && !customSummary ? null : (
@@ -2143,34 +2143,34 @@ function RevenueAnalysis() {
           {/* ── Section 1: Annual / Till Today ── */}
           <div className="mb-7">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+              <h2 className="text-sm font-bold text-[#334155] uppercase tracking-wide">
                 Current Year — Till Today
               </h2>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-[#94a3b8]">
                 Annual running totals
               </span>
             </div>
             {annualLoading ? (
               <div className="flex items-center justify-center h-24">
-                <div className="w-6 h-6 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {REVENUE_CHART_FIELDS.map(({ key, label, color }) => (
                   <div
                     key={key}
-                    className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4"
+                    className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4"
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: color }}
                       />
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                         {label}
                       </p>
                     </div>
-                    <p className="text-2xl font-extrabold text-gray-800">
+                    <p className="text-2xl font-extrabold text-[#1e293b]">
                       ETB{" "}
                       {(annualSummary
                         ? (annualSummary[key] ?? 0)
@@ -2184,8 +2184,8 @@ function RevenueAnalysis() {
           </div>
 
           {/* ── Section 2: Filtered Period Breakdown ── */}
-          <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
-            <span className="text-purple-700 text-xs font-bold uppercase tracking-wide">
+          <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
+            <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
               {isCustom && customRange
                 ? `${customRange.from} — ${customRange.to}`
                 : `${periodLabel} View`}
@@ -2201,9 +2201,9 @@ function RevenueAnalysis() {
           {/* By-source breakdown table — filtered */}
           {activeSummary?.by_source &&
             Object.keys(activeSummary.by_source).length > 0 && (
-              <div className="mt-5 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-                  <p className="text-sm font-semibold text-gray-700">
+              <div className="mt-5 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+                  <p className="text-sm font-semibold text-[#334155]">
                     {isCustom && customRange
                       ? `${customRange.from} — ${customRange.to}`
                       : `${periodLabel}`}{" "}
@@ -2212,11 +2212,11 @@ function RevenueAnalysis() {
                 </div>
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100">
+                    <tr className="border-b border-[#f1f5f9]">
                       {["Revenue Source", "Total (ETB)"].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                          className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
                         >
                           {h}
                         </th>
@@ -2229,12 +2229,12 @@ function RevenueAnalysis() {
                       .map(([src, val]) => (
                         <tr
                           key={src}
-                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
                         >
-                          <td className="px-5 py-3 font-medium text-gray-800">
+                          <td className="px-5 py-3 font-medium text-[#1e293b]">
                             {src}
                           </td>
-                          <td className="px-5 py-3 font-semibold text-gray-800">
+                          <td className="px-5 py-3 font-semibold text-[#1e293b]">
                             {val.toLocaleString()}
                           </td>
                         </tr>
@@ -2252,25 +2252,25 @@ function RevenueAnalysis() {
 function WorksOverview({ u, onSelect }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-1">Works</h1>
-      <p className="text-gray-500 text-sm mb-6">
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Works</h1>
+      <p className="text-[#64748b] text-sm mb-6">
         select a section to submit a report
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {WORKS.map(({ id, label, sidebarLabel, icon: Icon, color }) => (
           <div
             key={id}
-            className="bg-white rounded-xl border border-gray-200 px-6 py-7 flex flex-col items-center text-center"
+            className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-7 flex flex-col items-center text-center"
           >
             <div
               className={`w-14 h-14 rounded-full ${color} flex items-center justify-center mb-4`}
             >
               <Icon />
             </div>
-            <h2 className="font-semibold text-gray-800 text-base mb-1">
+            <h2 className="font-semibold text-[#1e293b] text-base mb-1">
               {sidebarLabel ?? label}
             </h2>
-            <p className="text-gray-400 text-xs mb-5">
+            <p className="text-[#94a3b8] text-xs mb-5">
               {id === "buusaa"
                 ? "Buusaa Gonofaa daily, weekly and monthly reports"
                 : id === "carraaHojii"
@@ -2283,7 +2283,7 @@ function WorksOverview({ u, onSelect }) {
             </p>
             <button
               onClick={() => onSelect(id)}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -2366,7 +2366,7 @@ export default function WoRedaDashboard() {
           setActiveNav(id);
           setActiveWork(null);
         }}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${active ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
       >
         <Icon />
         {!collapsed && <span className="truncate">{label}</span>}
@@ -2376,14 +2376,14 @@ export default function WoRedaDashboard() {
 
   return (
     <div
-      className="flex h-screen max-h-screen bg-[#f0f2f5] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
+      className="flex h-screen max-h-screen bg-[#f4f6f9] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
       style={{ position: "fixed", inset: 0 }}
     >
       {/* ════ SIDEBAR ════ */}
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
         style={{
-          background: "linear-gradient(180deg,#1e1456 0%,#16103d 100%)",
+          background: "linear-gradient(180deg,#1a3a5c 0%,#0d1f35 100%)",
         }}
       >
         <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10 flex-shrink-0">
@@ -2410,7 +2410,7 @@ export default function WoRedaDashboard() {
                 setWorksOpen((p) => !p);
                 setActiveWork(null);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${activeNav === "works" ? "bg-green-600 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${activeNav === "works" ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
             >
               <WorksIcon />
               {!collapsed && (
@@ -2502,24 +2502,24 @@ export default function WoRedaDashboard() {
 
       {/* ════ MAIN ════ */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-gray-800 font-semibold text-base">
+        <header className="bg-white border-b border-[#e2e8f0] px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-[#1e293b] font-semibold text-base">
             {topLabel()}
           </h2>
           <div className="flex items-center gap-4">
-            <button className="relative text-gray-500 hover:text-gray-800">
+            <button className="relative text-[#64748b] hover:text-[#1e293b]">
               <BellIcon />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#dc2626] rounded-full" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {u.initials}
               </div>
               <div className="text-left hidden sm:block">
-                <p className="text-gray-800 text-sm font-semibold leading-tight">
+                <p className="text-[#1e293b] text-sm font-semibold leading-tight">
                   {u.name}
                 </p>
-                <p className="text-gray-500 text-xs capitalize">{u.role}</p>
+                <p className="text-[#64748b] text-xs capitalize">{u.role}</p>
               </div>
             </div>
           </div>
@@ -2527,10 +2527,10 @@ export default function WoRedaDashboard() {
         <main className="flex-1 overflow-y-auto px-6 py-6">
           {activeNav === "dashboard" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
                 Dashboard
               </h1>
-              <p className="text-gray-500 text-sm mb-6">
+              <p className="text-[#64748b] text-sm mb-6">
                 Welcome back, {u.name}
               </p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -2538,22 +2538,22 @@ export default function WoRedaDashboard() {
                   {
                     label: "Total Submitted",
                     value: "—",
-                    color: "bg-purple-50 border-purple-200 text-purple-700",
+                    color: "bg-[#eef4fb] border-[#dce8f4] text-[#1a3a5c]",
                   },
                   {
                     label: "Pending Review",
                     value: "—",
-                    color: "bg-amber-50 border-amber-200 text-amber-700",
+                    color: "bg-[#f4f6f9] border-[#dce8f4] text-[#1a3a5c]",
                   },
                   {
                     label: "Approved",
                     value: "—",
-                    color: "bg-green-50 border-green-200 text-green-700",
+                    color: "bg-green-50 border-[#bbf7d0] text-[#166534]",
                   },
                   {
                     label: "Rejected",
                     value: "—",
-                    color: "bg-red-50 border-red-200 text-red-700",
+                    color: "bg-[#fef2f2] border-[#fecaca] text-[#991b1b]",
                   },
                 ].map(({ label, value, color }) => (
                   <div key={label} className={`rounded-xl border p-5 ${color}`}>
@@ -2562,7 +2562,7 @@ export default function WoRedaDashboard() {
                   </div>
                 ))}
               </div>
-              <h2 className="text-base font-semibold text-gray-700 mb-3">
+              <h2 className="text-base font-semibold text-[#334155] mb-3">
                 Quick Submit
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2575,14 +2575,14 @@ export default function WoRedaDashboard() {
                       setExpandedWork(id);
                       setWorksOpen(true);
                     }}
-                    className="bg-white rounded-xl border border-gray-200 px-4 py-5 flex flex-col items-center hover:shadow-md transition-all hover:-translate-y-0.5 text-center"
+                    className="bg-white rounded-xl border border-[#e2e8f0] px-4 py-5 flex flex-col items-center hover:shadow-md transition-all hover:-translate-y-0.5 text-center"
                   >
                     <div
                       className={`w-10 h-10 rounded-full ${color} flex items-center justify-center mb-3`}
                     >
                       <Icon />
                     </div>
-                    <p className="text-xs font-semibold text-gray-700">
+                    <p className="text-xs font-semibold text-[#334155]">
                       {sidebarLabel ?? label}
                     </p>
                   </button>
@@ -2593,12 +2593,12 @@ export default function WoRedaDashboard() {
 
           {activeNav === "history" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-5">
+              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
                 Report History
               </h1>
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-[#f4f6f9] border-b border-[#e2e8f0]">
                     <tr>
                       {[
                         "Date",
@@ -2609,7 +2609,7 @@ export default function WoRedaDashboard() {
                       ].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-wide"
+                          className="text-left px-5 py-3 text-[#64748b] font-semibold text-xs uppercase tracking-wide"
                         >
                           {h}
                         </th>
@@ -2620,7 +2620,7 @@ export default function WoRedaDashboard() {
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-5 py-10 text-center text-gray-400 text-sm"
+                        className="px-5 py-10 text-center text-[#94a3b8] text-sm"
                       >
                         No reports submitted yet.
                       </td>
@@ -2689,28 +2689,28 @@ export default function WoRedaDashboard() {
 
           {activeNav === "announcements" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-5">
+              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
                 Announcements
               </h1>
-              <div className="bg-white rounded-xl border border-gray-200 px-5 py-10 text-center">
-                <p className="text-gray-400 text-sm">No announcements yet.</p>
+              <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-10 text-center">
+                <p className="text-[#94a3b8] text-sm">No announcements yet.</p>
               </div>
             </div>
           )}
 
           {activeNav === "profile" && (
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-5">
+              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
                 Profile & Settings
               </h1>
-              <div className="bg-white rounded-xl border border-gray-200 px-6 py-6 max-w-lg">
+              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 max-w-lg">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                  <div className="w-14 h-14 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-lg font-bold">
                     {u.initials}
                   </div>
                   <div>
-                    <p className="font-bold text-gray-800 text-lg">{u.name}</p>
-                    <p className="text-gray-500 text-sm">
+                    <p className="font-bold text-[#1e293b] text-lg">{u.name}</p>
+                    <p className="text-[#64748b] text-sm">
                       {u.subcity} &middot; {u.woreda}
                     </p>
                   </div>
@@ -2723,10 +2723,10 @@ export default function WoRedaDashboard() {
                     { label: "Sub-city", value: u.subcity },
                   ].map(({ label, value }) => (
                     <div key={label}>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">
+                      <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
                         {label}
                       </p>
-                      <p className="text-gray-800 text-sm border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50">
+                      <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
                         {value}
                       </p>
                     </div>
@@ -2740,3 +2740,8 @@ export default function WoRedaDashboard() {
     </div>
   );
 }
+
+
+
+
+

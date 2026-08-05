@@ -2,14 +2,46 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy-950: #0b1930;
-  --color-navy-900: #0f2340;
-  --color-navy-800: #152d52;
-  --color-gold-400: #fde047;
-  --color-gold-500: #d4af37;
-  --color-gold-600: #b8941f;
+  /* ── Primary navy-blue palette (professional / civic / government) ── */
+  --color-brand-950: #0d1f35;   /* deepest sidebar dark */
+  --color-brand-900: #122840;   /* sidebar base */
+  --color-brand-800: #1a3a5c;   /* primary action, header gradient start */
+  --color-brand-700: #1e4976;   /* header gradient end */
+  --color-brand-600: #2563a8;   /* active nav, links */
+  --color-brand-100: #dce8f4;   /* light tint for highlights */
+  --color-brand-50:  #eef4fb;   /* lightest tint */
+
+  /* ── Surface / canvas ── */
+  --color-surface: #f4f6f9;     /* page background */
+  --color-card:    #ffffff;     /* card / panel background */
+  --color-border:  #e2e8f0;     /* card borders */
+
+  /* ── Text ── */
+  --color-text-primary:   #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted:     #94a3b8;
+
+  /* ── Status / semantic (muted, formal) ── */
+  --color-success-bg:   #f0faf4;
+  --color-success-text: #166534;
+  --color-success-border:#bbf7d0;
+  --color-error-bg:     #fef2f2;
+  --color-error-text:   #991b1b;
+  --color-error-border: #fecaca;
+  --color-warn-bg:      #fefce8;
+  --color-warn-text:    #854d0e;
+  --color-warn-border:  #fef08a;
+
+  /* ── Legacy tokens (kept for auth/login pages) ── */
+  --color-navy-950: #0d1f35;
+  --color-navy-900: #122840;
+  --color-navy-800: #1a3a5c;
+  --color-gold-400: #c8a84b;
+  --color-gold-500: #b8963e;
+  --color-gold-600: #a07a2a;
+
   --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans:  'Inter', system-ui, sans-serif;
 }
 
 @layer base {
@@ -27,8 +59,8 @@
     margin: 0;
     min-height: 100svh;
     font-family: var(--font-sans);
-    background-color: var(--color-navy-950);
-    color: #f8fafc;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -43,39 +75,49 @@
 }
 
 @layer base {
-  /* Override browser autofill white background on inputs */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 999px #0f2340 inset !important;
-    box-shadow: 0 0 0 999px #0f2340 inset !important;
-    -webkit-text-fill-color: #f8fafc !important;
-    caret-color: #f8fafc;
+    -webkit-box-shadow: 0 0 0 999px #f4f6f9 inset !important;
+    box-shadow: 0 0 0 999px #f4f6f9 inset !important;
+    -webkit-text-fill-color: #1e293b !important;
+    caret-color: #1e293b;
   }
 
-  /* Ensure native select/option elements use system colors so text is always readable */
   select option {
     background-color: #ffffff;
-    color: #1f2937;
+    color: #1e293b;
   }
 }
 
 @layer utilities {
-  .text-gold-gradient {
-    background: linear-gradient(135deg, #fde047 0%, #d4af37 100%);
+  /* Auth pages – subtle silver-blue heading gradient */
+  .text-brand-gradient {
+    background: linear-gradient(135deg, #7eb3dc 0%, #c8a84b 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
+  /* Keep legacy alias used in auth components */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #c8a84b 0%, #a07a2a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-brand-shadow {
+    box-shadow: 0 4px 14px rgba(26, 58, 92, 0.30);
+  }
+
+  /* Legacy alias */
   .btn-gold-glow {
-    box-shadow:
-      0 0 20px rgba(212, 175, 55, 0.35),
-      0 4px 14px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 14px rgba(184, 150, 62, 0.30);
   }
 
   .logo-glow {
-    filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.15));
+    filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.12));
   }
 }

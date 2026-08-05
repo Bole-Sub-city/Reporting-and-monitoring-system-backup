@@ -1,8 +1,8 @@
 const variants = {
   primary:
-    'bg-gold-500 text-navy-950 hover:bg-gold-400 btn-gold-glow font-semibold',
+    'bg-navy-800 text-white hover:bg-navy-700 btn-brand-shadow font-semibold',
   outline:
-    'border border-gold-500/70 text-gold-500 hover:bg-gold-500/10 bg-transparent',
+    'border border-navy-800 text-navy-800 hover:bg-navy-50 bg-transparent',
   ghost:
     'border border-white/30 text-white hover:bg-white/10 bg-transparent',
 }
@@ -27,8 +27,8 @@ export default function Button({
       type={type}
       disabled={disabled}
       className={[
-        'inline-flex items-center justify-center rounded-full font-medium transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950',
+        'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-800/40 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950',
         'disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant],
         sizes[size],

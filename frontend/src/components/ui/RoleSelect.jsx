@@ -4,7 +4,6 @@ export default function RoleSelect({ label, value, onChange, options, error }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
-  // Close when clicking outside
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false)
@@ -23,7 +22,7 @@ export default function RoleSelect({ label, value, onChange, options, error }) {
   return (
     <div className="w-full text-left" ref={ref}>
       {label && (
-        <label className="mb-1.5 block text-sm font-medium text-slate-200">
+        <label className="mb-1.5 block text-sm font-medium text-slate-300">
           {label}
         </label>
       )}
@@ -33,10 +32,10 @@ export default function RoleSelect({ label, value, onChange, options, error }) {
         type="button"
         onClick={() => setOpen((p) => !p)}
         className={[
-          'w-full flex items-center justify-between rounded-xl border bg-navy-900/60 px-4 py-3 text-sm text-white',
+          'w-full flex items-center justify-between rounded-lg border bg-navy-900/60 px-4 py-3 text-sm text-white',
           'transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-gold-500/20',
-          open ? 'border-gold-500/70' : error ? 'border-red-400/70' : 'border-white/15',
+          'focus:outline-none focus:ring-2 focus:ring-navy-600/20',
+          open ? 'border-navy-600/70' : error ? 'border-red-400/70' : 'border-white/15',
         ].join(' ')}
       >
         <span className={selected ? 'text-white' : 'text-slate-500'}>
@@ -53,7 +52,7 @@ export default function RoleSelect({ label, value, onChange, options, error }) {
 
       {/* Dropdown list */}
       {open && (
-        <ul className="absolute z-50 mt-1.5 w-auto min-w-[var(--trigger-w)] rounded-xl border border-white/10
+        <ul className="absolute z-50 mt-1.5 w-auto min-w-[var(--trigger-w)] rounded-lg border border-white/10
                        bg-navy-900 shadow-xl overflow-hidden"
           style={{ width: ref.current?.offsetWidth }}
         >
@@ -67,8 +66,8 @@ export default function RoleSelect({ label, value, onChange, options, error }) {
                   className={[
                     'w-full text-left px-4 py-3 text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-gold-500 text-navy-950'
-                      : 'text-slate-200 hover:bg-gold-500 hover:text-navy-950',
+                      ? 'bg-navy-800 text-white'
+                      : 'text-slate-200 hover:bg-navy-800 hover:text-white',
                   ].join(' ')}
                 >
                   {opt.label}
