@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
-import { saveSubcityPlan } from "../api/planApi";
+import {
+  saveSubcityPlan,
+  saveSubcityOwnPlan,
+  fetchSubcityOwnPlan,
+} from "../api/planApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const WOREDAS = [
@@ -131,15 +135,22 @@ function navIcon(id) {
 }
 
 // ─── Overview Page ────────────────────────────────────────────────────────────
-function OverviewPage({ plan, weights, u }) {
-  const hasPlan = plan && PLAN_FIELDS.some((f) => Number(plan[f.key] || 0) > 0);
-  const totalWeight = weights
-    ? WOREDAS.reduce((s, w) => s + Number(weights[w.id] || 0), 0)
+function OverviewPage({ dbPlan, u }) {
+  // dbPlan row has: hubannoo_uummuu, horannaa_misensaa, buusi_jirataa,
+  //                 buusi_daldalaa, weight_w1..w4
+  const hasPlan =
+    dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
+
+  const totalWeight = dbPlan
+    ? WOREDAS.reduce((s, w) => s + Number(dbPlan[`weight_${w.id}`] || 0), 0)
     : 0;
+
   const share = (woredaId, total) => {
-    if (!weights || totalWeight === 0) return Math.round(total / 4);
-    return Math.round((Number(weights[woredaId] || 0) / totalWeight) * total);
+    if (!dbPlan || totalWeight === 0) return Math.round(total / 4);
+    const w = Number(dbPlan[`weight_${woredaId}`] || 0);
+    return Math.round((w / totalWeight) * total);
   };
+
   return (
     <div>
       <div className="mb-6">
@@ -184,7 +195,9 @@ function OverviewPage({ plan, weights, u }) {
             <p className="text-sm font-semibold text-white">
               Annual Plan — Per-Woreda Allocation
             </p>
-            <p className="text-white/60 text-xs mt-0.5">Total ÷ 4 woredas</p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Fetched from database · Year {dbPlan.year}
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -208,7 +221,7 @@ function OverviewPage({ plan, weights, u }) {
               </thead>
               <tbody>
                 {PLAN_FIELDS.map(({ key, label, color }) => {
-                  const total = Number(plan[key] || 0);
+                  const total = Number(dbPlan[key] || 0);
                   return (
                     <tr
                       key={key}
@@ -255,22 +268,15 @@ function OverviewPage({ plan, weights, u }) {
 }
 
 // ─── Annual Plan Page ─────────────────────────────────────────────────────────
-// Proportional allocation: each woreda's share = (its weight / total weight) × subcity total
-function PlanPage({ plan, onSave, weights, onSaveWeights }) {
-  const cleanPlan = (p) => {
-    if (!p) return { ...EMPTY_PLAN };
-    const cleaned = { ...EMPTY_PLAN };
-    PLAN_FIELDS.forEach(({ key }) => {
-      cleaned[key] = p[key] !== undefined ? p[key] : "";
-    });
-    return cleaned;
-  };
-
-  const [form, setForm] = useState(() => cleanPlan(plan));
+// Always shows a blank form. After successful save the form resets.
+function PlanPage({ onSave }) {
+  const [form, setForm] = useState({ ...EMPTY_PLAN });
   const [wForm, setWForm] = useState(
-    () => weights || Object.fromEntries(WOREDAS.map((w) => [w.id, ""])),
+    Object.fromEntries(WOREDAS.map((w) => [w.id, ""])),
   );
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -279,7 +285,6 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
 
   const totalWeight = WOREDAS.reduce((s, w) => s + Number(wForm[w.id] || 0), 0);
 
-  // Proportional share for a woreda given a category total
   const share = (woredaId, categoryTotal) => {
     const w = Number(wForm[woredaId] || 0);
     if (totalWeight === 0 || w === 0) return 0;
@@ -289,12 +294,26 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
   const hasValues = PLAN_FIELDS.some((f) => Number(form[f.key] || 0) > 0);
   const hasWeights = totalWeight > 0;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(form, wForm);
-    onSaveWeights(wForm);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setSaveError("");
+    setSaved(false);
+    try {
+      await onSave(form, wForm);
+      setSaved(true);
+      // Reset the form
+      setForm({ ...EMPTY_PLAN });
+      setWForm(Object.fromEntries(WOREDAS.map((w) => [w.id, ""])));
+      setTimeout(() => setSaved(false), 4000);
+    } catch (err) {
+      setSaveError(
+        err?.response?.data?.message ||
+          "Failed to save plan. Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -501,21 +520,36 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
 
         {/* Save */}
         <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-          {saved ? (
-            <p className="flex items-center gap-2 text-green-700 text-sm font-semibold">
-              <CheckIcon /> Plan saved successfully.
-            </p>
-          ) : (
-            <p className="text-gray-400 text-xs">
-              You can update the plan at any time.
-            </p>
-          )}
+          <div>
+            {saved && (
+              <p className="flex items-center gap-2 text-green-700 text-sm font-semibold">
+                <CheckIcon /> Plan saved successfully.
+              </p>
+            )}
+            {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
+            {!saved && !saveError && (
+              <p className="text-gray-400 text-xs">
+                You can submit a new plan at any time — it will overwrite the
+                current one.
+              </p>
+            )}
+          </div>
           <button
             type="submit"
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
+            disabled={saving}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-60"
             style={{ backgroundColor: "#1e1456" }}
           >
-            <CheckIcon /> Save Plan
+            {saving ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckIcon /> Save Plan
+              </>
+            )}
           </button>
         </div>
       </form>
@@ -524,16 +558,19 @@ function PlanPage({ plan, onSave, weights, onSaveWeights }) {
 }
 
 // ─── Woreda Reports Page ──────────────────────────────────────────────────────
-function ReportsPage({ plan, weights }) {
+function ReportsPage({ dbPlan }) {
   const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
   const woreda = WOREDAS.find((w) => w.id === activeWoreda);
-  const hasPlan = plan && PLAN_FIELDS.some((f) => Number(plan[f.key] || 0) > 0);
-  const totalWeight = weights
-    ? WOREDAS.reduce((s, w) => s + Number(weights[w.id] || 0), 0)
+
+  const hasPlan =
+    dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
+  const totalWeight = dbPlan
+    ? WOREDAS.reduce((s, w) => s + Number(dbPlan[`weight_${w.id}`] || 0), 0)
     : 0;
   const share = (woredaId, total) => {
-    if (!weights || totalWeight === 0) return Math.round(total / 4);
-    return Math.round((Number(weights[woredaId] || 0) / totalWeight) * total);
+    if (!dbPlan || totalWeight === 0) return Math.round(total / 4);
+    const w = Number(dbPlan[`weight_${woredaId}`] || 0);
+    return Math.round((w / totalWeight) * total);
   };
 
   return (
@@ -574,7 +611,7 @@ function ReportsPage({ plan, weights }) {
       {hasPlan && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {PLAN_FIELDS.map(({ key, label, color }) => {
-            const s = share(activeWoreda, Number(plan[key] || 0));
+            const s = share(activeWoreda, Number(dbPlan[key] || 0));
             return (
               <div
                 key={key}
@@ -608,7 +645,7 @@ function ReportsPage({ plan, weights }) {
           }}
         >
           <p className="text-sm font-semibold text-white">
-            {woreda.name}  Submitted Reports
+            {woreda.name} Submitted Reports
           </p>
           <p className="text-white/60 text-xs mt-0.5">
             Live data will appear here once the backend endpoint is connected.
@@ -648,48 +685,29 @@ export default function SubCityDashboard({ user: propUser }) {
   const [activeNav, setActiveNav] = useState("overview");
   const [collapsed, setCollapsed] = useState(false);
 
-  // Annual plan stored in localStorage until backend is ready
-  const PLAN_KEY = "subcity_annual_plan";
-  const [plan, setPlan] = useState(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem(PLAN_KEY));
-      if (!raw) return null;
-      // Strip any legacy _locked key
-      const cleaned = { ...EMPTY_PLAN };
-      PLAN_FIELDS.forEach(({ key }) => {
-        cleaned[key] = raw[key] ?? "";
-      });
-      return cleaned;
-    } catch {
-      return null;
-    }
-  });
+  // Plan fetched from Supabase — single source of truth
+  const [dbPlan, setDbPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(true);
 
-  const WEIGHTS_KEY = "subcity_woreda_weights";
-  const [weights, setWeights] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(WEIGHTS_KEY)) || null;
-    } catch {
-      return null;
-    }
-  });
+  useEffect(() => {
+    fetchSubcityOwnPlan()
+      .then((d) => setDbPlan(d.plan))
+      .catch(() => setDbPlan(null))
+      .finally(() => setPlanLoading(false));
+  }, []);
 
-  const handleSaveWeights = (data) => {
-    setWeights(data);
-    localStorage.setItem(WEIGHTS_KEY, JSON.stringify(data));
-  };
-
+  /**
+   * Save plan to subcity_annual_plan table AND to per-wereda tables,
+   * then refresh dbPlan from DB so the Overview is always in sync.
+   */
   const handleSavePlan = async (data, wForm) => {
-    // Always persist locally so the UI updates immediately
-    setPlan(data);
-    localStorage.setItem(PLAN_KEY, JSON.stringify(data));
-
-    // Also push to Supabase (per-wereda tables)
-    try {
-      await saveSubcityPlan(data, wForm);
-    } catch (err) {
-      console.error("Failed to save plan to Supabase:", err);
-    }
+    // Save to subcity_annual_plan (for Overview display)
+    await saveSubcityOwnPlan(data, wForm);
+    // Save proportional split to the 4 wereda tables
+    await saveSubcityPlan(data, wForm);
+    // Refresh from DB so all browsers see the same data
+    const fresh = await fetchSubcityOwnPlan();
+    setDbPlan(fresh.plan);
   };
 
   const handleLogout = () => {
@@ -778,20 +796,16 @@ export default function SubCityDashboard({ user: propUser }) {
       {/* ── Main content ── */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-6 py-8">
-          {activeNav === "overview" && (
-            <OverviewPage plan={plan} weights={weights} u={u} />
-          )}
-          {activeNav === "plan" && (
-            <PlanPage
-              plan={plan}
-              onSave={handleSavePlan}
-              weights={weights}
-              onSaveWeights={handleSaveWeights}
-            />
-          )}
-          {activeNav === "reports" && (
-            <ReportsPage plan={plan} weights={weights} />
-          )}
+          {activeNav === "overview" &&
+            (planLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <div className="w-8 h-8 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <OverviewPage dbPlan={dbPlan} u={u} />
+            ))}
+          {activeNav === "plan" && <PlanPage onSave={handleSavePlan} />}
+          {activeNav === "reports" && <ReportsPage dbPlan={dbPlan} />}
         </div>
       </main>
     </div>

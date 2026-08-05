@@ -52,3 +52,22 @@ export const fetchWeredaPlan = async () => {
   const res = await api.get("/plans/wereda-plan", authHeader());
   return res.data; // { plan: {...} | null }
 };
+
+/**
+ * Save the subcity's own annual plan totals + weights to Supabase.
+ * Upserts on year — the form can be resubmitted any time.
+ */
+export const saveSubcityOwnPlan = async (plan, weights) => {
+  const res = await api.post(
+    "/plans/subcity-plan",
+    { plan, weights },
+    authHeader(),
+  );
+  return res.data;
+};
+
+/** Fetch the current year's subcity annual plan from Supabase. */
+export const fetchSubcityOwnPlan = async () => {
+  const res = await api.get("/plans/subcity-plan", authHeader());
+  return res.data; // { plan: {...} | null }
+};

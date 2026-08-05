@@ -157,10 +157,10 @@ const WEREDA_TABLE_MAP = {
 // Maps wereda usernames to their frontend IDs so the wereda dashboard
 // knows which table to read from
 const USERNAME_TO_WEREDA_ID = {
-  wereda01: "w1",
-  wereda02: "w2",
-  wereda03: "w3",
-  wereda04: "w4",
+  "Aanaa Gooroo": "w1",
+  "Aanaa Dhadacha Araaraa": "w2",
+  "Aanaa Dhakaa Adii": "w3",
+  "Aanaa Andoodee": "w4",
 };
 
 /**
@@ -259,10 +259,77 @@ const getWeredaPlan = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/plans/subcity-plan
+ * Saves the subcity's own annual plan totals + weights into the
+ * "subcity_annual_plan" table. Upserts on year so the form can be
+ * re-submitted freely (not locked).
+ */
+const saveSubcityOwnPlan = async (req, res) => {
+  try {
+    const { plan, weights } = req.body;
+
+    if (!plan || !weights) {
+      return res
+        .status(400)
+        .json({ message: "plan and weights are required." });
+    }
+
+    const year = new Date().getFullYear();
+
+    const { error } = await supabase.from("subcity_annual_plan").upsert(
+      [
+        {
+          year,
+          hubannoo_uummuu: Number(plan.hubannoo_uummuu || 0),
+          horannaa_misensaa: Number(plan.horannaa_misensaa || 0),
+          buusi_jirataa: Number(plan.buusi_jirataa || 0),
+          buusi_daldalaa: Number(plan.buusi_daldalaa || 0),
+          weight_w1: Number(weights.w1 || 0),
+          weight_w2: Number(weights.w2 || 0),
+          weight_w3: Number(weights.w3 || 0),
+          weight_w4: Number(weights.w4 || 0),
+        },
+      ],
+      { onConflict: "year" },
+    );
+
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.status(200).json({ message: "Subcity plan saved." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/subcity-plan
+ * Returns the current year's subcity annual plan row.
+ */
+const fetchSubcityOwnPlan = async (req, res) => {
+  try {
+    const year = new Date().getFullYear();
+
+    const { data, error } = await supabase
+      .from("subcity_annual_plan")
+      .select("*")
+      .eq("year", year)
+      .maybeSingle();
+
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createPlan,
   getMyPlan,
   getSummary,
   saveSubcityPlan,
   getWeredaPlan,
+  saveSubcityOwnPlan,
+  fetchSubcityOwnPlan,
 };

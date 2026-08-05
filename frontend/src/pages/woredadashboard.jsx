@@ -2294,21 +2294,33 @@ function WorksOverview({ u, onSelect }) {
   );
 }
 
+// Maps logged-in username to the aanaa (woreda) name shown in the UI
+const USERNAME_TO_WOREDA_NAME = {
+  "Aanaa Gooroo": "Aanaa Gooroo",
+  "Aanaa Dhadacha Araaraa": "Aanaa Dhadacha Araaraa",
+  "Aanaa Dhakaa Adii": "Aanaa Dhakaa Adii",
+  "Aanaa Andoodee": "Aanaa Andoodee",
+};
+
 export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
+  const waredaName =
+    (loggedUser && USERNAME_TO_WOREDA_NAME[loggedUser.username]) ||
+    loggedUser?.username ||
+    "Aanaa";
   const u = loggedUser
     ? {
         name: loggedUser.username,
         role: loggedUser.role,
-        woreda: "Woreda 01",
+        woreda: waredaName,
         subcity: "Adama Bole",
         initials: loggedUser.username.substring(0, 2).toUpperCase(),
       }
     : {
         name: "Guest",
         role: "wereda",
-        woreda: "Woreda 01",
+        woreda: "Aanaa",
         subcity: "Adama Bole",
         initials: "GU",
       };
