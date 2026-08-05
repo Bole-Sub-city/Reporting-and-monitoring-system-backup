@@ -267,32 +267,44 @@ function OverviewPage({ dbPlan, u }) {
   );
 }
 
+// ─── Fixed woreda percentage split ───────────────────────────────────────────
+const WOREDA_PCTS = {
+  w1: 0.27, // Aanaa Gooroo
+  w2: 0.255, // Aanaa Dhadacha Araaraa
+  w3: 0.245, // Aanaa Dhakaa Adii
+  w4: 0.23, // Aanaa Andoodee
+};
+
 // ─── Annual Plan Page ─────────────────────────────────────────────────────────
 // Always shows a blank form. After successful save the form resets.
 function PlanPage({ onSave }) {
   const [form, setForm] = useState({ ...EMPTY_PLAN });
-  const [wForm, setWForm] = useState(
-    Object.fromEntries(WOREDAS.map((w) => [w.id, ""])),
-  );
+  const [populationTotal, setPopulationTotal] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Derive wForm from populationTotal using fixed percentages
+  const wForm = Object.fromEntries(
+    WOREDAS.map((w) => [
+      w.id,
+      populationTotal !== "" && Number(populationTotal) > 0
+        ? Math.round(Number(populationTotal) * WOREDA_PCTS[w.id])
+        : "",
+    ]),
+  );
+
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const handleWeight = (e) =>
-    setWForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const totalWeight = WOREDAS.reduce((s, w) => s + Number(wForm[w.id] || 0), 0);
 
   const share = (woredaId, categoryTotal) => {
-    const w = Number(wForm[woredaId] || 0);
-    if (totalWeight === 0 || w === 0) return 0;
-    return Math.round((w / totalWeight) * Number(categoryTotal || 0));
+    if (!populationTotal || Number(populationTotal) <= 0) return 0;
+    return Math.round(WOREDA_PCTS[woredaId] * Number(categoryTotal || 0));
   };
 
   const hasValues = PLAN_FIELDS.some((f) => Number(form[f.key] || 0) > 0);
-  const hasWeights = totalWeight > 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -304,7 +316,7 @@ function PlanPage({ onSave }) {
       setSaved(true);
       // Reset the form
       setForm({ ...EMPTY_PLAN });
-      setWForm(Object.fromEntries(WOREDAS.map((w) => [w.id, ""])));
+      setPopulationTotal("");
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
       setSaveError(
@@ -329,7 +341,7 @@ function PlanPage({ onSave }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Step 1 — Woreda weights */}
+        {/* Step 1 — Total population with auto-distribution */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-gray-100"
@@ -337,82 +349,60 @@ function PlanPage({ onSave }) {
               background: "linear-gradient(90deg,#1e1456 0%,#2d1f7a 100%)",
             }}
           >
-            <p className="text-sm font-semibold text-white">
-              EnterWoreda Weights
-            </p>
+            <p className="text-sm font-semibold text-white">Total</p>
             <p className="text-white/60 text-xs mt-0.5">
-              Enter a weight for each woreda (e.g. population). The system uses
-              these to split the total proportionally.
+              Enter the total population. It will be distributed to each woreda
+              automatically using fixed percentages.
             </p>
           </div>
-          <div className="px-5 py-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {WOREDAS.map((w) => (
-              <div key={w.id}>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                  {w.name}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  name={w.id}
-                  value={wForm[w.id]}
-                  onChange={handleWeight}
-                  placeholder="e.g. 5000"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                />
-                {hasWeights && Number(wForm[w.id] || 0) > 0 && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    <span className="font-semibold text-[#1e1456]">
-                      {Math.round((Number(wForm[w.id]) / totalWeight) * 100)}%
-                    </span>{" "}
-                    of total
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-          {hasWeights && (
-            <div className="px-5 pb-4">
-              <div className="flex gap-1 h-2 rounded-full overflow-hidden">
-                {WOREDAS.map((w, i) => {
-                  const pct =
-                    totalWeight > 0
-                      ? (Number(wForm[w.id] || 0) / totalWeight) * 100
-                      : 0;
-                  const colors = ["#7c3aed", "#0369a1", "#059669", "#d97706"];
-                  return (
-                    <div
-                      key={w.id}
-                      style={{ width: `${pct}%`, backgroundColor: colors[i] }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="flex gap-4 mt-2">
-                {WOREDAS.map((w, i) => {
-                  const colors = ["#7c3aed", "#0369a1", "#059669", "#d97706"];
-                  const pct =
-                    totalWeight > 0
-                      ? Math.round(
-                          (Number(wForm[w.id] || 0) / totalWeight) * 100,
-                        )
-                      : 0;
-                  return (
-                    <span
-                      key={w.id}
-                      className="flex items-center gap-1 text-xs text-gray-500"
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: colors[i] }}
-                      />
-                      {w.name} {pct}%
-                    </span>
-                  );
-                })}
-              </div>
+          <div className="px-5 py-5">
+            <div className="max-w-xs mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Total
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={populationTotal}
+                onChange={(e) => setPopulationTotal(e.target.value)}
+                placeholder="e.g. 10000"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-300"
+              />
             </div>
-          )}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {WOREDAS.map((w, i) => {
+                const colors = ["#7c3aed", "#0369a1", "#059669", "#d97706"];
+                const pct = Math.round(WOREDA_PCTS[w.id] * 100);
+                const allocated =
+                  populationTotal !== "" && Number(populationTotal) > 0
+                    ? Math.round(Number(populationTotal) * WOREDA_PCTS[w.id])
+                    : null;
+                return (
+                  <div key={w.id}>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                      {w.name}
+                    </label>
+                    <input
+                      type="number"
+                      readOnly
+                      value={allocated !== null ? allocated : ""}
+                      placeholder={`${pct}%`}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-gray-100 cursor-default focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      <span
+                        className="font-semibold"
+                        style={{ color: colors[i] }}
+                      >
+                        {pct}%
+                      </span>{" "}
+                      of total
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Step 2 — Subcity totals */}
@@ -457,7 +447,7 @@ function PlanPage({ onSave }) {
         </div>
 
         {/* Step 3 — Allocation preview */}
-        {hasValues && hasWeights && (
+        {hasValues && populationTotal !== "" && Number(populationTotal) > 0 && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-700">
