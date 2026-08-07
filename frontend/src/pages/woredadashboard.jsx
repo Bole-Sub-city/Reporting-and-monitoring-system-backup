@@ -441,26 +441,7 @@ const OROMO_MONTHS = [
 // Generate day options 1-30
 const OROMO_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 const CARRAA_HOJII_FIELDS = [
-  { name: "qusannnaa", label: "Qusannnaa", required: true, type: "number" },
-  { name: "liqii", label: "Liqii", required: true, type: "number" },
-  {
-    name: "qusanna_dirqii",
-    label: "Qusanna Dirqii",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "deebii_liqii_bilchaate",
-    label: "Deebii Liqii Bilchaate",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "deebii_liqii_bulee",
-    label: "Deebii Liqii Bulee",
-    required: true,
-    type: "number",
-  },
+  { name: "leenjii", label: "Leenjii", required: true, type: "number" },
   {
     name: "carraa_hojii_dhaabbii",
     label: "Carraa Hojii Dhaabbii",
@@ -473,7 +454,34 @@ const CARRAA_HOJII_FIELDS = [
     required: true,
     type: "number",
   },
-  { name: "leenjii", label: "Leenjii", required: true, type: "number" },
+
+  {
+    name: "qusannaa",
+    label: "Qusannaa Haawaasaa",
+    required: true,
+    type: "number",
+  },
+
+  {
+    name: "qusanna_dirqii",
+    label: "Qusanna Dirqii",
+    required: true,
+    type: "number",
+  },
+  { name: "liqii", label: "Kenna Liqii ", required: true, type: "number" },
+  {
+    name: "deebii_liqii_bilchaate",
+    label: "Deebii Liqii Bilchaate",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "deebii_liqii_bulee",
+    label: "Deebii Liqii Bulee",
+    required: true,
+    type: "number",
+  },
+
   {
     name: "industrii_godoo",
     label: "Industrii Godoo",
