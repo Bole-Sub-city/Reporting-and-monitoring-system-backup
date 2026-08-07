@@ -264,7 +264,7 @@ function LockIcon() {
 const BUUSAA_FIELDS = [
   {
     name: "hubannooUummuu",
-    label: "Hubannoo Uummuu",
+    label: "Hubannoo Uumuu",
     required: true,
     type: "number",
   },
@@ -281,14 +281,26 @@ const BUUSAA_FIELDS = [
     type: "number",
   },
   {
+    name: "gumaataJiraataa",
+    label: "Gumaata Jiraataa",
+    required: true,
+    type: "number",
+  },
+  {
     name: "buuusiDaldalaa",
-    label: "Buusii Daldalaa Sadarka B",
+    label: "Buusii Daldalaa ",
     required: true,
     type: "number",
   },
   {
     name: "buuusiDaldalaaFiGumaataa",
-    label: "Buusii Daldalaa fi Gumaataa",
+    label: "Buusii Fi Gumaataa  Daldalaa ",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "inisheetiviiBuusaaGonofaa",
+    label: "inisheetivii Buusaa Gonofaa",
     required: true,
     type: "number",
   },
@@ -322,7 +334,7 @@ const PLAN_FIELDS = [
   {
     key: "hubannoo_uummuu",
     planKey: "hubannoo_uummuu_target",
-    label: "Hubannoo Uummuu",
+    label: "Hubannoo Uumuu",
     description: "Awareness targets",
     color: "#0f766e",
     bgColor: "bg-[#f0fdf9]",
@@ -340,9 +352,9 @@ const PLAN_FIELDS = [
     textColor: "text-[#1e40af]",
   },
   {
-    key: "buusi_jirataa",
-    planKey: "buusi_jirataa_target",
-    label: "Buusii Jirataa",
+    key: "buusi_jiraataa",
+    planKey: "buusi_jiraataa_target",
+    label: "Buusii Jiraataa",
     description: "Household beneficiary targets",
     color: "#475569",
     bgColor: "bg-[#f8fafc]",
@@ -350,10 +362,50 @@ const PLAN_FIELDS = [
     textColor: "text-[#475569]",
   },
   {
-    key: "buusi_daldalaa",
-    planKey: "buusi_daldalaa_target",
-    label: "Buusii Daldalaa Sadarkaa B",
+    key: "Gumaata Jiraataa",
+    planKey: "Gumaata_Jiraataa_target",
+    label: "Gumaata Jiraataa",
+    description: "Charity beneficiary targets",
+    color: "#64748b",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#64748b]",
+  },
+  {
+    key: "buusi_daldalaa_B",
+    planKey: "buusi_daldalaa_B_target",
+    label: "Buusii fi Gumaata Daldalaa ",
     description: "Business beneficiary targets",
+    color: "#64748b",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#64748b]",
+  },
+  {
+    key: "Inisheetivii Buusaa Gonofaa",
+    planKey: "Inisheetivii_Buusaa_Gonofaa_target",
+    label: "Inisheetivii Buusaa Gonofaa",
+    description: "Inishetive targets",
+    color: "#64748b",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#64748b]",
+  },
+  {
+    key: "Gumaata Midhaani",
+    planKey: "Gumaata_Midhaani_target",
+    label: "Gumaata Midhaani",
+    description: " Food Charity targets",
+    color: "#64748b",
+    bgColor: "bg-[#f8fafc]",
+    borderColor: "border-[#e2e8f0]",
+    textColor: "text-[#64748b]",
+  },
+  {
+    key: "Nyaata Barataa",
+    planKey: "Nyaata_Barataa_target",
+    label: "Nyaata Barataa",
+    description: "Student's Food targets",
     color: "#64748b",
     bgColor: "bg-[#f8fafc]",
     borderColor: "border-[#e2e8f0]",
@@ -1734,7 +1786,9 @@ function RevenueSubmitForm({ u }) {
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <p className="text-[#dc2626] text-xs font-medium">{entryError}</p>
+                <p className="text-[#dc2626] text-xs font-medium">
+                  {entryError}
+                </p>
               </div>
             )}
 
@@ -2740,8 +2794,3 @@ export default function WoRedaDashboard() {
     </div>
   );
 }
-
-
-
-
-
