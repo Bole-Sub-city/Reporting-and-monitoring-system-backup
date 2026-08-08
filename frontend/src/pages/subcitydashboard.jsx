@@ -5,7 +5,53 @@ import {
   saveSubcityPlan,
   saveSubcityOwnPlan,
   fetchSubcityOwnPlan,
+  saveSubcityQonnaPlan,
+  fetchSubcityQonnaPlan,
 } from "../api/planApi";
+
+// ─── Shared allocation helpers ────────────────────────────────────────────────
+/**
+ * Parse four woreda percentage strings into numbers.
+ * Returns { w1, w2, w3, w4 } as Numbers (NaN if blank/invalid).
+ */
+function parsePcts(raw) {
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [k, v === "" ? NaN : Number(v)]),
+  );
+}
+
+/**
+ * Validate that four percentage values:
+ *  - are all finite numbers
+ *  - are all >= 0
+ *  - sum to exactly 100 (±0.01 for float precision)
+ * Returns { ok: bool, total: number, error: string|null }
+ */
+function validatePcts(pcts) {
+  const vals = Object.values(pcts);
+  if (vals.some((v) => isNaN(v))) {
+    return { ok: false, total: null, error: "Enter a percentage for every woreda." };
+  }
+  if (vals.some((v) => v < 0)) {
+    return { ok: false, total: null, error: "Percentages cannot be negative." };
+  }
+  const total = vals.reduce((s, v) => s + v, 0);
+  const rounded = Math.round(total * 100) / 100; // safe to 2 decimal places
+  if (Math.abs(rounded - 100) > 0.01) {
+    return {
+      ok: false,
+      total: rounded,
+      error: `Woreda allocation must equal 100%. Current total: ${rounded}%`,
+    };
+  }
+  return { ok: true, total: rounded, error: null };
+}
+
+/** Distribute a subcity total to a woreda using validated percentage object. */
+function pctShare(pcts, woredaId, categoryTotal) {
+  const pct = Number(pcts[woredaId] || 0);
+  return Math.round((pct / 100) * Number(categoryTotal || 0));
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const WOREDAS = [
@@ -49,13 +95,68 @@ const SECTORS = [
   { id: "carraa", label: "Carraa Hojii Uummuu" },
 ];
 
-// ─── Fixed woreda percentage split ───────────────────────────────────────────
-const WOREDA_PCTS = {
-  w1: 0.27,
-  w2: 0.255,
-  w3: 0.245,
-  w4: 0.23,
-};
+// ─── Default woreda percentage split (editable in plan forms) ────────────────
+// These are defaults only — the planner can adjust them in each plan form.
+// The form enforces that all four values must sum to exactly 100%.
+const DEFAULT_WOREDA_PCTS = { w1: "27", w2: "25.5", w3: "24.5", w4: "23" };
+
+// ─── Qonna category definitions ───────────────────────────────────────────────
+const QONNA_CATEGORIES = [
+  {
+    key: "furdisa",
+    label: "Furdisa",
+    description: "Livestock / cattle farming",
+    unit: "animals",
+    color: "#065f46",
+    bgColor: "#f0fdf4",
+    borderColor: "#bbf7d0",
+  },
+  {
+    key: "annan",
+    label: "Annan",
+    description: "Dairy horii (cows)",
+    unit: "horii",
+    color: "#0f766e",
+    bgColor: "#f0fdfa",
+    borderColor: "#99f6e4",
+  },
+  {
+    key: "lukkuu",
+    label: "Lukkuu",
+    description: "Poultry  chickens",
+    unit: "lukkuu",
+    color: "#1e40af",
+    bgColor: "#eff6ff",
+    borderColor: "#bfdbfe",
+  },
+  {
+    key: "booyee",
+    label: "Booyyee",
+    description: "Pig farming",
+    unit: "booyyee",
+    color: "#7c3aed",
+    bgColor: "#f5f3ff",
+    borderColor: "#ddd6fe",
+  },
+  {
+    key: "kannisaa",
+    label: "Kannisaa",
+    description: "gaaguraa (hives)",
+    unit: "gaaguraa",
+    color: "#b45309",
+    bgColor: "#fffbeb",
+    borderColor: "#fde68a",
+  },
+  {
+    key: "qurxummii",
+    label: "Qurxummii",
+    description: "Fish farming  pond ",
+    unit: "cinaacha",
+    color: "#0369a1",
+    bgColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+  },
+];
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const GridIcon = () => (
@@ -224,7 +325,7 @@ function OverviewPage({ dbPlan, u }) {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Annual Plan — Per-Woreda Allocation
+              Annual Plan  Per Woreda Allocation
             </p>
             <p className="text-white/60 text-xs mt-0.5">
               Fetched from database · Year {dbPlan.year}
@@ -299,40 +400,119 @@ function OverviewPage({ dbPlan, u }) {
   );
 }
 
+// ─── Shared Woreda Percentage Inputs ─────────────────────────────────────────
+// Reused by both BuusaaPlanPage and QonnaPlanPage.
+function WoRedaPctInputs({ pcts, onChange }) {
+  const parsed = parsePcts(pcts);
+  const { ok, total, error } = validatePcts(parsed);
+  const colors = ["#065f46", "#1e40af", "#475569", "#64748b"];
+  return (
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0]"
+        style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+      >
+        <p className="text-sm font-semibold text-white">Woreda Allocation (%)</p>
+        <p className="text-white/60 text-xs mt-0.5">
+          Enter the percentage share for each woreda. Total must equal exactly 100%.
+        </p>
+      </div>
+      <div className="px-5 py-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          {WOREDAS.map((w, i) => (
+            <div key={w.id}>
+              <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
+                {w.name}
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={pcts[w.id]}
+                  onChange={(e) => onChange(w.id, e.target.value)}
+                  placeholder="0"
+                  className="w-full border border-[#e2e8f0] rounded-lg pl-3 pr-8 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#94a3b8] pointer-events-none">
+                  %
+                </span>
+              </div>
+              <p className="text-xs mt-1" style={{ color: colors[i] }}>
+                {!isNaN(Number(pcts[w.id])) && pcts[w.id] !== ""
+                  ? `${pcts[w.id]}%`
+                  : "—"}
+              </p>
+            </div>
+          ))}
+        </div>
+        {/* Live total indicator */}
+        {total !== null ? (
+          ok ? (
+            <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-4 py-2.5">
+              <svg className="w-4 h-4 text-[#166534] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-[#166534] text-sm font-semibold">
+                Total Allocation: {total}% ✓
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-lg px-4 py-2.5">
+              <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span className="text-[#dc2626] text-sm">{error}</span>
+            </div>
+          )
+        ) : (
+          <div className="bg-[#f4f6f9] border border-[#e2e8f0] rounded-lg px-4 py-2.5">
+            <span className="text-[#94a3b8] text-sm">Enter percentages above — total must equal 100%.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Buusaa Gonofaa Plan Page ─────────────────────────────────────────────────
 function BuusaaPlanPage({ onSave }) {
   const [form, setForm] = useState({ ...EMPTY_PLAN });
-  const [populationTotal, setPopulationTotal] = useState("");
+  const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  const wForm = Object.fromEntries(
-    WOREDAS.map((w) => [
-      w.id,
-      populationTotal !== "" && Number(populationTotal) > 0
-        ? Math.round(Number(populationTotal) * WOREDA_PCTS[w.id])
-        : "",
-    ]),
-  );
+  const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-  const share = (woredaId, categoryTotal) => {
-    if (!populationTotal || Number(populationTotal) <= 0) return 0;
-    return Math.round(WOREDA_PCTS[woredaId] * Number(categoryTotal || 0));
-  };
+
+  const parsed = parsePcts(pcts);
+  const pctValid = validatePcts(parsed);
   const hasValues = PLAN_FIELDS.some((f) => Number(form[f.key] || 0) > 0);
+  const canSubmit = hasValues && pctValid.ok;
+
+  const share = (woredaId, categoryTotal) =>
+    pctValid.ok ? pctShare(parsed, woredaId, categoryTotal) : 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!pctValid.ok) return;
     setSaving(true);
     setSaveError("");
     setSaved(false);
+    // Scale percentages ×10 and round to integers so decimal values like 25.5
+    // become 255. The backend computes each woreda's share as w / totalWeight,
+    // so multiplying all four weights by the same factor preserves the ratios
+    // exactly and avoids the "invalid input syntax for type integer" error.
+    const wForm = Object.fromEntries(
+      WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
+    );
     try {
       await onSave(form, wForm);
       setSaved(true);
       setForm({ ...EMPTY_PLAN });
-      setPopulationTotal("");
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
       setSaveError(err?.response?.data?.message || "Failed to save plan.");
@@ -345,82 +525,22 @@ function BuusaaPlanPage({ onSave }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Buusaa Gonofaa — Annual Plan
+          Buusaa Gonofaa  Annual Plan
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Enter subcity totals. The system distributes proportionally by woreda.
+          Enter subcity totals and woreda allocation percentages. The system
+          distributes the targets proportionally.
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Population */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-          <div
-            className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-            }}
-          >
-            <p className="text-sm font-semibold text-white">Total Population</p>
-            <p className="text-white/60 text-xs mt-0.5">
-              Distributed automatically using fixed percentages.
-            </p>
-          </div>
-          <div className="px-5 py-5">
-            <div className="max-w-xs mb-5">
-              <label className="block text-sm font-medium text-[#1e293b] mb-1.5">
-                Total
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={populationTotal}
-                onChange={(e) => setPopulationTotal(e.target.value)}
-                placeholder="e.g. 10000"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
-              />
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {WOREDAS.map((w, i) => {
-                const colors = ["#0f766e", "#1e40af", "#475569", "#64748b"];
-                const pct = Math.round(WOREDA_PCTS[w.id] * 100);
-                const allocated =
-                  populationTotal !== "" && Number(populationTotal) > 0
-                    ? Math.round(Number(populationTotal) * WOREDA_PCTS[w.id])
-                    : null;
-                return (
-                  <div key={w.id}>
-                    <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                      {w.name}
-                    </label>
-                    <input
-                      type="number"
-                      readOnly
-                      value={allocated !== null ? allocated : ""}
-                      placeholder={`${pct}%`}
-                      className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f1f5f9] cursor-default focus:outline-none"
-                    />
-                    <p className="text-xs text-[#94a3b8] mt-1">
-                      <span
-                        className="font-semibold"
-                        style={{ color: colors[i] }}
-                      >
-                        {pct}%
-                      </span>{" "}
-                      of total
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        {/* Woreda percentage inputs */}
+        <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
+
         {/* Targets */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-            }}
+            style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
           >
             <p className="text-sm font-semibold text-white">
               Enter Subcity Annual Totals
@@ -454,30 +574,30 @@ function BuusaaPlanPage({ onSave }) {
             ))}
           </div>
         </div>
-        {/* Preview */}
-        {hasValues && populationTotal !== "" && Number(populationTotal) > 0 && (
+
+        {/* Allocation preview */}
+        {hasValues && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
               <p className="text-sm font-semibold text-[#1e293b]">
                 Allocation Preview
+              </p>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Auto-calculated from entered percentages
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9]">
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                      Category
-                    </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                      Total
-                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Total</th>
                     {WOREDAS.map((w) => (
-                      <th
-                        key={w.id}
-                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                      >
+                      <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                         {w.name}
+                        <span className="block text-[#94a3b8] font-normal normal-case">
+                          {pcts[w.id]}%
+                        </span>
                       </th>
                     ))}
                   </tr>
@@ -485,23 +605,16 @@ function BuusaaPlanPage({ onSave }) {
                 <tbody>
                   {PLAN_FIELDS.map(({ key, label, color }) => {
                     const total = Number(form[key] || 0);
+                    if (total === 0) return null;
                     return (
-                      <tr
-                        key={key}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
-                      >
+                      <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: color }}
-                            />
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
                             {label}
                           </span>
                         </td>
-                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
-                          {total.toLocaleString()}
-                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{total.toLocaleString()}</td>
                         {WOREDAS.map((w) => (
                           <td key={w.id} className="px-5 py-3 text-[#64748b]">
                             {share(w.id, total).toLocaleString()}
@@ -515,25 +628,24 @@ function BuusaaPlanPage({ onSave }) {
             </div>
           </div>
         )}
-        {/* Save */}
+
+        {/* Save bar */}
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
             {saved && (
               <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
-                <CheckIcon /> Saved.
+                <CheckIcon /> Saved successfully.
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
-              <p className="text-[#94a3b8] text-xs">
-                Saving overwrites the current plan.
-              </p>
+              <p className="text-[#94a3b8] text-xs">Saving overwrites the current plan.</p>
             )}
           </div>
           <button
             type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-60"
+            disabled={saving || !canSubmit}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "#1a3a5c" }}
           >
             {saving ? (
@@ -542,10 +654,420 @@ function BuusaaPlanPage({ onSave }) {
                 Saving...
               </>
             ) : (
+              <><CheckIcon /> Save Plan</>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Qonna Annual Plan Page ───────────────────────────────────────────────────
+// Furdisa animal types — easy to extend when the planner confirms the final list
+const FURDISA_ANIMAL_TYPES = [
+  { value: "cattle", label: "Cattle" },
+  { value: "goat", label: "Goat" },
+  { value: "sheep", label: "Sheep" },
+  { value: "ox", label: "Ox" },
+  { value: "other", label: "Other (specify)" },
+];
+
+const EMPTY_QONNA_TARGETS = {
+  furdisa: "",
+  annan: "",
+  lukkuu: "",
+  booyee: "",
+  kannisaa: "",
+  qurxummii: "",
+};
+
+const EMPTY_QONNA_STD = {
+  furdisa: "",
+  annan: "",
+  lukkuu: "",
+  booyee: "",
+  kannisaa: "",
+  qurxummii: "",
+};
+
+function QonnaCapacityRow({ cat, std, onStdChange, resource, onResourceChange }) {
+  // Forward: resource / std = capacity
+  const stdNum = Number(std);
+  const resNum = Number(resource);
+  const capacity =
+    stdNum > 0 && resNum > 0 ? Math.floor(resNum / stdNum) : null;
+
+  // Reverse: target * std = required resource
+  // (shown separately in the target input)
+
+  return (
+    <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <span
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: cat.color }}
+        />
+        <p className="text-sm font-semibold text-[#1e293b]">{cat.label}</p>
+        <span className="text-xs text-[#94a3b8]">— {cat.description}</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Available resource */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1">
+            Available Resource
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={resource}
+            onChange={(e) => onResourceChange(e.target.value)}
+            placeholder="e.g. 80 ha / ponds / sites"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+          />
+        </div>
+        {/* Planning standard */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1">
+            Planning Standard (resource / {cat.unit})
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={std}
+            onChange={(e) => onStdChange(e.target.value)}
+            placeholder="e.g. 0.2"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+          />
+        </div>
+        {/* Estimated capacity */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1">
+            Estimated Capacity
+          </label>
+          {resource === "" || std === "" ? (
+            <div className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-xs text-[#94a3b8] bg-[#f1f5f9]">
+              Planning standard required to calculate capacity.
+            </div>
+          ) : stdNum <= 0 ? (
+            <div className="w-full border border-[#fecaca] rounded-lg px-3 py-2 text-xs text-[#dc2626] bg-[#fef2f2]">
+              Standard must be &gt; 0.
+            </div>
+          ) : (
+            <div
+              className="w-full border rounded-lg px-3 py-2 text-sm font-bold bg-white"
+              style={{ borderColor: cat.color, color: cat.color }}
+            >
+              {capacity !== null ? capacity.toLocaleString() : "—"}{" "}
+              <span className="text-xs font-normal text-[#64748b]">{cat.unit}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      {capacity !== null && capacity > 0 && (
+        <p className="text-xs text-[#64748b] bg-[#eef4fb] border border-[#dce8f4] rounded-lg px-3 py-2">
+          ℹ Capacity is <strong>{capacity.toLocaleString()} {cat.unit}</strong>.
+          Set your annual target below it may differ from capacity based on the actual plan.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function QonnaTargetRow({ cat, target, onTargetChange, std }) {
+  const stdNum = Number(std);
+  const targetNum = Number(target);
+  // Reverse calc: required resource = target × std
+  const requiredRes =
+    stdNum > 0 && targetNum > 0
+      ? Math.round(targetNum * stdNum * 100) / 100
+      : null;
+
+  return (
+    <div
+      className="rounded-xl border px-4 py-4"
+      style={{ borderColor: cat.borderColor, backgroundColor: cat.bgColor }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: cat.color }}
+        />
+        <p className="text-sm font-semibold" style={{ color: cat.color }}>
+          {cat.label} — Annual Target
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1">
+            Annual Target ({cat.unit})
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={target}
+            onChange={(e) => onTargetChange(e.target.value)}
+            placeholder="Enter target"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+          />
+        </div>
+        {requiredRes !== null && (
+          <div>
+            <label className="block text-xs font-medium text-[#64748b] mb-1">
+              Required Resource (reverse calc)
+            </label>
+            <div
+              className="w-full border rounded-lg px-3 py-2.5 text-sm font-semibold bg-white"
+              style={{ borderColor: cat.color, color: cat.color }}
+            >
+              {requiredRes.toLocaleString()} units
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QonnaPlanPage() {
+  const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
+  const [targets, setTargets] = useState({ ...EMPTY_QONNA_TARGETS });
+  const [stds, setStds] = useState({ ...EMPTY_QONNA_STD });
+  const [resources, setResources] = useState({ ...EMPTY_QONNA_STD });
+  // Furdisa: animal type
+  const [furdisaType, setFurdisaType] = useState("cattle");
+  const [furdisaOther, setFurdisaOther] = useState("");
+
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
+  const handleTarget = (key, val) => setTargets((p) => ({ ...p, [key]: val }));
+  const handleStd = (key, val) => setStds((p) => ({ ...p, [key]: val }));
+  const handleResource = (key, val) => setResources((p) => ({ ...p, [key]: val }));
+
+  const parsed = parsePcts(pcts);
+  const pctValid = validatePcts(parsed);
+  const hasAnyTarget = QONNA_CATEGORIES.some((c) => Number(targets[c.key] || 0) > 0);
+  const canSubmit = hasAnyTarget && pctValid.ok;
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!pctValid.ok) return;
+    setSaving(true);
+    setSaveError("");
+    setSaved(false);
+
+    // Build qophi object for API
+    const qophi = Object.fromEntries(
+      QONNA_CATEGORIES.map((c) => [c.key, Number(targets[c.key] || 0)]),
+    );
+    // Scale percentages ×10 as integers (e.g. 25.5 → 255) so decimal values
+    // don't hit "invalid input syntax for type integer" on the backend.
+    // The backend computes share as w / totalWeight, so the ratio is preserved.
+    const weights = Object.fromEntries(
+      WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
+    );
+
+    try {
+      await saveSubcityQonnaPlan(qophi, weights);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 4000);
+    } catch (err) {
+      setSaveError(err?.response?.data?.message || "Failed to save Qonna plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">
+          Qonna — Annual Plan
+        </h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Set annual targets for each Qonna category. Use the capacity
+          calculator to help determine feasible targets  then set the actual
+          target yourself.
+        </p>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Woreda % allocation */}
+        <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
+
+        {/* ── Furdisa — flexible animal type ── */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Furdisa — Livestock
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Select the animal type applicable to this plan
+            </p>
+          </div>
+          <div className="px-5 py-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
+                  Animal Type
+                </label>
+                <select
+                  value={furdisaType}
+                  onChange={(e) => setFurdisaType(e.target.value)}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
+                >
+                  {FURDISA_ANIMAL_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              {furdisaType === "other" && (
+                <div>
+                  <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
+                    Specify Animal Type
+                  </label>
+                  <input
+                    type="text"
+                    value={furdisaOther}
+                    onChange={(e) => setFurdisaOther(e.target.value)}
+                    placeholder="e.g. Camel, Donkey…"
+                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
+                  />
+                </div>
+              )}
+            </div>
+            <QonnaCapacityRow
+              cat={QONNA_CATEGORIES[0]}
+              std={stds.furdisa}
+              onStdChange={(v) => handleStd("furdisa", v)}
+              resource={resources.furdisa}
+              onResourceChange={(v) => handleResource("furdisa", v)}
+            />
+            <QonnaTargetRow
+              cat={QONNA_CATEGORIES[0]}
+              target={targets.furdisa}
+              onTargetChange={(v) => handleTarget("furdisa", v)}
+              std={stds.furdisa}
+            />
+          </div>
+        </div>
+
+        {/* ── Remaining 5 Qonna categories ── */}
+        {QONNA_CATEGORIES.slice(1).map((cat) => (
+          <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{ background: `linear-gradient(90deg,${cat.color} 0%,${cat.color}cc 100%)` }}
+            >
+              <p className="text-sm font-semibold text-white">{cat.label}</p>
+              <p className="text-white/70 text-xs mt-0.5">{cat.description}</p>
+            </div>
+            <div className="px-5 py-5 space-y-4">
+              <QonnaCapacityRow
+                cat={cat}
+                std={stds[cat.key]}
+                onStdChange={(v) => handleStd(cat.key, v)}
+                resource={resources[cat.key]}
+                onResourceChange={(v) => handleResource(cat.key, v)}
+              />
+              <QonnaTargetRow
+                cat={cat}
+                target={targets[cat.key]}
+                onTargetChange={(v) => handleTarget(cat.key, v)}
+                std={stds[cat.key]}
+              />
+            </div>
+          </div>
+        ))}
+
+        {/* ── Allocation preview ── */}
+        {hasAnyTarget && pctValid.ok && (
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
+              <p className="text-sm font-semibold text-[#1e293b]">
+                Woreda Allocation Preview
+              </p>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Annual targets distributed by entered percentages
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Subcity Total</th>
+                    {WOREDAS.map((w) => (
+                      <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                        {w.name}
+                        <span className="block text-[#94a3b8] font-normal normal-case">{pcts[w.id]}%</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {QONNA_CATEGORIES.map((cat) => {
+                    const total = Number(targets[cat.key] || 0);
+                    if (total === 0) return null;
+                    return (
+                      <tr key={cat.key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                            {cat.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{total.toLocaleString()}</td>
+                        {WOREDAS.map((w) => (
+                          <td key={w.id} className="px-5 py-3 text-[#64748b]">
+                            {pctShare(parsed, w.id, total).toLocaleString()}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── Save bar ── */}
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <div>
+            {saved && (
+              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
+                <CheckIcon /> Qonna plan saved to all 4 woredas.
+              </p>
+            )}
+            {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
+            {!saved && !saveError && (
+              <p className="text-[#94a3b8] text-xs">
+                Saving distributes targets to all 4 woreda plan tables.
+              </p>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={saving || !canSubmit}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: "#065f46" }}
+          >
+            {saving ? (
               <>
-                <CheckIcon />
-                Save Plan
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Saving...
               </>
+            ) : (
+              <><CheckIcon /> Save Qonna Plan</>
             )}
           </button>
         </div>
@@ -573,7 +1095,7 @@ function ComingSoonPage({ title }) {
         <p className="text-[#1e293b] font-semibold mb-2">Coming Soon</p>
         <p className="text-[#94a3b8] text-sm max-w-xs">
           Annual plan management for <strong>{title}</strong> will be available
-          here.
+          here
         </p>
         <span className="mt-4 inline-block bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-4 py-2 rounded-full">
           Under Development
@@ -595,7 +1117,7 @@ function WorkAnalysisPage({ sector }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Work Analysis — {sectorLabel}
+          Work Analysis {sectorLabel}
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Select a woreda to view performance data.
@@ -857,7 +1379,7 @@ export default function SubCityDashboard({ user: propUser }) {
                 >
                   <p className="font-semibold text-[#1e293b]">{s.label}</p>
                   <p className="text-xs text-[#94a3b8] mt-1">
-                    {s.id === "buusaa" ? "Active" : "Coming soon"}
+                    {s.id === "buusaa" || s.id === "qonna" ? "Active" : "Coming soon"}
                   </p>
                 </button>
               ))}
@@ -866,6 +1388,8 @@ export default function SubCityDashboard({ user: propUser }) {
         );
       if (activePlanSector === "buusaa")
         return <BuusaaPlanPage onSave={handleSavePlan} />;
+      if (activePlanSector === "qonna")
+        return <QonnaPlanPage />;
       return (
         <ComingSoonPage
           title={SECTORS.find((s) => s.id === activePlanSector)?.label ?? ""}

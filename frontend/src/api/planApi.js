@@ -71,3 +71,31 @@ export const fetchSubcityOwnPlan = async () => {
   const res = await api.get("/plans/subcity-plan", authHeader());
   return res.data; // { plan: {...} | null }
 };
+
+/**
+ * Save the subcity's Qonna annual plan (qophii lafaa totals) and
+ * distribute them to the 4 wereda qonna plan tables.
+ *
+ * @param {{ furdisa, annan, lukkuu, booyee, kannisaa, qurxummii }} qophi - qophii lafaa totals
+ * @param {{ w1, w2, w3, w4 }} weights - population counts per woreda
+ */
+export const saveSubcityQonnaPlan = async (qophi, weights) => {
+  const res = await api.post(
+    "/plans/subcity-qonna-plan",
+    { qophi, weights },
+    authHeader(),
+  );
+  return res.data;
+};
+
+/** Fetch the current year's subcity Qonna annual plan from Supabase. */
+export const fetchSubcityQonnaPlan = async () => {
+  const res = await api.get("/plans/subcity-qonna-plan", authHeader());
+  return res.data; // { plan: {...} | null }
+};
+
+/** Fetch the current year's Qonna plan for the logged-in wereda. */
+export const fetchWeredaQonnaPlan = async () => {
+  const res = await api.get("/plans/wereda-qonna-plan", authHeader());
+  return res.data; // { plan: {...} | null }
+};

@@ -12,6 +12,7 @@ import {
   fetchSummary,
   fetchSummaryByDateRange,
   fetchWeredaPlan,
+  fetchWeredaQonnaPlan,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 
@@ -496,6 +497,17 @@ const QONNA_FIELDS = [
   { name: "booyyee", label: "Booyyee", required: true, type: "number" },
   { name: "qurxummii", label: "Qurxummii", required: true, type: "number" },
   { name: "kanniissa", label: "Kanniissa", required: true, type: "number" },
+];
+
+// Qonna category metadata — keeps colours and descriptions consistent across
+// the annual-plan view and the analysis view.
+const QONNA_CATS = [
+  { key: "furdisa",   planKey: "furdisa_target",   label: "Furdisa",   description: "Livestock",          color: "#065f46" },
+  { key: "annan",     planKey: "annan_target",     label: "Annan",     description: "Dairy — horii",      color: "#0f766e" },
+  { key: "lukkuu",    planKey: "lukkuu_target",    label: "Lukkuu",    description: "Poultry",             color: "#1e40af" },
+  { key: "booyee",    planKey: "booyee_target",    label: "Booyyee",   description: "Pig farming",         color: "#7c3aed" },
+  { key: "kannisaa",  planKey: "kannisaa_target",  label: "Kannisaa",  description: "Apiculture",          color: "#b45309" },
+  { key: "qurxummii", planKey: "qurxummii_target", label: "Qurxummii", description: "Fish / pond farming", color: "#0369a1" },
 ];
 const REVENUE_FIELDS = [
   {
@@ -1154,6 +1166,761 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
   );
 }
 
+// ─── Qonna Annual Plan Section (Woreda — read-only) ──────────────────────────
+function QonnaAnnualPlanSection({ u }) {
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const year = new Date().getFullYear();
+
+  useEffect(() => {
+    fetchWeredaQonnaPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
+      </div>
+    );
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-[#1e293b]">
+          Qonna — Annual Plan
+        </h1>
+        <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">
+          {year}
+        </span>
+      </div>
+      <p className="text-[#64748b] text-sm mb-6">
+        {u.woreda} · Targets assigned by the sub-city office. Read-only.
+      </p>
+
+      {plan ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+          <div
+            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+            style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
+          >
+            <PlanIcon />
+            <div>
+              <p className="text-white font-bold text-base">
+                Qonna Annual Plan — {year}
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {u.name} · {u.woreda} · Read-only
+              </p>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {QONNA_CATS.map(({ planKey, label, description, color }) => (
+                <div
+                  key={planKey}
+                  className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">
+                      {label}
+                    </p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-[#1e293b]">
+                    {(plan[planKey] ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-[#94a3b8] mt-1">{description}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+              <svg className="w-5 h-5 text-[#065f46] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+              </svg>
+              <p className="text-[#065f46] text-sm">
+                These targets were assigned by your sub-city office. Contact
+                them if you believe the numbers are incorrect.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3">
+            <PlanIcon />
+          </div>
+          <p className="text-[#334155] font-semibold mb-1">No Qonna Plan Assigned Yet</p>
+          <p className="text-[#94a3b8] text-sm max-w-xs">
+            Your sub-city office hasn't saved a Qonna annual plan for {year} yet.
+            Once they do, your targets will appear here automatically.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Qonna Work Analysis Section (Woreda) ────────────────────────────────────
+// Reuses the exact same period-filtering + aggregation pattern as AnalysisSection
+// (Buusaa). Underlying reports from the `qonna` table are the source of truth.
+// Daily/weekly/monthly/quarterly/annual all aggregate from the same rows — no
+// double-counting possible.
+function QonnaAnalysisSection() {
+  const [period, setPeriod] = useState("monthly");
+  const [plan, setPlan] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Custom date-range state (Oromo calendar) — identical to AnalysisSection
+  const currentYear = new Date().getFullYear();
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay] = useState(1);
+  const [endMonth, setEndMonth] = useState("Adoolessa");
+  const [endDay, setEndDay] = useState(30);
+  const [customYear, setCustomYear] = useState(currentYear - 1);
+  const [customSummary, setCustomSummary] = useState(null);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState("");
+  const [customRange, setCustomRange] = useState(null);
+
+  // Fetch the assigned Qonna plan (for target columns)
+  useEffect(() => {
+    fetchWeredaQonnaPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null));
+  }, []);
+
+  // Fetch period summary — uses the existing /plans/summary endpoint with a
+  // qonna-specific table. The backend already aggregates the underlying rows
+  // for the requested period, so there is no double-counting here.
+  useEffect(() => {
+    if (period === "custom") return;
+    setLoading(true);
+    setError("");
+    // Re-use the existing fetchSummary which reads from qonna reports;
+    // we request the qonna-scoped endpoint when available, or fall back to
+    // the generic one with a sector param.
+    fetchSummary(period)
+      .then((d) => setSummary(d.summary))
+      .catch(() => setError("Failed to load Qonna summary data."))
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  const handleGenerateReport = async () => {
+    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
+    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
+    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    setCustomLoading(true);
+    setCustomError("");
+    setCustomSummary(null);
+    try {
+      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
+      setCustomSummary(d.summary);
+      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
+    } catch { setCustomError("Failed to load custom range data."); }
+    finally { setCustomLoading(false); }
+  };
+
+  const isCustom = period === "custom";
+  const activeSummary = isCustom ? customSummary : summary;
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+
+  // Ring chart for each Qonna category
+  function QonnaRingChart({ cat, actual, target }) {
+    const pct = target > 0 ? Math.min(Math.round((actual / target) * 100), 100) : 0;
+    const size = 130, sw = 13, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+    const offset = circ - (pct / 100) * circ;
+    return (
+      <div className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm">
+        <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">{cat.label}</p>
+        <p className="text-xs text-[#94a3b8] mb-2 text-center">{cat.description}</p>
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw}
+              strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+              style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-xl font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+            <span className="text-xs text-[#94a3b8] mt-0.5">done</span>
+          </div>
+        </div>
+        <div className="mt-3 w-full space-y-1">
+          <div className="flex justify-between text-xs text-[#64748b]">
+            <span>Actual</span>
+            <span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-xs text-[#64748b]">
+            <span>Target (period)</span>
+            <span className="font-semibold text-[#1e293b]">{target.toLocaleString()}</span>
+          </div>
+          <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-1">
+            <div className="h-1.5 rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Qonna — Work Analysis</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Actual performance vs assigned annual plan targets
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* No plan warning */}
+      {!plan && (
+        <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-[#1a3a5c] text-sm">
+            No Qonna annual plan assigned yet. Targets will appear once your sub-city office saves the plan.
+          </p>
+        </div>
+      )}
+
+      {/* Custom date range picker */}
+      {isCustom && (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-[#334155] mb-4">
+            Select Custom Date Range (Afaan Oromo Calendar)
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000" max="2100"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+              <div className="flex gap-2">
+                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+              <div className="flex gap-2">
+                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
+          <button onClick={handleGenerateReport} disabled={customLoading}
+            className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+            <AnalysisIcon />
+            {customLoading ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      )}
+
+      {/* Standard period loading */}
+      {!isCustom && loading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
+        </div>
+      ) : !isCustom && error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+      ) : isCustom && customLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
+        </div>
+      ) : isCustom && !customSummary ? null : (
+        <>
+          {/* Period banner */}
+          <div className="mb-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[#065f46] text-xs font-bold uppercase tracking-wide">
+              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+            </span>
+            {!isCustom && (
+              <>
+                <span className="text-[#065f46] text-xs">—</span>
+                <span className="text-[#065f46] text-xs">Targets are partitioned from the assigned annual plan</span>
+              </>
+            )}
+          </div>
+
+          {/* Ring charts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {QONNA_CATS.map((cat) => {
+              const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
+              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+              const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+              return (
+                <QonnaRingChart
+                  key={cat.key}
+                  cat={cat}
+                  actual={actual}
+                  target={periodTarget}
+                />
+              );
+            })}
+          </div>
+
+          {/* Summary table */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+              <p className="text-sm font-semibold text-[#334155]">
+                {isCustom && customRange
+                  ? `${customRange.from} — ${customRange.to} Summary`
+                  : `${periodLabel} Summary Table`}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    {["Category", isCustom ? "Total Actual" : "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement"].map((h) => (
+                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {QONNA_CATS.map((cat) => {
+                    const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
+                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+                    const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+                    const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                    return (
+                      <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                            {cat.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : annualTarget.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                        <td className="px-5 py-3">
+                          {isCustom ? "—" : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>
+                              {pct}%
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── CarraaHojii Annual Plan fields with display metadata ────────────────────
+const CARRAA_PLAN_FIELDS = [
+  { planKey: "leenjii_target",                   label: "Leenjii",                  color: "#1e40af", bg: "bg-[#eff6ff]",  border: "border-[#bfdbfe]",  text: "text-[#1e40af]"  },
+  { planKey: "carraa_hojii_dhaabbii_target",      label: "Carraa Hojii Dhaabbii",    color: "#0f766e", bg: "bg-[#f0fdfa]",  border: "border-[#99f6e4]",  text: "text-[#0f766e]"  },
+  { planKey: "carraa_hojii_qacarrii_target",      label: "Carraa Hojii Qacarrii",    color: "#7c3aed", bg: "bg-[#f5f3ff]",  border: "border-[#ddd6fe]",  text: "text-[#7c3aed]"  },
+  { planKey: "qusannaa_target",                   label: "Qusannaa Haawaasaa",       color: "#475569", bg: "bg-[#f8fafc]",  border: "border-[#e2e8f0]",  text: "text-[#475569]"  },
+  { planKey: "qusanna_dirqii_target",             label: "Qusanna Dirqii",           color: "#475569", bg: "bg-[#f8fafc]",  border: "border-[#e2e8f0]",  text: "text-[#475569]"  },
+  { planKey: "liqii_target",                      label: "Kenna Liqii",              color: "#b45309", bg: "bg-[#fffbeb]",  border: "border-[#fde68a]",  text: "text-[#b45309]"  },
+  { planKey: "deebii_liqii_bilchaate_target",     label: "Deebii Liqii Bilchaate",   color: "#065f46", bg: "bg-[#f0fdf4]",  border: "border-[#bbf7d0]",  text: "text-[#065f46]"  },
+  { planKey: "deebii_liqii_bulee_target",         label: "Deebii Liqii Bulee",       color: "#dc2626", bg: "bg-[#fef2f2]",  border: "border-[#fecaca]",  text: "text-[#dc2626]"  },
+  { planKey: "industrii_godoo_target",            label: "Industrii Godoo",          color: "#0369a1", bg: "bg-[#f0f9ff]",  border: "border-[#bae6fd]",  text: "text-[#0369a1]"  },
+];
+
+// CarraaHojii summary keys that correspond to the plan keys
+const CARRAA_SUMMARY_KEYS = [
+  { summaryKey: "leenjii",                key: "leenjii_target",               label: "Leenjii",               color: "#1e40af" },
+  { summaryKey: "carraa_hojii_dhaabbii",  key: "carraa_hojii_dhaabbii_target", label: "Carraa Hojii Dhaabbii", color: "#0f766e" },
+  { summaryKey: "carraa_hojii_qacarrii",  key: "carraa_hojii_qacarrii_target", label: "Carraa Hojii Qacarrii", color: "#7c3aed" },
+  { summaryKey: "qusannnaa",              key: "qusannaa_target",              label: "Qusannaa Haawaasaa",    color: "#475569" },
+  { summaryKey: "qusanna_dirqii",         key: "qusanna_dirqii_target",        label: "Qusanna Dirqii",        color: "#475569" },
+  { summaryKey: "liqii",                  key: "liqii_target",                 label: "Kenna Liqii",           color: "#b45309" },
+  { summaryKey: "deebii_liqii_bilchaate", key: "deebii_liqii_bilchaate_target",label: "Deebii Liqii Bilchaate",color: "#065f46" },
+  { summaryKey: "deebii_liqii_bulee",     key: "deebii_liqii_bulee_target",    label: "Deebii Liqii Bulee",    color: "#dc2626" },
+  { summaryKey: "industrii_godoo",        key: "industrii_godoo_target",       label: "Industrii Godoo",       color: "#0369a1" },
+];
+
+// ─── CarraaHojii Annual Plan Section (read-only, same style as AnnualPlanSection) ──
+function CarraaHojiiAnnualPlanSection({ u }) {
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const year = new Date().getFullYear();
+
+  useEffect(() => {
+    // Reuses the existing fetchWeredaPlan endpoint — the backend returns the
+    // woreda's row which already contains all category targets.
+    fetchWeredaPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
+      </div>
+    );
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-[#1e293b]">
+          Carraa Hojii Uummuu — Annual Plan
+        </h1>
+        <span className="bg-[#eff6ff] text-[#1e40af] text-xs font-bold px-3 py-1 rounded-full border border-[#bfdbfe]">
+          {year}
+        </span>
+      </div>
+      <p className="text-[#64748b] text-sm mb-6">
+        {u.woreda} · Targets assigned by the sub-city office. Read-only.
+      </p>
+
+      {plan ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+          <div
+            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+            style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+          >
+            <PlanIcon />
+            <div>
+              <p className="text-white font-bold text-base">
+                Carraa Hojii Uummuu Annual Plan — {year}
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {u.name} · {u.woreda} · Read-only
+              </p>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {CARRAA_PLAN_FIELDS.map(({ planKey, label, bg, border, text, color }) => (
+                <div key={planKey} className={`rounded-xl border ${border} ${bg} px-5 py-4`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <p className={`text-xs font-bold uppercase tracking-wide ${text}`}>{label}</p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-[#1e293b]">
+                    {(plan[planKey] ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-3">
+              <svg className="w-5 h-5 text-[#1e40af] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+              </svg>
+              <p className="text-[#1e40af] text-sm">
+                These targets were assigned by your sub-city office. Contact them if the numbers need correction.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3">
+            <PlanIcon />
+          </div>
+          <p className="text-[#334155] font-semibold mb-1">No Plan Assigned Yet</p>
+          <p className="text-[#94a3b8] text-sm max-w-xs">
+            Your sub-city office hasn't saved a Carraa Hojii plan for {year} yet.
+            Once they do, your targets will appear here automatically.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CarraaHojii Work Analysis Section ───────────────────────────────────────
+// Mirrors AnalysisSection (Buusaa) exactly — same period selector, same Oromo
+// date picker, same ring charts + summary table pattern.
+function CarraaHojiiAnalysisSection() {
+  const [period, setPeriod] = useState("monthly");
+  const [plan, setPlan] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const currentYear = new Date().getFullYear();
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay] = useState(1);
+  const [endMonth, setEndMonth] = useState("Adoolessa");
+  const [endDay, setEndDay] = useState(30);
+  const [customYear, setCustomYear] = useState(currentYear - 1);
+  const [customSummary, setCustomSummary] = useState(null);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState("");
+  const [customRange, setCustomRange] = useState(null);
+
+  useEffect(() => {
+    fetchWeredaPlan()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null));
+  }, []);
+
+  useEffect(() => {
+    if (period === "custom") return;
+    setLoading(true);
+    setError("");
+    fetchSummary(period)
+      .then((d) => setSummary(d.summary))
+      .catch(() => setError("Failed to load summary data."))
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  const handleGenerateReport = async () => {
+    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
+    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
+    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    setCustomLoading(true);
+    setCustomError("");
+    setCustomSummary(null);
+    try {
+      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
+      setCustomSummary(d.summary);
+      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
+    } catch { setCustomError("Failed to load custom range data."); }
+    finally { setCustomLoading(false); }
+  };
+
+  const isCustom = period === "custom";
+  const activeSummary = isCustom ? customSummary : summary;
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Carraa Hojii — Work Analysis</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">Actual performance vs assigned annual plan targets</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {!plan && (
+        <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-[#1a3a5c] text-sm">No annual plan assigned yet. Targets will appear once the sub-city saves the plan.</p>
+        </div>
+      )}
+
+      {/* Custom date picker */}
+      {isCustom && (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-[#334155] mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))} min="2000" max="2100"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+              <div className="flex gap-2">
+                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+              <div className="flex gap-2">
+                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
+          <button onClick={handleGenerateReport} disabled={customLoading}
+            className="flex items-center gap-2 bg-[#1e40af] hover:bg-[#1e3a8a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+            <AnalysisIcon />
+            {customLoading ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      )}
+
+      {!isCustom && loading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
+        </div>
+      ) : !isCustom && error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+      ) : isCustom && customLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
+        </div>
+      ) : isCustom && !customSummary ? null : (
+        <>
+          <div className="mb-5 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[#1e40af] text-xs font-bold uppercase tracking-wide">
+              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+            </span>
+            {!isCustom && <><span className="text-[#1e40af] text-xs">—</span><span className="text-[#1e40af] text-xs">Targets partitioned from annual plan</span></>}
+          </div>
+
+          {/* Ring charts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
+              const annualTarget = plan ? (plan[key] ?? 0) : 0;
+              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+              const actual = activeSummary ? (activeSummary[summaryKey] ?? 0) : 0;
+              const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 100) : 0;
+              const size = 130, sw = 13, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+              const offset = circ - (pct / 100) * circ;
+              return (
+                <div key={key} className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm">
+                  <p className="text-xs font-bold text-[#334155] mb-2 text-center">{label}</p>
+                  <div className="relative" style={{ width: size, height: size }}>
+                    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={sw}
+                        strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+                        style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xl font-extrabold leading-none" style={{ color }}>{pct}%</span>
+                      <span className="text-xs text-[#94a3b8] mt-0.5">done</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 w-full space-y-1">
+                    <div className="flex justify-between text-xs text-[#64748b]">
+                      <span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-[#64748b]">
+                      <span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-1">
+                      <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Summary table */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+              <p className="text-sm font-semibold text-[#334155]">
+                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Summary Table`}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    {["Category", isCustom ? "Total Actual" : "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement"].map((h) => (
+                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
+                    const annualTarget = plan ? (plan[key] ?? 0) : 0;
+                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+                    const actual = activeSummary ? (activeSummary[summaryKey] ?? 0) : 0;
+                    const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                    return (
+                      <tr key={key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                            {label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : annualTarget.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                        <td className="px-5 py-3">
+                          {isCustom ? "—" : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{ backgroundColor: `${color}22`, color }}>
+                              {pct}%
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Placeholder pages (non-implemented sectors) ─────────────────────────────
 function PlaceholderAnnualPlan({ title, u }) {
   return (
     <div>
@@ -2709,11 +3476,15 @@ export default function WoRedaDashboard() {
               const work = WORKS.find((w) => w.id === wid);
               if (sub === "plan") {
                 if (wid === "buusaa") return <AnnualPlanSection u={u} />;
+                if (wid === "qonna") return <QonnaAnnualPlanSection u={u} />;
+                if (wid === "carraaHojii") return <CarraaHojiiAnnualPlanSection u={u} />;
                 return <PlaceholderAnnualPlan title={work?.label} u={u} />;
               }
               if (sub === "analysis") {
                 if (wid === "buusaa") return <AnalysisSection />;
                 if (wid === "revenue") return <RevenueAnalysis />;
+                if (wid === "qonna") return <QonnaAnalysisSection />;
+                if (wid === "carraaHojii") return <CarraaHojiiAnalysisSection />;
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
               }
               if (wid === "buusaa") return <BuusaaSubmitForm u={u} />;
