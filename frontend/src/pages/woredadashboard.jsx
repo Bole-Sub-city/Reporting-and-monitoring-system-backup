@@ -502,12 +502,48 @@ const QONNA_FIELDS = [
 // Qonna category metadata — keeps colours and descriptions consistent across
 // the annual-plan view and the analysis view.
 const QONNA_CATS = [
-  { key: "furdisa",   planKey: "furdisa_target",   label: "Furdisa",   description: "Livestock",          color: "#065f46" },
-  { key: "annan",     planKey: "annan_target",     label: "Annan",     description: "Dairy — horii",      color: "#0f766e" },
-  { key: "lukkuu",    planKey: "lukkuu_target",    label: "Lukkuu",    description: "Poultry",             color: "#1e40af" },
-  { key: "booyee",    planKey: "booyee_target",    label: "Booyyee",   description: "Pig farming",         color: "#7c3aed" },
-  { key: "kannisaa",  planKey: "kannisaa_target",  label: "Kannisaa",  description: "Apiculture",          color: "#b45309" },
-  { key: "qurxummii", planKey: "qurxummii_target", label: "Qurxummii", description: "Fish / pond farming", color: "#0369a1" },
+  {
+    key: "furdisa",
+    planKey: "furdisa_target",
+    label: "Furdisa",
+    description: "Livestock",
+    color: "#065f46",
+  },
+  {
+    key: "annan",
+    planKey: "annan_target",
+    label: "Annan",
+    description: "Dairy — horii",
+    color: "#0f766e",
+  },
+  {
+    key: "lukkuu",
+    planKey: "lukkuu_target",
+    label: "Lukkuu",
+    description: "Poultry",
+    color: "#1e40af",
+  },
+  {
+    key: "booyee",
+    planKey: "booyee_target",
+    label: "Booyyee",
+    description: "Pig farming",
+    color: "#7c3aed",
+  },
+  {
+    key: "kannisaa",
+    planKey: "kannisaa_target",
+    label: "Kannisaa",
+    description: "Apiculture",
+    color: "#b45309",
+  },
+  {
+    key: "qurxummii",
+    planKey: "qurxummii_target",
+    label: "Qurxummii",
+    description: "Fish / pond farming",
+    color: "#0369a1",
+  },
 ];
 const REVENUE_FIELDS = [
   {
@@ -731,7 +767,7 @@ function AnnualPlanSection({ u }) {
                     </p>
                     <p className="text-xs text-[#64748b] mt-1">Annual target</p>
                   </div>
-                ),
+                )
               )}
             </div>
             <div className="mt-5 flex items-center gap-2 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3">
@@ -1032,9 +1068,9 @@ function AnalysisSection() {
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
-              const at = plan ? (plan[planKey] ?? 0) : 0;
+              const at = plan ? plan[planKey] ?? 0 : 0;
               const pt = isCustom ? 0 : partitionTarget(at, period);
-              const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+              const ac = activeSummary ? activeSummary[key] ?? 0 : 0;
               return (
                 <RingChart
                   key={key}
@@ -1078,9 +1114,9 @@ function AnalysisSection() {
               </thead>
               <tbody>
                 {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
-                  const at = plan ? (plan[planKey] ?? 0) : 0;
+                  const at = plan ? plan[planKey] ?? 0 : 0;
                   const pt = isCustom ? 0 : partitionTarget(at, period);
-                  const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+                  const ac = activeSummary ? activeSummary[key] ?? 0 : 0;
                   const pct =
                     pt > 0 ? Math.min(Math.round((ac / pt) * 100), 100) : 0;
                   return (
@@ -1204,7 +1240,9 @@ function QonnaAnnualPlanSection({ u }) {
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
             className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
+            style={{
+              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+            }}
           >
             <PlanIcon />
             <div>
@@ -1240,8 +1278,15 @@ function QonnaAnnualPlanSection({ u }) {
               ))}
             </div>
             <div className="mt-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-              <svg className="w-5 h-5 text-[#065f46] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+              <svg
+                className="w-5 h-5 text-[#065f46] flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4M12 16h.01" />
               </svg>
               <p className="text-[#065f46] text-sm">
                 These targets were assigned by your sub-city office. Contact
@@ -1255,10 +1300,12 @@ function QonnaAnnualPlanSection({ u }) {
           <div className="w-14 h-14 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3">
             <PlanIcon />
           </div>
-          <p className="text-[#334155] font-semibold mb-1">No Qonna Plan Assigned Yet</p>
+          <p className="text-[#334155] font-semibold mb-1">
+            No Qonna Plan Assigned Yet
+          </p>
           <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved a Qonna annual plan for {year} yet.
-            Once they do, your targets will appear here automatically.
+            Your sub-city office hasn't saved a Qonna annual plan for {year}{" "}
+            yet. Once they do, your targets will appear here automatically.
           </p>
         </div>
       )}
@@ -1316,17 +1363,29 @@ function QonnaAnalysisSection() {
   const handleGenerateReport = async () => {
     const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
     const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
-    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    if (!dateFrom || !dateTo) {
+      setCustomError("Invalid date selection.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      setCustomError("Start date must be before end date.");
+      return;
+    }
     setCustomLoading(true);
     setCustomError("");
     setCustomSummary(null);
     try {
       const d = await fetchSummaryByDateRange(dateFrom, dateTo);
       setCustomSummary(d.summary);
-      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
-    } catch { setCustomError("Failed to load custom range data."); }
-    finally { setCustomLoading(false); }
+      setCustomRange({
+        from: `${startMonth} ${startDay}`,
+        to: `${endMonth} ${endDay}`,
+      });
+    } catch {
+      setCustomError("Failed to load custom range data.");
+    } finally {
+      setCustomLoading(false);
+    }
   };
 
   const isCustom = period === "custom";
@@ -1335,37 +1394,76 @@ function QonnaAnalysisSection() {
 
   // Ring chart for each Qonna category
   function QonnaRingChart({ cat, actual, target }) {
-    const pct = target > 0 ? Math.min(Math.round((actual / target) * 100), 100) : 0;
-    const size = 130, sw = 13, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+    const pct =
+      target > 0 ? Math.min(Math.round((actual / target) * 100), 100) : 0;
+    const size = 130,
+      sw = 13,
+      r = (size - sw) / 2,
+      circ = 2 * Math.PI * r;
     const offset = circ - (pct / 100) * circ;
     return (
       <div className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm">
-        <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">{cat.label}</p>
-        <p className="text-xs text-[#94a3b8] mb-2 text-center">{cat.description}</p>
+        <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">
+          {cat.label}
+        </p>
+        <p className="text-xs text-[#94a3b8] mb-2 text-center">
+          {cat.description}
+        </p>
         <div className="relative" style={{ width: size, height: size }}>
-          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw}
-              strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-              style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+          <svg
+            width={size}
+            height={size}
+            style={{ transform: "rotate(-90deg)" }}
+          >
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke="#f3f4f6"
+              strokeWidth={sw}
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={cat.color}
+              strokeWidth={sw}
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              strokeDashoffset={offset}
+              style={{ transition: "stroke-dashoffset 0.7s ease" }}
+            />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xl font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+            <span
+              className="text-xl font-extrabold leading-none"
+              style={{ color: cat.color }}
+            >
+              {pct}%
+            </span>
             <span className="text-xs text-[#94a3b8] mt-0.5">done</span>
           </div>
         </div>
         <div className="mt-3 w-full space-y-1">
           <div className="flex justify-between text-xs text-[#64748b]">
             <span>Actual</span>
-            <span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span>
+            <span className="font-semibold text-[#1e293b]">
+              {actual.toLocaleString()}
+            </span>
           </div>
           <div className="flex justify-between text-xs text-[#64748b]">
             <span>Target (period)</span>
-            <span className="font-semibold text-[#1e293b]">{target.toLocaleString()}</span>
+            <span className="font-semibold text-[#1e293b]">
+              {target.toLocaleString()}
+            </span>
           </div>
           <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-1">
-            <div className="h-1.5 rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+            <div
+              className="h-1.5 rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, backgroundColor: cat.color }}
+            />
           </div>
         </div>
       </div>
@@ -1377,7 +1475,9 @@ function QonnaAnalysisSection() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Qonna — Work Analysis</h1>
+          <h1 className="text-2xl font-bold text-[#1e293b]">
+            Qonna — Work Analysis
+          </h1>
           <p className="text-[#64748b] text-sm mt-0.5">
             Actual performance vs assigned annual plan targets
           </p>
@@ -1386,10 +1486,18 @@ function QonnaAnalysisSection() {
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            onChange={(e) => {
+              setPeriod(e.target.value);
+              setCustomSummary(null);
+              setCustomRange(null);
+            }}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
-            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            {PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -1397,12 +1505,20 @@ function QonnaAnalysisSection() {
       {/* No plan warning */}
       {!plan && (
         <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-amber-500 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <p className="text-[#1a3a5c] text-sm">
-            No Qonna annual plan assigned yet. Targets will appear once your sub-city office saves the plan.
+            No Qonna annual plan assigned yet. Targets will appear once your
+            sub-city office saves the plan.
           </p>
         </div>
       )}
@@ -1415,41 +1531,85 @@ function QonnaAnalysisSection() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
-              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000" max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                Fiscal Year
+              </label>
+              <input
+                type="number"
+                value={customYear}
+                onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000"
+                max="2100"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                Start Date
+              </label>
               <div className="flex gap-2">
-                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={startMonth}
+                  onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={startDay}
+                  onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                End Date
+              </label>
               <div className="flex gap-2">
-                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={endMonth}
+                  onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={endDay}
+                  onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
-          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
-          <button onClick={handleGenerateReport} disabled={customLoading}
-            className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+          {customError && (
+            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
+          )}
+          <button
+            onClick={handleGenerateReport}
+            disabled={customLoading}
+            className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
             <AnalysisIcon />
             {customLoading ? "Generating..." : "Generate Report"}
           </button>
@@ -1462,7 +1622,9 @@ function QonnaAnalysisSection() {
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
         </div>
       ) : !isCustom && error ? (
-        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+          {error}
+        </div>
       ) : isCustom && customLoading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
@@ -1472,12 +1634,16 @@ function QonnaAnalysisSection() {
           {/* Period banner */}
           <div className="mb-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-2.5 flex items-center gap-2">
             <span className="text-[#065f46] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+              {isCustom && customRange
+                ? `${customRange.from} — ${customRange.to}`
+                : `${periodLabel} View`}
             </span>
             {!isCustom && (
               <>
                 <span className="text-[#065f46] text-xs">—</span>
-                <span className="text-[#065f46] text-xs">Targets are partitioned from the assigned annual plan</span>
+                <span className="text-[#065f46] text-xs">
+                  Targets are partitioned from the assigned annual plan
+                </span>
               </>
             )}
           </div>
@@ -1485,9 +1651,11 @@ function QonnaAnalysisSection() {
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {QONNA_CATS.map((cat) => {
-              const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
-              const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+              const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
+              const periodTarget = isCustom
+                ? 0
+                : partitionTarget(annualTarget, period);
+              const actual = activeSummary ? activeSummary[cat.key] ?? 0 : 0;
               return (
                 <QonnaRingChart
                   key={cat.key}
@@ -1512,32 +1680,72 @@ function QonnaAnalysisSection() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9]">
-                    {["Category", isCustom ? "Total Actual" : "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement"].map((h) => (
-                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                    {[
+                      "Category",
+                      isCustom ? "Total Actual" : "Annual Target",
+                      isCustom ? "—" : "Period Target",
+                      "Actual",
+                      "Achievement",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {QONNA_CATS.map((cat) => {
-                    const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
-                    const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
-                    const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                    const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
+                    const periodTarget = isCustom
+                      ? 0
+                      : partitionTarget(annualTarget, period);
+                    const actual = activeSummary
+                      ? activeSummary[cat.key] ?? 0
+                      : 0;
+                    const pct =
+                      periodTarget > 0
+                        ? Math.min(
+                            Math.round((actual / periodTarget) * 100),
+                            999
+                          )
+                        : 0;
                     return (
-                      <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                      <tr
+                        key={cat.key}
+                        className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                      >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: cat.color }}
+                            />
                             {cat.label}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : annualTarget.toLocaleString()}</td>
-                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
-                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-[#64748b]">
+                          {isCustom ? "—" : annualTarget.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 text-[#64748b]">
+                          {isCustom ? "—" : periodTarget.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                          {actual.toLocaleString()}
+                        </td>
                         <td className="px-5 py-3">
-                          {isCustom ? "—" : (
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>
+                          {isCustom ? (
+                            "—"
+                          ) : (
+                            <span
+                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{
+                                backgroundColor: `${cat.color}22`,
+                                color: cat.color,
+                              }}
+                            >
                               {pct}%
                             </span>
                           )}
@@ -1557,28 +1765,136 @@ function QonnaAnalysisSection() {
 
 // ─── CarraaHojii Annual Plan fields with display metadata ────────────────────
 const CARRAA_PLAN_FIELDS = [
-  { planKey: "leenjii_target",                   label: "Leenjii",                  color: "#1e40af", bg: "bg-[#eff6ff]",  border: "border-[#bfdbfe]",  text: "text-[#1e40af]"  },
-  { planKey: "carraa_hojii_dhaabbii_target",      label: "Carraa Hojii Dhaabbii",    color: "#0f766e", bg: "bg-[#f0fdfa]",  border: "border-[#99f6e4]",  text: "text-[#0f766e]"  },
-  { planKey: "carraa_hojii_qacarrii_target",      label: "Carraa Hojii Qacarrii",    color: "#7c3aed", bg: "bg-[#f5f3ff]",  border: "border-[#ddd6fe]",  text: "text-[#7c3aed]"  },
-  { planKey: "qusannaa_target",                   label: "Qusannaa Haawaasaa",       color: "#475569", bg: "bg-[#f8fafc]",  border: "border-[#e2e8f0]",  text: "text-[#475569]"  },
-  { planKey: "qusanna_dirqii_target",             label: "Qusanna Dirqii",           color: "#475569", bg: "bg-[#f8fafc]",  border: "border-[#e2e8f0]",  text: "text-[#475569]"  },
-  { planKey: "liqii_target",                      label: "Kenna Liqii",              color: "#b45309", bg: "bg-[#fffbeb]",  border: "border-[#fde68a]",  text: "text-[#b45309]"  },
-  { planKey: "deebii_liqii_bilchaate_target",     label: "Deebii Liqii Bilchaate",   color: "#065f46", bg: "bg-[#f0fdf4]",  border: "border-[#bbf7d0]",  text: "text-[#065f46]"  },
-  { planKey: "deebii_liqii_bulee_target",         label: "Deebii Liqii Bulee",       color: "#dc2626", bg: "bg-[#fef2f2]",  border: "border-[#fecaca]",  text: "text-[#dc2626]"  },
-  { planKey: "industrii_godoo_target",            label: "Industrii Godoo",          color: "#0369a1", bg: "bg-[#f0f9ff]",  border: "border-[#bae6fd]",  text: "text-[#0369a1]"  },
+  {
+    planKey: "leenjii_target",
+    label: "Leenjii",
+    color: "#1e40af",
+    bg: "bg-[#eff6ff]",
+    border: "border-[#bfdbfe]",
+    text: "text-[#1e40af]",
+  },
+  {
+    planKey: "carraa_hojii_dhaabbii_target",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+    bg: "bg-[#f0fdfa]",
+    border: "border-[#99f6e4]",
+    text: "text-[#0f766e]",
+  },
+  {
+    planKey: "carraa_hojii_qacarrii_target",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+    bg: "bg-[#f5f3ff]",
+    border: "border-[#ddd6fe]",
+    text: "text-[#7c3aed]",
+  },
+  {
+    planKey: "qusannaa_target",
+    label: "Qusannaa Haawaasaa",
+    color: "#475569",
+    bg: "bg-[#f8fafc]",
+    border: "border-[#e2e8f0]",
+    text: "text-[#475569]",
+  },
+  {
+    planKey: "qusanna_dirqii_target",
+    label: "Qusanna Dirqii",
+    color: "#475569",
+    bg: "bg-[#f8fafc]",
+    border: "border-[#e2e8f0]",
+    text: "text-[#475569]",
+  },
+  {
+    planKey: "liqii_target",
+    label: "Kenna Liqii",
+    color: "#b45309",
+    bg: "bg-[#fffbeb]",
+    border: "border-[#fde68a]",
+    text: "text-[#b45309]",
+  },
+  {
+    planKey: "deebii_liqii_bilchaate_target",
+    label: "Deebii Liqii Bilchaate",
+    color: "#065f46",
+    bg: "bg-[#f0fdf4]",
+    border: "border-[#bbf7d0]",
+    text: "text-[#065f46]",
+  },
+  {
+    planKey: "deebii_liqii_bulee_target",
+    label: "Deebii Liqii Bulee",
+    color: "#dc2626",
+    bg: "bg-[#fef2f2]",
+    border: "border-[#fecaca]",
+    text: "text-[#dc2626]",
+  },
+  {
+    planKey: "industrii_godoo_target",
+    label: "Industrii Godoo",
+    color: "#0369a1",
+    bg: "bg-[#f0f9ff]",
+    border: "border-[#bae6fd]",
+    text: "text-[#0369a1]",
+  },
 ];
 
 // CarraaHojii summary keys that correspond to the plan keys
 const CARRAA_SUMMARY_KEYS = [
-  { summaryKey: "leenjii",                key: "leenjii_target",               label: "Leenjii",               color: "#1e40af" },
-  { summaryKey: "carraa_hojii_dhaabbii",  key: "carraa_hojii_dhaabbii_target", label: "Carraa Hojii Dhaabbii", color: "#0f766e" },
-  { summaryKey: "carraa_hojii_qacarrii",  key: "carraa_hojii_qacarrii_target", label: "Carraa Hojii Qacarrii", color: "#7c3aed" },
-  { summaryKey: "qusannnaa",              key: "qusannaa_target",              label: "Qusannaa Haawaasaa",    color: "#475569" },
-  { summaryKey: "qusanna_dirqii",         key: "qusanna_dirqii_target",        label: "Qusanna Dirqii",        color: "#475569" },
-  { summaryKey: "liqii",                  key: "liqii_target",                 label: "Kenna Liqii",           color: "#b45309" },
-  { summaryKey: "deebii_liqii_bilchaate", key: "deebii_liqii_bilchaate_target",label: "Deebii Liqii Bilchaate",color: "#065f46" },
-  { summaryKey: "deebii_liqii_bulee",     key: "deebii_liqii_bulee_target",    label: "Deebii Liqii Bulee",    color: "#dc2626" },
-  { summaryKey: "industrii_godoo",        key: "industrii_godoo_target",       label: "Industrii Godoo",       color: "#0369a1" },
+  {
+    summaryKey: "leenjii",
+    key: "leenjii_target",
+    label: "Leenjii",
+    color: "#1e40af",
+  },
+  {
+    summaryKey: "carraa_hojii_dhaabbii",
+    key: "carraa_hojii_dhaabbii_target",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+  },
+  {
+    summaryKey: "carraa_hojii_qacarrii",
+    key: "carraa_hojii_qacarrii_target",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+  },
+  {
+    summaryKey: "qusannnaa",
+    key: "qusannaa_target",
+    label: "Qusannaa Haawaasaa",
+    color: "#475569",
+  },
+  {
+    summaryKey: "qusanna_dirqii",
+    key: "qusanna_dirqii_target",
+    label: "Qusanna Dirqii",
+    color: "#475569",
+  },
+  {
+    summaryKey: "liqii",
+    key: "liqii_target",
+    label: "Kenna Liqii",
+    color: "#b45309",
+  },
+  {
+    summaryKey: "deebii_liqii_bilchaate",
+    key: "deebii_liqii_bilchaate_target",
+    label: "Deebii Liqii Bilchaate",
+    color: "#065f46",
+  },
+  {
+    summaryKey: "deebii_liqii_bulee",
+    key: "deebii_liqii_bulee_target",
+    label: "Deebii Liqii Bulee",
+    color: "#dc2626",
+  },
+  {
+    summaryKey: "industrii_godoo",
+    key: "industrii_godoo_target",
+    label: "Industrii Godoo",
+    color: "#0369a1",
+  },
 ];
 
 // ─── CarraaHojii Annual Plan Section (read-only, same style as AnnualPlanSection) ──
@@ -1621,7 +1937,9 @@ function CarraaHojiiAnnualPlanSection({ u }) {
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
             className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+            style={{
+              background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+            }}
           >
             <PlanIcon />
             <div>
@@ -1635,25 +1953,45 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           </div>
           <div className="px-6 py-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {CARRAA_PLAN_FIELDS.map(({ planKey, label, bg, border, text, color }) => (
-                <div key={planKey} className={`rounded-xl border ${border} ${bg} px-5 py-4`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <p className={`text-xs font-bold uppercase tracking-wide ${text}`}>{label}</p>
+              {CARRAA_PLAN_FIELDS.map(
+                ({ planKey, label, bg, border, text, color }) => (
+                  <div
+                    key={planKey}
+                    className={`rounded-xl border ${border} ${bg} px-5 py-4`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                      <p
+                        className={`text-xs font-bold uppercase tracking-wide ${text}`}
+                      >
+                        {label}
+                      </p>
+                    </div>
+                    <p className="text-3xl font-extrabold text-[#1e293b]">
+                      {(plan[planKey] ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
                   </div>
-                  <p className="text-3xl font-extrabold text-[#1e293b]">
-                    {(plan[planKey] ?? 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
-                </div>
-              ))}
+                )
+              )}
             </div>
             <div className="mt-5 flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-3">
-              <svg className="w-5 h-5 text-[#1e40af] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+              <svg
+                className="w-5 h-5 text-[#1e40af] flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4M12 16h.01" />
               </svg>
               <p className="text-[#1e40af] text-sm">
-                These targets were assigned by your sub-city office. Contact them if the numbers need correction.
+                These targets were assigned by your sub-city office. Contact
+                them if the numbers need correction.
               </p>
             </div>
           </div>
@@ -1663,10 +2001,12 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3">
             <PlanIcon />
           </div>
-          <p className="text-[#334155] font-semibold mb-1">No Plan Assigned Yet</p>
+          <p className="text-[#334155] font-semibold mb-1">
+            No Plan Assigned Yet
+          </p>
           <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved a Carraa Hojii plan for {year} yet.
-            Once they do, your targets will appear here automatically.
+            Your sub-city office hasn't saved a Carraa Hojii plan for {year}{" "}
+            yet. Once they do, your targets will appear here automatically.
           </p>
         </div>
       )}
@@ -1714,17 +2054,29 @@ function CarraaHojiiAnalysisSection() {
   const handleGenerateReport = async () => {
     const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
     const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
-    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    if (!dateFrom || !dateTo) {
+      setCustomError("Invalid date selection.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      setCustomError("Start date must be before end date.");
+      return;
+    }
     setCustomLoading(true);
     setCustomError("");
     setCustomSummary(null);
     try {
       const d = await fetchSummaryByDateRange(dateFrom, dateTo);
       setCustomSummary(d.summary);
-      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
-    } catch { setCustomError("Failed to load custom range data."); }
-    finally { setCustomLoading(false); }
+      setCustomRange({
+        from: `${startMonth} ${startDay}`,
+        to: `${endMonth} ${endDay}`,
+      });
+    } catch {
+      setCustomError("Failed to load custom range data.");
+    } finally {
+      setCustomLoading(false);
+    }
   };
 
   const isCustom = period === "custom";
@@ -1736,71 +2088,140 @@ function CarraaHojiiAnalysisSection() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Carraa Hojii — Work Analysis</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">Actual performance vs assigned annual plan targets</p>
+          <h1 className="text-2xl font-bold text-[#1e293b]">
+            Carraa Hojii — Work Analysis
+          </h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Actual performance vs assigned annual plan targets
+          </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            onChange={(e) => {
+              setPeriod(e.target.value);
+              setCustomSummary(null);
+              setCustomRange(null);
+            }}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
-            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            {PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       {!plan && (
         <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-amber-500 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-[#1a3a5c] text-sm">No annual plan assigned yet. Targets will appear once the sub-city saves the plan.</p>
+          <p className="text-[#1a3a5c] text-sm">
+            No annual plan assigned yet. Targets will appear once the sub-city
+            saves the plan.
+          </p>
         </div>
       )}
 
       {/* Custom date picker */}
       {isCustom && (
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <p className="text-sm font-semibold text-[#334155] mb-4">
+            Select Custom Date Range (Afaan Oromo Calendar)
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
-              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))} min="2000" max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                Fiscal Year
+              </label>
+              <input
+                type="number"
+                value={customYear}
+                onChange={(e) => setCustomYear(Number(e.target.value))}
+                min="2000"
+                max="2100"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                Start Date
+              </label>
               <div className="flex gap-2">
-                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={startMonth}
+                  onChange={(e) => setStartMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={startDay}
+                  onChange={(e) => setStartDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">
+                End Date
+              </label>
               <div className="flex gap-2">
-                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                <select
+                  value={endMonth}
+                  onChange={(e) => setEndMonth(e.target.value)}
+                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_MONTHS.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name}
+                    </option>
+                  ))}
                 </select>
-                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                <select
+                  value={endDay}
+                  onChange={(e) => setEndDay(Number(e.target.value))}
+                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                >
+                  {OROMO_DAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
-          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
-          <button onClick={handleGenerateReport} disabled={customLoading}
-            className="flex items-center gap-2 bg-[#1e40af] hover:bg-[#1e3a8a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+          {customError && (
+            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
+          )}
+          <button
+            onClick={handleGenerateReport}
+            disabled={customLoading}
+            className="flex items-center gap-2 bg-[#1e40af] hover:bg-[#1e3a8a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
             <AnalysisIcon />
             {customLoading ? "Generating..." : "Generate Report"}
           </button>
@@ -1812,7 +2233,9 @@ function CarraaHojiiAnalysisSection() {
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
         </div>
       ) : !isCustom && error ? (
-        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+          {error}
+        </div>
       ) : isCustom && customLoading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
@@ -1821,44 +2244,105 @@ function CarraaHojiiAnalysisSection() {
         <>
           <div className="mb-5 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-2.5 flex items-center gap-2">
             <span className="text-[#1e40af] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+              {isCustom && customRange
+                ? `${customRange.from} — ${customRange.to}`
+                : `${periodLabel} View`}
             </span>
-            {!isCustom && <><span className="text-[#1e40af] text-xs">—</span><span className="text-[#1e40af] text-xs">Targets partitioned from annual plan</span></>}
+            {!isCustom && (
+              <>
+                <span className="text-[#1e40af] text-xs">—</span>
+                <span className="text-[#1e40af] text-xs">
+                  Targets partitioned from annual plan
+                </span>
+              </>
+            )}
           </div>
 
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
-              const annualTarget = plan ? (plan[key] ?? 0) : 0;
-              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
-              const actual = activeSummary ? (activeSummary[summaryKey] ?? 0) : 0;
-              const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 100) : 0;
-              const size = 130, sw = 13, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+              const annualTarget = plan ? plan[key] ?? 0 : 0;
+              const periodTarget = isCustom
+                ? 0
+                : partitionTarget(annualTarget, period);
+              const actual = activeSummary ? activeSummary[summaryKey] ?? 0 : 0;
+              const pct =
+                periodTarget > 0
+                  ? Math.min(Math.round((actual / periodTarget) * 100), 100)
+                  : 0;
+              const size = 130,
+                sw = 13,
+                r = (size - sw) / 2,
+                circ = 2 * Math.PI * r;
               const offset = circ - (pct / 100) * circ;
               return (
-                <div key={key} className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm">
-                  <p className="text-xs font-bold text-[#334155] mb-2 text-center">{label}</p>
-                  <div className="relative" style={{ width: size, height: size }}>
-                    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={sw}
-                        strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                        style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                <div
+                  key={key}
+                  className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm"
+                >
+                  <p className="text-xs font-bold text-[#334155] mb-2 text-center">
+                    {label}
+                  </p>
+                  <div
+                    className="relative"
+                    style={{ width: size, height: size }}
+                  >
+                    <svg
+                      width={size}
+                      height={size}
+                      style={{ transform: "rotate(-90deg)" }}
+                    >
+                      <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={r}
+                        fill="none"
+                        stroke="#f3f4f6"
+                        strokeWidth={sw}
+                      />
+                      <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={r}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={sw}
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                      />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xl font-extrabold leading-none" style={{ color }}>{pct}%</span>
-                      <span className="text-xs text-[#94a3b8] mt-0.5">done</span>
+                      <span
+                        className="text-xl font-extrabold leading-none"
+                        style={{ color }}
+                      >
+                        {pct}%
+                      </span>
+                      <span className="text-xs text-[#94a3b8] mt-0.5">
+                        done
+                      </span>
                     </div>
                   </div>
                   <div className="mt-3 w-full space-y-1">
                     <div className="flex justify-between text-xs text-[#64748b]">
-                      <span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span>
+                      <span>Actual</span>
+                      <span className="font-semibold text-[#1e293b]">
+                        {actual.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between text-xs text-[#64748b]">
-                      <span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span>
+                      <span>Target</span>
+                      <span className="font-semibold text-[#1e293b]">
+                        {periodTarget.toLocaleString()}
+                      </span>
                     </div>
                     <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-1">
-                      <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, backgroundColor: color }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1870,46 +2354,87 @@ function CarraaHojiiAnalysisSection() {
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
               <p className="text-sm font-semibold text-[#334155]">
-                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Summary Table`}
+                {isCustom && customRange
+                  ? `${customRange.from} — ${customRange.to} Summary`
+                  : `${periodLabel} Summary Table`}
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9]">
-                    {["Category", isCustom ? "Total Actual" : "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement"].map((h) => (
-                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                    {[
+                      "Category",
+                      isCustom ? "Total Actual" : "Annual Target",
+                      isCustom ? "—" : "Period Target",
+                      "Actual",
+                      "Achievement",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
-                    const annualTarget = plan ? (plan[key] ?? 0) : 0;
-                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
-                    const actual = activeSummary ? (activeSummary[summaryKey] ?? 0) : 0;
-                    const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
-                    return (
-                      <tr key={key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
-                        <td className="px-5 py-3 font-medium text-[#1e293b]">
-                          <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                            {label}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : annualTarget.toLocaleString()}</td>
-                        <td className="px-5 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
-                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
-                        <td className="px-5 py-3">
-                          {isCustom ? "—" : (
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${color}22`, color }}>
-                              {pct}%
+                  {CARRAA_SUMMARY_KEYS.map(
+                    ({ summaryKey, key, label, color }) => {
+                      const annualTarget = plan ? plan[key] ?? 0 : 0;
+                      const periodTarget = isCustom
+                        ? 0
+                        : partitionTarget(annualTarget, period);
+                      const actual = activeSummary
+                        ? activeSummary[summaryKey] ?? 0
+                        : 0;
+                      const pct =
+                        periodTarget > 0
+                          ? Math.min(
+                              Math.round((actual / periodTarget) * 100),
+                              999
+                            )
+                          : 0;
+                      return (
+                        <tr
+                          key={key}
+                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                        >
+                          <td className="px-5 py-3 font-medium text-[#1e293b]">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: color }}
+                              />
+                              {label}
                             </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="px-5 py-3 text-[#64748b]">
+                            {isCustom ? "—" : annualTarget.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3 text-[#64748b]">
+                            {isCustom ? "—" : periodTarget.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                            {actual.toLocaleString()}
+                          </td>
+                          <td className="px-5 py-3">
+                            {isCustom ? (
+                              "—"
+                            ) : (
+                              <span
+                                className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                                style={{ backgroundColor: `${color}22`, color }}
+                              >
+                                {pct}%
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2033,6 +2558,10 @@ function BuusaaSubmitForm({ u }) {
         buusi_jirataa: Number(form.buuusiJirataa || 0),
         buusi_daldalaa: Number(form.buuusiDaldalaa || 0),
         buusi_daldalaa_fi_gumaataa: Number(form.buuusiDaldalaaFiGumaataa || 0),
+        gumaata_jirataa: Number(form.gumaataJirataa || 0),
+        inisheetivii_buusaa_gonofaa: Number(
+          form.inisheetiviiBuusaaGonofaa || 0
+        ),
         gumaata_midhaani: Number(form.gumaataMootummaa || 0),
         nyaata_barataa: Number(form.nyaataBarataa || 0),
         zayitii: Number(form.zayitii || 0),
@@ -2619,7 +3148,7 @@ function RevenueSubmitForm({ u }) {
                               style={{
                                 backgroundColor:
                                   REVENUE_CATEGORIES.find(
-                                    (c) => c.id === e.categoryId,
+                                    (c) => c.id === e.categoryId
                                   )?.color ?? "#6b7280",
                               }}
                             />
@@ -2721,8 +3250,8 @@ const REVENUE_CHART_FIELDS = [
 // Simple bar chart — better than ring charts for revenue (no target, just totals)
 function RevenueBarChart({ fields, summary }) {
   const max = Math.max(
-    ...fields.map((f) => (summary ? (summary[f.key] ?? 0) : 0)),
-    1,
+    ...fields.map((f) => (summary ? summary[f.key] ?? 0 : 0)),
+    1
   );
   return (
     <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
@@ -2733,7 +3262,7 @@ function RevenueBarChart({ fields, summary }) {
       </div>
       <div className="px-5 py-5 space-y-4">
         {fields.map(({ key, label, color }) => {
-          const val = summary ? (summary[key] ?? 0) : 0;
+          const val = summary ? summary[key] ?? 0 : 0;
           const pct = max > 0 ? Math.round((val / max) * 100) : 0;
           return (
             <div key={key}>
@@ -3002,7 +3531,7 @@ function RevenueAnalysis() {
                     <p className="text-2xl font-extrabold text-[#1e293b]">
                       ETB{" "}
                       {(annualSummary
-                        ? (annualSummary[key] ?? 0)
+                        ? annualSummary[key] ?? 0
                         : 0
                       ).toLocaleString()}
                     </p>
@@ -3103,12 +3632,12 @@ function WorksOverview({ u, onSelect }) {
               {id === "buusaa"
                 ? "Buusaa Gonofaa daily, weekly and monthly reports"
                 : id === "carraaHojii"
-                  ? "Employment and job creation reports"
-                  : id === "qonna"
-                    ? "Agriculture sector reports"
-                    : id === "revenue"
-                      ? "Revenue collection and financial reports"
-                      : "Content coming soon"}
+                ? "Employment and job creation reports"
+                : id === "qonna"
+                ? "Agriculture sector reports"
+                : id === "revenue"
+                ? "Revenue collection and financial reports"
+                : "Content coming soon"}
             </p>
             <button
               onClick={() => onSelect(id)}
@@ -3195,7 +3724,11 @@ export default function WoRedaDashboard() {
           setActiveNav(id);
           setActiveWork(null);
         }}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${
+          active
+            ? "bg-white/15 text-white"
+            : "text-white/70 hover:bg-white/10 hover:text-white"
+        }`}
       >
         <Icon />
         {!collapsed && <span className="truncate">{label}</span>}
@@ -3239,7 +3772,11 @@ export default function WoRedaDashboard() {
                 setWorksOpen((p) => !p);
                 setActiveWork(null);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${activeNav === "works" ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${
+                activeNav === "works"
+                  ? "bg-white/15 text-white"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+              }`}
             >
               <WorksIcon />
               {!collapsed && (
@@ -3267,7 +3804,11 @@ export default function WoRedaDashboard() {
                     <div key={id}>
                       <button
                         onClick={handleRowClick}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${anySubActive ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          anySubActive
+                            ? "bg-white/15 text-white"
+                            : "text-white/60 hover:bg-white/10 hover:text-white"
+                        }`}
                       >
                         <Icon />
                         <span className="flex-1 truncate text-left">
@@ -3283,7 +3824,11 @@ export default function WoRedaDashboard() {
                               setActiveWork(`${id}:plan`);
                               setExpandedWork(id);
                             }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isPlanActive ? "bg-white/15 text-white" : "text-white/50 hover:bg-white/10 hover:text-white"}`}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              isPlanActive
+                                ? "bg-white/15 text-white"
+                                : "text-white/50 hover:bg-white/10 hover:text-white"
+                            }`}
                           >
                             <PlanIcon />
                             <span className="truncate">Annual Plan</span>
@@ -3294,7 +3839,11 @@ export default function WoRedaDashboard() {
                               setActiveWork(`${id}:analysis`);
                               setExpandedWork(id);
                             }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isAnalysisActive ? "bg-white/15 text-white" : "text-white/50 hover:bg-white/10 hover:text-white"}`}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              isAnalysisActive
+                                ? "bg-white/15 text-white"
+                                : "text-white/50 hover:bg-white/10 hover:text-white"
+                            }`}
                           >
                             <AnalysisIcon />
                             <span className="truncate">Work Analysis</span>
@@ -3477,14 +4026,16 @@ export default function WoRedaDashboard() {
               if (sub === "plan") {
                 if (wid === "buusaa") return <AnnualPlanSection u={u} />;
                 if (wid === "qonna") return <QonnaAnnualPlanSection u={u} />;
-                if (wid === "carraaHojii") return <CarraaHojiiAnnualPlanSection u={u} />;
+                if (wid === "carraaHojii")
+                  return <CarraaHojiiAnnualPlanSection u={u} />;
                 return <PlaceholderAnnualPlan title={work?.label} u={u} />;
               }
               if (sub === "analysis") {
                 if (wid === "buusaa") return <AnalysisSection />;
                 if (wid === "revenue") return <RevenueAnalysis />;
                 if (wid === "qonna") return <QonnaAnalysisSection />;
-                if (wid === "carraaHojii") return <CarraaHojiiAnalysisSection />;
+                if (wid === "carraaHojii")
+                  return <CarraaHojiiAnalysisSection />;
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
               }
               if (wid === "buusaa") return <BuusaaSubmitForm u={u} />;

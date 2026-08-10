@@ -1,6 +1,6 @@
 const supabase = require("../config/supabase");
 
-// Existing generic report creation
+// Existing generic report creation — FIXED mapping
 const createReport = async (req, res) => {
   try {
     const report = {
@@ -14,8 +14,11 @@ const createReport = async (req, res) => {
       hubannoo_uummuu: req.body.hubannoo_uummuu,
       horannaa_misensaa: req.body.horannaa_misensaa,
       buusi_jirataa: req.body.buusi_jirataa,
+      gumaata_jirataa: req.body.gumaata_jirataa,
       buusi_daldalaa: req.body.buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa: req.body.buusi_daldalaa_fi_gumaataa,
+      // Map frontend's "inisheetivii..." to database column "inisheetevii..."
+      inisheetevii_buusaa_gonofaa: req.body.inisheetivii_buusaa_gonofaa,
       gumaata_midhaani: req.body.gumaata_midhaani,
       nyaata_barataa: req.body.nyaata_barataa,
       zayitii: req.body.zayitii,
@@ -41,18 +44,19 @@ const createReport = async (req, res) => {
   }
 };
 
-// Buusaa Gonofaa report
+// Buusaa Gonofaa report — FIXED mapping
 const submitBuusaaReport = async (req, res) => {
   try {
     const {
-      user_id,
       report_date,
       report_type,
       hubannoo_uummuu,
       horannaa_misensaa,
       buusi_jirataa,
+      gumaata_jirataa,
       buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa,
+      inisheetivii_buusaa_gonofaa, // ← frontend sends this
       gumaata_midhaani,
       nyaata_barataa,
       zayitii,
@@ -62,14 +66,21 @@ const submitBuusaaReport = async (req, res) => {
 
     const { error } = await supabase.from("buusaa_reports").insert([
       {
-        user_id,
+        user_id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+
         report_date,
         report_type,
+
         hubannoo_uummuu,
         horannaa_misensaa,
         buusi_jirataa,
+        gumaata_jirataa,
         buusi_daldalaa,
         buusi_daldalaa_fi_gumaataa,
+        // Map to the exact database column name
+        inisheetevii_buusaa_gonofaa: inisheetivii_buusaa_gonofaa,
         gumaata_midhaani,
         nyaata_barataa,
         zayitii,
@@ -266,11 +277,9 @@ const submitRevenueReport = async (req, res) => {
   try {
     const { entries, total, report_date } = req.body;
 
-    // Get logged‑in user from request (set by authMiddleware)
     const user = req.user;
     const username = user?.username || "anonymous";
 
-    // Build rows for Supabase
     const rows = entries.map((entry) => ({
       username,
       gosa_galii: entry.category,
@@ -289,12 +298,10 @@ const submitRevenueReport = async (req, res) => {
         .json({ message: error.message || "Failed to submit revenue report." });
     }
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Revenue report submitted successfully.",
-      });
+    res.status(201).json({
+      success: true,
+      message: "Revenue report submitted successfully.",
+    });
   } catch (error) {
     console.error("Revenue submit error:", error);
     res
@@ -311,5 +318,5 @@ module.exports = {
   submitQonnaReport,
   getCarraaHojiiReports,
   getQonnaReports,
-  submitRevenueReport, // <-- new export
+  submitRevenueReport,
 };
