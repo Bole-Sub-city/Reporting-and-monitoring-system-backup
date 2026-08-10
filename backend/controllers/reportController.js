@@ -136,33 +136,33 @@ const submitCarraaHojiiReport = async (req, res) => {
     const {
       report_date,
       report_type,
-      qusannnaa,
-      liqii,
-      qusanna_dirqii,
-      deebii_liqii_bilchaate,
-      deebii_liqii_bulee,
+      leenjii,
       carraa_hojii_dhaabbii,
       carraa_hojii_qacarrii,
-      leenjii,
+      qusannaa_haawaasaa,
+      qusanna_dirqii,
+      kenna_liqii,
+      deebii_liqii_bilchaate,
+      deebii_liqii_bulee,
       industrii_godoo,
       yaada_gudinaa,
     } = req.body;
 
-    const { error } = await supabase.from("carraa_hojii_uummuu").insert([
+    const { error } = await supabase.from("carraa_hojii_uumuu").insert([
       {
         user_id: req.user.id,
         username: req.user.username,
         role: req.user.role,
         report_date,
         report_type,
-        qusannnaa,
-        liqii,
-        qusanna_dirqii,
-        deebii_liqii_bilchaate,
-        deebii_liqii_bulee,
+        leenjii,
         carraa_hojii_dhaabbii,
         carraa_hojii_qacarrii,
-        leenjii,
+        qusannaa_haawaasaa,
+        qusanna_dirqii,
+        kenna_liqii,
+        deebii_liqii_bilchaate,
+        deebii_liqii_bulee,
         industrii_godoo,
         yaada_gudinaa,
       },
@@ -174,7 +174,7 @@ const submitCarraaHojiiReport = async (req, res) => {
 
     res
       .status(201)
-      .json({ message: "Carraa Hojii Uummuu report submitted successfully." });
+      .json({ message: "Carraa Hojii Uumuu report submitted successfully." });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -228,7 +228,7 @@ const getCarraaHojiiReports = async (req, res) => {
     const { user_id } = req.params;
 
     const { data, error } = await supabase
-      .from("carraa_hojii_uummuu")
+      .from("carraa_hojii_uumuu")
       .select("*")
       .eq("user_id", user_id)
       .order("report_date", { ascending: false });

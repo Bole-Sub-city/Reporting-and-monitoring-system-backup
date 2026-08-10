@@ -457,7 +457,7 @@ const CARRAA_HOJII_FIELDS = [
   },
 
   {
-    name: "qusannaa",
+    name: "qusannaa_haawaasaa",
     label: "Qusannaa Haawaasaa",
     required: true,
     type: "number",
@@ -469,7 +469,12 @@ const CARRAA_HOJII_FIELDS = [
     required: true,
     type: "number",
   },
-  { name: "liqii", label: "Kenna Liqii ", required: true, type: "number" },
+  {
+    name: "kenna_liqii",
+    label: "Kenna Liqii ",
+    required: true,
+    type: "number",
+  },
   {
     name: "deebii_liqii_bilchaate",
     label: "Deebii Liqii Bilchaate",
@@ -602,7 +607,7 @@ const WORKS = [
   },
   {
     id: "carraaHojii",
-    label: "Carraa Hojii Uummuu",
+    label: "Carraa Hojii Uumuu",
     icon: JobsIcon,
     color: "bg-[#eff6ff] text-[#1e40af]",
   },
@@ -4045,7 +4050,7 @@ export default function WoRedaDashboard() {
                     u={u}
                     fields={CARRAA_HOJII_FIELDS}
                     submitFn={submitCarraaHojiiReport}
-                    title="Carraa Hojii Uummuu"
+                    title="Carraa Hojii Uumuu"
                     headerColor="linear-gradient(90deg,#1e40af 0%,#2563eb 100%)"
                   />
                 );
