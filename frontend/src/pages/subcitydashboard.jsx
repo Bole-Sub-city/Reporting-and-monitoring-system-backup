@@ -664,7 +664,7 @@ function BuusaaPlanPage({ onSave }) {
 }
 
 // ─── Qonna Annual Plan Page ───────────────────────────────────────────────────
-// Furdisa animal types — easy to extend when the planner confirms the final list
+// Furdisa animal types
 const FURDISA_ANIMAL_TYPES = [
   { value: "cattle", label: "Cattle" },
   { value: "goat", label: "Goat" },
@@ -673,169 +673,147 @@ const FURDISA_ANIMAL_TYPES = [
   { value: "other", label: "Other (specify)" },
 ];
 
-const EMPTY_QONNA_TARGETS = {
-  furdisa: "",
-  annan: "",
-  lukkuu: "",
-  booyee: "",
-  kannisaa: "",
-  qurxummii: "",
+// ── QonnaPlanRow ──────────────────────────────────────────────────────────────
+// Each category asks:
+//   1. How many "houses" (mana/gaaguraa/ponds depending on category)
+//   2. How many hectares per "house"  → total land = houses × ha/house
+//   3. How many animals/units per "house" → total animals = houses × units/house
+//      (for Annan: "how many cows per house", for Lukkuu: chickens per house, etc.)
+//
+// Config per category:
+//   houseLabel   – label for field 1 (the "house" count)
+//   haLabel      – label for field 2 (ha per house)
+//   unitLabel    – label for field 3 (animals/units per house)
+//   unitName     – short name used in the info row (e.g. "horii", "lukkuu")
+const QONNA_ROW_CFG = {
+  furdisa:   { houseLabel: "Lakk. Mana (Houses)",          haLabel: "Hektaara / Mana (ha)",  unitLabel: "Lakk. Horii / Mana",        unitName: "horii"    },
+  annan:     { houseLabel: "Lakk. Mana (Houses)",          haLabel: "Hektaara / Mana (ha)",  unitLabel: "Lakk. Sa'a / Mana (Cows)",  unitName: "sa'a"     },
+  lukkuu:    { houseLabel: "Lakk. Mana (Houses)",          haLabel: "Hektaara / Mana (ha)",  unitLabel: "Lakk. Lukkuu / Mana",       unitName: "lukkuu"   },
+  booyee:    { houseLabel: "Lakk. Mana (Houses)",          haLabel: "Hektaara / Mana (ha)",  unitLabel: "Lakk. Booyyee / Mana",      unitName: "booyyee"  },
+  kannisaa:  { houseLabel: "Lakk. Gaaguraa (Hives)",       haLabel: "Hektaara / Gaaguraa (ha)", unitLabel: "Lakk. Kannisaa / Gaaguraa", unitName: "kannisaa" },
+  qurxummii: { houseLabel: "Lakk. Dhaabbii (Ponds)",       haLabel: "Hektaara / Dhaabbii (ha)", unitLabel: "Lakk. Qurxummii / Dhaabbii", unitName: "qurxummii" },
 };
 
-const EMPTY_QONNA_STD = {
-  furdisa: "",
-  annan: "",
-  lukkuu: "",
-  booyee: "",
-  kannisaa: "",
-  qurxummii: "",
+const EMPTY_QONNA_FORM = {
+  furdisa:   { houses: "", haPerHouse: "", unitsPerHouse: "" },
+  annan:     { houses: "", haPerHouse: "", unitsPerHouse: "" },
+  lukkuu:    { houses: "", haPerHouse: "", unitsPerHouse: "" },
+  booyee:    { houses: "", haPerHouse: "", unitsPerHouse: "" },
+  kannisaa:  { houses: "", haPerHouse: "", unitsPerHouse: "" },
+  qurxummii: { houses: "", haPerHouse: "", unitsPerHouse: "" },
 };
 
-function QonnaCapacityRow({ cat, std, onStdChange, resource, onResourceChange }) {
-  // Forward: resource / std = capacity
-  const stdNum = Number(std);
-  const resNum = Number(resource);
-  const capacity =
-    stdNum > 0 && resNum > 0 ? Math.floor(resNum / stdNum) : null;
+function QonnaPlanRow({ cat, form, onChange }) {
+  const cfg = QONNA_ROW_CFG[cat.key];
+  const houses       = Number(form.houses);
+  const haPerHouse   = Number(form.haPerHouse);
+  const unitsPerHouse = Number(form.unitsPerHouse);
 
-  // Reverse: target * std = required resource
-  // (shown separately in the target input)
+  // Calculated outputs
+  const totalLand   = (houses > 0 && haPerHouse > 0)    ? Math.round(houses * haPerHouse * 100) / 100 : null;
+  const totalUnits  = (houses > 0 && unitsPerHouse > 0)  ? houses * unitsPerHouse : null;
 
-  return (
-    <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <span
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: cat.color }}
-        />
-        <p className="text-sm font-semibold text-[#1e293b]">{cat.label}</p>
-        <span className="text-xs text-[#94a3b8]">— {cat.description}</span>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Available resource */}
-        <div>
-          <label className="block text-xs font-medium text-[#64748b] mb-1">
-            Available Resource
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={resource}
-            onChange={(e) => onResourceChange(e.target.value)}
-            placeholder="e.g. 80 ha / ponds / sites"
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
-          />
-        </div>
-        {/* Planning standard */}
-        <div>
-          <label className="block text-xs font-medium text-[#64748b] mb-1">
-            Planning Standard (resource / {cat.unit})
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={std}
-            onChange={(e) => onStdChange(e.target.value)}
-            placeholder="e.g. 0.2"
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
-          />
-        </div>
-        {/* Estimated capacity */}
-        <div>
-          <label className="block text-xs font-medium text-[#64748b] mb-1">
-            Estimated Capacity
-          </label>
-          {resource === "" || std === "" ? (
-            <div className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-xs text-[#94a3b8] bg-[#f1f5f9]">
-              Planning standard required to calculate capacity.
-            </div>
-          ) : stdNum <= 0 ? (
-            <div className="w-full border border-[#fecaca] rounded-lg px-3 py-2 text-xs text-[#dc2626] bg-[#fef2f2]">
-              Standard must be &gt; 0.
-            </div>
-          ) : (
-            <div
-              className="w-full border rounded-lg px-3 py-2 text-sm font-bold bg-white"
-              style={{ borderColor: cat.color, color: cat.color }}
-            >
-              {capacity !== null ? capacity.toLocaleString() : "—"}{" "}
-              <span className="text-xs font-normal text-[#64748b]">{cat.unit}</span>
-            </div>
-          )}
-        </div>
-      </div>
-      {capacity !== null && capacity > 0 && (
-        <p className="text-xs text-[#64748b] bg-[#eef4fb] border border-[#dce8f4] rounded-lg px-3 py-2">
-          ℹ Capacity is <strong>{capacity.toLocaleString()} {cat.unit}</strong>.
-          Set your annual target below it may differ from capacity based on the actual plan.
-        </p>
-      )}
-    </div>
-  );
-}
-
-function QonnaTargetRow({ cat, target, onTargetChange, std }) {
-  const stdNum = Number(std);
-  const targetNum = Number(target);
-  // Reverse calc: required resource = target × std
-  const requiredRes =
-    stdNum > 0 && targetNum > 0
-      ? Math.round(targetNum * stdNum * 100) / 100
-      : null;
+  const inputCls = "w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]";
+  const readonlyCls = "w-full border-2 rounded-lg px-3 py-2.5 text-sm font-bold bg-white";
+  const emptyReadonly = "w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-xs text-[#94a3b8] bg-[#f1f5f9]";
 
   return (
     <div
-      className="rounded-xl border px-4 py-4"
+      className="rounded-xl border px-4 py-5 space-y-4"
       style={{ borderColor: cat.borderColor, backgroundColor: cat.bgColor }}
     >
-      <div className="flex items-center gap-2 mb-3">
-        <span
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: cat.color }}
-        />
-        <p className="text-sm font-semibold" style={{ color: cat.color }}>
-          {cat.label} — Annual Target
-        </p>
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+        <p className="text-sm font-semibold" style={{ color: cat.color }}>{cat.label}</p>
+        <span className="text-xs text-[#94a3b8] ml-1">— {cat.description}</span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+
+      {/* Row 1: inputs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Field 1: number of houses / gaaguraa / ponds */}
         <div>
-          <label className="block text-xs font-medium text-[#64748b] mb-1">
-            Annual Target ({cat.unit})
-          </label>
+          <label className="block text-xs font-medium text-[#64748b] mb-1.5">{cfg.houseLabel}</label>
           <input
-            type="number"
-            min="0"
-            value={target}
-            onChange={(e) => onTargetChange(e.target.value)}
-            placeholder="Enter target"
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            type="number" min="0" step="1"
+            value={form.houses}
+            onChange={(e) => onChange("houses", e.target.value)}
+            placeholder="0"
+            className={inputCls}
           />
         </div>
-        {requiredRes !== null && (
-          <div>
-            <label className="block text-xs font-medium text-[#64748b] mb-1">
-              Required Resource (reverse calc)
-            </label>
-            <div
-              className="w-full border rounded-lg px-3 py-2.5 text-sm font-semibold bg-white"
-              style={{ borderColor: cat.color, color: cat.color }}
-            >
-              {requiredRes.toLocaleString()} units
+
+        {/* Field 2: ha per house */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1.5">{cfg.haLabel}</label>
+          <input
+            type="number" min="0" step="any"
+            value={form.haPerHouse}
+            onChange={(e) => onChange("haPerHouse", e.target.value)}
+            placeholder="fkn. 0.5"
+            className={inputCls}
+          />
+        </div>
+
+        {/* Computed: total land */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1.5">
+            Qophi Lafaa Waliigalaa (ha) <span className="text-[#94a3b8]">(auto)</span>
+          </label>
+          {totalLand !== null ? (
+            <div className={readonlyCls} style={{ borderColor: cat.color, color: cat.color }}>
+              {totalLand.toLocaleString()} <span className="text-xs font-normal text-[#64748b] ml-1">ha</span>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className={emptyReadonly}>Mana fi hektaara galchi…</div>
+          )}
+        </div>
       </div>
+
+      {/* Row 2: units per house → total units */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Field 3: animals / units per house */}
+        <div>
+          <label className="block text-xs font-medium text-[#64748b] mb-1.5">{cfg.unitLabel}</label>
+          <input
+            type="number" min="0" step="1"
+            value={form.unitsPerHouse}
+            onChange={(e) => onChange("unitsPerHouse", e.target.value)}
+            placeholder="0"
+            className={inputCls}
+          />
+        </div>
+
+        {/* Computed: total animals */}
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-[#64748b] mb-1.5">
+            Lakk. {cfg.unitName} Waliigalaa <span className="text-[#94a3b8]">(auto)</span>
+          </label>
+          {totalUnits !== null ? (
+            <div className={readonlyCls} style={{ borderColor: cat.color, color: cat.color }}>
+              {totalUnits.toLocaleString()} <span className="text-xs font-normal text-[#64748b] ml-1">{cfg.unitName}</span>
+            </div>
+          ) : (
+            <div className={emptyReadonly}>Mana fi {cfg.unitName}/mana galchi…</div>
+          )}
+        </div>
+      </div>
+
+      {/* Info hint */}
+      {totalLand !== null && totalUnits !== null && (
+        <div className="bg-white/60 border rounded-lg px-3 py-2 text-xs text-[#64748b] space-y-1" style={{ borderColor: cat.borderColor }}>
+          <div>ℹ <strong>{form.houses}</strong> mana × <strong>{form.haPerHouse} ha</strong> = <strong style={{ color: cat.color }}>{totalLand} ha qophi lafaa</strong></div>
+          <div>ℹ <strong>{form.houses}</strong> mana × <strong>{form.unitsPerHouse} {cfg.unitName}/mana</strong> = <strong style={{ color: cat.color }}>{totalUnits.toLocaleString()} {cfg.unitName} waliigalaa</strong></div>
+        </div>
+      )}
     </div>
   );
 }
 
 function QonnaPlanPage() {
   const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
-  const [targets, setTargets] = useState({ ...EMPTY_QONNA_TARGETS });
-  const [stds, setStds] = useState({ ...EMPTY_QONNA_STD });
-  const [resources, setResources] = useState({ ...EMPTY_QONNA_STD });
+  // Each category has { houses, haPerHouse, unitsPerHouse }
+  const [forms, setForms] = useState({ ...EMPTY_QONNA_FORM });
   // Furdisa: animal type
   const [furdisaType, setFurdisaType] = useState("cattle");
   const [furdisaOther, setFurdisaOther] = useState("");
@@ -845,13 +823,22 @@ function QonnaPlanPage() {
   const [saveError, setSaveError] = useState("");
 
   const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
-  const handleTarget = (key, val) => setTargets((p) => ({ ...p, [key]: val }));
-  const handleStd = (key, val) => setStds((p) => ({ ...p, [key]: val }));
-  const handleResource = (key, val) => setResources((p) => ({ ...p, [key]: val }));
+  const handleForm = (key, field, val) =>
+    setForms((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
   const parsed = parsePcts(pcts);
   const pctValid = validatePcts(parsed);
-  const hasAnyTarget = QONNA_CATEGORIES.some((c) => Number(targets[c.key] || 0) > 0);
+
+  // Compute total animals per category from houses x unitsPerHouse
+  const totalAnimals = Object.fromEntries(
+    QONNA_CATEGORIES.map((c) => {
+      const f = forms[c.key];
+      const h = Number(f.houses);
+      const u = Number(f.unitsPerHouse);
+      return [c.key, h > 0 && u > 0 ? h * u : 0];
+    }),
+  );
+  const hasAnyTarget = QONNA_CATEGORIES.some((c) => totalAnimals[c.key] > 0);
   const canSubmit = hasAnyTarget && pctValid.ok;
 
   const handleSave = async (e) => {
@@ -861,13 +848,10 @@ function QonnaPlanPage() {
     setSaveError("");
     setSaved(false);
 
-    // Build qophi object for API
+    // Save total animals (houses x unitsPerHouse) as the target for each category
     const qophi = Object.fromEntries(
-      QONNA_CATEGORIES.map((c) => [c.key, Number(targets[c.key] || 0)]),
+      QONNA_CATEGORIES.map((c) => [c.key, totalAnimals[c.key]]),
     );
-    // Scale percentages ×10 as integers (e.g. 25.5 → 255) so decimal values
-    // don't hit "invalid input syntax for type integer" on the backend.
-    // The backend computes share as w / totalWeight, so the ratio is preserved.
     const weights = Object.fromEntries(
       WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
     );
@@ -886,13 +870,9 @@ function QonnaPlanPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Qonna — Annual Plan
-        </h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Qonna — Annual Plan</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Set annual targets for each Qonna category. Use the capacity
-          calculator to help determine feasible targets  then set the actual
-          target yourself.
+          Mana lakkaawi, hektaara fi lakkoofsa horii/mana galchi. Waliigalli ofumaan hergama.
         </p>
       </div>
 
@@ -900,90 +880,73 @@ function QonnaPlanPage() {
         {/* Woreda % allocation */}
         <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
 
-        {/* ── Furdisa — flexible animal type ── */}
+        {/* ── Furdisa ── */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-          <div
-            className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
-          >
-            <p className="text-sm font-semibold text-white">
-              Furdisa — Livestock
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              Select the animal type applicable to this plan
-            </p>
+          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}>
+            <p className="text-sm font-semibold text-white">Furdisa — Horii (Livestock)</p>
+            <p className="text-white/60 text-xs mt-0.5">Gosa horii filii, mana lakkaawi, hektaara fi horii/mana galchi</p>
           </div>
           <div className="px-5 py-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                  Animal Type
-                </label>
-                <select
-                  value={furdisaType}
-                  onChange={(e) => setFurdisaType(e.target.value)}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
-                >
-                  {FURDISA_ANIMAL_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
+                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">Gosa Horii</label>
+                <select value={furdisaType} onChange={(e) => setFurdisaType(e.target.value)}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]">
+                  {FURDISA_ANIMAL_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
               </div>
               {furdisaType === "other" && (
                 <div>
-                  <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                    Specify Animal Type
-                  </label>
-                  <input
-                    type="text"
-                    value={furdisaOther}
-                    onChange={(e) => setFurdisaOther(e.target.value)}
-                    placeholder="e.g. Camel, Donkey…"
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
-                  />
+                  <label className="block text-xs font-semibold text-[#64748b] mb-1.5">Gosa Ibsi</label>
+                  <input type="text" value={furdisaOther} onChange={(e) => setFurdisaOther(e.target.value)}
+                    placeholder="fkn. Gaala, Harree…"
+                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]" />
                 </div>
               )}
             </div>
-            <QonnaCapacityRow
-              cat={QONNA_CATEGORIES[0]}
-              std={stds.furdisa}
-              onStdChange={(v) => handleStd("furdisa", v)}
-              resource={resources.furdisa}
-              onResourceChange={(v) => handleResource("furdisa", v)}
-            />
-            <QonnaTargetRow
-              cat={QONNA_CATEGORIES[0]}
-              target={targets.furdisa}
-              onTargetChange={(v) => handleTarget("furdisa", v)}
-              std={stds.furdisa}
-            />
+            <QonnaPlanRow cat={QONNA_CATEGORIES[0]} form={forms.furdisa}
+              onChange={(field, val) => handleForm("furdisa", field, val)} />
           </div>
         </div>
 
-        {/* ── Remaining 5 Qonna categories ── */}
-        {QONNA_CATEGORIES.slice(1).map((cat) => (
+        {/* ── Kannisaa ── */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: "linear-gradient(90deg,#b45309 0%,#d97706 100%)" }}>
+            <p className="text-sm font-semibold text-white">Kannisaa — Gaaguraa (Hives)</p>
+            <p className="text-white/70 text-xs mt-0.5">Gaaguraa lakkaawi, hektaara fi kannisaa/gaaguraa galchi</p>
+          </div>
+          <div className="px-5 py-5">
+            <QonnaPlanRow cat={QONNA_CATEGORIES.find(c => c.key === "kannisaa")} form={forms.kannisaa}
+              onChange={(field, val) => handleForm("kannisaa", field, val)} />
+          </div>
+        </div>
+
+        {/* ── Qurxummii ── */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: "linear-gradient(90deg,#0369a1 0%,#0284c7 100%)" }}>
+            <p className="text-sm font-semibold text-white">Qurxummii — Dhaabbii (Ponds)</p>
+            <p className="text-white/70 text-xs mt-0.5">Dhaabbii lakkaawi, hektaara fi qurxummii/dhaabbii galchi</p>
+          </div>
+          <div className="px-5 py-5">
+            <QonnaPlanRow cat={QONNA_CATEGORIES.find(c => c.key === "qurxummii")} form={forms.qurxummii}
+              onChange={(field, val) => handleForm("qurxummii", field, val)} />
+          </div>
+        </div>
+
+        {/* ── Annan, Lukkuu, Booyyee ── */}
+        {[
+          QONNA_CATEGORIES.find(c => c.key === "annan"),
+          QONNA_CATEGORIES.find(c => c.key === "lukkuu"),
+          QONNA_CATEGORIES.find(c => c.key === "booyee"),
+        ].map((cat) => (
           <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div
-              className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: `linear-gradient(90deg,${cat.color} 0%,${cat.color}cc 100%)` }}
-            >
+            <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: `linear-gradient(90deg,${cat.color} 0%,${cat.color}cc 100%)` }}>
               <p className="text-sm font-semibold text-white">{cat.label}</p>
-              <p className="text-white/70 text-xs mt-0.5">{cat.description}</p>
+              <p className="text-white/70 text-xs mt-0.5">{cat.description} — mana lakkaawi, hektaara fi {QONNA_ROW_CFG[cat.key].unitName}/mana galchi</p>
             </div>
-            <div className="px-5 py-5 space-y-4">
-              <QonnaCapacityRow
-                cat={cat}
-                std={stds[cat.key]}
-                onStdChange={(v) => handleStd(cat.key, v)}
-                resource={resources[cat.key]}
-                onResourceChange={(v) => handleResource(cat.key, v)}
-              />
-              <QonnaTargetRow
-                cat={cat}
-                target={targets[cat.key]}
-                onTargetChange={(v) => handleTarget(cat.key, v)}
-                std={stds[cat.key]}
-              />
+            <div className="px-5 py-5">
+              <QonnaPlanRow cat={cat} form={forms[cat.key]}
+                onChange={(field, val) => handleForm(cat.key, field, val)} />
             </div>
           </div>
         ))}
@@ -992,12 +955,8 @@ function QonnaPlanPage() {
         {hasAnyTarget && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
-              <p className="text-sm font-semibold text-[#1e293b]">
-                Woreda Allocation Preview
-              </p>
-              <p className="text-xs text-[#64748b] mt-0.5">
-                Annual targets distributed by entered percentages
-              </p>
+              <p className="text-sm font-semibold text-[#1e293b]">Woreda Allocation Preview</p>
+              <p className="text-xs text-[#64748b] mt-0.5">Waliigalli horii/mana x mana — woreda hundaaf qoodama</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1007,15 +966,14 @@ function QonnaPlanPage() {
                     <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Subcity Total</th>
                     {WOREDAS.map((w) => (
                       <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                        {w.name}
-                        <span className="block text-[#94a3b8] font-normal normal-case">{pcts[w.id]}%</span>
+                        {w.name}<span className="block text-[#94a3b8] font-normal normal-case">{pcts[w.id]}%</span>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {QONNA_CATEGORIES.map((cat) => {
-                    const total = Number(targets[cat.key] || 0);
+                    const total = totalAnimals[cat.key];
                     if (total === 0) return null;
                     return (
                       <tr key={cat.key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
@@ -1050,22 +1008,14 @@ function QonnaPlanPage() {
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
-              <p className="text-[#94a3b8] text-xs">
-                Saving distributes targets to all 4 woreda plan tables.
-              </p>
+              <p className="text-[#94a3b8] text-xs">Saving distributes targets to all 4 woreda plan tables.</p>
             )}
           </div>
-          <button
-            type="submit"
-            disabled={saving || !canSubmit}
+          <button type="submit" disabled={saving || !canSubmit}
             className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "#065f46" }}
-          >
+            style={{ backgroundColor: "#065f46" }}>
             {saving ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Saving...
-              </>
+              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving...</>
             ) : (
               <><CheckIcon /> Save Qonna Plan</>
             )}
