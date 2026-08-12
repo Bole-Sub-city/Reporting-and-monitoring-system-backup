@@ -6,14 +6,14 @@ const CarraaHojiiForm = ({ userId }) => {
     user_id: userId,
     report_date: new Date().toISOString().split("T")[0],
     report_type: "Carraa Hojii Uummuu",
-    qusannnaa: 0,
-    liqii: 0,
-    qusanna_dirqii: 0,
-    deebii_liqii_bilchaate: 0,
-    deebii_liqii_bulee: 0,
+    leenjii: 0,
     carraa_hojii_dhaabbii: 0,
     carraa_hojii_qacarrii: 0,
-    leenjii: 0,
+    qusannaa_haawaasaa: 0,
+    qusanna_dirqii: 0,
+    kenna_liqii: 0,
+    deebii_liqii_bilchaate: 0,
+    deebii_liqii_bulee: 0,
     industrii_godoo: 0,
     yaada_gudinaa: "",
   });
@@ -21,19 +21,20 @@ const CarraaHojiiForm = ({ userId }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const numericFields = [
+    "leenjii",
+    "carraa_hojii_dhaabbii",
+    "carraa_hojii_qacarrii",
+    "qusannaa_haawaasaa",
+    "qusanna_dirqii",
+    "kenna_liqii",
+    "deebii_liqii_bilchaate",
+    "deebii_liqii_bulee",
+    "industrii_godoo",
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericFields = [
-      "qusannnaa",
-      "liqii",
-      "qusanna_dirqii",
-      "deebii_liqii_bilchaate",
-      "deebii_liqii_bulee",
-      "carraa_hojii_dhaabbii",
-      "carraa_hojii_qacarrii",
-      "leenjii",
-      "industrii_godoo",
-    ];
     setFormData({
       ...formData,
       [name]: numericFields.includes(name) ? parseFloat(value) || 0 : value,
@@ -49,14 +50,14 @@ const CarraaHojiiForm = ({ userId }) => {
       setMessage("Carraa Hojii Uummuu report submitted successfully!");
       setFormData({
         ...formData,
-        qusannnaa: 0,
-        liqii: 0,
-        qusanna_dirqii: 0,
-        deebii_liqii_bilchaate: 0,
-        deebii_liqii_bulee: 0,
+        leenjii: 0,
         carraa_hojii_dhaabbii: 0,
         carraa_hojii_qacarrii: 0,
-        leenjii: 0,
+        qusannaa_haawaasaa: 0,
+        qusanna_dirqii: 0,
+        kenna_liqii: 0,
+        deebii_liqii_bilchaate: 0,
+        deebii_liqii_bulee: 0,
         industrii_godoo: 0,
         yaada_gudinaa: "",
       });
@@ -87,14 +88,14 @@ const CarraaHojiiForm = ({ userId }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {[
-          { name: "qusannnaa", label: "Qusannnaa" },
-          { name: "liqii", label: "Liqii" },
-          { name: "qusanna_dirqii", label: "Qusanna Dirqii" },
-          { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
-          { name: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
+          { name: "leenjii", label: "Leenjii" },
           { name: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
           { name: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
-          { name: "leenjii", label: "Leenjii" },
+          { name: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa" },
+          { name: "qusanna_dirqii", label: "Qusanna Dirqii" },
+          { name: "kenna_liqii", label: "Kenna Liqii" },
+          { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
+          { name: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
           { name: "industrii_godoo", label: "Industrii Godoo" },
         ].map(({ name, label }) => (
           <div key={name}>

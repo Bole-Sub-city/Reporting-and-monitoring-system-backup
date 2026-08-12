@@ -166,7 +166,9 @@ const USERNAME_TO_WEREDA_ID = {
 /**
  * POST /api/plans/subcity
  * Called by the subcity dashboard "Save Plan" button.
- * Receives { plan: { hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, buusi_daldalaa },
+ * Receives { plan: { hubannoo_uummuu, horannaa_misensaa, buusi_jiraataa,
+ *                    gumaata_jirataa, buusi_daldalaa, inisheetiviiBuusaaGonofaa,
+ *                    gumaata_mootummaa, nyaata_barataa },
  *            weights: { w1, w2, w3, w4 } }
  * Computes each wereda's proportional share and upserts a row into the
  * corresponding annual_plan_wereda_N table.
@@ -203,12 +205,17 @@ const saveSubcityPlan = async (req, res) => {
         year,
         hubannoo_uummuu_target: share(wId, plan.hubannoo_uummuu),
         horannaa_misensaa_target: share(wId, plan.horannaa_misensaa),
-        buusi_jirataa_target: share(wId, plan.buusi_jirataa),
+        buusi_jiraataa_target: share(wId, plan.buusi_jiraataa),
+        gumaata_jirataa_target: share(wId, plan.gumaata_jirataa),
         buusi_daldalaa_target: share(wId, plan.buusi_daldalaa),
+        inisheetivii_buusaa_gonofaa_target: share(
+          wId,
+          plan.inisheetiviiBuusaaGonofaa,
+        ),
+        gumaata_mootummaa_target: share(wId, plan.gumaata_mootummaa),
+        nyaata_barataa_target: share(wId, plan.nyaata_barataa),
       };
 
-      // Upsert: overwrite existing row for the same year so subcity can
-      // update the plan freely. conflict_target = year column.
       const { error } = await supabase
         .from(tableName)
         .upsert([row], { onConflict: "year" });
@@ -262,7 +269,7 @@ const getWeredaPlan = async (req, res) => {
 /**
  * POST /api/plans/subcity-plan
  * Saves the subcity's own annual plan totals + weights into the
- * "subcity_annual_plan" table. Upserts on year so the form can be
+ * "subcity_buusaa_gonofaa_plan" table. Upserts on year so the form can be
  * re-submitted freely (not locked).
  */
 const saveSubcityOwnPlan = async (req, res) => {
@@ -277,14 +284,20 @@ const saveSubcityOwnPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
 
-    const { error } = await supabase.from("subcity_annual_plan").upsert(
+    const { error } = await supabase.from("subcity_buusaa_gonofaa_plan").upsert(
       [
         {
           year,
           hubannoo_uummuu: Number(plan.hubannoo_uummuu || 0),
           horannaa_misensaa: Number(plan.horannaa_misensaa || 0),
-          buusi_jirataa: Number(plan.buusi_jirataa || 0),
+          buusi_jiraataa: Number(plan.buusi_jiraataa || 0),
+          gumaata_jirataa: Number(plan.gumaata_jirataa || 0),
           buusi_daldalaa: Number(plan.buusi_daldalaa || 0),
+          inisheetivii_buusaa_gonofaa: Number(
+            plan.inisheetiviiBuusaaGonofaa || 0,
+          ),
+          gumaata_mootummaa: Number(plan.gumaata_mootummaa || 0),
+          nyaata_barataa: Number(plan.nyaata_barataa || 0),
           weight_w1: Number(weights.w1 || 0),
           weight_w2: Number(weights.w2 || 0),
           weight_w3: Number(weights.w3 || 0),
@@ -311,7 +324,7 @@ const fetchSubcityOwnPlan = async (req, res) => {
     const year = new Date().getFullYear();
 
     const { data, error } = await supabase
-      .from("subcity_annual_plan")
+      .from("subcity_buusaa_gonofaa_plan")
       .select("*")
       .eq("year", year)
       .maybeSingle();
