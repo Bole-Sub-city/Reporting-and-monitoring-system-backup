@@ -314,22 +314,22 @@ const BUUSAA_FIELDS = [
   {
     name: "nyaataBarataa",
     label: "Nyaata Barataa",
-    required: false,
+    required: true,
     type: "number",
   },
-  { name: "zayitii", label: "Zayitii", required: false, type: "number" },
+  { name: "zayitii", label: "Zayitii", required: true, type: "number" },
   {
     name: "sukkaara",
     label: "Sukkaara",
-    required: false,
+    required: true,
     type: "number",
     fullWidth: true,
   },
 ];
 const REPORT_TYPES = [
-  "Daily Report — Gabaasa Guyyaa",
-  "Weekly Report — Gabaasa Torban",
-  "Monthly Report — Gabaasa Ji'aa",
+  "Daily Report (Gabaasa Guyyaa)",
+  "Weekly Report (Gabaasa Torban)",
+  "Monthly Report (Gabaasa Ji'aa)",
 ];
 const PLAN_FIELDS = [
   {
@@ -504,7 +504,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "furdisa_bakka_qophaawe",
-    label: "Furdisa — Bakka Qophaawe (ha)",
+    label: "Furdisa Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -516,7 +516,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "annan_bakka_qophaawe",
-    label: "Annan — Bakka Qophaawe (ha)",
+    label: "Annan Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -528,7 +528,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "lukkuu_bakka_qophaawe",
-    label: "Lukkuu — Bakka Qophaawe (ha)",
+    label: "Lukkuu  Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -540,7 +540,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "booyyee_bakka_qophaawe",
-    label: "Booyyee — Bakka Qophaawe (ha)",
+    label: "Booyyee  Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -552,7 +552,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "qurxummii_bakka_qophaawe",
-    label: "Qurxummii — Bakka Qophaawe (ha)",
+    label: "Qurxummii Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -564,7 +564,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "kanniissa_bakka_qophaawe",
-    label: "Kanniissa — Bakka Qophaawe (ha)",
+    label: "Kanniissaa Bakka Qophaawe (ha)",
     required: false,
     type: "number",
   },
@@ -577,42 +577,36 @@ const QONNA_CATS = [
     key: "furdisa",
     planKey: "furdisa_target",
     label: "Furdisa",
-    description: "Livestock",
     color: "#065f46",
   },
   {
     key: "annan",
     planKey: "annan_target",
     label: "Annan",
-    description: "Dairy — horii",
     color: "#0f766e",
   },
   {
     key: "lukkuu",
     planKey: "lukkuu_target",
     label: "Lukkuu",
-    description: "Poultry",
     color: "#1e40af",
   },
   {
     key: "booyee",
     planKey: "booyee_target",
     label: "Booyyee",
-    description: "Pig farming",
     color: "#7c3aed",
   },
   {
     key: "kannisaa",
     planKey: "kannisaa_target",
     label: "Kannisaa",
-    description: "Apiculture",
     color: "#b45309",
   },
   {
     key: "qurxummii",
     planKey: "qurxummii_target",
     label: "Qurxummii",
-    description: "Fish / pond farming",
     color: "#0369a1",
   },
 ];
@@ -799,7 +793,7 @@ function AnnualPlanSection({ u }) {
         </span>
       </div>
       <p className="text-[#64748b] text-sm mb-6">
-        {u.woreda} · Targets set by the sub-city office. Read-only.
+        {u.woreda} · Targets set by the sub-city office. Read only.
       </p>
 
       {plan ? (
@@ -813,10 +807,10 @@ function AnnualPlanSection({ u }) {
             <PlanIcon />
             <div>
               <p className="text-white font-bold text-base">
-                Annual Plan — {year} <LockIcon />
+                Annual Plan  {year} <LockIcon />
               </p>
               <p className="text-white/60 text-xs mt-0.5">
-                {u.name} · {u.woreda} · Read-only
+                Read only
               </p>
             </div>
           </div>
@@ -1291,7 +1285,7 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
           ← Back
         </button>
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          {title} — Submit Report
+          {title} Submit Report
         </h1>
       </div>
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
@@ -1322,37 +1316,37 @@ const QONNA_HOUSE_LABEL = {
   furdisa: {
     house: "Mana Ijaaraman",
     housePH: "Lakk. mana",
-    animalLabel: "Lakk. Horii (Actual)",
+    animalLabel: "Lakk.Horii ",
     animalPH: "0",
   },
   annan: {
     house: "Mana Ijaaraman",
     housePH: "Lakk. mana",
-    animalLabel: "Lakk. Sa\u2019a / Cows (Actual)",
+    animalLabel: "Lakk.Sa\u2019aa",
     animalPH: "0",
   },
   lukkuu: {
     house: "Mana Ijaaraman",
     housePH: "Lakk. mana",
-    animalLabel: "Lakk. Lukkuu (Actual)",
+    animalLabel: "Lakk.Lukkuu",
     animalPH: "0",
   },
   booyee: {
     house: "Mana Ijaaraman",
     housePH: "Lakk. mana",
-    animalLabel: "Lakk. Booyyee (Actual)",
+    animalLabel: "Lakk.Booyyee",
     animalPH: "0",
   },
   kannisaa: {
     house: "Gaaguraa Ijaaraman",
     housePH: "Lakk. gaaguraa",
-    animalLabel: "Lakk. Kannisaa (Actual)",
+    animalLabel: "Lakk.Kannisaa ",
     animalPH: "0",
   },
   qurxummii: {
     house: "Dhaabbii Ijaaraman",
     housePH: "Lakk. dhaabbii",
-    animalLabel: "Lakk. Qurxummii (Actual)",
+    animalLabel: "Lakk.Qurxummii ",
     animalPH: "0",
   },
 };
@@ -1417,78 +1411,11 @@ function QonnaSubmitForm({ u }) {
 
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Qonna — Submit Report
+           Submit Report
         </h1>
-        <p className="text-[#64748b] text-sm mt-0.5">
-          {u.woreda} · Mana ijaaraman, lakkoofsa horii fi bakka qophaawe galchi
-        </p>
       </div>
 
-      {/* ── Annual Plan Card ── */}
-      <div className="mb-6">
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          <div
-            className="px-5 py-3 border-b border-[#e2e8f0] flex items-center gap-3"
-            style={{
-              background: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
-            }}
-          >
-            <svg
-              className="w-5 h-5 text-white flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              viewBox="0 0 24 24"
-            >
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-              <rect x="9" y="3" width="6" height="4" rx="1" />
-              <line x1="9" y1="12" x2="15" y2="12" />
-              <line x1="9" y1="16" x2="13" y2="16" />
-            </svg>
-            <div>
-              <p className="text-white font-bold text-sm">
-                Karoora Waggaa — {year}
-              </p>
-              <p className="text-white/60 text-xs">{u.woreda} · Read-only</p>
-            </div>
-          </div>
-          {planLoading ? (
-            <div className="flex items-center justify-center h-20">
-              <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
-            </div>
-          ) : plan ? (
-            <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {QONNA_CATS.map(({ planKey, label, description, color }) => (
-                <div
-                  key={planKey}
-                  className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center"
-                >
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
-                    <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">
-                      {label}
-                    </p>
-                  </div>
-                  <p className="text-2xl font-extrabold text-[#1e293b]">
-                    {(plan[planKey] ?? 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-[#94a3b8] mt-0.5">{description}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="px-5 py-6 text-center">
-              <p className="text-[#94a3b8] text-sm">
-                Sub-city hasn't set a Qonna plan yet. You can still submit a
-                report.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* ── Annual Plan Card removed per requirement ── */}
 
       {/* ── Report Type + Date ── */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1508,7 +1435,7 @@ function QonnaSubmitForm({ u }) {
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
-            Guyyaa Gabaasaa
+            Reporting  Period
           </p>
           <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
         </div>
@@ -1523,10 +1450,7 @@ function QonnaSubmitForm({ u }) {
               background: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
             }}
           >
-            <p className="text-white font-bold text-base">Qonna — Gabaasa</p>
-            <p className="text-white/60 text-xs mt-0.5">
-              {u.name} · {u.subcity} · {u.woreda}
-            </p>
+           
           </div>
           <div className="px-5 py-5 space-y-5">
             {QONNA_CATS.map(({ key, label, description, color, planKey }) => {
@@ -1564,8 +1488,24 @@ function QonnaSubmitForm({ u }) {
                       </span>
                     )}
                   </div>
-                  {/* Three inputs: houses/ponds/gaaguraa built, actual animals, land prepared */}
+                  {/* Three inputs: land prepared, houses/ponds/gaaguraa built, actual animals */}
                   <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[#334155] mb-1.5">
+                        Bakka Qophaawe (ha)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={form[`${key}_bakka_qophaawe`] ?? ""}
+                        onChange={(e) =>
+                          handleField(`${key}_bakka_qophaawe`, e.target.value)
+                        }
+                        placeholder="0"
+                        className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                      />
+                    </div>
                     <div>
                       <label className="block text-xs font-medium text-[#334155] mb-1.5">
                         {cfg.house} <span className="text-red-500">*</span>
@@ -1595,22 +1535,6 @@ function QonnaSubmitForm({ u }) {
                         onChange={(e) => handleField(key, e.target.value)}
                         placeholder={cfg.animalPH}
                         required
-                        className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-[#334155] mb-1.5">
-                        Bakka Qophaawe (ha)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={form[`${key}_bakka_qophaawe`] ?? ""}
-                        onChange={(e) =>
-                          handleField(`${key}_bakka_qophaawe`, e.target.value)
-                        }
-                        placeholder="0"
                         className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
                       />
                     </div>
@@ -1691,7 +1615,7 @@ function QonnaAnnualPlanSection({ u }) {
     <div>
       <div className="flex items-center gap-3 mb-2">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Qonna — Annual Plan
+           Annual Plan for Qonna
         </h1>
         <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">
           {year}
@@ -1712,7 +1636,7 @@ function QonnaAnnualPlanSection({ u }) {
             <PlanIcon />
             <div>
               <p className="text-white font-bold text-base">
-                Qonna Annual Plan — {year}
+                Qonna Annual Plan  {year}
               </p>
               <p className="text-white/60 text-xs mt-0.5">
                 {u.name} · {u.woreda} · Read-only
@@ -1854,10 +1778,10 @@ function QonnaAnalysisSection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">
-            Qonna — Work Analysis
+             Work Analysis
           </h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            Planned targets vs actual performance — animals, houses &amp; land
+            Planned targets vs actual performance ( animals, houses &amp; land)
           </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
@@ -2116,6 +2040,77 @@ function QonnaAnalysisSection() {
             })}
           </div>
 
+          {/* Ring charts — Houses / Ponds / Gaaguraa Built and Land Prepared */}
+          {(() => {
+            // Sum houses built across all categories (_mana fields)
+            const totalHouses = activeSummary
+              ? QONNA_CATS.reduce((s, c) => s + (activeSummary[`${c.key}_mana`] ?? 0), 0)
+              : 0;
+            // Qurxummii ponds specifically
+            const totalPonds = activeSummary ? (activeSummary["qurxummii_mana"] ?? 0) : 0;
+            // Kannisaa gaaguraa specifically
+            const totalGaaguraa = activeSummary ? (activeSummary["kannisaa_mana"] ?? 0) : 0;
+            // Sum land prepared across all categories (_bakka_qophaawe fields)
+            const totalLand = activeSummary
+              ? QONNA_CATS.reduce((s, c) => s + (activeSummary[`${c.key}_bakka_qophaawe`] ?? 0), 0)
+              : 0;
+
+            const extraCharts = [
+              { key: "houses_built",   label: "Houses Built",         description: "Mana Ijaaraman",       color: "#0f766e", value: totalHouses },
+              { key: "ponds_built",    label: "Ponds Built",          description: "Dhaabbii Ijaaraman",   color: "#0369a1", value: totalPonds },
+              { key: "gaaguraa_built", label: "Gaaguraa Built",       description: "Gaaguraa Ijaaraman",   color: "#b45309", value: totalGaaguraa },
+              { key: "land_prepared",  label: "Land Prepared (ha)",   description: "Bakka Qophaawe",       color: "#065f46", value: totalLand },
+            ];
+
+            return (
+              <div className="mb-6">
+                <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide mb-3">
+                  Infrastructure &amp; Land
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {extraCharts.map(({ key, label, description, color, value }) => {
+                    const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                    // No plan target for these — show raw actuals with a filled ring when > 0
+                    const pct = value > 0 ? 100 : 0;
+                    const offset = circ - (pct / 100) * circ;
+                    return (
+                      <div
+                        key={key}
+                        className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm"
+                      >
+                        <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">{label}</p>
+                        <p className="text-[10px] text-[#94a3b8] mb-2 text-center">{description}</p>
+                        <div className="relative" style={{ width: size, height: size }}>
+                          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                            <circle
+                              cx={size/2} cy={size/2} r={r} fill="none"
+                              stroke={color} strokeWidth={sw} strokeLinecap="round"
+                              strokeDasharray={circ} strokeDashoffset={offset}
+                              style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-lg font-extrabold leading-none" style={{ color }}>
+                              {value.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-[#94a3b8] mt-0.5">actual</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 w-full">
+                          <div className="flex justify-between text-[10px] text-[#64748b]">
+                            <span>Total</span>
+                            <span className="font-semibold text-[#1e293b]">{value.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Full plan vs actual — all dimensions */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mb-6">
             <div
@@ -2125,7 +2120,7 @@ function QonnaAnalysisSection() {
               }}
             >
               <p className="text-sm font-semibold text-white">
-                Qonna — Full Plan vs Actual (
+                Full Plan vs Actual (
                 {isCustom && customRange
                   ? `${customRange.from}–${customRange.to}`
                   : periodLabel}
@@ -2133,7 +2128,7 @@ function QonnaAnalysisSection() {
               </p>
               <p className="text-white/60 text-xs mt-0.5">
                 Annual target · Period target · Actual animals ·
-                Houses/Ponds/Gaaguraa built · Land prepared
+                Shed/Ponds/Hive built · Land prepared
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -2147,7 +2142,7 @@ function QonnaAnalysisSection() {
                       "Actual Animals",
                       "Houses / Ponds / Gaaguraa Built",
                       "Land Prepared (ha)",
-                      "Achievement",
+                      "% Complete",
                       isCustom ? "—" : "Remaining (carry-over)",
                     ].map((h) => (
                       <th
@@ -2507,14 +2502,14 @@ function CarraaHojiiAnnualPlanSection({ u }) {
     <div>
       <div className="flex items-center gap-3 mb-2">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Carraa Hojii Uummuu — Annual Plan
+          Carraa Hojii Uumuu  Annual Plan
         </h1>
         <span className="bg-[#eff6ff] text-[#1e40af] text-xs font-bold px-3 py-1 rounded-full border border-[#bfdbfe]">
           {year}
         </span>
       </div>
       <p className="text-[#64748b] text-sm mb-6">
-        {u.woreda} · Targets assigned by the sub-city office. Read-only.
+        Targets assigned by the sub-city office. Read-only.
       </p>
 
       {plan ? (
@@ -2528,7 +2523,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
             <PlanIcon />
             <div>
               <p className="text-white font-bold text-base">
-                Carraa Hojii Uummuu Annual Plan — {year}
+                Carraa Hojii Uummuu Annual Plan  {year}
               </p>
               <p className="text-white/60 text-xs mt-0.5">
                 {u.name} · {u.woreda} · Read-only
@@ -2673,7 +2668,7 @@ function CarraaHojiiAnalysisSection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">
-            Carraa Hojii — Work Analysis
+            Work Analysis
           </h1>
           <p className="text-[#64748b] text-sm mt-0.5">
             Actual performance vs assigned annual plan targets
@@ -2954,7 +2949,7 @@ function CarraaHojiiAnalysisSection() {
                       isCustom ? "Total Actual" : "Annual Target",
                       isCustom ? "—" : "Period Target",
                       "Actual",
-                      "Achievement",
+                      "% Complete",
                       isCustom ? "—" : "Remaining (carry-over)",
                     ].map((h) => (
                       <th
@@ -3080,7 +3075,7 @@ function PlaceholderAnnualPlan({ title, u }) {
   return (
     <div>
       <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
-        {title} — Annual Plan
+        {title}  Annual Plan
       </h1>
       <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} &middot; {u.subcity}
@@ -3108,7 +3103,7 @@ function PlaceholderAnalysis({ title, u }) {
   return (
     <div>
       <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
-        {title} — Work Analysis
+        {title}  Work Analysis
       </h1>
       <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} &middot; {u.subcity}
@@ -3122,7 +3117,7 @@ function PlaceholderAnalysis({ title, u }) {
         </h2>
         <p className="text-[#94a3b8] text-sm max-w-sm mb-6">
           Performance analytics for <strong>{title}</strong> will be shown here
-          — charts, trends, and targets for <strong>{u.woreda}</strong>.
+           charts, trends, and targets for <strong>{u.woreda}</strong>.
         </p>
         <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-4 py-2 rounded-full">
           Coming Soon
@@ -3214,9 +3209,7 @@ function BuusaaSubmitForm({ u }) {
             Complete all required fields and submit before the deadline
           </p>
         </div>
-        <button className="flex items-center gap-2 border border-gray-300 text-[#64748b] px-4 py-2 rounded-lg text-sm hover:bg-[#f4f6f9] transition-all">
-          <HistoryIcon /> History
-        </button>
+        
       </div>
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
@@ -3234,11 +3227,12 @@ function BuusaaSubmitForm({ u }) {
           </select>
         </div>
         <div className="text-right flex-shrink-0">
+      
           <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
             Reporting Period
           </p>
           <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
-          <p className="text-[#64748b] text-xs mt-0.5">⏰ Deadline: —</p>
+          
         </div>
       </div>
       <form onSubmit={handleSubmit}>
@@ -3363,7 +3357,7 @@ function GenericSubmitForm({
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            {title} — complete all required fields
+            {title} complete all required fields
           </p>
         </div>
       </div>
@@ -3387,7 +3381,7 @@ function GenericSubmitForm({
             Reporting Period
           </p>
           <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
-          <p className="text-[#64748b] text-xs mt-0.5">⏰ Deadline: —</p>
+         
         </div>
       </div>
       <form onSubmit={handleSubmit}>
@@ -3540,7 +3534,7 @@ function RevenueSubmitForm({ u }) {
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            Galii-Complete all required fields
+            Galii Complete all required fields
           </p>
         </div>
       </div>
@@ -4028,7 +4022,7 @@ function RevenueAnalysis() {
       {isCustom && (
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
           <p className="text-sm font-semibold text-[#334155] mb-4">
-            Select Custom Date Range (Afaan Oromo Calendar)
+            Select Custom Date Range
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div>
@@ -4132,7 +4126,7 @@ function RevenueAnalysis() {
           <div className="mb-7">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-[#334155] uppercase tracking-wide">
-                Current Year — Till Today
+                Current Year Till Today
               </h2>
               <span className="text-xs text-[#94a3b8]">
                 Annual running totals
@@ -4347,13 +4341,24 @@ export default function WoRedaDashboard() {
 
   const navBtn = (id, label, Icon) => {
     const active = activeNav === id;
+    const handleClick = () => {
+      if (id === "announcements") {
+        setActiveNav("announcements");
+        setActiveWork(null);
+        // Scroll to announcements section after state update
+        setTimeout(() => {
+          const el = document.getElementById("announcements-section");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+      } else {
+        setActiveNav(id);
+        setActiveWork(null);
+      }
+    };
     return (
       <button
         key={id}
-        onClick={() => {
-          setActiveNav(id);
-          setActiveWork(null);
-        }}
+        onClick={handleClick}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${
           active
             ? "bg-white/15 text-white"
@@ -4488,7 +4493,6 @@ export default function WoRedaDashboard() {
           </div>
           {navBtn("history", "Report History", HistoryIcon)}
           {navBtn("announcements", "Announcements", AnnouncementsIcon)}
-          {navBtn("profile", "Profile & Settings", ProfileIcon)}
         </nav>
         <div className="border-t border-white/10 py-2 flex-shrink-0">
           <button
@@ -4693,7 +4697,7 @@ export default function WoRedaDashboard() {
             })()}
 
           {activeNav === "announcements" && (
-            <div>
+            <div id="announcements-section">
               <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
                 Announcements
               </h1>

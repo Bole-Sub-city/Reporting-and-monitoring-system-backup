@@ -85,6 +85,8 @@ const PLAN_FIELDS = [
   },
   { key: "gumaata_mootummaa", label: "Gumaata Midhaani", color: "#64748b" },
   { key: "nyaata_barataa", label: "Nyaata Barataa", color: "#64748b" },
+  { key: "sukkaara", label: "Sukkaara", color: "#ea580c" },
+  { key: "zayitii", label: "Zayitii", color: "#65a30d" },
 ];
 
 const EMPTY_PLAN = {
@@ -96,6 +98,8 @@ const EMPTY_PLAN = {
   inisheetiviiBuusaaGonofaa: "",
   gumaata_mootummaa: "",
   nyaata_barataa: "",
+  sukkaara: "",
+  zayitii: "",
 };
 
 // Sectors used in Annual Plan and Work Analysis dropdowns
@@ -103,7 +107,7 @@ const SECTORS = [
   { id: "buusaa", label: "Buusaa Gonofaa" },
   { id: "qonna", label: "Qonna" },
   { id: "galii", label: "Galii Sassaabu" },
-  { id: "carraa", label: "Carraa Hojii Uummuu" },
+  { id: "carraa", label: "Carraa Hojii Uumuu" },
 ];
 
 // ─── Default woreda percentage split (editable in plan forms) ────────────────
@@ -116,7 +120,6 @@ const QONNA_CATEGORIES = [
   {
     key: "furdisa",
     label: "Furdisa",
-    description: "Livestock / cattle farming",
     unit: "animals",
     color: "#065f46",
     bgColor: "#f0fdf4",
@@ -125,7 +128,6 @@ const QONNA_CATEGORIES = [
   {
     key: "annan",
     label: "Annan",
-    description: "Dairy horii (cows)",
     unit: "horii",
     color: "#0f766e",
     bgColor: "#f0fdfa",
@@ -134,7 +136,6 @@ const QONNA_CATEGORIES = [
   {
     key: "lukkuu",
     label: "Lukkuu",
-    description: "Poultry  chickens",
     unit: "lukkuu",
     color: "#1e40af",
     bgColor: "#eff6ff",
@@ -143,7 +144,6 @@ const QONNA_CATEGORIES = [
   {
     key: "booyee",
     label: "Booyyee",
-    description: "Pig farming",
     unit: "booyyee",
     color: "#7c3aed",
     bgColor: "#f5f3ff",
@@ -152,7 +152,6 @@ const QONNA_CATEGORIES = [
   {
     key: "kannisaa",
     label: "Kannisaa",
-    description: "gaaguraa (hives)",
     unit: "gaaguraa",
     color: "#b45309",
     bgColor: "#fffbeb",
@@ -161,8 +160,7 @@ const QONNA_CATEGORIES = [
   {
     key: "qurxummii",
     label: "Qurxummii",
-    description: "Fish farming  pond ",
-    unit: "cinaacha",
+    unit: "Pondii",
     color: "#0369a1",
     bgColor: "#f0f9ff",
     borderColor: "#bae6fd",
@@ -744,39 +742,39 @@ const FURDISA_ANIMAL_TYPES = [
 //   unitName     – short name used in the info row (e.g. "horii", "lukkuu")
 const QONNA_ROW_CFG = {
   furdisa: {
-    houseLabel: "Lakk. Mana (Houses)",
-    haLabel: "Hektaara / Mana (ha)",
-    unitLabel: "Lakk. Horii / Mana",
+    houseLabel: "Lakk.Sheedii",
+    haLabel: "Hektaara /Sheedii",
+    unitLabel: "Lakk.Horii /sheedii ",
     unitName: "horii",
   },
   annan: {
-    houseLabel: "Lakk. Mana (Houses)",
-    haLabel: "Hektaara / Mana (ha)",
-    unitLabel: "Lakk. Sa'a / Mana (Cows)",
-    unitName: "sa'a",
+    houseLabel: "Lakk.Sheedii",
+    haLabel: "Hektaara / sheedii ",
+    unitLabel: "Lakk.Sa'a / sheedii",
+    unitName: "sa'aa",
   },
   lukkuu: {
-    houseLabel: "Lakk. Mana (Houses)",
-    haLabel: "Hektaara / Mana (ha)",
-    unitLabel: "Lakk. Lukkuu / Mana",
+    houseLabel: "Lakk.Sheedii",
+    haLabel: "Hektaara / Sheedii",
+    unitLabel: "Lakk.Lukkuu / Sheedii",
     unitName: "lukkuu",
   },
   booyee: {
-    houseLabel: "Lakk. Mana (Houses)",
-    haLabel: "Hektaara / Mana (ha)",
-    unitLabel: "Lakk. Booyyee / Mana",
+    houseLabel: "Lakk.Sheedii",
+    haLabel: "Hektaara / sheedii",
+    unitLabel: "Lakk. Booyyee / Sheedii",
     unitName: "booyyee",
   },
   kannisaa: {
-    houseLabel: "Lakk. Gaaguraa (Hives)",
-    haLabel: "Hektaara / Gaaguraa (ha)",
-    unitLabel: "Lakk. Kannisaa / Gaaguraa",
+    houseLabel: "Lakk.Gaaguraa",
+    haLabel: "Hektaara/Gaaguraa",
+    unitLabel: "Lakk.Kannisaa/Gaaguraa",
     unitName: "kannisaa",
   },
   qurxummii: {
-    houseLabel: "Lakk. Dhaabbii (Ponds)",
-    haLabel: "Hektaara / Dhaabbii (ha)",
-    unitLabel: "Lakk. Qurxummii / Dhaabbii",
+    houseLabel: "Lakk.Pondii",
+    haLabel: "Hektaara /Pondii",
+    unitLabel: "Lakk.Qurxummii/Pondii",
     unitName: "qurxummii",
   },
 };
@@ -1018,11 +1016,10 @@ function QonnaPlanPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Qonna — Annual Plan
+           Annual Plan for Qonna
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Mana lakkaawi, hektaara fi lakkoofsa horii/mana galchi. Waliigalli
-          ofumaan hergama.
+         Enter The Required Information Below
         </p>
       </div>
 
@@ -1039,17 +1036,14 @@ function QonnaPlanPage() {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Furdisa — Horii (Livestock)
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              Gosa horii filii, mana lakkaawi, hektaara fi horii/mana galchi
+              Furdisa
             </p>
           </div>
           <div className="px-5 py-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                  Gosa Horii
+                  Gosa Furdisaa
                 </label>
                 <select
                   value={furdisaType}
@@ -1095,10 +1089,7 @@ function QonnaPlanPage() {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Kannisaa — Gaaguraa (Hives)
-            </p>
-            <p className="text-white/70 text-xs mt-0.5">
-              Gaaguraa lakkaawi, hektaara fi kannisaa/gaaguraa galchi
+              Kannisaa
             </p>
           </div>
           <div className="px-5 py-5">
@@ -1119,10 +1110,7 @@ function QonnaPlanPage() {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Qurxummii — Dhaabbii (Ponds)
-            </p>
-            <p className="text-white/70 text-xs mt-0.5">
-              Dhaabbii lakkaawi, hektaara fi qurxummii/dhaabbii galchi
+              Qurxummii
             </p>
           </div>
           <div className="px-5 py-5">
@@ -1151,10 +1139,7 @@ function QonnaPlanPage() {
               }}
             >
               <p className="text-sm font-semibold text-white">{cat.label}</p>
-              <p className="text-white/70 text-xs mt-0.5">
-                {cat.description} — mana lakkaawi, hektaara fi{" "}
-                {QONNA_ROW_CFG[cat.key].unitName}/mana galchi
-              </p>
+              
             </div>
             <div className="px-5 py-5">
               <QonnaPlanRow
@@ -1174,7 +1159,7 @@ function QonnaPlanPage() {
                 Woreda Allocation Preview
               </p>
               <p className="text-xs text-[#64748b] mt-0.5">
-                Waliigalli horii/mana x mana — woreda hundaaf qoodama
+                Waliigalli horii/mana x mana  woreda hundaaf qoodama
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -1279,7 +1264,7 @@ function ComingSoonPage({ title }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          {title} — Annual Plan
+          {title}  Annual Plan
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Plan management for {title}
@@ -1355,7 +1340,7 @@ function WorkAnalysisPage({ sector }) {
           }}
         >
           <p className="text-sm font-semibold text-white">
-            {woredaLabel} — {sectorLabel}
+             {sectorLabel}
           </p>
           <p className="text-white/60 text-xs mt-0.5">
             Performance analysis will appear here once connected.
@@ -1382,7 +1367,9 @@ function WorkAnalysisPage({ sector }) {
 // ─── Woreda Reports Page ──────────────────────────────────────────────────────
 function ReportsPage({ dbPlan }) {
   const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
+  const [activeSector, setActiveSector] = useState("buusaa");
   const woreda = WOREDAS.find((w) => w.id === activeWoreda);
+
   const hasPlan =
     dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
   const totalWeight = dbPlan
@@ -1394,15 +1381,25 @@ function ReportsPage({ dbPlan }) {
       (Number(dbPlan[`weight_${woredaId}`] || 0) / totalWeight) * total,
     );
   };
+
+  const REPORT_SECTORS = [
+    { id: "buusaa",     label: "Buusaa Gonofaa",    color: "#1a3a5c" },
+    { id: "carraaHojii",label: "Carraa Hojii Uumuu",color: "#1e40af" },
+    { id: "qonna",      label: "Qonna",             color: "#065f46" },
+    { id: "revenue",    label: "Galii Sassaabu",    color: "#475569" },
+  ];
+
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Select a woreda to view submitted reports.
+          Select a woreda and sector to view submitted reports.
         </p>
       </div>
-      <div className="flex gap-2 mb-6 flex-wrap">
+
+      {/* Woreda tabs */}
+      <div className="flex gap-2 mb-4 flex-wrap">
         {WOREDAS.map((w) => (
           <button
             key={w.id}
@@ -1412,21 +1409,36 @@ function ReportsPage({ dbPlan }) {
                 ? "text-white shadow"
                 : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
             }`}
-            style={
-              activeWoreda === w.id
-                ? {
-                    background:
-                      "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-                  }
-                : {}
-            }
+            style={activeWoreda === w.id
+              ? { background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }
+              : {}}
           >
             {w.name}
           </button>
         ))}
       </div>
-      {hasPlan && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+
+      {/* Sector tabs */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {REPORT_SECTORS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSector(s.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeSector === s.id
+                ? "text-white shadow"
+                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:text-[#1e293b]"
+            }`}
+            style={activeSector === s.id ? { backgroundColor: s.color } : {}}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Buusaa Gonofaa plan allocation */}
+      {activeSector === "buusaa" && hasPlan && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {PLAN_FIELDS.map(({ key, label, color }) => {
             const s = share(activeWoreda, Number(dbPlan[key] || 0));
             return (
@@ -1446,40 +1458,65 @@ function ReportsPage({ dbPlan }) {
                 <p className="text-xl font-extrabold text-[#1e293b]">
                   {s.toLocaleString()}
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
-                  Allocated target
-                </p>
+                <p className="text-xs text-[#94a3b8] mt-0.5">Allocated target</p>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* Report table per sector */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
           style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            background: `linear-gradient(90deg,${
+              REPORT_SECTORS.find((s) => s.id === activeSector)?.color ?? "#1a3a5c"
+            } 0%,${
+              REPORT_SECTORS.find((s) => s.id === activeSector)?.color ?? "#1e4976"
+            }cc 100%)`,
           }}
         >
           <p className="text-sm font-semibold text-white">
-            {woreda.name} — Submitted Reports
+            {woreda.name} — {REPORT_SECTORS.find((s) => s.id === activeSector)?.label} Reports
           </p>
           <p className="text-white/60 text-xs mt-0.5">
-            Live data will appear once connected.
+            Submitted reports will appear here once the backend is connected.
           </p>
         </div>
-        <div className="px-6 py-12 flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-[#eef4fb] flex items-center justify-center mb-3 text-[#1a3a5c]">
-            <ListIcon />
-          </div>
-          <p className="text-[#1e293b] font-semibold mb-1">No data yet</p>
-          <p className="text-[#94a3b8] text-sm max-w-sm">
-            Wire to{" "}
-            <code className="bg-[#f4f6f9] px-1 rounded text-xs">
-              /api/reports?woreda={activeWoreda}
-            </code>{" "}
-            once backend is ready.
-          </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                {["Date", "Report Type", "Sector", "Status", "Action"].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colSpan={5} className="px-5 py-12 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                      <ListIcon />
+                    </div>
+                    <p className="text-[#94a3b8] text-sm">
+                      No {REPORT_SECTORS.find((s) => s.id === activeSector)?.label} reports
+                      found for {woreda.name}.
+                    </p>
+                    <code className="text-xs bg-[#f4f6f9] px-2 py-1 rounded text-[#64748b]">
+                      GET /api/reports?woreda={activeWoreda}&sector={activeSector}
+                    </code>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
