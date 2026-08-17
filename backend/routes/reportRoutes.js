@@ -8,7 +8,9 @@ const {
   getCarraaHojiiReports,
   getQonnaReports,
   getUserReports,
-  submitRevenueReport, // <-- new import
+  submitRevenueReport,
+  submitDaldalReport,
+  submitAtkReport,
 } = require("../controllers/reportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -26,6 +28,12 @@ router.get("/qonna/:user_id", authMiddleware, getQonnaReports);
 
 // ─── Revenue route ─────────────────────────────────────────────────────
 router.post("/revenue", authMiddleware, submitRevenueReport);
+
+// ─── Daldala route ─────────────────────────────────────────────────────
+router.post("/daldala", authMiddleware, submitDaldalReport);
+
+// ─── ATK route ─────────────────────────────────────────────────────────
+router.post("/atk", authMiddleware, submitAtkReport);
 
 // Existing routes
 router.get("/:user_id", authMiddleware, getUserReports);

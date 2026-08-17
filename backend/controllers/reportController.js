@@ -272,6 +272,92 @@ const getQonnaReports = async (req, res) => {
   }
 };
 
+// ─── Daldala report ──────────────────────────────────────────────────────────
+const submitDaldalReport = async (req, res) => {
+  try {
+    const {
+      report_date,
+      report_type,
+      galmee_haraa,
+      heyyema_haraa,
+      harahessaa,
+      galii_daldalarra_galuu,
+      toannoo_walii_gala,
+      tmd,
+      intarshippii,
+      ggg,
+      gabayaa_sanbata,
+      whg_kudraa,
+      whg_mudraa,
+      yaada_gudinaa,
+    } = req.body;
+
+    const { error } = await supabase.from("Daldala").insert([
+      {
+        user_id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        report_date,
+        report_type,
+        galmee_haraa,
+        heyyema_haraa,
+        harahessaa,
+        galii_daldalarra_galuu,
+        toannoo_walii_gala,
+        tmd,
+        intarshippii,
+        ggg,
+        gabayaa_sanbata,
+        whg_kudraa,
+        whg_mudraa,
+        yaada_gudinaa,
+      },
+    ]);
+
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.status(201).json({ message: "Daldala report submitted successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── ATK report ───────────────────────────────────────────────────────────────
+const submitAtkReport = async (req, res) => {
+  try {
+    const {
+      report_date,
+      report_type,
+      waliigaltee_pilaanii_kennuu,
+      heeyyama_ijaarsaa_kennamee,
+      toannoo_fi_hordoffii_gamoo,
+      galii_atk_galchuu,
+      yaada_gudinaa,
+    } = req.body;
+
+    const { error } = await supabase.from("ATK").insert([
+      {
+        user_id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        report_date,
+        report_type,
+        waliigaltee_pilaanii_kennuu,
+        heeyyama_ijaarsaa_kennamee,
+        toannoo_fi_hordoffii_gamoo,
+        galii_atk_galchuu,
+        yaada_gudinaa,
+      },
+    ]);
+
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.status(201).json({ message: "ATK report submitted successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ─── Revenue report ──────────────────────────────────────────────────────────
 const submitRevenueReport = async (req, res) => {
   try {
@@ -319,4 +405,6 @@ module.exports = {
   getCarraaHojiiReports,
   getQonnaReports,
   submitRevenueReport,
+  submitDaldalReport,
+  submitAtkReport,
 };
