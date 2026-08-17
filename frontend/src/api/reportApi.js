@@ -24,6 +24,22 @@ export const submitRevenueReport = async (reportData) => {
   return response.data;
 };
 
+export const submitDaldalReport = async (reportData) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post("/reports/daldala", reportData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const submitAtkReport = async (reportData) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post("/reports/atk", reportData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const submitBuusaaReport = async (reportData) => {
   const token = localStorage.getItem("token");
 

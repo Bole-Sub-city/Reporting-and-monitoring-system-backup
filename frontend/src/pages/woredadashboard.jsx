@@ -6,6 +6,8 @@ import {
   submitCarraaHojiiReport,
   submitQonnaReport,
   submitRevenueReport,
+  submitDaldalReport,
+  submitAtkReport,
 } from "../api/reportApi";
 import {
   fetchMyPlan,
@@ -13,6 +15,8 @@ import {
   fetchSummaryByDateRange,
   fetchWeredaPlan,
   fetchWeredaQonnaPlan,
+  fetchWeredaDaldalaPlan,
+  fetchWeredaAtkPlan,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 
@@ -244,6 +248,20 @@ function CollapseIcon({ collapsed }) {
       viewBox="0 0 24 24"
     >
       <polyline points={collapsed ? "9 18 15 12 9 6" : "15 18 9 12 15 6"} />
+    </svg>
+  );
+}
+function BuildingIcon() {
+  return (
+    <svg
+      className="w-5 h-5 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18M9 21V9" />
     </svg>
   );
 }
@@ -683,6 +701,20 @@ const WORKS = [
     sidebarLabel: "Galii Sassaabu",
     icon: RevenueIcon,
     color: "bg-[#f8fafc] text-[#475569]",
+  },
+  {
+    id: "daldala",
+    label: "Daldala",
+    sidebarLabel: "Daldala",
+    icon: RevenueIcon,
+    color: "bg-[#fefce8] text-[#854d0e]",
+  },
+  {
+    id: "atk",
+    label: "ATK",
+    sidebarLabel: "ATK",
+    icon: BuildingIcon,
+    color: "bg-[#fdf4ff] text-[#7e22ce]",
   },
 ];
 function todayStr() {
@@ -3099,6 +3131,375 @@ function PlaceholderAnnualPlan({ title, u }) {
   );
 }
 
+// ─── Daldala sector ──────────────────────────────────────────────────────────
+const DALDALA_FIELDS = [
+  { name: "galmee_haraa",           label: "Galmee Haraa",           required: true,  type: "number" },
+  { name: "heyyema_haraa",          label: "Heyyema Haraa",          required: true,  type: "number" },
+  { name: "harahessaa",             label: "Harahessaa",             required: true,  type: "number" },
+  { name: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu", required: true,  type: "number" },
+  { name: "toannoo_walii_gala",     label: "To'Annoo Walii Gala",    required: true,  type: "number" },
+  { name: "tmd",                    label: "TMD",                    required: true,  type: "number" },
+  { name: "intarshippii",           label: "Intarshippii",           required: false, type: "number" },
+  { name: "ggg",                    label: "GGG",                    required: false, type: "number" },
+  { name: "gabayaa_sanbata",        label: "Gabayaa Sanbata",        required: false, type: "number" },
+  { name: "whg_kudraa",             label: "WHG - Kudraa",           required: false, type: "number" },
+  { name: "whg_mudraa",             label: "WHG - Mudraa",           required: false, type: "number" },
+];
+
+const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
+  key: f.name,
+  planKey: `${f.name}_target`,
+  label: f.label,
+  color: ["#0f766e","#1e40af","#7c3aed","#b45309","#065f46","#0369a1","#dc2626","#475569","#854d0e","#166534","#1a3a5c"][i % 11],
+}));
+
+// ─── ATK sector ───────────────────────────────────────────────────────────────
+const ATK_FIELDS = [
+  { name: "waliigaltee_pilaanii_kennuu",    label: "Waliigaltee Pilaanii Kennuu",    required: true,  type: "number" },
+  { name: "heeyyama_ijaarsaa_kennamee",     label: "Heeyyama Ijaarsaa Kennamee",     required: true,  type: "number" },
+  { name: "toannoo_fi_hordoffii_gamoo",     label: "To'Annoo Fi Hordoffii Gamoo",    required: true,  type: "number" },
+  { name: "galii_atk_galchuu",             label: "Galii ATK Galchuu",              required: true,  type: "number" },
+];
+
+const ATK_CATS = ATK_FIELDS.map((f, i) => ({
+  key: f.name,
+  planKey: `${f.name}_target`,
+  label: f.label,
+  color: ["#7e22ce","#0369a1","#065f46","#b45309"][i % 4],
+}));
+
+// ─── Shared GenericAnnualPlanSection ─────────────────────────────────────────
+// Reusable read-only plan display for Daldala and ATK.
+function GenericAnnualPlanSection({ u, cats, fetchPlanFn, title, accentColor, accentLight, accentBorder }) {
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const year = new Date().getFullYear();
+  useEffect(() => {
+    fetchPlanFn()
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null))
+      .finally(() => setLoading(false));
+  }, [fetchPlanFn]);
+  if (loading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: accentColor }} />
+    </div>
+  );
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-[#1e293b]">{title} — Annual Plan</h1>
+        <span className="text-xs font-bold px-3 py-1 rounded-full border" style={{ background: accentLight, color: accentColor, borderColor: accentBorder }}>{year}</span>
+      </div>
+      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets assigned by the sub-city office. Read-only.</p>
+      {plan ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+          <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+            style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
+            <PlanIcon />
+            <div>
+              <p className="text-white font-bold text-base">{title} Annual Plan — {year}</p>
+              <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
+            </div>
+          </div>
+          <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cats.map(({ planKey, label, color }) => (
+              <div key={planKey} className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{label}</p>
+                </div>
+                <p className="text-3xl font-extrabold text-[#1e293b]">{(plan[planKey] ?? 0).toLocaleString()}</p>
+                <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
+              </div>
+            ))}
+          </div>
+          <div className="mx-6 mb-5 flex items-center gap-2 rounded-xl px-4 py-3 border"
+            style={{ background: accentLight, borderColor: accentBorder }}>
+            <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-sm" style={{ color: accentColor }}>Targets assigned by sub-city. Contact them if numbers need correction.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
+          <PlanIcon />
+          <p className="text-[#334155] font-semibold mb-1 mt-3">No {title} Plan Assigned Yet</p>
+          <p className="text-[#94a3b8] text-sm max-w-xs">Sub-city hasn't saved a {title} annual plan for {year} yet.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Shared GenericAnalysisSection ───────────────────────────────────────────
+function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentLight, accentBorder }) {
+  const [period, setPeriod] = useState("monthly");
+  const [plan, setPlan] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const currentYear = new Date().getFullYear();
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay] = useState(1);
+  const [endMonth, setEndMonth] = useState("Adoolessa");
+  const [endDay, setEndDay] = useState(30);
+  const [customYear, setCustomYear] = useState(currentYear - 1);
+  const [customSummary, setCustomSummary] = useState(null);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState("");
+  const [customRange, setCustomRange] = useState(null);
+
+  useEffect(() => { fetchPlanFn().then((d) => setPlan(d.plan)).catch(() => setPlan(null)); }, [fetchPlanFn]);
+  useEffect(() => {
+    if (period === "custom") return;
+    setLoading(true); setError("");
+    fetchSummary(period).then((d) => setSummary(d.summary)).catch(() => setError("Failed to load summary.")).finally(() => setLoading(false));
+  }, [period]);
+
+  const handleGenerateReport = async () => {
+    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
+    const dateTo   = oromoToGregorian(endMonth, endDay, customYear);
+    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
+    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
+    setCustomLoading(true); setCustomError(""); setCustomSummary(null);
+    try {
+      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
+      setCustomSummary(d.summary);
+      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
+    } catch { setCustomError("Failed to load custom range data."); }
+    finally { setCustomLoading(false); }
+  };
+
+  const isCustom = period === "custom";
+  const activeSummary = isCustom ? customSummary : summary;
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">{title} — Work Analysis</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">Actual performance vs assigned annual plan targets</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select value={period} onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer">
+            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {!plan && (
+        <div className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: accentLight, borderColor: accentBorder }}>
+          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-sm" style={{ color: accentColor }}>No annual plan assigned yet. Targets will appear once sub-city saves the plan.</p>
+        </div>
+      )}
+
+      {isCustom && (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
+          <p className="text-sm font-semibold text-[#334155] mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))} min="2000" max="2100"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+              <div className="flex gap-2">
+                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+              <div className="flex gap-2">
+                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                </select>
+                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
+          <button onClick={handleGenerateReport} disabled={customLoading}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
+            style={{ backgroundColor: accentColor }}>
+            <AnalysisIcon />{customLoading ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      )}
+
+      {!isCustom && loading ? (
+        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: accentColor }} /></div>
+      ) : !isCustom && error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+      ) : isCustom && customLoading ? (
+        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: accentColor }} /></div>
+      ) : isCustom && !customSummary ? null : (
+        <>
+          <div className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border" style={{ background: accentLight, borderColor: accentBorder }}>
+            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
+              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+            </span>
+            {!isCustom && <span className="text-xs" style={{ color: accentColor }}>— Targets partitioned from annual plan</span>}
+          </div>
+
+          {/* Ring charts */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+            {cats.map((cat) => {
+              const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
+              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+              const actual = activeSummary ? activeSummary[cat.key] ?? 0 : 0;
+              const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 100) : 0;
+              const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+              const offset = circ - (pct / 100) * circ;
+              return (
+                <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
+                  <p className="text-xs font-bold text-[#334155] mb-2 text-center">{cat.label}</p>
+                  <div className="relative" style={{ width: size, height: size }}>
+                    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw}
+                        strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+                        style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-lg font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+                      <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 w-full space-y-0.5">
+                    <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span></div>
+                    <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span></div>
+                    <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
+                      <div className="h-1 rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Summary table with Remaining */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
+              <p className="text-sm font-semibold text-white">
+                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Summary Table`}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                    {["Category", "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement", isCustom ? "—" : "Remaining (carry-over)"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cats.map((cat) => {
+                    const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
+                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+                    const actual = activeSummary ? activeSummary[cat.key] ?? 0 : 0;
+                    const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                    const remaining = periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
+                    return (
+                      <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-4 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                            {cat.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
+                        <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          {isCustom ? "—" : (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>{pct}%</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {isCustom ? "—" : remaining > 0 ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                              {remaining.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                              Done
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Period breakdown */}
+          {!isCustom && plan && (
+            <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mt-6">
+              <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+                <p className="text-sm font-semibold text-[#334155]">Period Target Breakdown</p>
+                <p className="text-xs text-[#64748b] mt-0.5">Annual plan divided — Daily · Weekly · Monthly · Annual</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#f1f5f9]">
+                      {["Category", "Annual", "Monthly (÷12)", "Weekly (÷52)", "Daily (÷365)"].map((h) => (
+                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cats.map((cat) => {
+                      const annual = plan ? plan[cat.planKey] ?? 0 : 0;
+                      return (
+                        <tr key={cat.key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+                          <td className="px-4 py-3 font-medium text-[#1e293b]">
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                              {cat.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-bold text-[#1e293b]">{annual.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#64748b]">{Math.round(annual / 12).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#64748b]">{Math.round(annual / 52).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#64748b]">{Math.round(annual / 365).toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function PlaceholderAnalysis({ title, u }) {
   return (
     <div>
@@ -4662,6 +5063,30 @@ export default function WoRedaDashboard() {
                 if (wid === "qonna") return <QonnaAnnualPlanSection u={u} />;
                 if (wid === "carraaHojii")
                   return <CarraaHojiiAnnualPlanSection u={u} />;
+                if (wid === "daldala")
+                  return (
+                    <GenericAnnualPlanSection
+                      u={u}
+                      cats={DALDALA_CATS}
+                      fetchPlanFn={fetchWeredaDaldalaPlan}
+                      title="Daldala"
+                      accentColor="#854d0e"
+                      accentLight="#fefce8"
+                      accentBorder="#fde68a"
+                    />
+                  );
+                if (wid === "atk")
+                  return (
+                    <GenericAnnualPlanSection
+                      u={u}
+                      cats={ATK_CATS}
+                      fetchPlanFn={fetchWeredaAtkPlan}
+                      title="ATK"
+                      accentColor="#7e22ce"
+                      accentLight="#fdf4ff"
+                      accentBorder="#e9d5ff"
+                    />
+                  );
                 return <PlaceholderAnnualPlan title={work?.label} u={u} />;
               }
               if (sub === "analysis") {
@@ -4670,6 +5095,28 @@ export default function WoRedaDashboard() {
                 if (wid === "qonna") return <QonnaAnalysisSection />;
                 if (wid === "carraaHojii")
                   return <CarraaHojiiAnalysisSection />;
+                if (wid === "daldala")
+                  return (
+                    <GenericAnalysisSection
+                      cats={DALDALA_CATS}
+                      fetchPlanFn={fetchWeredaDaldalaPlan}
+                      title="Daldala"
+                      accentColor="#854d0e"
+                      accentLight="#fefce8"
+                      accentBorder="#fde68a"
+                    />
+                  );
+                if (wid === "atk")
+                  return (
+                    <GenericAnalysisSection
+                      cats={ATK_CATS}
+                      fetchPlanFn={fetchWeredaAtkPlan}
+                      title="ATK"
+                      accentColor="#7e22ce"
+                      accentLight="#fdf4ff"
+                      accentBorder="#e9d5ff"
+                    />
+                  );
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
               }
               if (wid === "buusaa") return <BuusaaSubmitForm u={u} />;
@@ -4685,6 +5132,26 @@ export default function WoRedaDashboard() {
                 );
               if (wid === "qonna") return <QonnaSubmitForm u={u} />;
               if (wid === "revenue") return <RevenueSubmitForm u={u} />;
+              if (wid === "daldala")
+                return (
+                  <GenericSubmitForm
+                    u={u}
+                    fields={DALDALA_FIELDS}
+                    submitFn={submitDaldalReport}
+                    title="Daldala"
+                    headerColor="linear-gradient(90deg,#854d0e 0%,#a16207 100%)"
+                  />
+                );
+              if (wid === "atk")
+                return (
+                  <GenericSubmitForm
+                    u={u}
+                    fields={ATK_FIELDS}
+                    submitFn={submitAtkReport}
+                    title="ATK"
+                    headerColor="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
+                  />
+                );
               return (
                 <PlaceholderSubmit
                   title={work?.label}

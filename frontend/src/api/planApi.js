@@ -94,6 +94,18 @@ export const fetchSubcityQonnaPlan = async () => {
   return res.data; // { plan: {...} | null }
 };
 
+/** Fetch the current year's Daldala plan for the logged-in wereda. */
+export const fetchWeredaDaldalaPlan = async () => {
+  const res = await api.get("/plans/wereda-daldala-plan", authHeader());
+  return res.data;
+};
+
+/** Fetch the current year's ATK plan for the logged-in wereda. */
+export const fetchWeredaAtkPlan = async () => {
+  const res = await api.get("/plans/wereda-atk-plan", authHeader());
+  return res.data;
+};
+
 /** Fetch the current year's Qonna plan for the logged-in wereda. */
 export const fetchWeredaQonnaPlan = async () => {
   const res = await api.get("/plans/wereda-qonna-plan", authHeader());
