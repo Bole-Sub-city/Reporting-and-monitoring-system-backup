@@ -3103,13 +3103,13 @@ const DALDALA_FIELDS = [
   { name: "heyyema_haraa",          label: "Heyyema Haraa",          required: true,  type: "number" },
   { name: "harahessaa",             label: "Harahessaa",             required: true,  type: "number" },
   { name: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu", required: true,  type: "number" },
-  { name: "toannoo_walii_gala",     label: "To'Annoo Walii Gala",    required: true,  type: "number" },
-  { name: "tmd",                    label: "TMD",                    required: true,  type: "number" },
+  { name: "toannoo_walii_gala",     label: "To'annoo Walii Gala",    required: true,  type: "number" },
+  { name: "tmd",                    label: " Leenjii TMD",                    required: true,  type: "number" },
   { name: "intarshippii",           label: "Intarshippii",           required: false, type: "number" },
-  { name: "ggg",                    label: "GGG",                    required: false, type: "number" },
-  { name: "gabayaa_sanbata",        label: "Gabayaa Sanbata",        required: false, type: "number" },
-  { name: "whg_kudraa",             label: "WHG - Kudraa",           required: false, type: "number" },
-  { name: "whg_mudraa",             label: "WHG - Mudraa",           required: false, type: "number" },
+  { name: "ggg",                    label: "Giddu Gala Gabaa",                    required: false, type: "number" },
+  { name: "gabayaa_sanbata",        label: "Gabaa Sanbata",        required: false, type: "number" },
+  { name: "whg_kudraa",             label: "Walitti hidhinsaa Gabaa - Kudraa",           required: false, type: "number" },
+  { name: "whg_mudraa",             label: "Walitti hidhinsaa Gabaa - Mudraa",           required: false, type: "number" },
 ];
 
 const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
@@ -3123,7 +3123,7 @@ const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
 const ATK_FIELDS = [
   { name: "waliigaltee_pilaanii_kennuu",    label: "Waliigaltee Pilaanii Kennuu",    required: true,  type: "number" },
   { name: "heeyyama_ijaarsaa_kennamee",     label: "Heeyyama Ijaarsaa Kennamee",     required: true,  type: "number" },
-  { name: "toannoo_fi_hordoffii_gamoo",     label: "To'Annoo Fi Hordoffii Gamoo",    required: true,  type: "number" },
+  { name: "toannoo_fi_hordoffii_gamoo",     label: "To'annoo Fi Hordoffii Gamoo",    required: true,  type: "number" },
   { name: "galii_atk_galchuu",             label: "Galii ATK Galchuu",              required: true,  type: "number" },
 ];
 
