@@ -7,6 +7,8 @@ import {
   fetchSubcityOwnPlan,
   saveSubcityQonnaPlan,
   fetchSubcityQonnaPlan,
+  saveSubcityGenericPlan,
+  fetchSubcityGenericPlan,
 } from "../api/planApi";
 
 // ─── Shared allocation helpers ────────────────────────────────────────────────
@@ -104,10 +106,12 @@ const EMPTY_PLAN = {
 
 // Sectors used in Annual Plan and Work Analysis dropdowns
 const SECTORS = [
-  { id: "buusaa", label: "Buusaa Gonofaa" },
-  { id: "qonna", label: "Qonna" },
-  { id: "galii", label: "Galii Sassaabu" },
-  { id: "carraa", label: "Carraa Hojii Uumuu" },
+  { id: "buusaa",     label: "Buusaa Gonofaa" },
+  { id: "qonna",      label: "Qonna" },
+  { id: "galii",      label: "Galii Sassaabu" },
+  { id: "carraa",     label: "Carraa Hojii Uumuu" },
+  { id: "daldala",    label: "Daldala" },
+  { id: "atk",        label: "ATK" },
 ];
 
 // ─── Default woreda percentage split (editable in plan forms) ────────────────
@@ -986,16 +990,37 @@ function QonnaPlanPage() {
     setSaveError("");
     setSaved(false);
 
-    // Save total animals (houses x unitsPerHouse) as the target for each category
+    // Save total animals (houses x unitsPerHouse), houses count, ha per house,
+    // and total land per category so the woreda can see all planned dimensions.
     const qophi = Object.fromEntries(
-      QONNA_CATEGORIES.map((c) => [c.key, totalAnimals[c.key]]),
+      QONNA_CATEGORIES.map((c) => {
+        const f = forms[c.key];
+        const houses = Number(f.houses) || 0;
+        const haPerHouse = Number(f.haPerHouse) || 0;
+        const totalLand = Math.round(houses * haPerHouse * 100) / 100;
+        return [c.key, totalAnimals[c.key]];
+      }),
+    );
+    // Also pass the extra dimension data flat so backend can store them
+    const qophiExtra = Object.fromEntries(
+      QONNA_CATEGORIES.flatMap((c) => {
+        const f = forms[c.key];
+        const houses = Number(f.houses) || 0;
+        const haPerHouse = Number(f.haPerHouse) || 0;
+        const totalLand = Math.round(houses * haPerHouse * 100) / 100;
+        return [
+          [`${c.key}_houses`, houses],
+          [`${c.key}_ha_per_house`, haPerHouse],
+          [`${c.key}_total_land`, totalLand],
+        ];
+      }),
     );
     const weights = Object.fromEntries(
       WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
     );
 
     try {
-      await saveSubcityQonnaPlan(qophi, weights);
+      await saveSubcityQonnaPlan(qophi, weights, qophiExtra);
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
@@ -1253,6 +1278,352 @@ function QonnaPlanPage() {
   );
 }
 
+// ─── Generic sector field definitions ────────────────────────────────────────
+const GALII_FIELDS = [
+  { key: "galii_idilee",          label: "Galii Idilee",          color: "#0f766e" },
+  { key: "galii_mana_qophessaa",  label: "Galii Mana Qophessaa",  color: "#1e40af" },
+];
+
+const CARRAA_FIELDS = [
+  { key: "leenjii",                    label: "Leenjii",                    color: "#1e40af" },
+  { key: "carraa_hojii_dhaabbii",      label: "Carraa Hojii Dhaabbii",      color: "#0f766e" },
+  { key: "carraa_hojii_qacarrii",      label: "Carraa Hojii Qacarrii",      color: "#7c3aed" },
+  { key: "qusannaa_haawaasaa",         label: "Qusannaa Haawaasaa",         color: "#475569" },
+  { key: "qusanna_dirqii",             label: "Qusanna Dirqii",             color: "#64748b" },
+  { key: "kenna_liqii",                label: "Kenna Liqii",                color: "#b45309" },
+  { key: "deebii_liqii_bilchaate",     label: "Deebii Liqii Bilchaate",     color: "#065f46" },
+  { key: "deebii_liqii_bulee",         label: "Deebii Liqii Bulee",         color: "#dc2626" },
+  { key: "industrii_godoo",            label: "Industrii Godoo",            color: "#0369a1" },
+];
+
+const DALDALA_FIELDS_SC = [
+  { key: "galmee_haraa",           label: "Galmee Haraa",           color: "#0f766e" },
+  { key: "heyyema_haraa",          label: "Heyyema Haraa",          color: "#1e40af" },
+  { key: "harahessaa",             label: "Harahessaa",             color: "#7c3aed" },
+  { key: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu", color: "#b45309" },
+  { key: "toannoo_walii_gala",     label: "To'Annoo Walii Gala",    color: "#065f46" },
+  { key: "tmd",                    label: "TMD",                    color: "#0369a1" },
+  { key: "intarshippii",           label: "Intarshippii",           color: "#dc2626" },
+  { key: "ggg",                    label: "GGG",                    color: "#475569" },
+  { key: "gabayaa_sanbata",        label: "Gabayaa Sanbata",        color: "#854d0e" },
+  { key: "whg_kudraa",             label: "WHG - Kudraa",           color: "#166534" },
+  { key: "whg_mudraa",             label: "WHG - Mudraa",           color: "#1a3a5c" },
+];
+
+const ATK_FIELDS_SC = [
+  { key: "waliigaltee_pilaanii_kennuu",  label: "Waliigaltee Pilaanii Kennuu",  color: "#7e22ce" },
+  { key: "heeyyama_ijaarsaa_kennamee",   label: "Heeyyama Ijaarsaa Kennamee",   color: "#0369a1" },
+  { key: "toannoo_fi_hordoffii_gamoo",   label: "To'Annoo Fi Hordoffii Gamoo",  color: "#065f46" },
+  { key: "galii_atk_galchuu",            label: "Galii ATK Galchuu",            color: "#b45309" },
+];
+
+// Sector config map used by GenericSubcityPlanPage and GenericSubcityAnalysisPage
+const SECTOR_CFG = {
+  galii:   { fields: GALII_FIELDS,      label: "Galii Sassaabu",    color: "#475569", gradient: "linear-gradient(90deg,#475569 0%,#64748b 100%)" },
+  carraa:  { fields: CARRAA_FIELDS,     label: "Carraa Hojii Uumuu",color: "#1e40af", gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" },
+  daldala: { fields: DALDALA_FIELDS_SC, label: "Daldala",           color: "#854d0e", gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)" },
+  atk:     { fields: ATK_FIELDS_SC,     label: "ATK",               color: "#7e22ce", gradient: "linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)" },
+};
+
+// ─── Generic Subcity Annual Plan Page ────────────────────────────────────────
+// Used for Galii, Carraa, Daldala, ATK — same pattern as BuusaaPlanPage.
+function GenericSubcityPlanPage({ sector }) {
+  const cfg = SECTOR_CFG[sector];
+  const emptyForm = Object.fromEntries(cfg.fields.map((f) => [f.key, ""]));
+  const [form, setForm] = useState(emptyForm);
+  const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
+  const handleField = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+
+  const parsed = parsePcts(pcts);
+  const pctValid = validatePcts(parsed);
+  const hasValues = cfg.fields.some((f) => Number(form[f.key] || 0) > 0);
+  const canSubmit = hasValues && pctValid.ok;
+  const share = (woredaId, total) => pctValid.ok ? pctShare(parsed, woredaId, total) : 0;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!pctValid.ok) return;
+    setSaving(true); setSaveError(""); setSaved(false);
+    const wForm = Object.fromEntries(
+      WOREDAS.map((w) => {
+        const effectivePct = w.id === "w2" ? 25 : parsed[w.id];
+        return [w.id, Math.round(effectivePct * 10)];
+      }),
+    );
+    try {
+      await saveSubcityGenericPlan(sector, form, wForm);
+      setSaved(true);
+      setForm(emptyForm);
+      setTimeout(() => setSaved(false), 4000);
+    } catch (err) {
+      setSaveError(err?.response?.data?.message || "Failed to save plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">{cfg.label} — Annual Plan</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Enter subcity totals and woreda allocation percentages.
+        </p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: cfg.gradient }}>
+            <p className="text-sm font-semibold text-white">Enter Subcity Annual Totals</p>
+            <p className="text-white/60 text-xs mt-0.5">Total targets for the whole subcity</p>
+          </div>
+          <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {cfg.fields.map(({ key, label, color }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-[#1e293b] mb-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    {label}
+                  </span>
+                </label>
+                <input type="number" min="0" name={key} value={form[key]} onChange={handleField}
+                  placeholder="0"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {hasValues && pctValid.ok && (
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
+              <p className="text-sm font-semibold text-[#1e293b]">Allocation Preview</p>
+              <p className="text-xs text-[#64748b] mt-0.5">Auto-calculated from entered percentages</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Total</th>
+                    {WOREDAS.map((w) => (
+                      <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                        {w.name}<span className="block text-[#94a3b8] font-normal normal-case">{pcts[w.id]}%</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cfg.fields.map(({ key, label, color }) => {
+                    const total = Number(form[key] || 0);
+                    if (total === 0) return null;
+                    return (
+                      <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                            {label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{total.toLocaleString()}</td>
+                        {WOREDAS.map((w) => (
+                          <td key={w.id} className="px-5 py-3 text-[#64748b]">{share(w.id, total).toLocaleString()}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <div>
+            {saved && <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold"><CheckIcon /> Saved successfully.</p>}
+            {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
+            {!saved && !saveError && <p className="text-[#94a3b8] text-xs">Saving overwrites the current plan.</p>}
+          </div>
+          <button type="submit" disabled={saving || !canSubmit}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
+            style={{ backgroundColor: cfg.color }}>
+            {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving...</> : <><CheckIcon /> Save Plan</>}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Generic Subcity Work Analysis Page ──────────────────────────────────────
+// Fetches the saved subcity plan for the sector and shows a woreda-tab view
+// with ring charts + summary table + remaining column — same pattern as Buusaa.
+function GenericSubcityAnalysisPage({ sector }) {
+  const cfg = SECTOR_CFG[sector];
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
+
+  useEffect(() => {
+    fetchSubcityGenericPlan(sector)
+      .then((d) => setPlan(d.plan))
+      .catch(() => setPlan(null))
+      .finally(() => setLoading(false));
+  }, [sector]);
+
+  const woredaLabel = WOREDAS.find((w) => w.id === activeWoreda)?.name ?? "";
+
+  // For display: subcity plan has total + woreda shares stored as
+  // {field}_w1, {field}_w2 etc. We'll show the subcity totals and
+  // woreda-allocated amounts from the plan directly.
+  const getPlanTotal = (fieldKey) => plan ? Number(plan[fieldKey] || 0) : 0;
+  const getWoredaShare = (fieldKey, woredaId) =>
+    plan ? Number(plan[`${fieldKey}_${woredaId}`] || 0) : 0;
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">{cfg.label} — Work Analysis</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Subcity annual plan distributed across the 4 woredas.
+        </p>
+      </div>
+
+      {!plan && (
+        <div className="mb-5 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <p className="text-[#92400e] text-sm">No {cfg.label} annual plan saved yet. Enter targets in Annual Plan first.</p>
+        </div>
+      )}
+
+      {/* Woreda tabs */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {WOREDAS.map((w) => (
+          <button key={w.id} onClick={() => setActiveWoreda(w.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeWoreda === w.id ? "text-white shadow" : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"}`}
+            style={activeWoreda === w.id ? { background: cfg.gradient } : {}}>
+            {w.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Subcity totals overview */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
+        <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: cfg.gradient }}>
+          <p className="text-sm font-semibold text-white">Subcity Total Annual Plan</p>
+          <p className="text-white/60 text-xs mt-0.5">All 4 woredas combined</p>
+        </div>
+        <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {cfg.fields.map(({ key, label, color }) => {
+            const total = getPlanTotal(key);
+            return (
+              <div key={key} className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                  <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">{label}</p>
+                </div>
+                <p className="text-xl font-extrabold text-[#1e293b]">{total.toLocaleString()}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selected woreda plan breakdown */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f4f6f9]">
+          <p className="text-sm font-semibold text-[#1e293b]">{woredaLabel} — Allocated Targets</p>
+          <p className="text-xs text-[#64748b] mt-0.5">Share of subcity totals distributed to this woreda</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9]">
+                {["Category", "Subcity Total", `${woredaLabel} Share`].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {cfg.fields.map(({ key, label, color }) => {
+                const total = getPlanTotal(key);
+                const share = getWoredaShare(key, activeWoreda);
+                return (
+                  <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                    <td className="px-5 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                        {label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-[#64748b]">{total.toLocaleString()}</td>
+                    <td className="px-5 py-3 font-semibold text-[#1e293b]">{share.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* All woredas comparison */}
+      {plan && (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f4f6f9]">
+            <p className="text-sm font-semibold text-[#1e293b]">All Woredas Comparison</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9]">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Subcity Total</th>
+                  {WOREDAS.map((w) => (
+                    <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{w.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {cfg.fields.map(({ key, label, color }) => {
+                  const total = getPlanTotal(key);
+                  return (
+                    <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                      <td className="px-5 py-3 font-medium text-[#1e293b]">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          {label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 font-bold text-[#1e293b]">{total.toLocaleString()}</td>
+                      {WOREDAS.map((w) => (
+                        <td key={w.id} className="px-5 py-3 text-[#64748b]">{getWoredaShare(key, w.id).toLocaleString()}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Coming Soon Page ─────────────────────────────────────────────────────────
 function ComingSoonPage({ title }) {
   return (
@@ -1283,12 +1654,16 @@ function ComingSoonPage({ title }) {
 }
 
 // ─── Work Analysis Page ───────────────────────────────────────────────────────
-// Woredas shown as tab buttons on the page, not in the sidebar
+// Routes to the correct analysis component based on sector.
 function WorkAnalysisPage({ sector }) {
+  // Galii, Carraa, Daldala, ATK — use the generic subcity analysis page
+  if (sector === "galii" || sector === "carraa" || sector === "daldala" || sector === "atk") {
+    return <GenericSubcityAnalysisPage sector={sector} />;
+  }
+  // Buusaa and Qonna — woreda-tab placeholder (real data in woreda dashboard)
   const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
   const sectorLabel = SECTORS.find((s) => s.id === sector)?.label ?? sector;
-  const woredaLabel =
-    WOREDAS.find((w) => w.id === activeWoreda)?.name ?? activeWoreda;
+  const woredaLabel = WOREDAS.find((w) => w.id === activeWoreda)?.name ?? activeWoreda;
 
   return (
     <div>
@@ -1608,7 +1983,8 @@ export default function SubCityDashboard({ user: propUser }) {
                 >
                   <p className="font-semibold text-[#1e293b]">{s.label}</p>
                   <p className="text-xs text-[#94a3b8] mt-1">
-                    {s.id === "buusaa" || s.id === "qonna"
+                    {s.id === "buusaa" || s.id === "qonna" || s.id === "galii" ||
+                     s.id === "carraa" || s.id === "daldala" || s.id === "atk"
                       ? "Active"
                       : "Coming soon"}
                   </p>
@@ -1620,6 +1996,9 @@ export default function SubCityDashboard({ user: propUser }) {
       if (activePlanSector === "buusaa")
         return <BuusaaPlanPage onSave={handleSavePlan} />;
       if (activePlanSector === "qonna") return <QonnaPlanPage />;
+      if (activePlanSector === "galii" || activePlanSector === "carraa" ||
+          activePlanSector === "daldala" || activePlanSector === "atk")
+        return <GenericSubcityPlanPage sector={activePlanSector} />;
       return (
         <ComingSoonPage
           title={SECTORS.find((s) => s.id === activePlanSector)?.label ?? ""}

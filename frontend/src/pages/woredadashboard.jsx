@@ -17,6 +17,8 @@ import {
   fetchWeredaQonnaPlan,
   fetchWeredaDaldalaPlan,
   fetchWeredaAtkPlan,
+  fetchWeredaRevenuePlan,
+  fetchWeredaCarraaHojiiPlan,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 
@@ -798,14 +800,14 @@ function RingChart({ actual, target, color, label, description }) {
 }
 
 function AnnualPlanSection({ u }) {
-  const [plan, setPlan] = useState(null);
+  const [plan, setPlan] = useState({});
   const [loading, setLoading] = useState(true);
   const year = new Date().getFullYear();
 
   useEffect(() => {
     fetchWeredaPlan()
-      .then((d) => setPlan(d.plan))
-      .catch(() => setPlan(null))
+      .then((d) => setPlan(d.plan || {}))
+      .catch(() => setPlan({}))
       .finally(() => setLoading(false));
   }, []);
 
@@ -818,77 +820,38 @@ function AnnualPlanSection({ u }) {
 
   return (
     <div>
-      {plan ? (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          <div
-            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-            }}
-          >
-            <PlanIcon />
-            <div>
-              <p className="text-white font-bold text-base">
-                Annual Plan  {year} <LockIcon />
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">
-                Read only
-              </p>
-            </div>
-          </div>
-          <div className="px-6 py-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {PLAN_FIELDS.map(
-                ({ planKey, label, bgColor, borderColor, textColor }) => (
-                  <div
-                    key={planKey}
-                    className={`rounded-xl border ${borderColor} ${bgColor} px-5 py-4`}
-                  >
-                    <p
-                      className={`text-xs font-bold uppercase tracking-wide ${textColor} mb-1`}
-                    >
-                      {label}
-                    </p>
-                    <p className="text-3xl font-extrabold text-[#1e293b]">
-                      {(plan[planKey] ?? 0).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-[#64748b] mt-1">Annual target</p>
-                  </div>
-                ),
-              )}
-            </div>
-            <div className="mt-5 flex items-center gap-2 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3">
-              <svg
-                className="w-5 h-5 text-[#1a3a5c] flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
-              <p className="text-[#1a3a5c] text-sm">
-                These targets were assigned by your sub-city office. Contact
-                them if you believe the numbers are incorrect.
-              </p>
-            </div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Buusaa Gonofaa — Annual Plan</h1>
+        <span className="bg-[#eef4fb] text-[#1a3a5c] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-[#dce8f4]">{year}</span>
+      </div>
+      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets set by the sub-city office. Read-only.</p>
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}>
+          <PlanIcon />
+          <div>
+            <p className="text-white font-bold text-base">Annual Plan — {year} <LockIcon /></p>
+            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
           </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-[#f4f6f9] flex items-center justify-center mb-3 text-amber-400">
-            <PlanIcon />
+        <div className="px-6 py-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PLAN_FIELDS.map(({ planKey, label, bgColor, borderColor, textColor }) => (
+              <div key={planKey} className={`rounded-xl border ${borderColor} ${bgColor} px-5 py-4`}>
+                <p className={`text-xs font-bold uppercase tracking-wide ${textColor} mb-1`}>{label}</p>
+                <p className="text-3xl font-extrabold text-[#1e293b]">{(plan[planKey] ?? 0).toLocaleString()}</p>
+                <p className="text-xs text-[#64748b] mt-1">Annual target</p>
+              </div>
+            ))}
           </div>
-          <p className="text-[#334155] font-semibold mb-1">
-            No Plan Assigned Yet
-          </p>
-          <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved an annual plan for {year} yet.
-            Once they do, your targets will appear here automatically.
-          </p>
+          <div className="mt-5 flex items-center gap-2 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3">
+            <svg className="w-5 h-5 text-[#1a3a5c] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-[#1a3a5c] text-sm">These targets were assigned by your sub-city office. Contact them if you believe the numbers are incorrect.</p>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -1615,14 +1578,14 @@ function QonnaSubmitForm({ u }) {
 
 // ─── Qonna Annual Plan Section (Woreda — read-only) ──────────────────────────
 function QonnaAnnualPlanSection({ u }) {
-  const [plan, setPlan] = useState(null);
+  const [plan, setPlan] = useState({});
   const [loading, setLoading] = useState(true);
   const year = new Date().getFullYear();
 
   useEffect(() => {
     fetchWeredaQonnaPlan()
-      .then((d) => setPlan(d.plan))
-      .catch(() => setPlan(null))
+      .then((d) => setPlan(d.plan || {}))
+      .catch(() => setPlan({}))
       .finally(() => setLoading(false));
   }, []);
 
@@ -1633,81 +1596,80 @@ function QonnaAnnualPlanSection({ u }) {
       </div>
     );
 
+  // House label per category — consistent with subcity dashboard
+  const HOUSE_LABEL = {
+    furdisa:   "Sheedii",
+    annan:     "Sheedii",
+    lukkuu:    "Sheedii",
+    booyee:    "Sheedii",
+    kannisaa:  "Gaaguraa",
+    qurxummii: "Dhaabbii (Pond)",
+  };
+
   return (
     <div>
-      {plan ? (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          <div
-            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
-            }}
-          >
-            <PlanIcon />
-            <div>
-              <p className="text-white font-bold text-base">
-                Qonna Annual Plan  {year}
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">
-                {u.name} · {u.woreda} · Read-only
-              </p>
-            </div>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Qonna — Annual Plan</h1>
+        <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">{year}</span>
+      </div>
+      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets assigned by the sub-city office. Read-only.</p>
+
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+          style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}>
+          <PlanIcon />
+          <div>
+            <p className="text-white font-bold text-base">Qonna Annual Plan — {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
           </div>
-          <div className="px-6 py-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {QONNA_CATS.map(({ planKey, label, description, color }) => (
-                <div
-                  key={planKey}
-                  className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">
-                      {label}
-                    </p>
-                  </div>
-                  <p className="text-3xl font-extrabold text-[#1e293b]">
-                    {(plan[planKey] ?? 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-[#94a3b8] mt-1">{description}</p>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {QONNA_CATS.map(({ planKey, key, label, description, color }) => {
+            const animals    = plan[planKey] ?? 0;
+            const houses     = plan[`${key}_houses`] ?? 0;
+            const totalLand  = plan[`${key}_total_land`] ?? 0;
+            return (
+              <div key={planKey} className="rounded-xl border border-[#e2e8f0] overflow-hidden">
+                <div className="px-4 py-2.5 flex items-center gap-2"
+                  style={{ backgroundColor: `${color}15`, borderBottom: `1px solid ${color}30` }}>
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <p className="text-sm font-bold" style={{ color }}>{label}</p>
+                  <span className="text-xs text-[#94a3b8] ml-1">— {description}</span>
                 </div>
-              ))}
-            </div>
-            <div className="mt-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-              <svg
-                className="w-5 h-5 text-[#065f46] flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
-              <p className="text-[#065f46] text-sm">
-                These targets were assigned by your sub-city office. Contact
-                them if you believe the numbers are incorrect.
-              </p>
-            </div>
-          </div>
+                <div className="px-4 py-4 grid grid-cols-3 gap-3">
+                  <div className="rounded-lg bg-[#f8fafc] border border-[#e2e8f0] px-3 py-3 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#64748b] mb-1">{HOUSE_LABEL[key] ?? "Sheedii"}</p>
+                    <p className="text-2xl font-extrabold text-[#1e293b]">{houses.toLocaleString()}</p>
+                    <p className="text-[10px] text-[#94a3b8] mt-0.5">Lakk. {HOUSE_LABEL[key]}</p>
+                  </div>
+                  <div className="rounded-lg border px-3 py-3 text-center"
+                    style={{ backgroundColor: `${color}10`, borderColor: `${color}30` }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color }}>Qophi Lafaa</p>
+                    <p className="text-2xl font-extrabold text-[#1e293b]">{totalLand.toLocaleString()}</p>
+                    <p className="text-[10px] text-[#94a3b8] mt-0.5">Ha waliigalaa</p>
+                  </div>
+                  <div className="rounded-lg border px-3 py-3 text-center"
+                    style={{ backgroundColor: `${color}18`, borderColor: `${color}40` }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color }}>
+                      {key === "annan" ? "Sa'a" : key === "kannisaa" ? "Kannisaa" : key === "qurxummii" ? "Qurxummii" : "Horii"}
+                    </p>
+                    <p className="text-2xl font-extrabold" style={{ color }}>{animals.toLocaleString()}</p>
+                    <p className="text-[10px] text-[#94a3b8] mt-0.5">Lakk. karoorfame</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3">
-            <PlanIcon />
-          </div>
-          <p className="text-[#334155] font-semibold mb-1">
-            No Qonna Plan Assigned Yet
-          </p>
-          <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved a Qonna annual plan for {year}{" "}
-            yet. Once they do, your targets will appear here automatically.
-          </p>
+
+        <div className="mx-6 mb-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <svg className="w-5 h-5 text-[#065f46] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-[#065f46] text-sm">Targets assigned by sub-city. Contact them if numbers need correction.</p>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -3134,16 +3096,34 @@ const ATK_CATS = ATK_FIELDS.map((f, i) => ({
   color: ["#7e22ce","#0369a1","#065f46","#b45309"][i % 4],
 }));
 
+// Revenue (Galii) and CarraaHojii category lists for GenericAnnualPlanSection
+const REVENUE_CATS = [
+  { key: "galii_idilee",         planKey: "galii_idilee_target",         label: "Galii Idilee",         color: "#0f766e" },
+  { key: "galii_mana_qophessaa", planKey: "galii_mana_qophessaa_target", label: "Galii Mana Qophessaa", color: "#1e40af" },
+];
+
+const CARRAA_WOREDA_CATS = [
+  { key: "leenjii",                label: "Leenjii",                    planKey: "leenjii_target",                    color: "#1e40af" },
+  { key: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",      planKey: "carraa_hojii_dhaabbii_target",      color: "#0f766e" },
+  { key: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",      planKey: "carraa_hojii_qacarrii_target",      color: "#7c3aed" },
+  { key: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",         planKey: "qusannaa_target",                   color: "#475569" },
+  { key: "qusanna_dirqii",         label: "Qusanna Dirqii",             planKey: "qusanna_dirqii_target",             color: "#64748b" },
+  { key: "kenna_liqii",            label: "Kenna Liqii",                planKey: "liqii_target",                      color: "#b45309" },
+  { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate",     planKey: "deebii_liqii_bilchaate_target",     color: "#065f46" },
+  { key: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",         planKey: "deebii_liqii_bulee_target",         color: "#dc2626" },
+  { key: "industrii_godoo",        label: "Industrii Godoo",            planKey: "industrii_godoo_target",            color: "#0369a1" },
+];
+
 // ─── Shared GenericAnnualPlanSection ─────────────────────────────────────────
 // Reusable read-only plan display for Daldala and ATK.
 function GenericAnnualPlanSection({ u, cats, fetchPlanFn, title, accentColor, accentLight, accentBorder }) {
-  const [plan, setPlan] = useState(null);
+  const [plan, setPlan] = useState({});
   const [loading, setLoading] = useState(true);
   const year = new Date().getFullYear();
   useEffect(() => {
     fetchPlanFn()
-      .then((d) => setPlan(d.plan))
-      .catch(() => setPlan(null))
+      .then((d) => setPlan(d.plan || {}))
+      .catch(() => setPlan({}))
       .finally(() => setLoading(false));
   }, [fetchPlanFn]);
   if (loading) return (
@@ -3158,43 +3138,35 @@ function GenericAnnualPlanSection({ u, cats, fetchPlanFn, title, accentColor, ac
         <span className="text-xs font-bold px-3 py-1 rounded-full border" style={{ background: accentLight, color: accentColor, borderColor: accentBorder }}>{year}</span>
       </div>
       <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets assigned by the sub-city office. Read-only.</p>
-      {plan ? (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
-            <PlanIcon />
-            <div>
-              <p className="text-white font-bold text-base">{title} Annual Plan — {year}</p>
-              <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
-            </div>
-          </div>
-          <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cats.map(({ planKey, label, color }) => (
-              <div key={planKey} className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{label}</p>
-                </div>
-                <p className="text-3xl font-extrabold text-[#1e293b]">{(plan[planKey] ?? 0).toLocaleString()}</p>
-                <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
-              </div>
-            ))}
-          </div>
-          <div className="mx-6 mb-5 flex items-center gap-2 rounded-xl px-4 py-3 border"
-            style={{ background: accentLight, borderColor: accentBorder }}>
-            <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
-            </svg>
-            <p className="text-sm" style={{ color: accentColor }}>Targets assigned by sub-city. Contact them if numbers need correction.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
           <PlanIcon />
-          <p className="text-[#334155] font-semibold mb-1 mt-3">No {title} Plan Assigned Yet</p>
-          <p className="text-[#94a3b8] text-sm max-w-xs">Sub-city hasn't saved a {title} annual plan for {year} yet.</p>
+          <div>
+            <p className="text-white font-bold text-base">{title} Annual Plan — {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
+          </div>
         </div>
-      )}
+        <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cats.map(({ planKey, label, color }) => (
+            <div key={planKey} className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">{label}</p>
+              </div>
+              <p className="text-3xl font-extrabold text-[#1e293b]">{(plan[planKey] ?? 0).toLocaleString()}</p>
+              <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
+            </div>
+          ))}
+        </div>
+        <div className="mx-6 mb-5 flex items-center gap-2 rounded-xl px-4 py-3 border"
+          style={{ background: accentLight, borderColor: accentBorder }}>
+          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-sm" style={{ color: accentColor }}>Targets assigned by sub-city. Contact them if numbers need correction.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -5011,7 +4983,29 @@ export default function WoRedaDashboard() {
                 if (wid === "buusaa") return <AnnualPlanSection u={u} />;
                 if (wid === "qonna") return <QonnaAnnualPlanSection u={u} />;
                 if (wid === "carraaHojii")
-                  return <CarraaHojiiAnnualPlanSection u={u} />;
+                  return (
+                    <GenericAnnualPlanSection
+                      u={u}
+                      cats={CARRAA_WOREDA_CATS}
+                      fetchPlanFn={fetchWeredaCarraaHojiiPlan}
+                      title="Carraa Hojii Uumuu"
+                      accentColor="#1e40af"
+                      accentLight="#eff6ff"
+                      accentBorder="#bfdbfe"
+                    />
+                  );
+                if (wid === "revenue")
+                  return (
+                    <GenericAnnualPlanSection
+                      u={u}
+                      cats={REVENUE_CATS}
+                      fetchPlanFn={fetchWeredaRevenuePlan}
+                      title="Galii Sassaabu"
+                      accentColor="#475569"
+                      accentLight="#f8fafc"
+                      accentBorder="#e2e8f0"
+                    />
+                  );
                 if (wid === "daldala")
                   return (
                     <GenericAnnualPlanSection
@@ -5040,10 +5034,29 @@ export default function WoRedaDashboard() {
               }
               if (sub === "analysis") {
                 if (wid === "buusaa") return <AnalysisSection />;
-                if (wid === "revenue") return <RevenueAnalysis />;
+                if (wid === "revenue")
+                  return (
+                    <GenericAnalysisSection
+                      cats={REVENUE_CATS}
+                      fetchPlanFn={fetchWeredaRevenuePlan}
+                      title="Galii Sassaabu"
+                      accentColor="#475569"
+                      accentLight="#f8fafc"
+                      accentBorder="#e2e8f0"
+                    />
+                  );
                 if (wid === "qonna") return <QonnaAnalysisSection />;
                 if (wid === "carraaHojii")
-                  return <CarraaHojiiAnalysisSection />;
+                  return (
+                    <GenericAnalysisSection
+                      cats={CARRAA_WOREDA_CATS}
+                      fetchPlanFn={fetchWeredaCarraaHojiiPlan}
+                      title="Carraa Hojii Uumuu"
+                      accentColor="#1e40af"
+                      accentLight="#eff6ff"
+                      accentBorder="#bfdbfe"
+                    />
+                  );
                 if (wid === "daldala")
                   return (
                     <GenericAnalysisSection

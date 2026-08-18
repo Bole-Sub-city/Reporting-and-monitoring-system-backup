@@ -73,16 +73,15 @@ export const fetchSubcityOwnPlan = async () => {
 };
 
 /**
- * Save the subcity's Qonna annual plan (qophii lafaa totals) and
- * distribute them to the 4 wereda qonna plan tables.
- *
- * @param {{ furdisa, annan, lukkuu, booyee, kannisaa, qurxummii }} qophi - qophii lafaa totals
- * @param {{ w1, w2, w3, w4 }} weights - population counts per woreda
+ * Save the subcity's Qonna annual plan and distribute to the 4 wereda tables.
+ * @param {Object} qophi      - { furdisa: animalsTotal, … } animal totals per category
+ * @param {Object} weights    - { w1, w2, w3, w4 } woreda weights
+ * @param {Object} [extra]    - flat extra keys: { furdisa_houses, furdisa_ha_per_house, … }
  */
-export const saveSubcityQonnaPlan = async (qophi, weights) => {
+export const saveSubcityQonnaPlan = async (qophi, weights, extra = {}) => {
   const res = await api.post(
     "/plans/subcity-qonna-plan",
-    { qophi, weights },
+    { qophi, weights, extra },
     authHeader(),
   );
   return res.data;
@@ -106,8 +105,45 @@ export const fetchWeredaAtkPlan = async () => {
   return res.data;
 };
 
+/** Fetch the current year's Revenue (Galii) plan for the logged-in wereda. */
+export const fetchWeredaRevenuePlan = async () => {
+  const res = await api.get("/plans/wereda-revenue-plan", authHeader());
+  return res.data;
+};
+
+/** Fetch the current year's CarraaHojii plan for the logged-in wereda. */
+export const fetchWeredaCarraaHojiiPlan = async () => {
+  const res = await api.get("/plans/wereda-carraa-plan", authHeader());
+  return res.data;
+};
+
 /** Fetch the current year's Qonna plan for the logged-in wereda. */
 export const fetchWeredaQonnaPlan = async () => {
   const res = await api.get("/plans/wereda-qonna-plan", authHeader());
+  return res.data; // { plan: {...} | null }
+};
+
+/**
+ * Save a generic subcity plan (galii, carraa, daldala, atk) and distribute
+ * to the 4 wereda tables.
+ * @param {string} sector  - one of "galii" | "carraa" | "daldala" | "atk"
+ * @param {Object} totals  - field totals keyed by field name
+ * @param {Object} weights - { w1, w2, w3, w4 } woreda weights
+ */
+export const saveSubcityGenericPlan = async (sector, totals, weights) => {
+  const res = await api.post(
+    "/plans/subcity-generic-plan",
+    { sector, totals, weights },
+    authHeader(),
+  );
+  return res.data;
+};
+
+/** Fetch a generic subcity plan by sector. */
+export const fetchSubcityGenericPlan = async (sector) => {
+  const res = await api.get(
+    `/plans/subcity-generic-plan?sector=${sector}`,
+    authHeader(),
+  );
   return res.data; // { plan: {...} | null }
 };
