@@ -12,7 +12,6 @@ import {
 import {
   fetchMyPlan,
   fetchSummary,
-  fetchSummaryByDateRange,
   fetchWeredaPlan,
   fetchWeredaQonnaPlan,
   fetchWeredaDaldalaPlan,
@@ -870,18 +869,6 @@ function AnalysisSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Custom date range state
-  const currentYear = new Date().getFullYear();
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customYear, setCustomYear] = useState(currentYear - 1); // Ethiopian fiscal year start
-  const [customSummary, setCustomSummary] = useState(null);
-  const [customLoading, setCustomLoading] = useState(false);
-  const [customError, setCustomError] = useState("");
-  const [customRange, setCustomRange] = useState(null); // { from, to } labels
-
   useEffect(() => {
     fetchMyPlan()
       .then((d) => setPlan(d.plan))
@@ -897,36 +884,7 @@ function AnalysisSection() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  const handleGenerateReport = async () => {
-    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) {
-      setCustomError("Invalid date selection.");
-      return;
-    }
-    if (dateFrom > dateTo) {
-      setCustomError("Start date must be before end date.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomSummary(null);
-    try {
-      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
-      setCustomSummary(d.summary);
-      setCustomRange({
-        from: `${startMonth} ${startDay}`,
-        to: `${endMonth} ${endDay}`,
-      });
-    } catch {
-      setCustomError("Failed to load custom range data.");
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
-  const isCustom = period === "custom";
-  const activeSummary = isCustom ? customSummary : summary;
+  const activeSummary = summary;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -940,11 +898,7 @@ function AnalysisSection() {
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value);
-              setCustomSummary(null);
-              setCustomRange(null);
-            }}
+            onChange={(e) => setPeriod(e.target.value)}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
@@ -977,139 +931,35 @@ function AnalysisSection() {
         </div>
       )}
 
-      {/* ── Custom Date Range picker ── */}
-      {isCustom && (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">
-            Select Custom Date Range (Afaan Oromo Calendar)
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            {/* Ethiopian fiscal year */}
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Fiscal Year (starts Adoolessa)
-              </label>
-              <input
-                type="number"
-                value={customYear}
-                onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000"
-                max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-            </div>
-            {/* Start */}
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Start Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={startMonth}
-                  onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={startDay}
-                  onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {/* End */}
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                End Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={endMonth}
-                  onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={endDay}
-                  onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          {customError && (
-            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
-          )}
-          <button
-            onClick={handleGenerateReport}
-            disabled={customLoading}
-            className="flex items-center gap-2 bg-[#1e4976] hover:bg-[#122840] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          >
-            <AnalysisIcon />
-            {customLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      )}
-
-      {/* ── Standard period loading ── */}
-      {!isCustom && loading ? (
+      {/* ── Loading / error ── */}
+      {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
         </div>
-      ) : !isCustom && error ? (
+      ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
-      ) : isCustom && customLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
-        </div>
-      ) : isCustom && !customSummary ? null : (
+      ) : (
         <>
           {/* Period label banner */}
           <div className="mb-5 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2">
             <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange
-                ? `${customRange.from} — ${customRange.to}`
-                : `${periodLabel} View`}
+              {periodLabel} View
             </span>
-            {!isCustom && (
-              <>
-                <span className="text-[#1a3a5c] text-xs">—</span>
-                <span className="text-[#1a3a5c] text-xs">
-                  Targets are auto-partitioned from the annual plan
-                </span>
-              </>
-            )}
+            <>
+              <span className="text-[#1a3a5c] text-xs">—</span>
+              <span className="text-[#1a3a5c] text-xs">
+                Targets are auto-partitioned from the annual plan
+              </span>
+            </>
           </div>
 
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
               const at = plan ? (plan[planKey] ?? 0) : 0;
-              const pt = isCustom ? 0 : partitionTarget(at, period);
+              const pt = partitionTarget(at, period);
               const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
               return (
                 <RingChart
@@ -1128,9 +978,7 @@ function AnalysisSection() {
           <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
               <p className="text-sm font-semibold text-[#334155]">
-                {isCustom && customRange
-                  ? `${customRange.from} — ${customRange.to} Summary`
-                  : `${periodLabel} Summary Table`}
+                {periodLabel} Summary Table
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -1139,11 +987,11 @@ function AnalysisSection() {
                   <tr className="border-b border-[#f1f5f9]">
                     {[
                       "Category",
-                      isCustom ? "Total Actual" : "Annual Target",
-                      isCustom ? "—" : "Period Target",
+                      "Annual Target",
+                      "Period Target",
                       "Actual",
                       "% Complete",
-                      isCustom ? "—" : "Remaining (carry-over)",
+                      "Remaining (carry-over)",
                     ].map((h) => (
                       <th
                         key={h}
@@ -1157,7 +1005,7 @@ function AnalysisSection() {
                 <tbody>
                   {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
                     const at = plan ? (plan[planKey] ?? 0) : 0;
-                    const pt = isCustom ? 0 : partitionTarget(at, period);
+                    const pt = partitionTarget(at, period);
                     const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
                     const pct =
                       pt > 0 ? Math.min(Math.round((ac / pt) * 100), 100) : 0;
@@ -1177,30 +1025,24 @@ function AnalysisSection() {
                           </span>
                         </td>
                         <td className="px-5 py-3 text-[#64748b]">
-                          {isCustom ? "—" : at.toLocaleString()}
+                          {at.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 text-[#64748b]">
-                          {isCustom ? "—" : pt.toLocaleString()}
+                          {pt.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 font-semibold text-[#1e293b]">
                           {ac.toLocaleString()}
                         </td>
                         <td className="px-5 py-3">
-                          {isCustom ? (
-                            "—"
-                          ) : (
-                            <span
-                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${color}22`, color }}
-                            >
-                              {pct}%
-                            </span>
-                          )}
+                          <span
+                            className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                            style={{ backgroundColor: `${color}22`, color }}
+                          >
+                            {pct}%
+                          </span>
                         </td>
                         <td className="px-5 py-3">
-                          {isCustom ? (
-                            "—"
-                          ) : remaining > 0 ? (
+                          {remaining > 0 ? (
                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
                               <svg
                                 className="w-3 h-3 flex-shrink-0"
@@ -1668,17 +1510,6 @@ function QonnaAnalysisSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const currentYear = new Date().getFullYear();
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customYear, setCustomYear] = useState(currentYear - 1);
-  const [customSummary, setCustomSummary] = useState(null);
-  const [customLoading, setCustomLoading] = useState(false);
-  const [customError, setCustomError] = useState("");
-  const [customRange, setCustomRange] = useState(null);
-
   useEffect(() => {
     fetchWeredaQonnaPlan()
       .then((d) => setPlan(d.plan))
@@ -1695,36 +1526,7 @@ function QonnaAnalysisSection() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  const handleGenerateReport = async () => {
-    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) {
-      setCustomError("Invalid date selection.");
-      return;
-    }
-    if (dateFrom > dateTo) {
-      setCustomError("Start date must be before end date.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomSummary(null);
-    try {
-      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
-      setCustomSummary(d.summary);
-      setCustomRange({
-        from: `${startMonth} ${startDay}`,
-        to: `${endMonth} ${endDay}`,
-      });
-    } catch {
-      setCustomError("Failed to load custom range data.");
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
-  const isCustom = period === "custom";
-  const activeSummary = isCustom ? customSummary : summary;
+  const activeSummary = summary;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -1740,11 +1542,7 @@ function QonnaAnalysisSection() {
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value);
-              setCustomSummary(null);
-              setCustomRange(null);
-            }}
+            onChange={(e) => setPeriod(e.target.value)}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
@@ -1776,134 +1574,31 @@ function QonnaAnalysisSection() {
         </div>
       )}
 
-      {/* ── Custom date range picker ── */}
-      {isCustom && (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">
-            Select Custom Date Range (Afaan Oromo Calendar)
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Fiscal Year
-              </label>
-              <input
-                type="number"
-                value={customYear}
-                onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000"
-                max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Start Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={startMonth}
-                  onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={startDay}
-                  onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                End Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={endMonth}
-                  onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={endDay}
-                  onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          {customError && (
-            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
-          )}
-          <button
-            onClick={handleGenerateReport}
-            disabled={customLoading}
-            className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          >
-            <AnalysisIcon />
-            {customLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      )}
-
       {/* Loading / error states */}
-      {!isCustom && loading ? (
+      {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
         </div>
-      ) : !isCustom && error ? (
+      ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
-      ) : isCustom && customLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
-        </div>
-      ) : isCustom && !customSummary ? null : (
+      ) : (
         <>
           {/* Period banner */}
           <div className="mb-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-2.5 flex items-center gap-2">
             <span className="text-[#065f46] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange
-                ? `${customRange.from} — ${customRange.to}`
-                : `${periodLabel} View`}
+              {periodLabel} View
             </span>
-            {!isCustom && (
-              <span className="text-[#065f46] text-xs">
-                Targets partitioned from annual plan
-              </span>
-            )}
+            <span className="text-[#065f46] text-xs">
+              Targets partitioned from annual plan
+            </span>
           </div>
           {/* Ring charts — animals achieved vs period target */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             {QONNA_CATS.map((cat) => {
               const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-              const periodTarget = isCustom
-                ? 0
-                : partitionTarget(annualTarget, period);
+              const periodTarget = partitionTarget(annualTarget, period);
               const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
               const pct =
                 periodTarget > 0
@@ -2072,11 +1767,7 @@ function QonnaAnalysisSection() {
               }}
             >
               <p className="text-sm font-semibold text-white">
-                Full Plan vs Actual (
-                {isCustom && customRange
-                  ? `${customRange.from}–${customRange.to}`
-                  : periodLabel}
-                )
+                Full Plan vs Actual ({periodLabel})
               </p>
               <p className="text-white/60 text-xs mt-0.5">
                 Annual target · Period target · Actual animals ·
@@ -2090,12 +1781,12 @@ function QonnaAnalysisSection() {
                     {[
                       "Category",
                       "Annual Target",
-                      isCustom ? "—" : "Period Target",
+                      "Period Target",
                       "Actual Animals",
                       "Houses / Ponds / Gaaguraa Built",
                       "Land Prepared (ha)",
                       "% Complete",
-                      isCustom ? "—" : "Remaining (carry-over)",
+                      "Remaining (carry-over)",
                     ].map((h) => (
                       <th
                         key={h}
@@ -2109,9 +1800,7 @@ function QonnaAnalysisSection() {
                 <tbody>
                   {QONNA_CATS.map((cat) => {
                     const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-                    const periodTarget = isCustom
-                      ? 0
-                      : partitionTarget(annualTarget, period);
+                    const periodTarget = partitionTarget(annualTarget, period);
                     const actual = activeSummary
                       ? (activeSummary[cat.key] ?? 0)
                       : 0;
@@ -2148,7 +1837,7 @@ function QonnaAnalysisSection() {
                           {annualTarget.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-[#64748b]">
-                          {isCustom ? "—" : periodTarget.toLocaleString()}
+                          {periodTarget.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 font-semibold text-[#1e293b]">
                           {actual.toLocaleString()}
@@ -2160,10 +1849,7 @@ function QonnaAnalysisSection() {
                           {actualLand > 0 ? `${actualLand} ha` : "—"}
                         </td>
                         <td className="px-4 py-3">
-                          {isCustom ? (
-                            "—"
-                          ) : (
-                            <span
+                          <span
                               className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
                               style={{
                                 backgroundColor: `${cat.color}22`,
@@ -2172,12 +1858,9 @@ function QonnaAnalysisSection() {
                             >
                               {pct}%
                             </span>
-                          )}
                         </td>
                         <td className="px-4 py-3">
-                          {isCustom ? (
-                            "—"
-                          ) : remaining > 0 ? (
+                          {remaining > 0 ? (
                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
                               <svg
                                 className="w-3 h-3 flex-shrink-0"
@@ -2222,7 +1905,7 @@ function QonnaAnalysisSection() {
           </div>
 
           {/* Period target breakdown */}
-          {!isCustom && plan && (
+          {plan && (
             <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
               <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
                 <p className="text-sm font-semibold text-[#334155]">
@@ -2534,25 +2217,13 @@ function CarraaHojiiAnnualPlanSection({ u }) {
 }
 
 // ─── CarraaHojii Work Analysis Section ───────────────────────────────────────
-// Mirrors AnalysisSection (Buusaa) exactly — same period selector, same Oromo
-// date picker, same ring charts + summary table pattern.
+// Mirrors AnalysisSection (Buusaa) exactly — same period selector, same ring charts + summary table pattern.
 function CarraaHojiiAnalysisSection() {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const currentYear = new Date().getFullYear();
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customYear, setCustomYear] = useState(currentYear - 1);
-  const [customSummary, setCustomSummary] = useState(null);
-  const [customLoading, setCustomLoading] = useState(false);
-  const [customError, setCustomError] = useState("");
-  const [customRange, setCustomRange] = useState(null);
 
   useEffect(() => {
     fetchWeredaPlan()
@@ -2569,36 +2240,7 @@ function CarraaHojiiAnalysisSection() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  const handleGenerateReport = async () => {
-    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) {
-      setCustomError("Invalid date selection.");
-      return;
-    }
-    if (dateFrom > dateTo) {
-      setCustomError("Start date must be before end date.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomSummary(null);
-    try {
-      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
-      setCustomSummary(d.summary);
-      setCustomRange({
-        from: `${startMonth} ${startDay}`,
-        to: `${endMonth} ${endDay}`,
-      });
-    } catch {
-      setCustomError("Failed to load custom range data.");
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
-  const isCustom = period === "custom";
-  const activeSummary = isCustom ? customSummary : summary;
+  const activeSummary = summary;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -2614,11 +2256,7 @@ function CarraaHojiiAnalysisSection() {
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value);
-              setCustomSummary(null);
-              setCustomRange(null);
-            }}
+            onChange={(e) => setPeriod(e.target.value)}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
@@ -2650,136 +2288,33 @@ function CarraaHojiiAnalysisSection() {
         </div>
       )}
 
-      {/* Custom date picker */}
-      {isCustom && (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">
-            Select Custom Date Range (Afaan Oromo Calendar)
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Fiscal Year
-              </label>
-              <input
-                type="number"
-                value={customYear}
-                onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000"
-                max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Start Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={startMonth}
-                  onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={startDay}
-                  onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                End Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={endMonth}
-                  onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={endDay}
-                  onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          {customError && (
-            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
-          )}
-          <button
-            onClick={handleGenerateReport}
-            disabled={customLoading}
-            className="flex items-center gap-2 bg-[#1e40af] hover:bg-[#1e3a8a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          >
-            <AnalysisIcon />
-            {customLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      )}
-
-      {!isCustom && loading ? (
+      {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
         </div>
-      ) : !isCustom && error ? (
+      ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
-      ) : isCustom && customLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
-        </div>
-      ) : isCustom && !customSummary ? null : (
+      ) : (
         <>
           <div className="mb-5 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-2.5 flex items-center gap-2">
             <span className="text-[#1e40af] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange
-                ? `${customRange.from} — ${customRange.to}`
-                : `${periodLabel} View`}
+              {periodLabel} View
             </span>
-            {!isCustom && (
-              <>
-                <span className="text-[#1e40af] text-xs">—</span>
-                <span className="text-[#1e40af] text-xs">
-                  Targets partitioned from annual plan
-                </span>
-              </>
-            )}
+            <>
+              <span className="text-[#1e40af] text-xs">—</span>
+              <span className="text-[#1e40af] text-xs">
+                Targets partitioned from annual plan
+              </span>
+            </>
           </div>
 
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
               const annualTarget = plan ? (plan[key] ?? 0) : 0;
-              const periodTarget = isCustom
-                ? 0
-                : partitionTarget(annualTarget, period);
+              const periodTarget = partitionTarget(annualTarget, period);
               const actual = activeSummary
                 ? (activeSummary[summaryKey] ?? 0)
                 : 0;
@@ -2871,9 +2406,7 @@ function CarraaHojiiAnalysisSection() {
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
               <p className="text-sm font-semibold text-[#334155]">
-                {isCustom && customRange
-                  ? `${customRange.from} — ${customRange.to} Summary`
-                  : `${periodLabel} Summary Table`}
+                {periodLabel} Summary Table
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -2882,11 +2415,11 @@ function CarraaHojiiAnalysisSection() {
                   <tr className="border-b border-[#f1f5f9]">
                     {[
                       "Category",
-                      isCustom ? "Total Actual" : "Annual Target",
-                      isCustom ? "—" : "Period Target",
+                      "Annual Target",
+                      "Period Target",
                       "Actual",
                       "% Complete",
-                      isCustom ? "—" : "Remaining (carry-over)",
+                      "Remaining (carry-over)",
                     ].map((h) => (
                       <th
                         key={h}
@@ -2901,9 +2434,7 @@ function CarraaHojiiAnalysisSection() {
                   {CARRAA_SUMMARY_KEYS.map(
                     ({ summaryKey, key, label, color }) => {
                       const annualTarget = plan ? (plan[key] ?? 0) : 0;
-                      const periodTarget = isCustom
-                        ? 0
-                        : partitionTarget(annualTarget, period);
+                      const periodTarget = partitionTarget(annualTarget, period);
                       const actual = activeSummary
                         ? (activeSummary[summaryKey] ?? 0)
                         : 0;
@@ -2933,30 +2464,24 @@ function CarraaHojiiAnalysisSection() {
                             </span>
                           </td>
                           <td className="px-5 py-3 text-[#64748b]">
-                            {isCustom ? "—" : annualTarget.toLocaleString()}
+                            {annualTarget.toLocaleString()}
                           </td>
                           <td className="px-5 py-3 text-[#64748b]">
-                            {isCustom ? "—" : periodTarget.toLocaleString()}
+                            {periodTarget.toLocaleString()}
                           </td>
                           <td className="px-5 py-3 font-semibold text-[#1e293b]">
                             {actual.toLocaleString()}
                           </td>
                           <td className="px-5 py-3">
-                            {isCustom ? (
-                              "—"
-                            ) : (
-                              <span
-                                className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                                style={{ backgroundColor: `${color}22`, color }}
-                              >
-                                {pct}%
-                              </span>
-                            )}
+                            <span
+                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{ backgroundColor: `${color}22`, color }}
+                            >
+                              {pct}%
+                            </span>
                           </td>
                           <td className="px-5 py-3">
-                            {isCustom ? (
-                              "—"
-                            ) : remaining > 0 ? (
+                            {remaining > 0 ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
                                 <svg
                                   className="w-3 h-3 flex-shrink-0"
@@ -3149,16 +2674,6 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const currentYear = new Date().getFullYear();
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customYear, setCustomYear] = useState(currentYear - 1);
-  const [customSummary, setCustomSummary] = useState(null);
-  const [customLoading, setCustomLoading] = useState(false);
-  const [customError, setCustomError] = useState("");
-  const [customRange, setCustomRange] = useState(null);
 
   useEffect(() => { fetchPlanFn().then((d) => setPlan(d.plan)).catch(() => setPlan(null)); }, [fetchPlanFn]);
   useEffect(() => {
@@ -3166,22 +2681,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
     fetchSummary(period).then((d) => setSummary(d.summary)).catch(() => setError("Failed to load summary.")).finally(() => setLoading(false));
   }, [period]);
 
-  const handleGenerateReport = async () => {
-    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo   = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) { setCustomError("Invalid date selection."); return; }
-    if (dateFrom > dateTo) { setCustomError("Start date must be before end date."); return; }
-    setCustomLoading(true); setCustomError(""); setCustomSummary(null);
-    try {
-      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
-      setCustomSummary(d.summary);
-      setCustomRange({ from: `${startMonth} ${startDay}`, to: `${endMonth} ${endDay}` });
-    } catch { setCustomError("Failed to load custom range data."); }
-    finally { setCustomLoading(false); }
-  };
-
-  const isCustom = period === "custom";
-  const activeSummary = isCustom ? customSummary : summary;
+  const activeSummary = summary;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -3192,7 +2692,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
-          <select value={period} onChange={(e) => { setPeriod(e.target.value); setCustomSummary(null); setCustomRange(null); }}
+          <select value={period} onChange={(e) => setPeriod(e.target.value)}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer">
             {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
@@ -3209,67 +2709,24 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
         </div>
       )}
 
-      {isCustom && (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">Select Custom Date Range (Afaan Oromo Calendar)</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
-              <input type="number" value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))} min="2000" max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
-              <div className="flex gap-2">
-                <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
-                </select>
-                <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
-              <div className="flex gap-2">
-                <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
-                </select>
-                <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                  {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-          {customError && <p className="text-[#dc2626] text-sm mb-3">{customError}</p>}
-          <button onClick={handleGenerateReport} disabled={customLoading}
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60"
-            style={{ backgroundColor: accentColor }}>
-            <AnalysisIcon />{customLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      )}
-
-      {!isCustom && loading ? (
+      {loading ? (
         <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: accentColor }} /></div>
-      ) : !isCustom && error ? (
+      ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
-      ) : isCustom && customLoading ? (
-        <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: accentColor }} /></div>
-      ) : isCustom && !customSummary ? null : (
+      ) : (
         <>
           <div className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border" style={{ background: accentLight, borderColor: accentBorder }}>
             <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
-              {isCustom && customRange ? `${customRange.from} — ${customRange.to}` : `${periodLabel} View`}
+              {periodLabel} View
             </span>
-            {!isCustom && <span className="text-xs" style={{ color: accentColor }}>— Targets partitioned from annual plan</span>}
+            <span className="text-xs" style={{ color: accentColor }}>— Targets partitioned from annual plan</span>
           </div>
 
           {/* Ring charts */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
             {cats.map((cat) => {
               const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
-              const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+              const periodTarget = partitionTarget(annualTarget, period);
               const actual = activeSummary ? activeSummary[cat.key] ?? 0 : 0;
               const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 100) : 0;
               const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
@@ -3301,18 +2758,16 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
             })}
           </div>
 
-          {/* Summary table with Remaining */}
+          {/* Summary table */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
-              <p className="text-sm font-semibold text-white">
-                {isCustom && customRange ? `${customRange.from} — ${customRange.to} Summary` : `${periodLabel} Summary Table`}
-              </p>
+              <p className="text-sm font-semibold text-white">{periodLabel} Summary Table</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {["Category", "Annual Target", isCustom ? "—" : "Period Target", "Actual", "Achievement", isCustom ? "—" : "Remaining (carry-over)"].map((h) => (
+                    {["Category", "Annual Target", "Period Target", "Actual", "Achievement", "Remaining (carry-over)"].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -3320,7 +2775,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
                 <tbody>
                   {cats.map((cat) => {
                     const annualTarget = plan ? plan[cat.planKey] ?? 0 : 0;
-                    const periodTarget = isCustom ? 0 : partitionTarget(annualTarget, period);
+                    const periodTarget = partitionTarget(annualTarget, period);
                     const actual = activeSummary ? activeSummary[cat.key] ?? 0 : 0;
                     const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
                     const remaining = periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
@@ -3333,16 +2788,14 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
                           </span>
                         </td>
                         <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-[#64748b]">{isCustom ? "—" : periodTarget.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
                         <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
                         <td className="px-4 py-3">
-                          {isCustom ? "—" : (
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>{pct}%</span>
-                          )}
+                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                            style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>{pct}%</span>
                         </td>
                         <td className="px-4 py-3">
-                          {isCustom ? "—" : remaining > 0 ? (
+                          {remaining > 0 ? (
                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                               {remaining.toLocaleString()}
@@ -3363,7 +2816,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
           </div>
 
           {/* Period breakdown */}
-          {!isCustom && plan && (
+          {plan && (
             <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mt-6">
               <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
                 <p className="text-sm font-semibold text-[#334155]">Period Target Breakdown</p>
@@ -4232,17 +3685,6 @@ function RevenueAnalysis() {
   const [annualSummary, setAnnualSummary] = useState(null);
   const [annualLoading, setAnnualLoading] = useState(false);
 
-  const currentYear = new Date().getFullYear();
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customYear, setCustomYear] = useState(currentYear - 1);
-  const [customSummary, setCustomSummary] = useState(null);
-  const [customLoading, setCustomLoading] = useState(false);
-  const [customError, setCustomError] = useState("");
-  const [customRange, setCustomRange] = useState(null);
-
   // Fetch annual once on mount — always shows current year running totals
   useEffect(() => {
     setAnnualLoading(true);
@@ -4261,36 +3703,7 @@ function RevenueAnalysis() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  const handleGenerateReport = async () => {
-    const dateFrom = oromoToGregorian(startMonth, startDay, customYear);
-    const dateTo = oromoToGregorian(endMonth, endDay, customYear);
-    if (!dateFrom || !dateTo) {
-      setCustomError("Invalid date selection.");
-      return;
-    }
-    if (dateFrom > dateTo) {
-      setCustomError("Start date must be before end date.");
-      return;
-    }
-    setCustomLoading(true);
-    setCustomError("");
-    setCustomSummary(null);
-    try {
-      const d = await fetchSummaryByDateRange(dateFrom, dateTo);
-      setCustomSummary(d.summary);
-      setCustomRange({
-        from: `${startMonth} ${startDay}`,
-        to: `${endMonth} ${endDay}`,
-      });
-    } catch {
-      setCustomError("Failed to load custom range data.");
-    } finally {
-      setCustomLoading(false);
-    }
-  };
-
-  const isCustom = period === "custom";
-  const activeSummary = isCustom ? customSummary : summary;
+  const activeSummary = summary;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -4304,11 +3717,7 @@ function RevenueAnalysis() {
           <AnalysisIcon />
           <select
             value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value);
-              setCustomSummary(null);
-              setCustomRange(null);
-            }}
+            onChange={(e) => setPeriod(e.target.value)}
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
@@ -4320,109 +3729,16 @@ function RevenueAnalysis() {
         </div>
       </div>
 
-      {/* Custom date picker */}
-      {isCustom && (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-6 py-5 mb-6">
-          <p className="text-sm font-semibold text-[#334155] mb-4">
-            Select Custom Date Range
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Fiscal Year (starts Adoolessa)
-              </label>
-              <input
-                type="number"
-                value={customYear}
-                onChange={(e) => setCustomYear(Number(e.target.value))}
-                min="2000"
-                max="2100"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                Start Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={startMonth}
-                  onChange={(e) => setStartMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={startDay}
-                  onChange={(e) => setStartDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#64748b] mb-1">
-                End Date
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={endMonth}
-                  onChange={(e) => setEndMonth(e.target.value)}
-                  className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_MONTHS.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={endDay}
-                  onChange={(e) => setEndDay(Number(e.target.value))}
-                  className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                >
-                  {OROMO_DAYS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          {customError && (
-            <p className="text-[#dc2626] text-sm mb-3">{customError}</p>
-          )}
-          <button
-            onClick={handleGenerateReport}
-            disabled={customLoading}
-            className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
-          >
-            <AnalysisIcon />
-            {customLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-      )}
-
       {/* Loading / error */}
-      {(!isCustom && loading) || (isCustom && customLoading) ? (
+      {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
         </div>
-      ) : !isCustom && error ? (
+      ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
           {error}
         </div>
-      ) : isCustom && !customSummary ? null : (
+      ) : (
         <>
           {/* ── Section 1: Annual / Till Today ── */}
           <div className="mb-7">
@@ -4430,9 +3746,7 @@ function RevenueAnalysis() {
               <h2 className="text-sm font-bold text-[#334155] uppercase tracking-wide">
                 Current Year Till Today
               </h2>
-              <span className="text-xs text-[#94a3b8]">
-                Annual running totals
-              </span>
+              <span className="text-xs text-[#94a3b8]">Annual running totals</span>
             </div>
             {annualLoading ? (
               <div className="flex items-center justify-center h-24">
@@ -4441,25 +3755,13 @@ function RevenueAnalysis() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {REVENUE_CHART_FIELDS.map(({ key, label, color }) => (
-                  <div
-                    key={key}
-                    className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4"
-                  >
+                  <div key={key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      />
-                      <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                        {label}
-                      </p>
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">{label}</p>
                     </div>
                     <p className="text-2xl font-extrabold text-[#1e293b]">
-                      ETB{" "}
-                      {(annualSummary
-                        ? (annualSummary[key] ?? 0)
-                        : 0
-                      ).toLocaleString()}
+                      ETB {(annualSummary ? (annualSummary[key] ?? 0) : 0).toLocaleString()}
                     </p>
                   </div>
                 ))}
@@ -4470,65 +3772,372 @@ function RevenueAnalysis() {
           {/* ── Section 2: Filtered Period Breakdown ── */}
           <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
             <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
-              {isCustom && customRange
-                ? `${customRange.from} — ${customRange.to}`
-                : `${periodLabel} View`}
+              {periodLabel} View
             </span>
           </div>
 
           {/* Bar chart — filtered */}
-          <RevenueBarChart
-            fields={REVENUE_CHART_FIELDS}
-            summary={activeSummary}
-          />
+          <RevenueBarChart fields={REVENUE_CHART_FIELDS} summary={activeSummary} />
 
           {/* By-source breakdown table — filtered */}
-          {activeSummary?.by_source &&
-            Object.keys(activeSummary.by_source).length > 0 && (
-              <div className="mt-5 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-                <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
-                  <p className="text-sm font-semibold text-[#334155]">
-                    {isCustom && customRange
-                      ? `${customRange.from} — ${customRange.to}`
-                      : `${periodLabel}`}{" "}
-                    — By Revenue Source
-                  </p>
-                </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#f1f5f9]">
-                      {["Revenue Source", "Total (ETB)"].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(activeSummary.by_source)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([src, val]) => (
-                        <tr
-                          key={src}
-                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
-                        >
-                          <td className="px-5 py-3 font-medium text-[#1e293b]">
-                            {src}
-                          </td>
-                          <td className="px-5 py-3 font-semibold text-[#1e293b]">
-                            {val.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+          {activeSummary?.by_source && Object.keys(activeSummary.by_source).length > 0 && (
+            <div className="mt-5 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+              <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+                <p className="text-sm font-semibold text-[#334155]">
+                  {periodLabel} — By Revenue Source
+                </p>
               </div>
-            )}
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    {["Revenue Source", "Total (ETB)"].map((h) => (
+                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(activeSummary.by_source)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([src, val]) => (
+                      <tr key={src} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">{src}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{val.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
+    </div>
+  );
+}
+
+// ─── Stub data for Report History (frontend-only until backend connects) ─────
+const STUB_REPORT_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+const STUB_SECTORS = [
+  { id: "buusaa",     label: "Buusaa Gonofaa",     color: "#1a3a5c" },
+  { id: "carraaHojii",label: "Carraa Hojii Uumuu", color: "#1e40af" },
+  { id: "qonna",      label: "Qonna",              color: "#065f46" },
+  { id: "revenue",    label: "Galii Sassaabu",     color: "#475569" },
+  { id: "daldala",    label: "Daldala",            color: "#854d0e" },
+  { id: "atk",        label: "ATK",                color: "#7e22ce" },
+];
+
+// Generate some realistic stub rows
+const STUB_ROWS = [
+  { id: 1, date: "2026-08-15", sector: "buusaa",      reportType: "Daily",     status: "Approved",  data: { hubannoo_uummuu: 14, horannaa_misensaa: 8, buusi_jirataa: 22 } },
+  { id: 2, date: "2026-08-12", sector: "qonna",       reportType: "Weekly",    status: "Approved",  data: { furdisa: 120, annan: 45, lukkuu: 300 } },
+  { id: 3, date: "2026-08-10", sector: "carraaHojii", reportType: "Monthly",   status: "Pending",   data: { leenjii: 50, carraa_hojii_dhaabbii: 30 } },
+  { id: 4, date: "2026-08-01", sector: "revenue",     reportType: "Monthly",   status: "Approved",  data: { galiiIdilee: 45000, galiiManaQophessaa: 18000 } },
+  { id: 5, date: "2026-07-31", sector: "buusaa",      reportType: "Monthly",   status: "Approved",  data: { hubannoo_uummuu: 62, horannaa_misensaa: 38, buusi_jirataa: 95 } },
+  { id: 6, date: "2026-07-25", sector: "daldala",     reportType: "Weekly",    status: "Rejected",  data: { galmee_haraa: 5, heyyema_haraa: 3 } },
+  { id: 7, date: "2026-07-20", sector: "atk",         reportType: "Weekly",    status: "Approved",  data: { waliigaltee_pilaanii_kennuu: 12 } },
+  { id: 8, date: "2026-07-01", sector: "buusaa",      reportType: "Quarterly", status: "Approved",  data: { hubannoo_uummuu: 180, horannaa_misensaa: 110, buusi_jirataa: 280 } },
+  { id: 9, date: "2026-06-30", sector: "qonna",       reportType: "Monthly",   status: "Pending",   data: { furdisa: 98, annan: 40 } },
+  { id: 10,date: "2026-04-01", sector: "buusaa",      reportType: "Annual",    status: "Approved",  data: { hubannoo_uummuu: 720, horannaa_misensaa: 450, buusi_jirataa: 1100 } },
+];
+
+// ─── Report Detail Modal ──────────────────────────────────────────────────────
+function ReportDetailModal({ row, onClose }) {
+  if (!row) return null;
+  const sector = STUB_SECTORS.find((s) => s.id === row.sector);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
+        {/* Header */}
+        <div
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
+          style={{ background: `linear-gradient(90deg,${sector?.color ?? "#1a3a5c"} 0%,${sector?.color ?? "#1a3a5c"}cc 100%)` }}
+        >
+          <div>
+            <p className="text-white font-bold text-base">{sector?.label} Report</p>
+            <p className="text-white/60 text-xs mt-0.5">{row.reportType} · {row.date}</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        {/* Status badge */}
+        <div className="px-6 pt-4 flex items-center gap-3">
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+            row.status === "Approved"  ? "bg-green-100 text-green-700" :
+            row.status === "Rejected"  ? "bg-red-100 text-red-700" :
+                                         "bg-amber-100 text-amber-700"
+          }`}>
+            {row.status}
+          </span>
+          <span className="text-xs text-[#94a3b8]">Submitted on {row.date}</span>
+        </div>
+        {/* Data summary */}
+        <div className="px-6 py-4">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">Report Data</p>
+          <div className="space-y-2">
+            {Object.entries(row.data).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5">
+                <span className="text-sm text-[#475569] capitalize">{k.replace(/_/g, " ")}</span>
+                <span className="text-sm font-bold text-[#1e293b]">{Number(v).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="px-6 pb-5 flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Report History Section (Woreda) ─────────────────────────────────────────
+function ReportHistorySection({ woreda }) {
+  const currentYear = new Date().getFullYear();
+
+  // Filters
+  const [filterPeriod,  setFilterPeriod]  = useState("all");
+  const [filterSector,  setFilterSector]  = useState("all");
+
+  // Custom date range
+  const [isCustom,      setIsCustom]      = useState(false);
+  const [startMonth,    setStartMonth]    = useState("Adoolessa");
+  const [startDay,      setStartDay]      = useState(1);
+  const [endMonth,      setEndMonth]      = useState("Adoolessa");
+  const [endDay,        setEndDay]        = useState(30);
+  const [customFiscal,  setCustomFiscal]  = useState(currentYear - 1);
+  const [customDateErr, setCustomDateErr] = useState("");
+  const [appliedRange,  setAppliedRange]  = useState(null); // { from, to } ISO strings
+
+  // Modal
+  const [modalRow, setModalRow] = useState(null);
+
+  // Derived filtered list (stub — replace with API fetch when backend is ready)
+  const filteredRows = STUB_ROWS.filter((r) => {
+    const periodMatch = filterPeriod === "all" || r.reportType === filterPeriod;
+    const sectorMatch = filterSector === "all" || r.sector === filterSector;
+    let dateMatch = true;
+    if (isCustom && appliedRange) {
+      dateMatch = r.date >= appliedRange.from && r.date <= appliedRange.to;
+    }
+    return periodMatch && sectorMatch && dateMatch;
+  });
+
+  const handleApplyCustom = () => {
+    const from = oromoToGregorian(startMonth, startDay, customFiscal);
+    const to   = oromoToGregorian(endMonth,   endDay,   customFiscal);
+    if (!from || !to) { setCustomDateErr("Invalid date selection."); return; }
+    if (from > to)    { setCustomDateErr("Start date must be before end date."); return; }
+    setCustomDateErr("");
+    setAppliedRange({ from, to });
+  };
+
+  const handlePeriodChange = (val) => {
+    if (val === "custom") {
+      setIsCustom(true);
+      setFilterPeriod("all");
+      setAppliedRange(null);
+    } else {
+      setIsCustom(false);
+      setAppliedRange(null);
+      setFilterPeriod(val);
+    }
+  };
+
+  const statusColor = (s) =>
+    s === "Approved" ? "bg-green-100 text-green-700" :
+    s === "Rejected" ? "bg-red-100 text-red-700"     : "bg-amber-100 text-amber-700";
+
+  return (
+    <div>
+      {modalRow && <ReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />}
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          View and generate reports you have submitted — filter by period, sector, or a custom date range.
+        </p>
+      </div>
+
+      {/* ── Filter bar ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          {/* Period picker */}
+          <div className="flex-1 min-w-[140px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
+            <select
+              value={isCustom ? "custom" : filterPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Periods</option>
+              {STUB_REPORT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Sector picker */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
+            <select
+              value={filterSector}
+              onChange={(e) => setFilterSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Sectors</option>
+              {STUB_SECTORS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+
+          {/* Result count */}
+          <div className="flex-shrink-0 pb-0.5">
+            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
+              {filteredRows.length} result{filteredRows.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+
+        {/* Custom date range expander */}
+        {isCustom && (
+          <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
+              Custom Date Range (Afaan Oromo Calendar)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+                <input
+                  type="number"
+                  value={customFiscal}
+                  onChange={(e) => setCustomFiscal(Number(e.target.value))}
+                  min="2000" max="2100"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <div className="flex gap-2">
+                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  </select>
+                  <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <div className="flex gap-2">
+                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  </select>
+                  <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
+            {appliedRange && (
+              <p className="text-[#16a34a] text-xs mb-2 font-medium">
+                Showing reports from {appliedRange.from} to {appliedRange.to}
+              </p>
+            )}
+            <button
+              onClick={handleApplyCustom}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
+              <AnalysisIcon />
+              Apply Date Range
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Results table ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
+          <p className="text-sm font-semibold text-[#334155]">
+            {isCustom && appliedRange
+              ? `Reports from ${appliedRange.from} — ${appliedRange.to}`
+              : filterSector !== "all"
+              ? `${STUB_SECTORS.find(s => s.id === filterSector)?.label} Reports`
+              : filterPeriod !== "all"
+              ? `${filterPeriod} Reports`
+              : "All Submitted Reports"}
+          </p>
+          <p className="text-xs text-[#94a3b8]">{woreda}</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9]">
+                {["Date Submitted", "Sector", "Report Type", "Status", "Action"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                        <HistoryIcon />
+                      </div>
+                      <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredRows.map((row) => {
+                const sec = STUB_SECTORS.find((s) => s.id === row.sector);
+                return (
+                  <tr key={row.id} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                    <td className="px-5 py-3 text-[#475569] text-sm">{row.date}</td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }} />
+                        <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row.sector}</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-[#475569]">{row.reportType}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => setModalRow(row)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -4891,42 +4500,7 @@ export default function WoRedaDashboard() {
             </div>
           )}
 
-          {activeNav === "history" && (
-            <div>
-              <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-[#f4f6f9] border-b border-[#e2e8f0]">
-                    <tr>
-                      {[
-                        "Date",
-                        "Section",
-                        "Report Type",
-                        "Status",
-                        "Action",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left px-5 py-3 text-[#64748b] font-semibold text-xs uppercase tracking-wide"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-5 py-10 text-center text-[#94a3b8] text-sm"
-                      >
-                        No reports submitted yet.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {activeNav === "history" && <ReportHistorySection woreda={u.woreda} />}
 
           {activeNav === "works" &&
             (() => {

@@ -70,6 +70,33 @@ const WOREDAS = [
   { id: "w4", name: "Aanaa Andoodee" },
 ];
 
+// ─── Oromo calendar helpers (used in Report History date picker) ──────────────
+const OROMO_MONTHS_SC = [
+  { name: "Adoolessa",    gregStart: "07-08" },
+  { name: "Hagayya",      gregStart: "08-07" },
+  { name: "Fulbaana",     gregStart: "09-06" },
+  { name: "Onkololeessa", gregStart: "10-06" },
+  { name: "Sadaasa",      gregStart: "11-05" },
+  { name: "Mudde",        gregStart: "12-05" },
+  { name: "Amajjii",      gregStart: "01-04" },
+  { name: "Guraandhala",  gregStart: "02-03" },
+  { name: "Bitooteessa",  gregStart: "03-05" },
+  { name: "Ebla",         gregStart: "04-04" },
+  { name: "Caamsaa",      gregStart: "05-04" },
+  { name: "Waxabajjii",   gregStart: "06-03" },
+];
+const OROMO_DAYS_SC = Array.from({ length: 30 }, (_, i) => i + 1);
+
+function oromoToGregorianSC(monthName, day, year) {
+  const month = OROMO_MONTHS_SC.find((m) => m.name === monthName);
+  if (!month) return null;
+  const [mm, dd] = month.gregStart.split("-").map(Number);
+  const gregYear = mm <= 6 ? year + 1 : year;
+  const base = new Date(gregYear, mm - 1, dd);
+  base.setDate(base.getDate() + (day - 1));
+  return base.toISOString().split("T")[0];
+}
+
 const PLAN_FIELDS = [
   { key: "hubannoo_uummuu", label: "Hubannoo Uumuu", color: "#0f766e" },
   { key: "horannaa_misensaa", label: "Horannaa Misensaa", color: "#1e40af" },
@@ -1301,11 +1328,11 @@ const DALDALA_FIELDS_SC = [
   { key: "heyyema_haraa",          label: "Heyyema Haraa",          color: "#1e40af" },
   { key: "harahessaa",             label: "Harahessaa",             color: "#7c3aed" },
   { key: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu", color: "#b45309" },
-  { key: "toannoo_walii_gala",     label: "To'Annoo Walii Gala",    color: "#065f46" },
-  { key: "tmd",                    label: "TMD",                    color: "#0369a1" },
+  { key: "toannoo_walii_gala",     label: "To'annoo Walii Gala",    color: "#065f46" },
+  { key: "tmd",                    label: "Leenjii TMD",                    color: "#0369a1" },
   { key: "intarshippii",           label: "Intarshippii",           color: "#dc2626" },
-  { key: "ggg",                    label: "GGG",                    color: "#475569" },
-  { key: "gabayaa_sanbata",        label: "Gabayaa Sanbata",        color: "#854d0e" },
+  { key: "ggg",                    label: "Giddu Gala Gabaa",                    color: "#475569" },
+  { key: "gabayaa_sanbata",        label: "Gabaa Sanbata",        color: "#854d0e" },
   { key: "whg_kudraa",             label: "WHG - Kudraa",           color: "#166534" },
   { key: "whg_mudraa",             label: "WHG - Mudraa",           color: "#1a3a5c" },
 ];
@@ -1313,12 +1340,26 @@ const DALDALA_FIELDS_SC = [
 const ATK_FIELDS_SC = [
   { key: "waliigaltee_pilaanii_kennuu",  label: "Waliigaltee Pilaanii Kennuu",  color: "#7e22ce" },
   { key: "heeyyama_ijaarsaa_kennamee",   label: "Heeyyama Ijaarsaa Kennamee",   color: "#0369a1" },
-  { key: "toannoo_fi_hordoffii_gamoo",   label: "To'Annoo Fi Hordoffii Gamoo",  color: "#065f46" },
+  { key: "toannoo_fi_hordoffii_gamoo",   label: "To'annoo Fi Hordoffii Gamoo",  color: "#065f46" },
   { key: "galii_atk_galchuu",            label: "Galii ATK Galchuu",            color: "#b45309" },
 ];
 
 // Sector config map used by GenericSubcityPlanPage and GenericSubcityAnalysisPage
 const SECTOR_CFG = {
+  buusaa: {
+    fields: PLAN_FIELDS.map(({ key, label, color }) => ({ key, label, color })),
+    label: "Buusaa Gonofaa",
+    color: "#1a3a5c",
+    gradient: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+    fetchFn: fetchSubcityOwnPlan,
+  },
+  qonna: {
+    fields: QONNA_CATEGORIES.map(({ key, label, color }) => ({ key, label, color })),
+    label: "Qonna",
+    color: "#065f46",
+    gradient: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
+    fetchFn: fetchSubcityQonnaPlan,
+  },
   galii:   { fields: GALII_FIELDS,      label: "Galii Sassaabu",    color: "#475569", gradient: "linear-gradient(90deg,#475569 0%,#64748b 100%)" },
   carraa:  { fields: CARRAA_FIELDS,     label: "Carraa Hojii Uumuu",color: "#1e40af", gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" },
   daldala: { fields: DALDALA_FIELDS_SC, label: "Daldala",           color: "#854d0e", gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)" },
@@ -1470,7 +1511,8 @@ function GenericSubcityAnalysisPage({ sector }) {
   const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
 
   useEffect(() => {
-    fetchSubcityGenericPlan(sector)
+    const fetch = cfg.fetchFn ?? (() => fetchSubcityGenericPlan(sector));
+    fetch()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null))
       .finally(() => setLoading(false));
@@ -1654,237 +1696,352 @@ function ComingSoonPage({ title }) {
 }
 
 // ─── Work Analysis Page ───────────────────────────────────────────────────────
-// Routes to the correct analysis component based on sector.
+// Routes all 6 sectors through GenericSubcityAnalysisPage.
 function WorkAnalysisPage({ sector }) {
-  // Galii, Carraa, Daldala, ATK — use the generic subcity analysis page
-  if (sector === "galii" || sector === "carraa" || sector === "daldala" || sector === "atk") {
-    return <GenericSubcityAnalysisPage sector={sector} />;
-  }
-  // Buusaa and Qonna — woreda-tab placeholder (real data in woreda dashboard)
-  const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
-  const sectorLabel = SECTORS.find((s) => s.id === sector)?.label ?? sector;
-  const woredaLabel = WOREDAS.find((w) => w.id === activeWoreda)?.name ?? activeWoreda;
+  return <GenericSubcityAnalysisPage sector={sector} />;
+}
 
+// ─── All Sectors (6) for Report History ──────────────────────────────────────
+const REPORT_SECTORS_ALL = [
+  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#1a3a5c" },
+  { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
+  { id: "qonna",       label: "Qonna",              color: "#065f46" },
+  { id: "revenue",     label: "Galii Sassaabu",     color: "#475569" },
+  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
+  { id: "atk",         label: "ATK",                color: "#7e22ce" },
+];
+
+const STUB_PERIOD_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+
+// Stub rows — all 4 woredas, all 6 sectors
+const SC_STUB_ROWS = [
+  { id:  1, woredaId: "w1", sector: "buusaa",      reportType: "Daily",     date: "2026-08-15", status: "Approved",  data: { hubannoo_uummuu: 14, buusi_jirataa: 22 } },
+  { id:  2, woredaId: "w2", sector: "qonna",       reportType: "Weekly",    date: "2026-08-12", status: "Approved",  data: { furdisa: 120, lukkuu: 300 } },
+  { id:  3, woredaId: "w3", sector: "carraaHojii", reportType: "Monthly",   date: "2026-08-10", status: "Pending",   data: { leenjii: 50, carraa_hojii_dhaabbii: 30 } },
+  { id:  4, woredaId: "w4", sector: "revenue",     reportType: "Monthly",   date: "2026-08-01", status: "Approved",  data: { galiiIdilee: 45000 } },
+  { id:  5, woredaId: "w1", sector: "buusaa",      reportType: "Monthly",   date: "2026-07-31", status: "Approved",  data: { hubannoo_uummuu: 62, buusi_jirataa: 95 } },
+  { id:  6, woredaId: "w2", sector: "daldala",     reportType: "Weekly",    date: "2026-07-25", status: "Rejected",  data: { galmee_haraa: 5 } },
+  { id:  7, woredaId: "w3", sector: "atk",         reportType: "Weekly",    date: "2026-07-20", status: "Approved",  data: { waliigaltee_pilaanii_kennuu: 12 } },
+  { id:  8, woredaId: "w4", sector: "buusaa",      reportType: "Quarterly", date: "2026-07-01", status: "Approved",  data: { hubannoo_uummuu: 180, buusi_jirataa: 280 } },
+  { id:  9, woredaId: "w1", sector: "qonna",       reportType: "Monthly",   date: "2026-06-30", status: "Pending",   data: { furdisa: 98, annan: 40 } },
+  { id: 10, woredaId: "w2", sector: "buusaa",      reportType: "Annual",    date: "2026-04-01", status: "Approved",  data: { hubannoo_uummuu: 720, buusi_jirataa: 1100 } },
+  { id: 11, woredaId: "w3", sector: "revenue",     reportType: "Weekly",    date: "2026-08-08", status: "Approved",  data: { galiiIdilee: 8200 } },
+  { id: 12, woredaId: "w4", sector: "daldala",     reportType: "Monthly",   date: "2026-07-31", status: "Pending",   data: { galmee_haraa: 18 } },
+  { id: 13, woredaId: "w1", sector: "atk",         reportType: "Monthly",   date: "2026-07-30", status: "Approved",  data: { heeyyama_ijaarsaa_kennamee: 9 } },
+  { id: 14, woredaId: "w2", sector: "carraaHojii", reportType: "Quarterly", date: "2026-07-01", status: "Approved",  data: { leenjii: 140, kenna_liqii: 60 } },
+];
+
+// ─── Report Detail Modal (subcity) ────────────────────────────────────────────
+function SCReportDetailModal({ row, onClose }) {
+  if (!row) return null;
+  const sec    = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
+  const woreda = WOREDAS.find((w) => w.id === row.woredaId);
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Work Analysis
-        </h1>
-        <p className="text-[#64748b] text-sm mt-0.5">
-          Select a woreda to view performance data.
-        </p>
-      </div>
-
-      {/* Woreda tab selector — same style as Woreda Reports */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {WOREDAS.map((w) => (
-          <button
-            key={w.id}
-            onClick={() => setActiveWoreda(w.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeWoreda === w.id
-                ? "text-white shadow"
-                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
-            }`}
-            style={
-              activeWoreda === w.id
-                ? {
-                    background:
-                      "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-                  }
-                : {}
-            }
-          >
-            {w.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Content placeholder per woreda */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div
-          className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
-          }}
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
+          style={{ background: `linear-gradient(90deg,${sec?.color ?? "#1a3a5c"} 0%,${sec?.color ?? "#1a3a5c"}cc 100%)` }}
         >
-          <p className="text-sm font-semibold text-white">
-            Work Analysis
-          </p>
-          <p className="text-white/60 text-xs mt-0.5">
-            Performance analysis will appear here once connected.
-          </p>
-        </div>
-        <div className="px-6 py-14 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-[#eef4fb] flex items-center justify-center mb-4 text-[#1a3a5c]">
-            <AnalysisIcon />
+          <div>
+            <p className="text-white font-bold text-base">{sec?.label} Report</p>
+            <p className="text-white/60 text-xs mt-0.5">{woreda?.name} · {row.reportType} · {row.date}</p>
           </div>
-          <p className="text-[#1e293b] font-semibold mb-2">Coming Soon</p>
-          <p className="text-[#94a3b8] text-sm max-w-xs">
-            Analytics for <strong>{sectorLabel}</strong> ·{" "}
-            <strong>{woredaLabel}</strong> will be available here.
-          </p>
-          <span className="mt-4 inline-block bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-4 py-2 rounded-full">
-            Under Development
-          </span>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-6 pt-4 flex items-center gap-3">
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+            row.status === "Approved" ? "bg-green-100 text-green-700" :
+            row.status === "Rejected" ? "bg-red-100 text-red-700"    : "bg-amber-100 text-amber-700"
+          }`}>{row.status}</span>
+          <span className="text-xs text-[#94a3b8]">Submitted on {row.date}</span>
+        </div>
+        <div className="px-6 py-4">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">Report Data</p>
+          <div className="space-y-2">
+            {Object.entries(row.data).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5">
+                <span className="text-sm text-[#475569] capitalize">{k.replace(/_/g, " ")}</span>
+                <span className="text-sm font-bold text-[#1e293b]">{Number(v).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="px-6 pb-5 flex justify-end">
+          <button onClick={onClose} className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+            Close
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Woreda Reports Page ──────────────────────────────────────────────────────
-function ReportsPage({ dbPlan }) {
-  const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
-  const [activeSector, setActiveSector] = useState("buusaa");
-  const woreda = WOREDAS.find((w) => w.id === activeWoreda);
+// ─── Woreda Reports / Report History Page (Subcity) ───────────────────────────
+function ReportsPage() {
+  const currentYear = new Date().getFullYear();
 
-  const hasPlan =
-    dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
-  const totalWeight = dbPlan
-    ? WOREDAS.reduce((s, w) => s + Number(dbPlan[`weight_${w.id}`] || 0), 0)
-    : 0;
-  const share = (woredaId, total) => {
-    if (!dbPlan || totalWeight === 0) return Math.round(total / 4);
-    return Math.round(
-      (Number(dbPlan[`weight_${woredaId}`] || 0) / totalWeight) * total,
-    );
+  // Filters
+  const [filterWoreda, setFilterWoreda] = useState("all");
+  const [filterSector, setFilterSector] = useState("all");
+  const [filterPeriod, setFilterPeriod] = useState("all");
+
+  // Custom date range
+  const [isCustom,      setIsCustom]      = useState(false);
+  const [startMonth,    setStartMonth]    = useState("Adoolessa");
+  const [startDay,      setStartDay]      = useState(1);
+  const [endMonth,      setEndMonth]      = useState("Adoolessa");
+  const [endDay,        setEndDay]        = useState(30);
+  const [customFiscal,  setCustomFiscal]  = useState(currentYear - 1);
+  const [customDateErr, setCustomDateErr] = useState("");
+  const [appliedRange,  setAppliedRange]  = useState(null);
+
+  // Modal
+  const [modalRow, setModalRow] = useState(null);
+
+  // Derived filtered list
+  const filteredRows = SC_STUB_ROWS.filter((r) => {
+    const woredaMatch  = filterWoreda === "all" || r.woredaId === filterWoreda;
+    const sectorMatch  = filterSector === "all" || r.sector === filterSector;
+    const periodMatch  = filterPeriod === "all" || r.reportType === filterPeriod;
+    let   dateMatch    = true;
+    if (isCustom && appliedRange) {
+      dateMatch = r.date >= appliedRange.from && r.date <= appliedRange.to;
+    }
+    return woredaMatch && sectorMatch && periodMatch && dateMatch;
+  });
+
+  const handleApplyCustom = () => {
+    const from = oromoToGregorianSC(startMonth, startDay, customFiscal);
+    const to   = oromoToGregorianSC(endMonth,   endDay,   customFiscal);
+    if (!from || !to) { setCustomDateErr("Invalid date selection."); return; }
+    if (from > to)    { setCustomDateErr("Start date must be before end date."); return; }
+    setCustomDateErr("");
+    setAppliedRange({ from, to });
   };
 
-  const REPORT_SECTORS = [
-    { id: "buusaa",     label: "Buusaa Gonofaa",    color: "#1a3a5c" },
-    { id: "carraaHojii",label: "Carraa Hojii Uumuu",color: "#1e40af" },
-    { id: "qonna",      label: "Qonna",             color: "#065f46" },
-    { id: "revenue",    label: "Galii Sassaabu",    color: "#475569" },
-  ];
+  const handlePeriodChange = (val) => {
+    if (val === "custom") {
+      setIsCustom(true);
+      setFilterPeriod("all");
+      setAppliedRange(null);
+    } else {
+      setIsCustom(false);
+      setAppliedRange(null);
+      setFilterPeriod(val);
+    }
+  };
+
+  const statusColor = (s) =>
+    s === "Approved" ? "bg-green-100 text-green-700" :
+    s === "Rejected" ? "bg-red-100 text-red-700"     : "bg-amber-100 text-amber-700";
+
+  const activeWoredaName  = filterWoreda === "all" ? "All Woredas"  : WOREDAS.find(w => w.id === filterWoreda)?.name;
+  const activeSectorLabel = filterSector === "all" ? "All Sectors"  : REPORT_SECTORS_ALL.find(s => s.id === filterSector)?.label;
+  const activeSectorColor = filterSector === "all" ? "#1a3a5c"      : REPORT_SECTORS_ALL.find(s => s.id === filterSector)?.color ?? "#1a3a5c";
 
   return (
     <div>
+      {modalRow && <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />}
+
+      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Select a woreda and sector to view submitted reports.
+          Filter by woreda, sector, and period — or pick a custom date range.
         </p>
       </div>
 
-      {/* Woreda tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {WOREDAS.map((w) => (
-          <button
-            key={w.id}
-            onClick={() => setActiveWoreda(w.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeWoreda === w.id
-                ? "text-white shadow"
-                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
-            }`}
-            style={activeWoreda === w.id
-              ? { background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }
-              : {}}
-          >
-            {w.name}
-          </button>
-        ))}
-      </div>
+      {/* ── Filter bar ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          {/* Woreda */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Woreda</label>
+            <select
+              value={filterWoreda}
+              onChange={(e) => setFilterWoreda(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Woredas</option>
+              {WOREDAS.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
 
-      {/* Sector tabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {REPORT_SECTORS.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setActiveSector(s.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeSector === s.id
-                ? "text-white shadow"
-                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:text-[#1e293b]"
-            }`}
-            style={activeSector === s.id ? { backgroundColor: s.color } : {}}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+          {/* Sector */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
+            <select
+              value={filterSector}
+              onChange={(e) => setFilterSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Sectors</option>
+              {REPORT_SECTORS_ALL.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
 
-      {/* Buusaa Gonofaa plan allocation */}
-      {activeSector === "buusaa" && hasPlan && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-          {PLAN_FIELDS.map(({ key, label, color }) => {
-            const s = share(activeWoreda, Number(dbPlan[key] || 0));
-            return (
-              <div
-                key={key}
-                className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-4 py-4"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: color }}
-                  />
-                  <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide truncate">
-                    {label}
-                  </p>
-                </div>
-                <p className="text-xl font-extrabold text-[#1e293b]">
-                  {s.toLocaleString()}
-                </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">Allocated target</p>
-              </div>
-            );
-          })}
+          {/* Period */}
+          <div className="flex-1 min-w-[140px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
+            <select
+              value={isCustom ? "custom" : filterPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Periods</option>
+              {STUB_PERIOD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Result count */}
+          <div className="flex-shrink-0 pb-0.5">
+            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
+              {filteredRows.length} result{filteredRows.length !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
-      )}
 
-      {/* Report table per sector */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        {/* Custom date range expander */}
+        {isCustom && (
+          <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
+              Custom Date Range (Afaan Oromo Calendar)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+                <input
+                  type="number"
+                  value={customFiscal}
+                  onChange={(e) => setCustomFiscal(Number(e.target.value))}
+                  min="2000" max="2100"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <div className="flex gap-2">
+                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS_SC.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  </select>
+                  <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS_SC.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <div className="flex gap-2">
+                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS_SC.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  </select>
+                  <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS_SC.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
+            {appliedRange && (
+              <p className="text-[#16a34a] text-xs mb-2 font-medium">
+                Showing reports from {appliedRange.from} to {appliedRange.to}
+              </p>
+            )}
+            <button
+              onClick={handleApplyCustom}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
+              <AnalysisIcon />
+              Apply Date Range
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Results table ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
-          className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{
-            background: `linear-gradient(90deg,${
-              REPORT_SECTORS.find((s) => s.id === activeSector)?.color ?? "#1a3a5c"
-            } 0%,${
-              REPORT_SECTORS.find((s) => s.id === activeSector)?.color ?? "#1e4976"
-            }cc 100%)`,
-          }}
+          className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
+          style={{ background: `linear-gradient(90deg,${activeSectorColor} 0%,${activeSectorColor}cc 100%)` }}
         >
-          <p className="text-sm font-semibold text-white">
-            {woreda.name} — {REPORT_SECTORS.find((s) => s.id === activeSector)?.label} Reports
-          </p>
-          <p className="text-white/60 text-xs mt-0.5">
-            Submitted reports will appear here once the backend is connected.
-          </p>
+          <div>
+            <p className="text-sm font-semibold text-white">
+              {isCustom && appliedRange
+                ? `Reports ${appliedRange.from} — ${appliedRange.to}`
+                : `${activeWoredaName} · ${activeSectorLabel}`}
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              {filteredRows.length} report{filteredRows.length !== 1 ? "s" : ""} found
+            </p>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                {["Date", "Report Type", "Sector", "Status", "Action"].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                  >
+                {["Date", "Woreda", "Sector", "Report Type", "Status", "Action"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan={5} className="px-5 py-12 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
-                      <ListIcon />
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                        <ListIcon />
+                      </div>
+                      <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
                     </div>
-                    <p className="text-[#94a3b8] text-sm">
-                      No {REPORT_SECTORS.find((s) => s.id === activeSector)?.label} reports
-                      found for {woreda.name}.
-                    </p>
-                    <code className="text-xs bg-[#f4f6f9] px-2 py-1 rounded text-[#64748b]">
-                      GET /api/reports?woreda={activeWoreda}&sector={activeSector}
-                    </code>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                </tr>
+              ) : filteredRows.map((row) => {
+                const sec    = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
+                const woreda = WOREDAS.find((w) => w.id === row.woredaId);
+                return (
+                  <tr key={row.id} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                    <td className="px-5 py-3 text-[#475569] text-sm">{row.date}</td>
+                    <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">{woreda?.name ?? row.woredaId}</td>
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }} />
+                        <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row.sector}</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-[#475569]">{row.reportType}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => setModalRow(row)}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1960,7 +2117,7 @@ export default function SubCityDashboard({ user: propUser }) {
         );
       return <OverviewPage dbPlan={dbPlan} u={u} />;
     }
-    if (activeNav === "reports") return <ReportsPage dbPlan={dbPlan} />;
+    if (activeNav === "reports") return <ReportsPage />;
     if (activeNav === "plan") {
       if (!activePlanSector)
         return (
