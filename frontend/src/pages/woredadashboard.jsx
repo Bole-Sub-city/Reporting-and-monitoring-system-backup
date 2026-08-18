@@ -439,7 +439,6 @@ const PERIODS = [
   { value: "monthly", label: "Monthly" },
   { value: "quarterly", label: "Quarterly" },
   { value: "annual", label: "Annual" },
-  { value: "custom", label: "Custom Date Range" },
 ];
 
 // Afaan Oromo months with their approximate Gregorian date ranges
@@ -820,18 +819,13 @@ function AnnualPlanSection({ u }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Buusaa Gonofaa — Annual Plan</h1>
-        <span className="bg-[#eef4fb] text-[#1a3a5c] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-[#dce8f4]">{year}</span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets set by the sub-city office. Read-only.</p>
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
           style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}>
           <PlanIcon />
           <div>
-            <p className="text-white font-bold text-base">Annual Plan — {year} <LockIcon /></p>
-            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
+            <p className="text-white font-bold text-base">Annual Plan {year} <LockIcon /></p>
+            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
           </div>
         </div>
         <div className="px-6 py-5">
@@ -895,7 +889,6 @@ function AnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (period === "custom") return;
     setLoading(true);
     setError("");
     fetchSummary(period)
@@ -942,9 +935,6 @@ function AnalysisSection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Comparing actual performance against partitioned plan targets
-          </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
@@ -1608,19 +1598,13 @@ function QonnaAnnualPlanSection({ u }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Qonna — Annual Plan</h1>
-        <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">{year}</span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets assigned by the sub-city office. Read-only.</p>
-
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
           style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}>
           <PlanIcon />
           <div>
-            <p className="text-white font-bold text-base">Qonna Annual Plan — {year}</p>
-            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
+            <p className="text-white font-bold text-base">Annual Plan {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
           </div>
         </div>
 
@@ -1635,7 +1619,7 @@ function QonnaAnnualPlanSection({ u }) {
                   style={{ backgroundColor: `${color}15`, borderBottom: `1px solid ${color}30` }}>
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                   <p className="text-sm font-bold" style={{ color }}>{label}</p>
-                  <span className="text-xs text-[#94a3b8] ml-1">— {description}</span>
+                  {description && <span className="text-xs text-[#94a3b8] ml-1">{description}</span>}
                 </div>
                 <div className="px-4 py-4 grid grid-cols-3 gap-3">
                   <div className="rounded-lg bg-[#f8fafc] border border-[#e2e8f0] px-3 py-3 text-center">
@@ -1703,7 +1687,6 @@ function QonnaAnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (period === "custom") return;
     setLoading(true);
     setError("");
     fetchSummary(period)
@@ -1750,11 +1733,8 @@ function QonnaAnalysisSection() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">
-             Work Analysis
+            Work Analysis
           </h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Planned targets vs actual performance ( animals, houses &amp; land)
-          </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
@@ -2483,10 +2463,10 @@ function CarraaHojiiAnnualPlanSection({ u }) {
             <PlanIcon />
             <div>
               <p className="text-white font-bold text-base">
-                Carraa Hojii Uummuu Annual Plan  {year}
+                Annual Plan {year}
               </p>
               <p className="text-white/60 text-xs mt-0.5">
-                 Read-only
+                Read-only
               </p>
             </div>
           </div>
@@ -2581,7 +2561,6 @@ function CarraaHojiiAnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (period === "custom") return;
     setLoading(true);
     setError("");
     fetchSummary(period)
@@ -2630,9 +2609,6 @@ function CarraaHojiiAnalysisSection() {
           <h1 className="text-2xl font-bold text-[#1e293b]">
             Work Analysis
           </h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Actual performance vs assigned annual plan targets
-          </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
@@ -3133,18 +3109,13 @@ function GenericAnnualPlanSection({ u, cats, fetchPlanFn, title, accentColor, ac
   );
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">{title} — Annual Plan</h1>
-        <span className="text-xs font-bold px-3 py-1 rounded-full border" style={{ background: accentLight, color: accentColor, borderColor: accentBorder }}>{year}</span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">{u.woreda} · Targets assigned by the sub-city office. Read-only.</p>
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
           style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
           <PlanIcon />
           <div>
-            <p className="text-white font-bold text-base">{title} Annual Plan — {year}</p>
-            <p className="text-white/60 text-xs mt-0.5">{u.name} · {u.woreda} · Read-only</p>
+            <p className="text-white font-bold text-base">Annual Plan {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
           </div>
         </div>
         <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -3191,7 +3162,6 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
 
   useEffect(() => { fetchPlanFn().then((d) => setPlan(d.plan)).catch(() => setPlan(null)); }, [fetchPlanFn]);
   useEffect(() => {
-    if (period === "custom") return;
     setLoading(true); setError("");
     fetchSummary(period).then((d) => setSummary(d.summary)).catch(() => setError("Failed to load summary.")).finally(() => setLoading(false));
   }, [period]);
@@ -3218,8 +3188,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">{title} — Work Analysis</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">Actual performance vs assigned annual plan targets</p>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
@@ -3441,9 +3410,7 @@ function GenericAnalysisSection({ cats, fetchPlanFn, title, accentColor, accentL
 function PlaceholderAnalysis({ title, u }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
-        {title}  Work Analysis
-      </h1>
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Work Analysis</h1>
       <p className="text-[#64748b] text-sm mb-6">
         {u.woreda} &middot; {u.subcity}
       </p>
@@ -4286,7 +4253,6 @@ function RevenueAnalysis() {
   }, []);
 
   useEffect(() => {
-    if (period === "custom") return;
     setLoading(true);
     setError("");
     fetchSummary(period)
@@ -4332,10 +4298,7 @@ function RevenueAnalysis() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]"> Work Analysis</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Revenue totals by category and time period
-          </p>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
@@ -4660,8 +4623,8 @@ export default function WoRedaDashboard() {
       if (!activeWork) return "Works";
       const [wid, sub] = activeWork.split(":");
       const wl = WORKS.find((w) => w.id === wid)?.label ?? "Works";
-      if (sub === "plan") return `${wl} — Annual Plan`;
-      if (sub === "analysis") return "Work Analysis";
+      if (sub === "plan") return wl;
+      if (sub === "analysis") return wl;
       return wl;
     }
     return (

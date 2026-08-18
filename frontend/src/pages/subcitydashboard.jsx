@@ -563,7 +563,7 @@ function BuusaaPlanPage({ onSave }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Buusaa Gonofaa Annual Plan
+          Annual Plan
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Enter subcity totals and woreda allocation percentages. The system
@@ -1036,10 +1036,10 @@ function QonnaPlanPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-           Annual Plan for Qonna
+          Annual Plan
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-         Enter The Required Information Below
+          Enter The Required Information Below
         </p>
       </div>
 
@@ -1370,7 +1370,7 @@ function GenericSubcityPlanPage({ sector }) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">{cfg.label} — Annual Plan</h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Enter subcity totals and woreda allocation percentages.
         </p>
@@ -1494,7 +1494,7 @@ function GenericSubcityAnalysisPage({ sector }) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">{cfg.label} — Work Analysis</h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Subcity annual plan distributed across the 4 woredas.
         </p>
@@ -1669,7 +1669,7 @@ function WorkAnalysisPage({ sector }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Work Analysis For {sectorLabel}
+          Work Analysis
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Select a woreda to view performance data.
@@ -1710,7 +1710,7 @@ function WorkAnalysisPage({ sector }) {
           }}
         >
           <p className="text-sm font-semibold text-white">
-             {sectorLabel}
+            Work Analysis
           </p>
           <p className="text-white/60 text-xs mt-0.5">
             Performance analysis will appear here once connected.
