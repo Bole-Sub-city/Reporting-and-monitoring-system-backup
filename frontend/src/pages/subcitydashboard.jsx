@@ -816,14 +816,9 @@ function QonnaPlanRow({ cat, form, onChange }) {
     >
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: cat.color }}
-        />
-        <p className="text-sm font-semibold" style={{ color: cat.color }}>
-          {cat.label}
-        </p>
-        <span className="text-xs text-[#94a3b8] ml-1">— {cat.description}</span>
+      
+        
+        <span className="text-xs text-[#94a3b8] ml-1"> {cat.description}</span>
       </div>
 
       {/* Row 1: inputs */}
@@ -1264,7 +1259,7 @@ function ComingSoonPage({ title }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          {title}  Annual Plan
+           Annual Plan For {title} 
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Plan management for {title}
@@ -1299,7 +1294,7 @@ function WorkAnalysisPage({ sector }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          Work Analysis {sectorLabel}
+          Work Analysis For {sectorLabel}
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Select a woreda to view performance data.

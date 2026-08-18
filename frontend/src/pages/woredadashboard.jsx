@@ -818,16 +818,6 @@ function AnnualPlanSection({ u }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
-        <span className="bg-[#eef4fb] text-[#1a3a5c] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide border border-[#dce8f4]">
-          {year}
-        </span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">
-        {u.woreda} · Targets set by the sub-city office. Read only.
-      </p>
-
       {plan ? (
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
@@ -1346,26 +1336,26 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
 // Per category: houses/ponds/gaaguraa built, actual animals, land prepared (ha)
 const QONNA_HOUSE_LABEL = {
   furdisa: {
-    house: "Mana Ijaaraman",
+    house: "Sheedii Ijaaraman",
     housePH: "Lakk. mana",
     animalLabel: "Lakk.Horii ",
     animalPH: "0",
   },
   annan: {
-    house: "Mana Ijaaraman",
-    housePH: "Lakk. mana",
+    house: "Sheedii Ijaaraman",
+    housePH: "Lakk.Sheedii",
     animalLabel: "Lakk.Sa\u2019aa",
     animalPH: "0",
   },
   lukkuu: {
-    house: "Mana Ijaaraman",
-    housePH: "Lakk. mana",
+    house: "Sheedii Ijaaraman",
+    housePH: "Lakk.Sheedii",
     animalLabel: "Lakk.Lukkuu",
     animalPH: "0",
   },
   booyee: {
-    house: "Mana Ijaaraman",
-    housePH: "Lakk. mana",
+    house: "Sheedii Ijaaraman",
+    housePH: "Lakk.Sheedii",
     animalLabel: "Lakk.Booyyee",
     animalPH: "0",
   },
@@ -1376,8 +1366,8 @@ const QONNA_HOUSE_LABEL = {
     animalPH: "0",
   },
   qurxummii: {
-    house: "Dhaabbii Ijaaraman",
-    housePH: "Lakk. dhaabbii",
+    house: "Pondii Ijaaraman",
+    housePH: "Lakk.Pondii",
     animalLabel: "Lakk.Qurxummii ",
     animalPH: "0",
   },
@@ -1509,14 +1499,14 @@ function QonnaSubmitForm({ u }) {
                       {label}
                     </p>
                     <span className="text-xs text-[#94a3b8] ml-1">
-                      — {description}
+                      {description}
                     </span>
                     {annualTarget !== null && (
                       <span
                         className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: `${color}18`, color }}
                       >
-                        Karoora: {annualTarget.toLocaleString()}
+                        Plan: {annualTarget.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -1645,18 +1635,6 @@ function QonnaAnnualPlanSection({ u }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-           Annual Plan for Qonna
-        </h1>
-        <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">
-          {year}
-        </span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">
-        {u.woreda} · Targets assigned by the sub-city office. Read-only.
-      </p>
-
       {plan ? (
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
@@ -1973,7 +1951,7 @@ function QonnaAnalysisSection() {
             </span>
             {!isCustom && (
               <span className="text-[#065f46] text-xs">
-                — Targets partitioned from annual plan
+                Targets partitioned from annual plan
               </span>
             )}
           </div>
@@ -2532,18 +2510,6 @@ function CarraaHojiiAnnualPlanSection({ u }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Carraa Hojii Uumuu  Annual Plan
-        </h1>
-        <span className="bg-[#eff6ff] text-[#1e40af] text-xs font-bold px-3 py-1 rounded-full border border-[#bfdbfe]">
-          {year}
-        </span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">
-        Targets assigned by the sub-city office. Read-only.
-      </p>
-
       {plan ? (
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
           <div
@@ -2558,7 +2524,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
                 Carraa Hojii Uummuu Annual Plan  {year}
               </p>
               <p className="text-white/60 text-xs mt-0.5">
-                {u.name} · {u.woreda} · Read-only
+                 Read-only
               </p>
             </div>
           </div>
@@ -3120,7 +3086,7 @@ function PlaceholderAnnualPlan({ title, u }) {
           Annual Plan
         </h2>
         <p className="text-[#94a3b8] text-sm max-w-sm mb-6">
-          The annual plan for <strong>{title}</strong> will be managed here —
+          The annual plan for <strong>{title}</strong> will be managed here 
           targets and progress tracking for <strong>{u.woreda}</strong>.
         </p>
         <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-4 py-2 rounded-full">
@@ -4635,10 +4601,6 @@ function RevenueAnalysis() {
 function WorksOverview({ u, onSelect }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Works</h1>
-      <p className="text-[#64748b] text-sm mb-6">
-        select a section to submit a report
-      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         {WORKS.map(({ id, label, sidebarLabel, icon: Icon, color }) => (
           <div
@@ -4920,31 +4882,21 @@ export default function WoRedaDashboard() {
             {topLabel()}
           </h2>
           <div className="flex items-center gap-4">
-            <button className="relative text-[#64748b] hover:text-[#1e293b]">
+            <button 
+              onClick={() => setActiveNav("announcements")}
+              className="relative text-[#64748b] hover:text-[#1e293b]"
+            >
               <BellIcon />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#dc2626] rounded-full" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {u.initials}
-              </div>
-              <div className="text-left hidden sm:block">
-                <p className="text-[#1e293b] text-sm font-semibold leading-tight">
-                  {u.name}
-                </p>
-                <p className="text-[#64748b] text-xs capitalize">{u.role}</p>
-              </div>
-            </div>
+            
           </div>
         </header>
         <main className="flex-1 overflow-y-auto px-6 py-6">
           {activeNav === "dashboard" && (
             <div>
-              <h1 className="text-2xl font-bold text-[#1e293b] mb-1">
-                Dashboard
-              </h1>
-              <p className="text-[#64748b] text-sm mb-6">
-                Welcome back, {u.name}
+              <p className="text-[#1e293b] text-lg font-bold mb-6">
+                Welcome back! {u.name}
               </p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {[
@@ -5006,9 +4958,6 @@ export default function WoRedaDashboard() {
 
           {activeNav === "history" && (
             <div>
-              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
-                Report History
-              </h1>
               <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-[#f4f6f9] border-b border-[#e2e8f0]">
