@@ -1513,8 +1513,8 @@ const DALDALA_FIELDS_SC = [
   { key: "intarshippii", label: "Intarshippii", color: "#dc2626" },
   { key: "ggg", label: "Giddu Gala Gabaa", color: "#475569" },
   { key: "gabayaa_sanbata", label: "Gabaa Sanbata", color: "#854d0e" },
-  { key: "whg_kudraa", label: "WHG - Kudraa", color: "#166534" },
-  { key: "whg_mudraa", label: "WHG - Mudraa", color: "#1a3a5c" },
+  { key: "whg_kudraa", label: "Walitti Hidhinsa Gabaa - Kudraa", color: "#166534" },
+  { key: "whg_mudraa", label: "Walitti Hidhinsa Gabaa - Mudraa", color: "#1a3a5c" },
 ];
 
 const ATK_FIELDS_SC = [
