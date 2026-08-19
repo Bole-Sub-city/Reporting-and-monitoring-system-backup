@@ -186,12 +186,24 @@ const submitQonnaReport = async (req, res) => {
     const {
       report_date,
       report_type,
-      furdisa,
-      annan,
-      lukkuu,
-      booyyee,
-      qurxummii,
-      kanniissa,
+      furdisa_bakka_qophaawe,
+      furdisa_sheedii_ijaaraman,
+      furdisa_lakk_horii,
+      annan_bakka_qophaawe,
+      annan_sheedii_ijaaraman,
+      annan_lakk_saaa,
+      lukkuu_bakka_qophaawe,
+      lukkuu_sheedii_ijaaraman,
+      lukkuu_lakk_lukkuu,
+      boyyee_bakka_qophaawe,
+      boyyee_sheedii_ijaaraman,
+      boyyee_lakk_booyyee,
+      kannisaa_bakka_qophaawe,
+      kannisaa_gaaguraa_ijaaraman,
+      kannisaa_lakk_kannisaa,
+      qurxummii_bakka_qophaawe,
+      qurxummii_pondii_ijaaraman,
+      qurxummii_lakk_qurxummii,
       yaada_gudinaa,
     } = req.body;
 
@@ -202,19 +214,29 @@ const submitQonnaReport = async (req, res) => {
         role: req.user.role,
         report_date,
         report_type,
-        furdisa,
-        annan,
-        lukkuu,
-        booyyee,
-        qurxummii,
-        kanniissa,
+        furdisa_bakka_qophaawe,
+        furdisa_sheedii_ijaaraman,
+        furdisa_lakk_horii,
+        annan_bakka_qophaawe,
+        annan_sheedii_ijaaraman,
+        annan_lakk_saaa,
+        lukkuu_bakka_qophaawe,
+        lukkuu_sheedii_ijaaraman,
+        lukkuu_lakk_lukkuu,
+        boyyee_bakka_qophaawe,
+        boyyee_sheedii_ijaaraman,
+        boyyee_lakk_booyyee,
+        kannisaa_bakka_qophaawe,
+        kannisaa_gaaguraa_ijaaraman,
+        kannisaa_lakk_kannisaa,
+        qurxummii_bakka_qophaawe,
+        qurxummii_pondii_ijaaraman,
+        qurxummii_lakk_qurxummii,
         yaada_gudinaa,
       },
     ]);
 
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
+    if (error) return res.status(400).json({ message: error.message });
 
     res.status(201).json({ message: "Qonna report submitted successfully." });
   } catch (err) {

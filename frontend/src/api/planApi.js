@@ -74,14 +74,13 @@ export const fetchSubcityOwnPlan = async () => {
 
 /**
  * Save the subcity's Qonna annual plan and distribute to the 4 wereda tables.
- * @param {Object} qophi      - { furdisa: animalsTotal, … } animal totals per category
- * @param {Object} weights    - { w1, w2, w3, w4 } woreda weights
- * @param {Object} [extra]    - flat extra keys: { furdisa_houses, furdisa_ha_per_house, … }
+ * @param {Object} planData  - flat object with all column names as keys
+ * @param {Object} weights   - { w1, w2, w3, w4 } woreda weights
  */
-export const saveSubcityQonnaPlan = async (qophi, weights, extra = {}) => {
+export const saveSubcityQonnaPlan = async (planData, weights) => {
   const res = await api.post(
     "/plans/subcity-qonna-plan",
-    { qophi, weights, extra },
+    { planData, weights },
     authHeader(),
   );
   return res.data;

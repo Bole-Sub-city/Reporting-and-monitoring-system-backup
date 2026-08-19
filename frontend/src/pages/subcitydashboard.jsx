@@ -72,18 +72,18 @@ const WOREDAS = [
 
 // ─── Oromo calendar helpers (used in Report History date picker) ──────────────
 const OROMO_MONTHS_SC = [
-  { name: "Adoolessa",    gregStart: "07-08" },
-  { name: "Hagayya",      gregStart: "08-07" },
-  { name: "Fulbaana",     gregStart: "09-06" },
+  { name: "Adoolessa", gregStart: "07-08" },
+  { name: "Hagayya", gregStart: "08-07" },
+  { name: "Fulbaana", gregStart: "09-06" },
   { name: "Onkololeessa", gregStart: "10-06" },
-  { name: "Sadaasa",      gregStart: "11-05" },
-  { name: "Mudde",        gregStart: "12-05" },
-  { name: "Amajjii",      gregStart: "01-04" },
-  { name: "Guraandhala",  gregStart: "02-03" },
-  { name: "Bitooteessa",  gregStart: "03-05" },
-  { name: "Ebla",         gregStart: "04-04" },
-  { name: "Caamsaa",      gregStart: "05-04" },
-  { name: "Waxabajjii",   gregStart: "06-03" },
+  { name: "Sadaasa", gregStart: "11-05" },
+  { name: "Mudde", gregStart: "12-05" },
+  { name: "Amajjii", gregStart: "01-04" },
+  { name: "Guraandhala", gregStart: "02-03" },
+  { name: "Bitooteessa", gregStart: "03-05" },
+  { name: "Ebla", gregStart: "04-04" },
+  { name: "Caamsaa", gregStart: "05-04" },
+  { name: "Waxabajjii", gregStart: "06-03" },
 ];
 const OROMO_DAYS_SC = Array.from({ length: 30 }, (_, i) => i + 1);
 
@@ -133,12 +133,12 @@ const EMPTY_PLAN = {
 
 // Sectors used in Annual Plan and Work Analysis dropdowns
 const SECTORS = [
-  { id: "buusaa",     label: "Buusaa Gonofaa" },
-  { id: "qonna",      label: "Qonna" },
-  { id: "galii",      label: "Galii Sassaabu" },
-  { id: "carraa",     label: "Carraa Hojii Uumuu" },
-  { id: "daldala",    label: "Daldala" },
-  { id: "atk",        label: "ATK" },
+  { id: "buusaa", label: "Buusaa Gonofaa" },
+  { id: "qonna", label: "Qonna" },
+  { id: "galii", label: "Galii Sassaabu" },
+  { id: "carraa", label: "Carraa Hojii Uumuu" },
+  { id: "daldala", label: "Daldala" },
+  { id: "atk", label: "ATK" },
 ];
 
 // ─── Default woreda percentage split (editable in plan forms) ────────────────
@@ -315,7 +315,7 @@ const CollapseIcon = ({ collapsed }) => (
 );
 
 // ─── Overview Page ────────────────────────────────────────────────────────────
-function OverviewPage({ dbPlan, u }) {
+function OverviewPage({ dbPlan, dbQonnaPlan, u }) {
   const hasPlan =
     dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
   const totalWeight = dbPlan
@@ -327,6 +327,76 @@ function OverviewPage({ dbPlan, u }) {
       (Number(dbPlan[`weight_${woredaId}`] || 0) / totalWeight) * total,
     );
   };
+
+  // Qonna overview — 3 distributed fields per category
+  const QONNA_OV_CATS = [
+    {
+      key: "furdisa",
+      label: "Furdisa",
+      color: "#065f46",
+      fields: [
+        { col: "furdisa_qophi_lafa", label: "Qophi Lafa" },
+        { col: "furdisa_lakk_sheedii", label: "Lakk Sheedii" },
+        { col: "furdisa_lakk_horii_waliigalaa", label: "Lakk Horii" },
+      ],
+    },
+    {
+      key: "annan",
+      label: "Annan",
+      color: "#0f766e",
+      fields: [
+        { col: "annan_qophi_lafa", label: "Qophi Lafa" },
+        { col: "annan_lakk_sheedii", label: "Lakk Sheedii" },
+        { col: "annan_lakk_saa_waliigalaa", label: "Lakk Sa'a" },
+      ],
+    },
+    {
+      key: "lukkuu",
+      label: "Lukkuu",
+      color: "#1e40af",
+      fields: [
+        { col: "lukkuu_qophi_lafa", label: "Qophi Lafa" },
+        { col: "lukkuu_lakk_sheedii", label: "Lakk Sheedii" },
+        { col: "lukkuu_lakk_lukkuu_waliigalaa", label: "Lakk Lukkuu" },
+      ],
+    },
+    {
+      key: "booyee",
+      label: "Booyyee",
+      color: "#7c3aed",
+      fields: [
+        { col: "booyee_qophi_lafa", label: "Qophi Lafa" },
+        { col: "booyee_lakk_sheedii", label: "Lakk Sheedii" },
+        { col: "booyee_lakk_booyyee_waliigalaa", label: "Lakk Booyyee" },
+      ],
+    },
+    {
+      key: "kannisaa",
+      label: "Kannisaa",
+      color: "#b45309",
+      fields: [
+        { col: "kannisaa_qophi_lafa", label: "Qophi Lafa" },
+        { col: "kannisaa_lakk_gaaguraa", label: "Lakk Gaaguraa" },
+        { col: "kannisaa_lakk_kannisaa_waliigalaa", label: "Lakk Kannisaa" },
+      ],
+    },
+    {
+      key: "qurxummii",
+      label: "Qurxummii",
+      color: "#0369a1",
+      fields: [
+        { col: "qurxummii_qophi_lafa", label: "Qophi Lafa" },
+        { col: "qurxummii_lakk_pondii", label: "Lakk Pondii" },
+        { col: "qurxummii_lakk_qurxummii_waliigalaa", label: "Lakk Qurxummii" },
+      ],
+    },
+  ];
+  const hasQonnaPlan =
+    dbQonnaPlan &&
+    QONNA_OV_CATS.some((cat) =>
+      cat.fields.some((f) => Number(dbQonnaPlan[f.col] || 0) > 0),
+    );
+
   return (
     <div>
       <div className="mb-6">
@@ -356,8 +426,10 @@ function OverviewPage({ dbPlan, u }) {
           </div>
         ))}
       </div>
+
+      {/* ── Buusaa Gonofaa plan ── */}
       {hasPlan ? (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
@@ -365,7 +437,7 @@ function OverviewPage({ dbPlan, u }) {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Annual Plan Per Woreda Allocation
+              Buusaa Gonofaa — Annual Plan Per Woreda Allocation
             </p>
             <p className="text-white/60 text-xs mt-0.5">
               Fetched from database · Year {dbPlan.year}
@@ -424,15 +496,108 @@ function OverviewPage({ dbPlan, u }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-10 flex flex-col items-center text-center shadow-sm">
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-8 flex flex-col items-center text-center shadow-sm mb-6">
           <div className="w-14 h-14 rounded-full bg-[#eef4fb] flex items-center justify-center mb-3 text-[#1a3a5c]">
             <TargetIcon />
           </div>
           <p className="text-[#1e293b] font-semibold mb-1">
-            No Annual Plan Yet
+            No Buusaa Gonofaa Plan Yet
           </p>
           <p className="text-[#94a3b8] text-sm max-w-xs">
             Go to Annual Plan → Buusaa Gonofaa to enter subcity targets.
+          </p>
+        </div>
+      )}
+
+      {/* ── Qonna plan ── */}
+      {hasQonnaPlan ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+            }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Qonna — Annual Plan Per Woreda Allocation
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Fetched from database · Year {dbQonnaPlan.year}
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9]">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    Category
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    Field
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    Subcity Total
+                  </th>
+                  {WOREDAS.map((w) => (
+                    <th
+                      key={w.id}
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                    >
+                      {w.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {QONNA_OV_CATS.map(({ key, label, color, fields }) =>
+                  fields.map(({ col, label: fLabel }, fi) => {
+                    const total = Number(dbQonnaPlan[col] || 0);
+                    return (
+                      <tr
+                        key={col}
+                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                      >
+                        {fi === 0 && (
+                          <td
+                            className="px-5 py-3 font-bold text-[#1e293b]"
+                            rowSpan={3}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: color }}
+                              />
+                              {label}
+                            </span>
+                          </td>
+                        )}
+                        <td className="px-5 py-3 text-[#64748b] text-xs">
+                          {fLabel}
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                          {total.toLocaleString()}
+                        </td>
+                        {WOREDAS.map((w) => (
+                          <td key={w.id} className="px-5 py-3 text-[#64748b]">
+                            {share(w.id, total).toLocaleString()}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  }),
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-8 flex flex-col items-center text-center shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3 text-[#065f46]">
+            <TargetIcon />
+          </div>
+          <p className="text-[#1e293b] font-semibold mb-1">No Qonna Plan Yet</p>
+          <p className="text-[#94a3b8] text-sm max-w-xs">
+            Go to Annual Plan → Qonna to enter subcity targets.
           </p>
         </div>
       )}
@@ -589,9 +754,7 @@ function BuusaaPlanPage({ onSave }) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Annual Plan
-        </h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Enter subcity totals and woreda allocation percentages. The system
           distributes the targets proportionally.
@@ -847,8 +1010,6 @@ function QonnaPlanRow({ cat, form, onChange }) {
     >
       {/* Header */}
       <div className="flex items-center gap-2">
-      
-        
         <span className="text-xs text-[#94a3b8] ml-1"> {cat.description}</span>
       </div>
 
@@ -981,11 +1142,7 @@ function QonnaPlanRow({ cat, form, onChange }) {
 
 function QonnaPlanPage() {
   const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
-  // Each category has { houses, haPerHouse, unitsPerHouse }
   const [forms, setForms] = useState({ ...EMPTY_QONNA_FORM });
-  // Furdisa: animal type
-  const [furdisaType, setFurdisaType] = useState("cattle");
-  const [furdisaOther, setFurdisaOther] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1010,6 +1167,54 @@ function QonnaPlanPage() {
   const hasAnyTarget = QONNA_CATEGORIES.some((c) => totalAnimals[c.key] > 0);
   const canSubmit = hasAnyTarget && pctValid.ok;
 
+  // Column name helpers — keep naming consistent with DB columns
+  // Subcity-only (not distributed): hektaara_*, lakk_*_per_*
+  // Distributed to weredas: qophi_lafa_*, lakk_sheedii_*, lakk_*_waliigalaa
+  const CFG_KEYS = {
+    furdisa: {
+      qophi: "furdisa_qophi_lafa",
+      sheedii: "furdisa_lakk_sheedii",
+      lakk: "furdisa_lakk_horii_waliigalaa",
+      hektaara: "furdisa_hektaara_sheedii",
+      lakkPer: "furdisa_lakk_horii_sheedii",
+    },
+    annan: {
+      qophi: "annan_qophi_lafa",
+      sheedii: "annan_lakk_sheedii",
+      lakk: "annan_lakk_saa_waliigalaa",
+      hektaara: "annan_hektaara_sheedii",
+      lakkPer: "annan_lakk_saa_sheedii",
+    },
+    lukkuu: {
+      qophi: "lukkuu_qophi_lafa",
+      sheedii: "lukkuu_lakk_sheedii",
+      lakk: "lukkuu_lakk_lukkuu_waliigalaa",
+      hektaara: "lukkuu_hektaara_sheedii",
+      lakkPer: "lukkuu_lakk_lukkuu_sheedii",
+    },
+    booyee: {
+      qophi: "booyee_qophi_lafa",
+      sheedii: "booyee_lakk_sheedii",
+      lakk: "booyee_lakk_booyyee_waliigalaa",
+      hektaara: "booyee_hektaara_sheedii",
+      lakkPer: "booyee_lakk_booyyee_sheedii",
+    },
+    kannisaa: {
+      qophi: "kannisaa_qophi_lafa",
+      sheedii: "kannisaa_lakk_gaaguraa",
+      lakk: "kannisaa_lakk_kannisaa_waliigalaa",
+      hektaara: "kannisaa_hektaara_gaaguraa",
+      lakkPer: "kannisaa_lakk_kannisaa_gaaguraa",
+    },
+    qurxummii: {
+      qophi: "qurxummii_qophi_lafa",
+      sheedii: "qurxummii_lakk_pondii",
+      lakk: "qurxummii_lakk_qurxummii_waliigalaa",
+      hektaara: "qurxummii_hektaara_pondii",
+      lakkPer: "qurxummii_lakk_qurxummii_pondii",
+    },
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!pctValid.ok) return;
@@ -1017,37 +1222,33 @@ function QonnaPlanPage() {
     setSaveError("");
     setSaved(false);
 
-    // Save total animals (houses x unitsPerHouse), houses count, ha per house,
-    // and total land per category so the woreda can see all planned dimensions.
-    const qophi = Object.fromEntries(
-      QONNA_CATEGORIES.map((c) => {
-        const f = forms[c.key];
-        const houses = Number(f.houses) || 0;
-        const haPerHouse = Number(f.haPerHouse) || 0;
-        const totalLand = Math.round(houses * haPerHouse * 100) / 100;
-        return [c.key, totalAnimals[c.key]];
-      }),
-    );
-    // Also pass the extra dimension data flat so backend can store them
-    const qophiExtra = Object.fromEntries(
-      QONNA_CATEGORIES.flatMap((c) => {
-        const f = forms[c.key];
-        const houses = Number(f.houses) || 0;
-        const haPerHouse = Number(f.haPerHouse) || 0;
-        const totalLand = Math.round(houses * haPerHouse * 100) / 100;
-        return [
-          [`${c.key}_houses`, houses],
-          [`${c.key}_ha_per_house`, haPerHouse],
-          [`${c.key}_total_land`, totalLand],
-        ];
-      }),
-    );
+    // Build a flat payload with all columns named exactly as they will be in DB
+    const planData = { year: new Date().getFullYear() };
+
+    QONNA_CATEGORIES.forEach((c) => {
+      const f = forms[c.key];
+      const cfg = CFG_KEYS[c.key];
+      const houses = Number(f.houses) || 0;
+      const haPer = Number(f.haPerHouse) || 0;
+      const unitsPer = Number(f.unitsPerHouse) || 0;
+      const totalLand = Math.round(houses * haPer * 100) / 100;
+      const totalUnits = houses * unitsPer;
+
+      // 3 distributed fields (go to wereda tables)
+      planData[cfg.qophi] = totalLand;
+      planData[cfg.sheedii] = houses;
+      planData[cfg.lakk] = totalUnits;
+      // 2 subcity-only fields (stored only in subcity table)
+      planData[cfg.hektaara] = haPer;
+      planData[cfg.lakkPer] = unitsPer;
+    });
+
     const weights = Object.fromEntries(
       WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
     );
 
     try {
-      await saveSubcityQonnaPlan(qophi, weights, qophiExtra);
+      await saveSubcityQonnaPlan(planData, weights);
       setSaved(true);
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
@@ -1062,9 +1263,7 @@ function QonnaPlanPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Annual Plan
-        </h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Enter The Required Information Below
         </p>
@@ -1082,43 +1281,9 @@ function QonnaPlanPage() {
               background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
             }}
           >
-            <p className="text-sm font-semibold text-white">
-              Furdisa
-            </p>
+            <p className="text-sm font-semibold text-white">Furdisa</p>
           </div>
-          <div className="px-5 py-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                  Gosa Furdisaa
-                </label>
-                <select
-                  value={furdisaType}
-                  onChange={(e) => setFurdisaType(e.target.value)}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
-                >
-                  {FURDISA_ANIMAL_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {furdisaType === "other" && (
-                <div>
-                  <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                    Gosa Ibsi
-                  </label>
-                  <input
-                    type="text"
-                    value={furdisaOther}
-                    onChange={(e) => setFurdisaOther(e.target.value)}
-                    placeholder="fkn. Gaala, Harree…"
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 focus:border-[#065f46]"
-                  />
-                </div>
-              )}
-            </div>
+          <div className="px-5 py-5">
             <QonnaPlanRow
               cat={QONNA_CATEGORIES[0]}
               form={forms.furdisa}
@@ -1135,9 +1300,7 @@ function QonnaPlanPage() {
               background: "linear-gradient(90deg,#b45309 0%,#d97706 100%)",
             }}
           >
-            <p className="text-sm font-semibold text-white">
-              Kannisaa
-            </p>
+            <p className="text-sm font-semibold text-white">Kannisaa</p>
           </div>
           <div className="px-5 py-5">
             <QonnaPlanRow
@@ -1156,9 +1319,7 @@ function QonnaPlanPage() {
               background: "linear-gradient(90deg,#0369a1 0%,#0284c7 100%)",
             }}
           >
-            <p className="text-sm font-semibold text-white">
-              Qurxummii
-            </p>
+            <p className="text-sm font-semibold text-white">Qurxummii</p>
           </div>
           <div className="px-5 py-5">
             <QonnaPlanRow
@@ -1186,7 +1347,6 @@ function QonnaPlanPage() {
               }}
             >
               <p className="text-sm font-semibold text-white">{cat.label}</p>
-              
             </div>
             <div className="px-5 py-5">
               <QonnaPlanRow
@@ -1206,7 +1366,7 @@ function QonnaPlanPage() {
                 Woreda Allocation Preview
               </p>
               <p className="text-xs text-[#64748b] mt-0.5">
-                Waliigalli horii/mana x mana  woreda hundaaf qoodama
+                Waliigalli horii/mana x mana woreda hundaaf qoodama
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -1307,41 +1467,73 @@ function QonnaPlanPage() {
 
 // ─── Generic sector field definitions ────────────────────────────────────────
 const GALII_FIELDS = [
-  { key: "galii_idilee",          label: "Galii Idilee",          color: "#0f766e" },
-  { key: "galii_mana_qophessaa",  label: "Galii Mana Qophessaa",  color: "#1e40af" },
+  { key: "galii_idilee", label: "Galii Idilee", color: "#0f766e" },
+  {
+    key: "galii_mana_qophessaa",
+    label: "Galii Mana Qophessaa",
+    color: "#1e40af",
+  },
 ];
 
 const CARRAA_FIELDS = [
-  { key: "leenjii",                    label: "Leenjii",                    color: "#1e40af" },
-  { key: "carraa_hojii_dhaabbii",      label: "Carraa Hojii Dhaabbii",      color: "#0f766e" },
-  { key: "carraa_hojii_qacarrii",      label: "Carraa Hojii Qacarrii",      color: "#7c3aed" },
-  { key: "qusannaa_haawaasaa",         label: "Qusannaa Haawaasaa",         color: "#475569" },
-  { key: "qusanna_dirqii",             label: "Qusanna Dirqii",             color: "#64748b" },
-  { key: "kenna_liqii",                label: "Kenna Liqii",                color: "#b45309" },
-  { key: "deebii_liqii_bilchaate",     label: "Deebii Liqii Bilchaate",     color: "#065f46" },
-  { key: "deebii_liqii_bulee",         label: "Deebii Liqii Bulee",         color: "#dc2626" },
-  { key: "industrii_godoo",            label: "Industrii Godoo",            color: "#0369a1" },
+  { key: "leenjii", label: "Leenjii", color: "#1e40af" },
+  {
+    key: "carraa_hojii_dhaabbii",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+  },
+  {
+    key: "carraa_hojii_qacarrii",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+  },
+  { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa", color: "#475569" },
+  { key: "qusanna_dirqii", label: "Qusanna Dirqii", color: "#64748b" },
+  { key: "kenna_liqii", label: "Kenna Liqii", color: "#b45309" },
+  {
+    key: "deebii_liqii_bilchaate",
+    label: "Deebii Liqii Bilchaate",
+    color: "#065f46",
+  },
+  { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee", color: "#dc2626" },
+  { key: "industrii_godoo", label: "Industrii Godoo", color: "#0369a1" },
 ];
 
 const DALDALA_FIELDS_SC = [
-  { key: "galmee_haraa",           label: "Galmee Haraa",           color: "#0f766e" },
-  { key: "heyyema_haraa",          label: "Heyyema Haraa",          color: "#1e40af" },
-  { key: "harahessaa",             label: "Harahessaa",             color: "#7c3aed" },
-  { key: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu", color: "#b45309" },
-  { key: "toannoo_walii_gala",     label: "To'annoo Walii Gala",    color: "#065f46" },
-  { key: "tmd",                    label: "Leenjii TMD",                    color: "#0369a1" },
-  { key: "intarshippii",           label: "Intarshippii",           color: "#dc2626" },
-  { key: "ggg",                    label: "Giddu Gala Gabaa",                    color: "#475569" },
-  { key: "gabayaa_sanbata",        label: "Gabaa Sanbata",        color: "#854d0e" },
-  { key: "whg_kudraa",             label: "WHG - Kudraa",           color: "#166534" },
-  { key: "whg_mudraa",             label: "WHG - Mudraa",           color: "#1a3a5c" },
+  { key: "galmee_haraa", label: "Galmee Haraa", color: "#0f766e" },
+  { key: "heyyema_haraa", label: "Heyyema Haraa", color: "#1e40af" },
+  { key: "harahessaa", label: "Harahessaa", color: "#7c3aed" },
+  {
+    key: "galii_daldalarra_galuu",
+    label: "Galii Daldalarra Galuu",
+    color: "#b45309",
+  },
+  { key: "toannoo_walii_gala", label: "To'annoo Walii Gala", color: "#065f46" },
+  { key: "tmd", label: "Leenjii TMD", color: "#0369a1" },
+  { key: "intarshippii", label: "Intarshippii", color: "#dc2626" },
+  { key: "ggg", label: "Giddu Gala Gabaa", color: "#475569" },
+  { key: "gabayaa_sanbata", label: "Gabaa Sanbata", color: "#854d0e" },
+  { key: "whg_kudraa", label: "WHG - Kudraa", color: "#166534" },
+  { key: "whg_mudraa", label: "WHG - Mudraa", color: "#1a3a5c" },
 ];
 
 const ATK_FIELDS_SC = [
-  { key: "waliigaltee_pilaanii_kennuu",  label: "Waliigaltee Pilaanii Kennuu",  color: "#7e22ce" },
-  { key: "heeyyama_ijaarsaa_kennamee",   label: "Heeyyama Ijaarsaa Kennamee",   color: "#0369a1" },
-  { key: "toannoo_fi_hordoffii_gamoo",   label: "To'annoo Fi Hordoffii Gamoo",  color: "#065f46" },
-  { key: "galii_atk_galchuu",            label: "Galii ATK Galchuu",            color: "#b45309" },
+  {
+    key: "waliigaltee_pilaanii_kennuu",
+    label: "Waliigaltee Pilaanii Kennuu",
+    color: "#7e22ce",
+  },
+  {
+    key: "heeyyama_ijaarsaa_kennamee",
+    label: "Heeyyama Ijaarsaa Kennamee",
+    color: "#0369a1",
+  },
+  {
+    key: "toannoo_fi_hordoffii_gamoo",
+    label: "To'annoo Fi Hordoffii Gamoo",
+    color: "#065f46",
+  },
+  { key: "galii_atk_galchuu", label: "Galii ATK Galchuu", color: "#b45309" },
 ];
 
 // Sector config map used by GenericSubcityPlanPage and GenericSubcityAnalysisPage
@@ -1354,16 +1546,40 @@ const SECTOR_CFG = {
     fetchFn: fetchSubcityOwnPlan,
   },
   qonna: {
-    fields: QONNA_CATEGORIES.map(({ key, label, color }) => ({ key, label, color })),
+    fields: QONNA_CATEGORIES.map(({ key, label, color }) => ({
+      key,
+      label,
+      color,
+    })),
     label: "Qonna",
     color: "#065f46",
     gradient: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
     fetchFn: fetchSubcityQonnaPlan,
   },
-  galii:   { fields: GALII_FIELDS,      label: "Galii Sassaabu",    color: "#475569", gradient: "linear-gradient(90deg,#475569 0%,#64748b 100%)" },
-  carraa:  { fields: CARRAA_FIELDS,     label: "Carraa Hojii Uumuu",color: "#1e40af", gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" },
-  daldala: { fields: DALDALA_FIELDS_SC, label: "Daldala",           color: "#854d0e", gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)" },
-  atk:     { fields: ATK_FIELDS_SC,     label: "ATK",               color: "#7e22ce", gradient: "linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)" },
+  galii: {
+    fields: GALII_FIELDS,
+    label: "Galii Sassaabu",
+    color: "#475569",
+    gradient: "linear-gradient(90deg,#475569 0%,#64748b 100%)",
+  },
+  carraa: {
+    fields: CARRAA_FIELDS,
+    label: "Carraa Hojii Uumuu",
+    color: "#1e40af",
+    gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+  },
+  daldala: {
+    fields: DALDALA_FIELDS_SC,
+    label: "Daldala",
+    color: "#854d0e",
+    gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)",
+  },
+  atk: {
+    fields: ATK_FIELDS_SC,
+    label: "ATK",
+    color: "#7e22ce",
+    gradient: "linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)",
+  },
 };
 
 // ─── Generic Subcity Annual Plan Page ────────────────────────────────────────
@@ -1378,18 +1594,22 @@ function GenericSubcityPlanPage({ sector }) {
   const [saveError, setSaveError] = useState("");
 
   const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
-  const handleField = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleField = (e) =>
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const parsed = parsePcts(pcts);
   const pctValid = validatePcts(parsed);
   const hasValues = cfg.fields.some((f) => Number(form[f.key] || 0) > 0);
   const canSubmit = hasValues && pctValid.ok;
-  const share = (woredaId, total) => pctValid.ok ? pctShare(parsed, woredaId, total) : 0;
+  const share = (woredaId, total) =>
+    pctValid.ok ? pctShare(parsed, woredaId, total) : 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!pctValid.ok) return;
-    setSaving(true); setSaveError(""); setSaved(false);
+    setSaving(true);
+    setSaveError("");
+    setSaved(false);
     const wForm = Object.fromEntries(
       WOREDAS.map((w) => {
         const effectivePct = w.id === "w2" ? 25 : parsed[w.id];
@@ -1419,22 +1639,38 @@ function GenericSubcityPlanPage({ sector }) {
       <form onSubmit={handleSubmit} className="space-y-5">
         <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: cfg.gradient }}>
-            <p className="text-sm font-semibold text-white">Enter Subcity Annual Totals</p>
-            <p className="text-white/60 text-xs mt-0.5">Total targets for the whole subcity</p>
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: cfg.gradient }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Enter Subcity Annual Totals
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Total targets for the whole subcity
+            </p>
           </div>
           <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
             {cfg.fields.map(({ key, label, color }) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-[#1e293b] mb-1.5">
                   <span className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
                     {label}
                   </span>
                 </label>
-                <input type="number" min="0" name={key} value={form[key]} onChange={handleField}
+                <input
+                  type="number"
+                  min="0"
+                  name={key}
+                  value={form[key]}
+                  onChange={handleField}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]" />
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                />
               </div>
             ))}
           </div>
@@ -1443,18 +1679,32 @@ function GenericSubcityPlanPage({ sector }) {
         {hasValues && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
-              <p className="text-sm font-semibold text-[#1e293b]">Allocation Preview</p>
-              <p className="text-xs text-[#64748b] mt-0.5">Auto-calculated from entered percentages</p>
+              <p className="text-sm font-semibold text-[#1e293b]">
+                Allocation Preview
+              </p>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Auto-calculated from entered percentages
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9]">
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Total</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Category
+                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Total
+                    </th>
                     {WOREDAS.map((w) => (
-                      <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                        {w.name}<span className="block text-[#94a3b8] font-normal normal-case">{pcts[w.id]}%</span>
+                      <th
+                        key={w.id}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {w.name}
+                        <span className="block text-[#94a3b8] font-normal normal-case">
+                          {pcts[w.id]}%
+                        </span>
                       </th>
                     ))}
                   </tr>
@@ -1464,16 +1714,26 @@ function GenericSubcityPlanPage({ sector }) {
                     const total = Number(form[key] || 0);
                     if (total === 0) return null;
                     return (
-                      <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                      <tr
+                        key={key}
+                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                      >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: color }}
+                            />
                             {label}
                           </span>
                         </td>
-                        <td className="px-5 py-3 font-semibold text-[#1e293b]">{total.toLocaleString()}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                          {total.toLocaleString()}
+                        </td>
                         {WOREDAS.map((w) => (
-                          <td key={w.id} className="px-5 py-3 text-[#64748b]">{share(w.id, total).toLocaleString()}</td>
+                          <td key={w.id} className="px-5 py-3 text-[#64748b]">
+                            {share(w.id, total).toLocaleString()}
+                          </td>
                         ))}
                       </tr>
                     );
@@ -1486,14 +1746,34 @@ function GenericSubcityPlanPage({ sector }) {
 
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
-            {saved && <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold"><CheckIcon /> Saved successfully.</p>}
+            {saved && (
+              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
+                <CheckIcon /> Saved successfully.
+              </p>
+            )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && <p className="text-[#94a3b8] text-xs">Saving overwrites the current plan.</p>}
+            {!saved && !saveError && (
+              <p className="text-[#94a3b8] text-xs">
+                Saving overwrites the current plan.
+              </p>
+            )}
           </div>
-          <button type="submit" disabled={saving || !canSubmit}
+          <button
+            type="submit"
+            disabled={saving || !canSubmit}
             className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: cfg.color }}>
-            {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving...</> : <><CheckIcon /> Save Plan</>}
+            style={{ backgroundColor: cfg.color }}
+          >
+            {saving ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckIcon /> Save Plan
+              </>
+            )}
           </button>
         </div>
       </form>
@@ -1523,15 +1803,19 @@ function GenericSubcityAnalysisPage({ sector }) {
   // For display: subcity plan has total + woreda shares stored as
   // {field}_w1, {field}_w2 etc. We'll show the subcity totals and
   // woreda-allocated amounts from the plan directly.
-  const getPlanTotal = (fieldKey) => plan ? Number(plan[fieldKey] || 0) : 0;
+  const getPlanTotal = (fieldKey) => (plan ? Number(plan[fieldKey] || 0) : 0);
   const getWoredaShare = (fieldKey, woredaId) =>
     plan ? Number(plan[`${fieldKey}_${woredaId}`] || 0) : 0;
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-48">
-      <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div
+          className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+          style={{ borderTopColor: cfg.color }}
+        />
+      </div>
+    );
 
   return (
     <div>
@@ -1544,20 +1828,33 @@ function GenericSubcityAnalysisPage({ sector }) {
 
       {!plan && (
         <div className="mb-5 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-amber-500 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-[#92400e] text-sm">No {cfg.label} annual plan saved yet. Enter targets in Annual Plan first.</p>
+          <p className="text-[#92400e] text-sm">
+            No {cfg.label} annual plan saved yet. Enter targets in Annual Plan
+            first.
+          </p>
         </div>
       )}
 
       {/* Woreda tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {WOREDAS.map((w) => (
-          <button key={w.id} onClick={() => setActiveWoreda(w.id)}
+          <button
+            key={w.id}
+            onClick={() => setActiveWoreda(w.id)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeWoreda === w.id ? "text-white shadow" : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"}`}
-            style={activeWoreda === w.id ? { background: cfg.gradient } : {}}>
+            style={activeWoreda === w.id ? { background: cfg.gradient } : {}}
+          >
             {w.name}
           </button>
         ))}
@@ -1565,20 +1862,35 @@ function GenericSubcityAnalysisPage({ sector }) {
 
       {/* Subcity totals overview */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
-        <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: cfg.gradient }}>
-          <p className="text-sm font-semibold text-white">Subcity Total Annual Plan</p>
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{ background: cfg.gradient }}
+        >
+          <p className="text-sm font-semibold text-white">
+            Subcity Total Annual Plan
+          </p>
           <p className="text-white/60 text-xs mt-0.5">All 4 woredas combined</p>
         </div>
         <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {cfg.fields.map(({ key, label, color }) => {
             const total = getPlanTotal(key);
             return (
-              <div key={key} className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center">
+              <div
+                key={key}
+                className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center"
+              >
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                  <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">{label}</p>
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">
+                    {label}
+                  </p>
                 </div>
-                <p className="text-xl font-extrabold text-[#1e293b]">{total.toLocaleString()}</p>
+                <p className="text-xl font-extrabold text-[#1e293b]">
+                  {total.toLocaleString()}
+                </p>
               </div>
             );
           })}
@@ -1588,16 +1900,27 @@ function GenericSubcityAnalysisPage({ sector }) {
       {/* Selected woreda plan breakdown */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f4f6f9]">
-          <p className="text-sm font-semibold text-[#1e293b]">{woredaLabel} — Allocated Targets</p>
-          <p className="text-xs text-[#64748b] mt-0.5">Share of subcity totals distributed to this woreda</p>
+          <p className="text-sm font-semibold text-[#1e293b]">
+            {woredaLabel} — Allocated Targets
+          </p>
+          <p className="text-xs text-[#64748b] mt-0.5">
+            Share of subcity totals distributed to this woreda
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f1f5f9]">
-                {["Category", "Subcity Total", `${woredaLabel} Share`].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
-                ))}
+                {["Category", "Subcity Total", `${woredaLabel} Share`].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
@@ -1605,15 +1928,25 @@ function GenericSubcityAnalysisPage({ sector }) {
                 const total = getPlanTotal(key);
                 const share = getWoredaShare(key, activeWoreda);
                 return (
-                  <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                  <tr
+                    key={key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                  >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
                         {label}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-[#64748b]">{total.toLocaleString()}</td>
-                    <td className="px-5 py-3 font-semibold text-[#1e293b]">{share.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-[#64748b]">
+                      {total.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                      {share.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })}
@@ -1626,16 +1959,27 @@ function GenericSubcityAnalysisPage({ sector }) {
       {plan && (
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mt-6">
           <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f4f6f9]">
-            <p className="text-sm font-semibold text-[#1e293b]">All Woredas Comparison</p>
+            <p className="text-sm font-semibold text-[#1e293b]">
+              All Woredas Comparison
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9]">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Category</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Subcity Total</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    Category
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                    Subcity Total
+                  </th>
                   {WOREDAS.map((w) => (
-                    <th key={w.id} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{w.name}</th>
+                    <th
+                      key={w.id}
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                    >
+                      {w.name}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -1643,16 +1987,26 @@ function GenericSubcityAnalysisPage({ sector }) {
                 {cfg.fields.map(({ key, label, color }) => {
                   const total = getPlanTotal(key);
                   return (
-                    <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors">
+                    <tr
+                      key={key}
+                      className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                    >
                       <td className="px-5 py-3 font-medium text-[#1e293b]">
                         <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                          />
                           {label}
                         </span>
                       </td>
-                      <td className="px-5 py-3 font-bold text-[#1e293b]">{total.toLocaleString()}</td>
+                      <td className="px-5 py-3 font-bold text-[#1e293b]">
+                        {total.toLocaleString()}
+                      </td>
                       {WOREDAS.map((w) => (
-                        <td key={w.id} className="px-5 py-3 text-[#64748b]">{getWoredaShare(key, w.id).toLocaleString()}</td>
+                        <td key={w.id} className="px-5 py-3 text-[#64748b]">
+                          {getWoredaShare(key, w.id).toLocaleString()}
+                        </td>
                       ))}
                     </tr>
                   );
@@ -1672,7 +2026,7 @@ function ComingSoonPage({ title }) {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">
-           Annual Plan For {title} 
+          Annual Plan For {title}
         </h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Plan management for {title}
@@ -1703,76 +2057,228 @@ function WorkAnalysisPage({ sector }) {
 
 // ─── All Sectors (6) for Report History ──────────────────────────────────────
 const REPORT_SECTORS_ALL = [
-  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#1a3a5c" },
+  { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna",       label: "Qonna",              color: "#065f46" },
-  { id: "revenue",     label: "Galii Sassaabu",     color: "#475569" },
-  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
-  { id: "atk",         label: "ATK",                color: "#7e22ce" },
+  { id: "qonna", label: "Qonna", color: "#065f46" },
+  { id: "revenue", label: "Galii Sassaabu", color: "#475569" },
+  { id: "daldala", label: "Daldala", color: "#854d0e" },
+  { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
 const STUB_PERIOD_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
 
 // Stub rows — all 4 woredas, all 6 sectors
 const SC_STUB_ROWS = [
-  { id:  1, woredaId: "w1", sector: "buusaa",      reportType: "Daily",     date: "2026-08-15", status: "Approved",  data: { hubannoo_uummuu: 14, buusi_jirataa: 22 } },
-  { id:  2, woredaId: "w2", sector: "qonna",       reportType: "Weekly",    date: "2026-08-12", status: "Approved",  data: { furdisa: 120, lukkuu: 300 } },
-  { id:  3, woredaId: "w3", sector: "carraaHojii", reportType: "Monthly",   date: "2026-08-10", status: "Pending",   data: { leenjii: 50, carraa_hojii_dhaabbii: 30 } },
-  { id:  4, woredaId: "w4", sector: "revenue",     reportType: "Monthly",   date: "2026-08-01", status: "Approved",  data: { galiiIdilee: 45000 } },
-  { id:  5, woredaId: "w1", sector: "buusaa",      reportType: "Monthly",   date: "2026-07-31", status: "Approved",  data: { hubannoo_uummuu: 62, buusi_jirataa: 95 } },
-  { id:  6, woredaId: "w2", sector: "daldala",     reportType: "Weekly",    date: "2026-07-25", status: "Rejected",  data: { galmee_haraa: 5 } },
-  { id:  7, woredaId: "w3", sector: "atk",         reportType: "Weekly",    date: "2026-07-20", status: "Approved",  data: { waliigaltee_pilaanii_kennuu: 12 } },
-  { id:  8, woredaId: "w4", sector: "buusaa",      reportType: "Quarterly", date: "2026-07-01", status: "Approved",  data: { hubannoo_uummuu: 180, buusi_jirataa: 280 } },
-  { id:  9, woredaId: "w1", sector: "qonna",       reportType: "Monthly",   date: "2026-06-30", status: "Pending",   data: { furdisa: 98, annan: 40 } },
-  { id: 10, woredaId: "w2", sector: "buusaa",      reportType: "Annual",    date: "2026-04-01", status: "Approved",  data: { hubannoo_uummuu: 720, buusi_jirataa: 1100 } },
-  { id: 11, woredaId: "w3", sector: "revenue",     reportType: "Weekly",    date: "2026-08-08", status: "Approved",  data: { galiiIdilee: 8200 } },
-  { id: 12, woredaId: "w4", sector: "daldala",     reportType: "Monthly",   date: "2026-07-31", status: "Pending",   data: { galmee_haraa: 18 } },
-  { id: 13, woredaId: "w1", sector: "atk",         reportType: "Monthly",   date: "2026-07-30", status: "Approved",  data: { heeyyama_ijaarsaa_kennamee: 9 } },
-  { id: 14, woredaId: "w2", sector: "carraaHojii", reportType: "Quarterly", date: "2026-07-01", status: "Approved",  data: { leenjii: 140, kenna_liqii: 60 } },
+  {
+    id: 1,
+    woredaId: "w1",
+    sector: "buusaa",
+    reportType: "Daily",
+    date: "2026-08-15",
+    status: "Approved",
+    data: { hubannoo_uummuu: 14, buusi_jirataa: 22 },
+  },
+  {
+    id: 2,
+    woredaId: "w2",
+    sector: "qonna",
+    reportType: "Weekly",
+    date: "2026-08-12",
+    status: "Approved",
+    data: { furdisa: 120, lukkuu: 300 },
+  },
+  {
+    id: 3,
+    woredaId: "w3",
+    sector: "carraaHojii",
+    reportType: "Monthly",
+    date: "2026-08-10",
+    status: "Pending",
+    data: { leenjii: 50, carraa_hojii_dhaabbii: 30 },
+  },
+  {
+    id: 4,
+    woredaId: "w4",
+    sector: "revenue",
+    reportType: "Monthly",
+    date: "2026-08-01",
+    status: "Approved",
+    data: { galiiIdilee: 45000 },
+  },
+  {
+    id: 5,
+    woredaId: "w1",
+    sector: "buusaa",
+    reportType: "Monthly",
+    date: "2026-07-31",
+    status: "Approved",
+    data: { hubannoo_uummuu: 62, buusi_jirataa: 95 },
+  },
+  {
+    id: 6,
+    woredaId: "w2",
+    sector: "daldala",
+    reportType: "Weekly",
+    date: "2026-07-25",
+    status: "Rejected",
+    data: { galmee_haraa: 5 },
+  },
+  {
+    id: 7,
+    woredaId: "w3",
+    sector: "atk",
+    reportType: "Weekly",
+    date: "2026-07-20",
+    status: "Approved",
+    data: { waliigaltee_pilaanii_kennuu: 12 },
+  },
+  {
+    id: 8,
+    woredaId: "w4",
+    sector: "buusaa",
+    reportType: "Quarterly",
+    date: "2026-07-01",
+    status: "Approved",
+    data: { hubannoo_uummuu: 180, buusi_jirataa: 280 },
+  },
+  {
+    id: 9,
+    woredaId: "w1",
+    sector: "qonna",
+    reportType: "Monthly",
+    date: "2026-06-30",
+    status: "Pending",
+    data: { furdisa: 98, annan: 40 },
+  },
+  {
+    id: 10,
+    woredaId: "w2",
+    sector: "buusaa",
+    reportType: "Annual",
+    date: "2026-04-01",
+    status: "Approved",
+    data: { hubannoo_uummuu: 720, buusi_jirataa: 1100 },
+  },
+  {
+    id: 11,
+    woredaId: "w3",
+    sector: "revenue",
+    reportType: "Weekly",
+    date: "2026-08-08",
+    status: "Approved",
+    data: { galiiIdilee: 8200 },
+  },
+  {
+    id: 12,
+    woredaId: "w4",
+    sector: "daldala",
+    reportType: "Monthly",
+    date: "2026-07-31",
+    status: "Pending",
+    data: { galmee_haraa: 18 },
+  },
+  {
+    id: 13,
+    woredaId: "w1",
+    sector: "atk",
+    reportType: "Monthly",
+    date: "2026-07-30",
+    status: "Approved",
+    data: { heeyyama_ijaarsaa_kennamee: 9 },
+  },
+  {
+    id: 14,
+    woredaId: "w2",
+    sector: "carraaHojii",
+    reportType: "Quarterly",
+    date: "2026-07-01",
+    status: "Approved",
+    data: { leenjii: 140, kenna_liqii: 60 },
+  },
 ];
 
 // ─── Report Detail Modal (subcity) ────────────────────────────────────────────
 function SCReportDetailModal({ row, onClose }) {
   if (!row) return null;
-  const sec    = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
+  const sec = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
   const woreda = WOREDAS.find((w) => w.id === row.woredaId);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{ background: `linear-gradient(90deg,${sec?.color ?? "#1a3a5c"} 0%,${sec?.color ?? "#1a3a5c"}cc 100%)` }}
+          style={{
+            background: `linear-gradient(90deg,${sec?.color ?? "#1a3a5c"} 0%,${sec?.color ?? "#1a3a5c"}cc 100%)`,
+          }}
         >
           <div>
-            <p className="text-white font-bold text-base">{sec?.label} Report</p>
-            <p className="text-white/60 text-xs mt-0.5">{woreda?.name} · {row.reportType} · {row.date}</p>
+            <p className="text-white font-bold text-base">
+              {sec?.label} Report
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              {woreda?.name} · {row.reportType} · {row.date}
+            </p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
         <div className="px-6 pt-4 flex items-center gap-3">
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-            row.status === "Approved" ? "bg-green-100 text-green-700" :
-            row.status === "Rejected" ? "bg-red-100 text-red-700"    : "bg-amber-100 text-amber-700"
-          }`}>{row.status}</span>
-          <span className="text-xs text-[#94a3b8]">Submitted on {row.date}</span>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+              row.status === "Approved"
+                ? "bg-green-100 text-green-700"
+                : row.status === "Rejected"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {row.status}
+          </span>
+          <span className="text-xs text-[#94a3b8]">
+            Submitted on {row.date}
+          </span>
         </div>
         <div className="px-6 py-4">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">Report Data</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
+            Report Data
+          </p>
           <div className="space-y-2">
             {Object.entries(row.data).map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5">
-                <span className="text-sm text-[#475569] capitalize">{k.replace(/_/g, " ")}</span>
-                <span className="text-sm font-bold text-[#1e293b]">{Number(v).toLocaleString()}</span>
+              <div
+                key={k}
+                className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5"
+              >
+                <span className="text-sm text-[#475569] capitalize">
+                  {k.replace(/_/g, " ")}
+                </span>
+                <span className="text-sm font-bold text-[#1e293b]">
+                  {Number(v).toLocaleString()}
+                </span>
               </div>
             ))}
           </div>
         </div>
         <div className="px-6 pb-5 flex justify-end">
-          <button onClick={onClose} className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+          <button
+            onClick={onClose}
+            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >
             Close
           </button>
         </div>
@@ -1791,24 +2297,24 @@ function ReportsPage() {
   const [filterPeriod, setFilterPeriod] = useState("all");
 
   // Custom date range
-  const [isCustom,      setIsCustom]      = useState(false);
-  const [startMonth,    setStartMonth]    = useState("Adoolessa");
-  const [startDay,      setStartDay]      = useState(1);
-  const [endMonth,      setEndMonth]      = useState("Adoolessa");
-  const [endDay,        setEndDay]        = useState(30);
-  const [customFiscal,  setCustomFiscal]  = useState(currentYear - 1);
+  const [isCustom, setIsCustom] = useState(false);
+  const [startMonth, setStartMonth] = useState("Adoolessa");
+  const [startDay, setStartDay] = useState(1);
+  const [endMonth, setEndMonth] = useState("Adoolessa");
+  const [endDay, setEndDay] = useState(30);
+  const [customFiscal, setCustomFiscal] = useState(currentYear - 1);
   const [customDateErr, setCustomDateErr] = useState("");
-  const [appliedRange,  setAppliedRange]  = useState(null);
+  const [appliedRange, setAppliedRange] = useState(null);
 
   // Modal
   const [modalRow, setModalRow] = useState(null);
 
   // Derived filtered list
   const filteredRows = SC_STUB_ROWS.filter((r) => {
-    const woredaMatch  = filterWoreda === "all" || r.woredaId === filterWoreda;
-    const sectorMatch  = filterSector === "all" || r.sector === filterSector;
-    const periodMatch  = filterPeriod === "all" || r.reportType === filterPeriod;
-    let   dateMatch    = true;
+    const woredaMatch = filterWoreda === "all" || r.woredaId === filterWoreda;
+    const sectorMatch = filterSector === "all" || r.sector === filterSector;
+    const periodMatch = filterPeriod === "all" || r.reportType === filterPeriod;
+    let dateMatch = true;
     if (isCustom && appliedRange) {
       dateMatch = r.date >= appliedRange.from && r.date <= appliedRange.to;
     }
@@ -1817,9 +2323,15 @@ function ReportsPage() {
 
   const handleApplyCustom = () => {
     const from = oromoToGregorianSC(startMonth, startDay, customFiscal);
-    const to   = oromoToGregorianSC(endMonth,   endDay,   customFiscal);
-    if (!from || !to) { setCustomDateErr("Invalid date selection."); return; }
-    if (from > to)    { setCustomDateErr("Start date must be before end date."); return; }
+    const to = oromoToGregorianSC(endMonth, endDay, customFiscal);
+    if (!from || !to) {
+      setCustomDateErr("Invalid date selection.");
+      return;
+    }
+    if (from > to) {
+      setCustomDateErr("Start date must be before end date.");
+      return;
+    }
     setCustomDateErr("");
     setAppliedRange({ from, to });
   };
@@ -1837,16 +2349,31 @@ function ReportsPage() {
   };
 
   const statusColor = (s) =>
-    s === "Approved" ? "bg-green-100 text-green-700" :
-    s === "Rejected" ? "bg-red-100 text-red-700"     : "bg-amber-100 text-amber-700";
+    s === "Approved"
+      ? "bg-green-100 text-green-700"
+      : s === "Rejected"
+        ? "bg-red-100 text-red-700"
+        : "bg-amber-100 text-amber-700";
 
-  const activeWoredaName  = filterWoreda === "all" ? "All Woredas"  : WOREDAS.find(w => w.id === filterWoreda)?.name;
-  const activeSectorLabel = filterSector === "all" ? "All Sectors"  : REPORT_SECTORS_ALL.find(s => s.id === filterSector)?.label;
-  const activeSectorColor = filterSector === "all" ? "#1a3a5c"      : REPORT_SECTORS_ALL.find(s => s.id === filterSector)?.color ?? "#1a3a5c";
+  const activeWoredaName =
+    filterWoreda === "all"
+      ? "All Woredas"
+      : WOREDAS.find((w) => w.id === filterWoreda)?.name;
+  const activeSectorLabel =
+    filterSector === "all"
+      ? "All Sectors"
+      : REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.label;
+  const activeSectorColor =
+    filterSector === "all"
+      ? "#1a3a5c"
+      : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ??
+        "#1a3a5c");
 
   return (
     <div>
-      {modalRow && <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />}
+      {modalRow && (
+        <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
+      )}
 
       {/* Header */}
       <div className="mb-6">
@@ -1861,40 +2388,58 @@ function ReportsPage() {
         <div className="flex flex-wrap gap-4 items-end">
           {/* Woreda */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Woreda</label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Woreda
+            </label>
             <select
               value={filterWoreda}
               onChange={(e) => setFilterWoreda(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Woredas</option>
-              {WOREDAS.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              {WOREDAS.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Sector */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Sectors</option>
-              {REPORT_SECTORS_ALL.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              {REPORT_SECTORS_ALL.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Period */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Period
+            </label>
             <select
               value={isCustom ? "custom" : filterPeriod}
               onChange={(e) => handlePeriodChange(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Periods</option>
-              {STUB_PERIOD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              {STUB_PERIOD_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
               <option value="custom">Custom Date Range</option>
             </select>
           </div>
@@ -1915,43 +2460,80 @@ function ReportsPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Fiscal Year
+                </label>
                 <input
                   type="number"
                   value={customFiscal}
                   onChange={(e) => setCustomFiscal(Number(e.target.value))}
-                  min="2000" max="2100"
+                  min="2000"
+                  max="2100"
                   className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Start Date
+                </label>
                 <div className="flex gap-2">
-                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_MONTHS_SC.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <select
+                    value={startMonth}
+                    onChange={(e) => setStartMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_MONTHS_SC.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
                   </select>
-                  <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_DAYS_SC.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <select
+                    value={startDay}
+                    onChange={(e) => setStartDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_DAYS_SC.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  End Date
+                </label>
                 <div className="flex gap-2">
-                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_MONTHS_SC.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <select
+                    value={endMonth}
+                    onChange={(e) => setEndMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_MONTHS_SC.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
                   </select>
-                  <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_DAYS_SC.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <select
+                    value={endDay}
+                    onChange={(e) => setEndDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_DAYS_SC.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             </div>
-            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
+            {customDateErr && (
+              <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
+            )}
             {appliedRange && (
               <p className="text-[#16a34a] text-xs mb-2 font-medium">
                 Showing reports from {appliedRange.from} to {appliedRange.to}
@@ -1972,7 +2554,9 @@ function ReportsPage() {
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
-          style={{ background: `linear-gradient(90deg,${activeSectorColor} 0%,${activeSectorColor}cc 100%)` }}
+          style={{
+            background: `linear-gradient(90deg,${activeSectorColor} 0%,${activeSectorColor}cc 100%)`,
+          }}
         >
           <div>
             <p className="text-sm font-semibold text-white">
@@ -1981,7 +2565,8 @@ function ReportsPage() {
                 : `${activeWoredaName} · ${activeSectorLabel}`}
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {filteredRows.length} report{filteredRows.length !== 1 ? "s" : ""} found
+              {filteredRows.length} report{filteredRows.length !== 1 ? "s" : ""}{" "}
+              found
             </p>
           </div>
         </div>
@@ -1989,8 +2574,18 @@ function ReportsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                {["Date", "Woreda", "Sector", "Report Type", "Status", "Action"].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                {[
+                  "Date",
+                  "Woreda",
+                  "Sector",
+                  "Report Type",
+                  "Status",
+                  "Action",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                  >
                     {h}
                   </th>
                 ))}
@@ -2004,44 +2599,80 @@ function ReportsPage() {
                       <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
                         <ListIcon />
                       </div>
-                      <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
+                      <p className="text-[#94a3b8] text-sm">
+                        No reports match the selected filters.
+                      </p>
                     </div>
                   </td>
                 </tr>
-              ) : filteredRows.map((row) => {
-                const sec    = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
-                const woreda = WOREDAS.find((w) => w.id === row.woredaId);
-                return (
-                  <tr key={row.id} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
-                    <td className="px-5 py-3 text-[#475569] text-sm">{row.date}</td>
-                    <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">{woreda?.name ?? row.woredaId}</td>
-                    <td className="px-5 py-3">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }} />
-                        <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row.sector}</span>
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-sm text-[#475569]">{row.reportType}</td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <button
-                        onClick={() => setModalRow(row)}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              ) : (
+                filteredRows.map((row) => {
+                  const sec = REPORT_SECTORS_ALL.find(
+                    (s) => s.id === row.sector,
+                  );
+                  const woreda = WOREDAS.find((w) => w.id === row.woredaId);
+                  return (
+                    <tr
+                      key={row.id}
+                      className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                    >
+                      <td className="px-5 py-3 text-[#475569] text-sm">
+                        {row.date}
+                      </td>
+                      <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
+                        {woreda?.name ?? row.woredaId}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: sec?.color ?? "#64748b" }}
+                          />
+                          <span className="text-sm font-medium text-[#1e293b]">
+                            {sec?.label ?? row.sector}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-sm text-[#475569]">
+                        {row.reportType}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}
+                        >
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={() => setModalRow(row)}
+                          className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -2079,12 +2710,16 @@ export default function SubCityDashboard({ user: propUser }) {
   // ── data ──
   const [dbPlan, setDbPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [dbQonnaPlan, setDbQonnaPlan] = useState(null);
 
   useEffect(() => {
     fetchSubcityOwnPlan()
       .then((d) => setDbPlan(d.plan))
       .catch(() => setDbPlan(null))
       .finally(() => setPlanLoading(false));
+    fetchSubcityQonnaPlan()
+      .then((d) => setDbQonnaPlan(d.plan))
+      .catch(() => setDbQonnaPlan(null));
   }, []);
 
   const handleSavePlan = async (data, wForm) => {
@@ -2115,7 +2750,7 @@ export default function SubCityDashboard({ user: propUser }) {
             <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
           </div>
         );
-      return <OverviewPage dbPlan={dbPlan} u={u} />;
+      return <OverviewPage dbPlan={dbPlan} dbQonnaPlan={dbQonnaPlan} u={u} />;
     }
     if (activeNav === "reports") return <ReportsPage />;
     if (activeNav === "plan") {
@@ -2140,8 +2775,12 @@ export default function SubCityDashboard({ user: propUser }) {
                 >
                   <p className="font-semibold text-[#1e293b]">{s.label}</p>
                   <p className="text-xs text-[#94a3b8] mt-1">
-                    {s.id === "buusaa" || s.id === "qonna" || s.id === "galii" ||
-                     s.id === "carraa" || s.id === "daldala" || s.id === "atk"
+                    {s.id === "buusaa" ||
+                    s.id === "qonna" ||
+                    s.id === "galii" ||
+                    s.id === "carraa" ||
+                    s.id === "daldala" ||
+                    s.id === "atk"
                       ? "Active"
                       : "Coming soon"}
                   </p>
@@ -2153,8 +2792,12 @@ export default function SubCityDashboard({ user: propUser }) {
       if (activePlanSector === "buusaa")
         return <BuusaaPlanPage onSave={handleSavePlan} />;
       if (activePlanSector === "qonna") return <QonnaPlanPage />;
-      if (activePlanSector === "galii" || activePlanSector === "carraa" ||
-          activePlanSector === "daldala" || activePlanSector === "atk")
+      if (
+        activePlanSector === "galii" ||
+        activePlanSector === "carraa" ||
+        activePlanSector === "daldala" ||
+        activePlanSector === "atk"
+      )
         return <GenericSubcityPlanPage sector={activePlanSector} />;
       return (
         <ComingSoonPage
