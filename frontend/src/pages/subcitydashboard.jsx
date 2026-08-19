@@ -108,7 +108,7 @@ const PLAN_FIELDS = [
     color: "#64748b",
   },
   {
-    key: "inisheetiviiBuusaaGonofaa",
+    key: "inisheetivii_buusaa_gonofaa",
     label: "inisheetivii Buusaa Gonofaa",
     color: "#64748b",
   },
