@@ -44,21 +44,21 @@ router.post("/subcity-generic-plan", authMiddleware, saveSubcityGenericPlan);
 router.get("/subcity-generic-plan", authMiddleware, fetchSubcityGenericPlan);
 router.get("/wereda-generic-plan", authMiddleware, getWeredaGenericPlan);
 
-// Backward-compatible specific wereda plan routes
+// Dedicated wereda plan routes for each sector (avoids req.query mutation issue in Express 5)
 router.get("/wereda-daldala-plan", authMiddleware, (req, res) => {
-  req.query = { ...req.query, sector: "daldala" };
+  req._sector = "daldala";
   getWeredaGenericPlan(req, res);
 });
 router.get("/wereda-atk-plan", authMiddleware, (req, res) => {
-  req.query = { ...req.query, sector: "atk" };
+  req._sector = "atk";
   getWeredaGenericPlan(req, res);
 });
 router.get("/wereda-revenue-plan", authMiddleware, (req, res) => {
-  req.query = { ...req.query, sector: "galii" };
+  req._sector = "galii";
   getWeredaGenericPlan(req, res);
 });
 router.get("/wereda-carraa-plan", authMiddleware, (req, res) => {
-  req.query = { ...req.query, sector: "carraa" };
+  req._sector = "carraa";
   getWeredaGenericPlan(req, res);
 });
 

@@ -590,7 +590,7 @@ const saveSubcityGenericPlan = async (req, res) => {
  */
 const fetchSubcityGenericPlan = async (req, res) => {
   try {
-    const { sector } = req.query;
+    const sector = req._sector || req.query.sector;
     if (!sector || !GENERIC_SECTOR_SUBCITY_TABLE[sector]) {
       return res.status(400).json({ message: `Unknown sector: ${sector}` });
     }
@@ -613,7 +613,8 @@ const fetchSubcityGenericPlan = async (req, res) => {
  */
 const getWeredaGenericPlan = async (req, res) => {
   try {
-    const { sector } = req.query;
+    // Support both req._sector (set by dedicated routes) and req.query.sector
+    const sector = req._sector || req.query.sector;
     if (!sector || !GENERIC_SECTOR_WEREDA_TABLE[sector]) {
       return res.status(400).json({ message: `Unknown sector: ${sector}` });
     }
@@ -621,7 +622,6 @@ const getWeredaGenericPlan = async (req, res) => {
     const wId = USERNAME_TO_WEREDA_ID[username];
     if (!wId) return res.status(403).json({ message: "Not a recognised wereda account." });
 
-    // Fetch the most recent year's plan (no year filter — avoids year mismatch)
     const { data, error } = await supabase
       .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
       .select("*")
