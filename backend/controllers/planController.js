@@ -210,7 +210,7 @@ const saveSubcityPlan = async (req, res) => {
         buusi_daldalaa_target: share(wId, plan.buusi_daldalaa),
         inisheetivii_buusaa_gonofaa_target: share(
           wId,
-          plan.inisheetiviiBuusaaGonofaa,
+          plan.inisheetivii_buusaa_gonofaa ?? plan.inisheetiviiBuusaaGonofaa,
         ),
         gumaata_mootummaa_target: share(wId, plan.gumaata_mootummaa),
         nyaata_barataa_target: share(wId, plan.nyaata_barataa),
@@ -252,12 +252,12 @@ const getWeredaPlan = async (req, res) => {
     }
 
     const tableName = WEREDA_TABLE_MAP[wId];
-    const year = new Date().getFullYear();
 
     const { data, error } = await supabase
       .from(tableName)
       .select("*")
-      .eq("year", year)
+      .order("year", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) return res.status(400).json({ message: error.message });
@@ -296,7 +296,7 @@ const saveSubcityOwnPlan = async (req, res) => {
           gumaata_jirataa: Number(plan.gumaata_jirataa || 0),
           buusi_daldalaa: Number(plan.buusi_daldalaa || 0),
           inisheetivii_buusaa_gonofaa: Number(
-            plan.inisheetiviiBuusaaGonofaa || 0,
+            plan.inisheetivii_buusaa_gonofaa ?? plan.inisheetiviiBuusaaGonofaa ?? 0,
           ),
           gumaata_mootummaa: Number(plan.gumaata_mootummaa || 0),
           nyaata_barataa: Number(plan.nyaata_barataa || 0),
@@ -469,13 +469,165 @@ const getWeredaQonnaPlan = async (req, res) => {
         .status(403)
         .json({ message: "Not a recognised wereda account." });
 
-    const year = new Date().getFullYear();
     const { data, error } = await supabase
       .from(WEREDA_QONNA_TABLE_MAP[wId])
       .select("*")
-      .eq("year", year)
+      .order("year", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── Generic sector plan tables ──────────────────────────────────────────────
+// Covers: carraa (Carraa Hojii), daldala (Daldala), atk (ATK), galii (Revenue)
+
+const GENERIC_SECTOR_SUBCITY_TABLE = {
+  carraa:  "subcity_carraa_plan",
+  daldala: "subcity_daldala_plan",
+  atk:     "subcity_atk_plan",
+  galii:   "subcity_galii_plan",
+};
+
+const GENERIC_SECTOR_WEREDA_TABLE = {
+  carraa:  { w1: "annual_carraa_plan_wereda_1",  w2: "annual_carraa_plan_wereda_2",  w3: "annual_carraa_plan_wereda_3",  w4: "annual_carraa_plan_wereda_4"  },
+  daldala: { w1: "annual_daldala_plan_wereda_1", w2: "annual_daldala_plan_wereda_2", w3: "annual_daldala_plan_wereda_3", w4: "annual_daldala_plan_wereda_4" },
+  atk:     { w1: "annual_atk_plan_wereda_1",     w2: "annual_atk_plan_wereda_2",     w3: "annual_atk_plan_wereda_3",     w4: "annual_atk_plan_wereda_4"     },
+  galii:   { w1: "annual_galii_plan_wereda_1",   w2: "annual_galii_plan_wereda_2",   w3: "annual_galii_plan_wereda_3",   w4: "annual_galii_plan_wereda_4"   },
+};
+
+// Explicit field lists per sector — only these keys are written to the DB.
+// This prevents cross-sector field pollution when form sends extra keys.
+const GENERIC_SECTOR_FIELDS = {
+  carraa: [
+    "leenjii", "carraa_hojii_dhaabbii", "carraa_hojii_qacarrii",
+    "qusannaa_haawaasaa", "qusanna_dirqii", "kenna_liqii",
+    "deebii_liqii_bilchaate", "deebii_liqii_bulee", "industrii_godoo",
+  ],
+  daldala: [
+    "galmee_haraa", "heyyema_haraa", "harahessaa", "galii_daldalarra_galuu",
+    "toannoo_walii_gala", "tmd", "intarshippii", "ggg",
+    "gabayaa_sanbata", "whg_kudraa", "whg_mudraa",
+  ],
+  atk: [
+    "waliigaltee_pilaanii_kennuu", "heeyyama_ijaarsaa_kennamee",
+    "toannoo_fi_hordoffii_gamoo", "galii_atk_galchuu",
+  ],
+  galii: [
+    "galii_idilee", "galii_mana_qophessaa", "waliigala_galii",
+  ],
+};
+
+/**
+ * POST /api/plans/subcity-generic-plan
+ * Save any sector's subcity plan + distribute to 4 wereda tables.
+ * Body: { sector, totals: { field: value, ... }, weights: { w1, w2, w3, w4 } }
+ */
+const saveSubcityGenericPlan = async (req, res) => {
+  try {
+    const { sector, totals, weights } = req.body;
+    if (!sector || !GENERIC_SECTOR_SUBCITY_TABLE[sector]) {
+      return res.status(400).json({ message: `Unknown sector: ${sector}` });
+    }
+    if (!totals || !weights) {
+      return res.status(400).json({ message: "totals and weights are required." });
+    }
+
+    const year = new Date().getFullYear();
+    const allowedFields = GENERIC_SECTOR_FIELDS[sector];
+
+    // 1. Save to subcity table — only allowed fields for this sector
+    const subcityRow = { year };
+    allowedFields.forEach((f) => { subcityRow[f] = Number(totals[f] || 0); });
+    subcityRow.weight_w1 = Number(weights.w1 || 0);
+    subcityRow.weight_w2 = Number(weights.w2 || 0);
+    subcityRow.weight_w3 = Number(weights.w3 || 0);
+    subcityRow.weight_w4 = Number(weights.w4 || 0);
+
+    const { error: subcityErr } = await supabase
+      .from(GENERIC_SECTOR_SUBCITY_TABLE[sector])
+      .upsert([subcityRow], { onConflict: "year" });
+
+    if (subcityErr) return res.status(400).json({ message: subcityErr.message });
+
+    // 2. Distribute to 4 wereda tables — only allowed fields, suffixed _target
+    const totalWeight = ["w1", "w2", "w3", "w4"].reduce(
+      (s, id) => s + Number(weights[id] || 0), 0
+    );
+    const share = (wId, val) => {
+      const w = Number(weights[wId] || 0);
+      if (totalWeight === 0 || w === 0) return Math.round(Number(val || 0) / 4);
+      return Math.round((w / totalWeight) * Number(val || 0));
+    };
+
+    const errors = [];
+    for (const wId of ["w1", "w2", "w3", "w4"]) {
+      const wRow = { year };
+      allowedFields.forEach((field) => {
+        wRow[`${field}_target`] = share(wId, totals[field] || 0);
+      });
+      const { error } = await supabase
+        .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
+        .upsert([wRow], { onConflict: "year" });
+      if (error) errors.push(`${GENERIC_SECTOR_WEREDA_TABLE[sector][wId]}: ${error.message}`);
+    }
+
+    if (errors.length) return res.status(400).json({ message: errors.join(" | ") });
+
+    res.status(200).json({ message: `${sector} plan saved.` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/subcity-generic-plan?sector=carraa|daldala|atk|galii
+ * Returns the current year's subcity plan for the given sector.
+ */
+const fetchSubcityGenericPlan = async (req, res) => {
+  try {
+    const { sector } = req.query;
+    if (!sector || !GENERIC_SECTOR_SUBCITY_TABLE[sector]) {
+      return res.status(400).json({ message: `Unknown sector: ${sector}` });
+    }
+    const { data, error } = await supabase
+      .from(GENERIC_SECTOR_SUBCITY_TABLE[sector])
+      .select("*")
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/wereda-generic-plan?sector=carraa|daldala|atk|galii
+ * Returns the current year's plan for the logged-in wereda (read-only).
+ */
+const getWeredaGenericPlan = async (req, res) => {
+  try {
+    const { sector } = req.query;
+    if (!sector || !GENERIC_SECTOR_WEREDA_TABLE[sector]) {
+      return res.status(400).json({ message: `Unknown sector: ${sector}` });
+    }
+    const username = req.user.username;
+    const wId = USERNAME_TO_WEREDA_ID[username];
+    if (!wId) return res.status(403).json({ message: "Not a recognised wereda account." });
+
+    // Fetch the most recent year's plan (no year filter — avoids year mismatch)
+    const { data, error } = await supabase
+      .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
+      .select("*")
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     if (error) return res.status(400).json({ message: error.message });
     res.json({ plan: data || null });
   } catch (err) {
@@ -494,4 +646,7 @@ module.exports = {
   saveSubcityQonnaPlan,
   fetchSubcityQonnaPlan,
   getWeredaQonnaPlan,
+  saveSubcityGenericPlan,
+  fetchSubcityGenericPlan,
+  getWeredaGenericPlan,
 };

@@ -418,6 +418,30 @@ const submitRevenueReport = async (req, res) => {
   }
 };
 
+// ─── Get ALL reports (for subcity/admin monitoring) ──────────────────────────
+const getAllReports = async (req, res) => {
+  try {
+    const { username, report_type, date_from, date_to } = req.query;
+
+    let query = supabase
+      .from("buusaa_reports")
+      .select("*")
+      .order("report_date", { ascending: false });
+
+    if (username) query = query.eq("username", username);
+    if (report_type) query = query.eq("report_type", report_type);
+    if (date_from) query = query.gte("report_date", date_from);
+    if (date_to) query = query.lte("report_date", date_to);
+
+    const { data, error } = await query;
+    if (error) return res.status(400).json({ message: error.message });
+
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createReport,
   submitBuusaaReport,
@@ -429,4 +453,5 @@ module.exports = {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  getAllReports,
 };

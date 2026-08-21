@@ -11,12 +11,16 @@ const {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  getAllReports,
 } = require("../controllers/reportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
 
 // General reports
 router.post("/", authMiddleware, createReport);
+
+// All reports — for subcity/admin monitoring
+router.get("/all-reports", authMiddleware, getAllReports);
 
 // Carraa Hojii Uummuu routes
 router.post("/carraa-hojii", authMiddleware, submitCarraaHojiiReport);

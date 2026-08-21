@@ -12,6 +12,9 @@ const {
   saveSubcityQonnaPlan,
   fetchSubcityQonnaPlan,
   getWeredaQonnaPlan,
+  saveSubcityGenericPlan,
+  fetchSubcityGenericPlan,
+  getWeredaGenericPlan,
 } = require("../controllers/planController");
 
 // All plan routes require authentication
@@ -35,5 +38,28 @@ router.get("/subcity-qonna-plan", authMiddleware, fetchSubcityQonnaPlan);
 
 // Wereda reads its own Qonna plan (read-only)
 router.get("/wereda-qonna-plan", authMiddleware, getWeredaQonnaPlan);
+
+// Generic sector plans (carraa, daldala, atk, galii)
+router.post("/subcity-generic-plan", authMiddleware, saveSubcityGenericPlan);
+router.get("/subcity-generic-plan", authMiddleware, fetchSubcityGenericPlan);
+router.get("/wereda-generic-plan", authMiddleware, getWeredaGenericPlan);
+
+// Backward-compatible specific wereda plan routes
+router.get("/wereda-daldala-plan", authMiddleware, (req, res) => {
+  req.query = { ...req.query, sector: "daldala" };
+  getWeredaGenericPlan(req, res);
+});
+router.get("/wereda-atk-plan", authMiddleware, (req, res) => {
+  req.query = { ...req.query, sector: "atk" };
+  getWeredaGenericPlan(req, res);
+});
+router.get("/wereda-revenue-plan", authMiddleware, (req, res) => {
+  req.query = { ...req.query, sector: "galii" };
+  getWeredaGenericPlan(req, res);
+});
+router.get("/wereda-carraa-plan", authMiddleware, (req, res) => {
+  req.query = { ...req.query, sector: "carraa" };
+  getWeredaGenericPlan(req, res);
+});
 
 module.exports = router;

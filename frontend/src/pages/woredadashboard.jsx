@@ -929,7 +929,9 @@ function AnalysisSection() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchMyPlan()
+    // Use fetchWeredaPlan (reads annual_plan_wereda_N with _target columns)
+    // instead of fetchMyPlan (reads annual_plans which lacks _target columns)
+    fetchWeredaPlan()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null));
   }, []);
@@ -2272,7 +2274,7 @@ const CARRAA_PLAN_FIELDS = [
     text: "text-[#7c3aed]",
   },
   {
-    planKey: "qusannaa_target",
+    planKey: "qusannaa_haawaasaa_target",
     label: "Qusannaa Haawaasaa",
     color: "#475569",
     bg: "bg-[#f8fafc]",
@@ -2288,7 +2290,7 @@ const CARRAA_PLAN_FIELDS = [
     text: "text-[#475569]",
   },
   {
-    planKey: "liqii_target",
+    planKey: "kenna_liqii_target",
     label: "Kenna Liqii",
     color: "#b45309",
     bg: "bg-[#fffbeb]",
@@ -2974,7 +2976,7 @@ const CARRAA_WOREDA_CATS = [
   {
     key: "qusannaa_haawaasaa",
     label: "Qusannaa Haawaasaa",
-    planKey: "qusannaa_target",
+    planKey: "qusannaa_haawaasaa_target",
     color: "#475569",
   },
   {
@@ -2986,7 +2988,7 @@ const CARRAA_WOREDA_CATS = [
   {
     key: "kenna_liqii",
     label: "Kenna Liqii",
-    planKey: "liqii_target",
+    planKey: "kenna_liqii_target",
     color: "#b45309",
   },
   {

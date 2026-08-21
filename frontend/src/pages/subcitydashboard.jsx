@@ -124,7 +124,7 @@ const EMPTY_PLAN = {
   buusi_jiraataa: "",
   gumaata_jirataa: "",
   buusi_daldalaa: "",
-  inisheetiviiBuusaaGonofaa: "",
+  inisheetivii_buusaa_gonofaa: "",
   gumaata_mootummaa: "",
   nyaata_barataa: "",
   sukkaara: "",
