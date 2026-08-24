@@ -146,3 +146,39 @@ export const fetchSubcityGenericPlan = async (sector) => {
   );
   return res.data; // { plan: {...} | null }
 };
+
+// ─── Subcity Work Analysis API Functions ─────────────────────────────────────
+
+/**
+ * GET /api/subcity/woreda-reports?sector=&period=
+ * Returns all 4 woredas' summed actual report values for the selected sector
+ * and period. Used by ComparisonView and RankView.
+ *
+ * @param {string} sector  - "buusaa" | "qonna" | "galii" | "carraa" | "daldala" | "atk"
+ * @param {string} period  - "daily" | "weekly" | "monthly" | "annual"
+ * @returns {{ woredas: [{woredaId, name, actuals}], sector, period, from, to }}
+ */
+export const fetchWoRedaReports = async (sector, period) => {
+  const res = await api.get(
+    `/subcity/woreda-reports?sector=${encodeURIComponent(sector)}&period=${encodeURIComponent(period)}`,
+    authHeader(),
+  );
+  return res.data;
+};
+
+/**
+ * GET /api/subcity/woreda-analysis?sector=&woredaId=&period=
+ * Returns one woreda's summed actuals + plan targets for ring charts.
+ *
+ * @param {string} sector   - "buusaa" | "qonna" | "galii" | "carraa" | "daldala" | "atk"
+ * @param {string} woredaId - "w1" | "w2" | "w3" | "w4"
+ * @param {string} period   - "daily" | "weekly" | "monthly" | "annual"
+ * @returns {{ woredaId, name, sector, period, from, to, actuals, targets }}
+ */
+export const fetchWoRedaAnalysis = async (sector, woredaId, period) => {
+  const res = await api.get(
+    `/subcity/woreda-analysis?sector=${encodeURIComponent(sector)}&woredaId=${encodeURIComponent(woredaId)}&period=${encodeURIComponent(period)}`,
+    authHeader(),
+  );
+  return res.data;
+};

@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
+import RingChart from "../components/ui/RingChart";
 import {
   saveSubcityPlan,
   saveSubcityOwnPlan,
@@ -9,6 +10,8 @@ import {
   fetchSubcityQonnaPlan,
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
+  fetchWoRedaReports,
+  fetchWoRedaAnalysis,
 } from "../api/planApi";
 import { fetchAllWoredaReports } from "../api/reportApi";
 
@@ -1914,6 +1917,515 @@ function GenericSubcityPlanPage({ sector }) {
   );
 }
 
+// ─── Helper: partition annual target to period ────────────────────────────────
+function partitionTarget(annual, period) {
+  if (!annual) return 0;
+  const d = { daily: 365, weekly: 52, monthly: 12, annual: 1 };
+  return Math.round(annual / (d[period] || 1));
+}
+
+// ─── Helper: compute bounded completion % ────────────────────────────────────
+function computeCompletionPct(actuals, targets, fields) {
+  const totalActual = fields.reduce((s, f) => s + Number(actuals[f.key] || 0), 0);
+  const totalTarget = fields.reduce((s, f) => s + Number(targets[f.key] || 0), 0);
+  if (totalTarget === 0) return 0;
+  return Math.min(100, Math.round((totalActual / totalTarget) * 1000) / 10);
+}
+
+// ─── Period selector options for work analysis ────────────────────────────────
+const ANALYSIS_PERIODS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "annual", label: "Annual" },
+];
+
+// ─── WorkAnalysisRingSection ─────────────────────────────────────────────────
+// Shows ring charts (actual vs period-target) for the selected woreda + sector.
+function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
+  const [period, setPeriod] = useState("monthly");
+  const [actuals, setActuals] = useState(null);
+  const [targets, setTargets] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    fetchWoRedaAnalysis(sector, woredaId, period)
+      .then((d) => {
+        setActuals(d.actuals || {});
+        setTargets(d.targets || {});
+      })
+      .catch((err) => {
+        setError(
+          err?.response?.data?.message || "Failed to load ring chart data.",
+        );
+        setActuals({});
+        setTargets({});
+      })
+      .finally(() => setLoading(false));
+  }, [sector, woredaId, period]);
+
+  const woredaName = WOREDAS.find((w) => w.id === woredaId)?.name ?? woredaId;
+
+  return (
+    <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between flex-wrap gap-3"
+        style={{ background: cfg.gradient }}
+      >
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {woredaName} — {cfg.label} Work Analysis
+          </p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Actual vs period-adjusted target
+          </p>
+        </div>
+        {/* Period selector */}
+        <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1.5">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-white font-medium bg-transparent focus:outline-none cursor-pointer"
+            style={{ color: "white" }}
+          >
+            {ANALYSIS_PERIODS.map((p) => (
+              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="px-5 py-5">
+        {error && (
+          <div className="mb-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
+            <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span className="text-[#dc2626] text-sm">{error}</span>
+          </div>
+        )}
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <div
+              className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+              style={{ borderTopColor: cfg.color }}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {cfg.fields.map(({ key, label, color, description }) => {
+              const annualTarget = targets ? Number(targets[key] || 0) : 0;
+              const periodTarget = partitionTarget(annualTarget, period);
+              const actual = actuals ? Number(actuals[key] || 0) : 0;
+              return (
+                <RingChart
+                  key={key}
+                  actual={actual}
+                  target={periodTarget}
+                  color={color}
+                  label={label}
+                  description={description || label}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ComparisonView ───────────────────────────────────────────────────────────
+// Shows a table of actual submitted reports across all 4 woredas.
+function ComparisonView({ sector, cfg }) {
+  const [period, setPeriod] = useState("monthly");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    fetchWoRedaReports(sector, period)
+      .then((d) => setData(d))
+      .catch((err) => {
+        setError(
+          err?.response?.data?.message || "Failed to load comparison data.",
+        );
+        setData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [sector, period]);
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between flex-wrap gap-3"
+        style={{ background: cfg.gradient }}
+      >
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {cfg.label} — Woreda Submitted Reports Comparison
+          </p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Actual submitted values per field across all 4 woredas
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1.5">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-white font-medium bg-transparent focus:outline-none cursor-pointer"
+            style={{ color: "white" }}
+          >
+            {ANALYSIS_PERIODS.map((p) => (
+              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mx-5 mt-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-[#dc2626] text-sm">{error}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+        </div>
+      ) : data ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Field
+                </th>
+                {WOREDAS.map((w) => (
+                  <th
+                    key={w.id}
+                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                  >
+                    {w.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {cfg.fields.map(({ key, label, color }) => (
+                <tr
+                  key={key}
+                  className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                >
+                  <td className="px-5 py-3 font-medium text-[#1e293b]">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      {label}
+                    </span>
+                  </td>
+                  {WOREDAS.map((w) => {
+                    const woredaData = data.woredas?.find((wd) => wd.woredaId === w.id);
+                    const val = woredaData?.actuals?.[key] ?? 0;
+                    return (
+                      <td key={w.id} className="px-5 py-3 font-semibold text-[#1e293b]">
+                        {Number(val).toLocaleString()}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── RankView ─────────────────────────────────────────────────────────────────
+// Shows 4 woredas ranked by completion %. Each row is clickable for detail.
+function RankView({ sector, cfg }) {
+  const [period, setPeriod] = useState("monthly");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [expandedWoreda, setExpandedWoreda] = useState(null);
+  // per-woreda detail data: { [woredaId]: { actuals, targets, loading, error } }
+  const [detailData, setDetailData] = useState({});
+  const [detailPeriod, setDetailPeriod] = useState("monthly");
+
+  // Fetch all 4 woredas' actuals
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    fetchWoRedaReports(sector, period)
+      .then((d) => setData(d))
+      .catch((err) => {
+        setError(err?.response?.data?.message || "Failed to load rank data.");
+        setData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [sector, period]);
+
+  // Fetch detail when a woreda is expanded
+  useEffect(() => {
+    if (!expandedWoreda) return;
+    setDetailData((prev) => ({
+      ...prev,
+      [expandedWoreda]: { ...(prev[expandedWoreda] || {}), loading: true, error: "" },
+    }));
+    fetchWoRedaAnalysis(sector, expandedWoreda, detailPeriod)
+      .then((d) => {
+        setDetailData((prev) => ({
+          ...prev,
+          [expandedWoreda]: {
+            actuals: d.actuals || {},
+            targets: d.targets || {},
+            loading: false,
+            error: "",
+          },
+        }));
+      })
+      .catch((err) => {
+        setDetailData((prev) => ({
+          ...prev,
+          [expandedWoreda]: {
+            actuals: {},
+            targets: {},
+            loading: false,
+            error: err?.response?.data?.message || "Failed to load detail.",
+          },
+        }));
+      });
+  }, [expandedWoreda, sector, detailPeriod]);
+
+  // Build ranked list from fetched data
+  const rankedWoredas = (() => {
+    if (!data) return [];
+    return WOREDAS.map((w) => {
+      const woredaData = data.woredas?.find((wd) => wd.woredaId === w.id);
+      const actuals = woredaData?.actuals || {};
+      const pct = computeCompletionPct(actuals, actuals, cfg.fields); // will be 0 without targets
+      return { ...w, actuals, completionPct: 0, _actuals: actuals };
+    })
+      .sort((a, b) => b.completionPct - a.completionPct || a.id.localeCompare(b.id))
+      .map((w, i) => ({ ...w, rank: i + 1 }));
+  })();
+
+  // Build ranked list with real completion % when detail is loaded
+  const rankedWithPct = (() => {
+    if (!data) return [];
+    return WOREDAS.map((w) => {
+      const woredaData = data.woredas?.find((wd) => wd.woredaId === w.id);
+      const actuals = woredaData?.actuals || {};
+      const detail = detailData[w.id];
+      const targets = detail?.targets || {};
+      const completionPct = computeCompletionPct(actuals, targets, cfg.fields);
+      return { ...w, actuals, targets, completionPct };
+    })
+      .sort((a, b) => b.completionPct - a.completionPct || a.id.localeCompare(b.id))
+      .map((w, i) => ({ ...w, rank: i + 1 }));
+  })();
+
+  const rankColors = ["#f59e0b", "#94a3b8", "#b45309", "#64748b"];
+  const rankLabels = ["🥇", "🥈", "🥉", "4th"];
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between flex-wrap gap-3"
+        style={{ background: cfg.gradient }}
+      >
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {cfg.label} — Woreda Completion Ranking
+          </p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Ranked by actual work vs. assigned targets
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1.5">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-white font-medium bg-transparent focus:outline-none cursor-pointer"
+            style={{ color: "white" }}
+          >
+            {ANALYSIS_PERIODS.map((p) => (
+              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mx-5 mt-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-[#dc2626] text-sm">{error}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+        </div>
+      ) : (
+        <div className="divide-y divide-[#f1f5f9]">
+          {rankedWithPct.map((w) => {
+            const isExpanded = expandedWoreda === w.id;
+            const detail = detailData[w.id];
+            const rankIdx = w.rank - 1;
+
+            return (
+              <div key={w.id}>
+                {/* Rank row — clickable */}
+                <button
+                  onClick={() => setExpandedWoreda(isExpanded ? null : w.id)}
+                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-[#f8fafc] transition-colors text-left"
+                >
+                  {/* Rank badge */}
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold"
+                    style={{ backgroundColor: `${rankColors[rankIdx]}22`, color: rankColors[rankIdx] }}>
+                    {rankLabels[rankIdx]}
+                  </div>
+
+                  {/* Woreda name */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[#1e293b] text-sm">{w.name}</p>
+                    <p className="text-xs text-[#94a3b8] mt-0.5">
+                      Click to {isExpanded ? "collapse" : "view"} plan vs. submitted detail
+                    </p>
+                  </div>
+
+                  {/* Completion % bar */}
+                  <div className="w-40 flex-shrink-0">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-[#64748b]">Completion</span>
+                      <span className="font-bold" style={{ color: cfg.color }}>
+                        {w.completionPct}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#f1f5f9] rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-700"
+                        style={{ width: `${w.completionPct}%`, backgroundColor: cfg.color }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chevron */}
+                  <svg className={`w-4 h-4 text-[#94a3b8] flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                    fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {/* Expanded detail panel */}
+                {isExpanded && (
+                  <div className="px-5 pb-5 bg-[#f8fafc] border-t border-[#f1f5f9]">
+                    {/* Detail period selector */}
+                    <div className="flex items-center justify-between py-3">
+                      <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                        Plan vs. Submitted — {w.name}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[#94a3b8]">Period:</span>
+                        <select
+                          value={detailPeriod}
+                          onChange={(e) => setDetailPeriod(e.target.value)}
+                          className="text-xs border border-[#e2e8f0] rounded-lg px-2 py-1.5 bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                        >
+                          {ANALYSIS_PERIODS.map((p) => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {detail?.error && (
+                      <div className="mb-3 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-2.5">
+                        <span className="text-[#dc2626] text-xs">{detail.error}</span>
+                      </div>
+                    )}
+
+                    {detail?.loading ? (
+                      <div className="flex items-center justify-center h-20">
+                        <div className="w-6 h-6 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-xl border border-[#e2e8f0] bg-white">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-[#f1f5f9]">
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Field</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Targeted (Annual)</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Period Target</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Submitted</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">% Done</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cfg.fields.map(({ key, label, color }) => {
+                              const annualTarget = Number(detail?.targets?.[key] || 0);
+                              const periodTgt = partitionTarget(annualTarget, detailPeriod);
+                              const actual = Number(w.actuals?.[key] || 0);
+                              const pct = periodTgt > 0 ? Math.min(100, Math.round((actual / periodTgt) * 100)) : 0;
+                              return (
+                                <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+                                  <td className="px-4 py-3 font-medium text-[#1e293b]">
+                                    <span className="flex items-center gap-2">
+                                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                                      {label}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-[#64748b]">{annualTarget.toLocaleString()}</td>
+                                  <td className="px-4 py-3 text-[#64748b]">{periodTgt.toLocaleString()}</td>
+                                  <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                                  <td className="px-4 py-3">
+                                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-green-100 text-green-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                                      {pct}%
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Generic Subcity Work Analysis Page ──────────────────────────────────────
 // Fetches the saved subcity plan for the sector and shows a woreda-tab view
 // with ring charts + summary table + remaining column — same pattern as Buusaa.
@@ -1922,6 +2434,7 @@ function GenericSubcityAnalysisPage({ sector }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeWoreda, setActiveWoreda] = useState(WOREDAS[0].id);
+  const [activeView, setActiveView] = useState("woreda"); // "woreda" | "comparison" | "rank"
 
   useEffect(() => {
     const fetch = cfg.fetchFn ?? (() => fetchSubcityGenericPlan(sector));
@@ -1980,19 +2493,65 @@ function GenericSubcityAnalysisPage({ sector }) {
       )}
 
       {/* Woreda tabs */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-2 mb-4 flex-wrap">
         {WOREDAS.map((w) => (
           <button
             key={w.id}
-            onClick={() => setActiveWoreda(w.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeWoreda === w.id ? "text-white shadow" : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"}`}
-            style={activeWoreda === w.id ? { background: cfg.gradient } : {}}
+            onClick={() => {
+              setActiveWoreda(w.id);
+              setActiveView("woreda");
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeView === "woreda" && activeWoreda === w.id
+                ? "text-white shadow"
+                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
+            }`}
+            style={activeView === "woreda" && activeWoreda === w.id ? { background: cfg.gradient } : {}}
           >
             {w.name}
           </button>
         ))}
       </div>
 
+      {/* Comparison & Rank buttons */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <button
+          onClick={() => setActiveView("comparison")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+            activeView === "comparison"
+              ? "text-white shadow border-transparent"
+              : "bg-white border-[#e2e8f0] text-[#1a3a5c] hover:border-[#1a3a5c] hover:bg-[#eef4fb]"
+          }`}
+          style={activeView === "comparison" ? { background: cfg.gradient } : {}}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <rect x="3" y="3" width="8" height="18" rx="1" /><rect x="13" y="3" width="8" height="18" rx="1" />
+          </svg>
+          Comparison
+        </button>
+        <button
+          onClick={() => setActiveView("rank")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+            activeView === "rank"
+              ? "text-white shadow border-transparent"
+              : "bg-white border-[#e2e8f0] text-[#1a3a5c] hover:border-[#1a3a5c] hover:bg-[#eef4fb]"
+          }`}
+          style={activeView === "rank" ? { background: cfg.gradient } : {}}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          Rank
+        </button>
+      </div>
+
+      {/* ── View-conditional content ── */}
+      {activeView === "comparison" ? (
+        <ComparisonView sector={sector} cfg={cfg} />
+      ) : activeView === "rank" ? (
+        <RankView sector={sector} cfg={cfg} />
+      ) : (
+        <>
       {/* Subcity totals overview */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
         <div
@@ -2088,12 +2647,12 @@ function GenericSubcityAnalysisPage({ sector }) {
         </div>
       </div>
 
-      {/* All woredas comparison */}
+      {/* All woredas comparison (plan targets) */}
       {plan && (
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mt-6">
           <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f4f6f9]">
             <p className="text-sm font-semibold text-[#1e293b]">
-              All Woredas Comparison
+              All Woredas — Plan Target Comparison
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -2149,6 +2708,15 @@ function GenericSubcityAnalysisPage({ sector }) {
           </div>
         </div>
       )}
+
+      {/* Ring charts — actual vs target for selected woreda */}
+      <WorkAnalysisRingSection
+        sector={sector}
+        woredaId={activeWoreda}
+        cfg={cfg}
+      />
+        </>
+      )}
     </div>
   );
 }
@@ -2187,8 +2755,7 @@ function ComingSoonPage({ title }) {
 function WorkAnalysisPage({ sector }) {
   return <GenericSubcityAnalysisPage sector={sector} />;
 }
-
-// ─── Report History constants ─────────────────────────────────────────────────
+// ─── All Sectors (6) for Report History ──────────────────────────────────────
 const REPORT_SECTORS_ALL = [
   { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },

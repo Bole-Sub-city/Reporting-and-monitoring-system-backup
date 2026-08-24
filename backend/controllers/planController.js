@@ -313,7 +313,7 @@ const saveSubcityOwnPlan = async (req, res) => {
           hubannoo_uummuu: Number(plan.hubannoo_uummuu || 0),
           horannaa_misensaa: Number(plan.horannaa_misensaa || 0),
           buusi_jiraataa: Number(plan.buusi_jiraataa || 0),
-          gumaata_jiraataa: Number(plan.gumaata_jiraataa || 0),
+          gumaata_jirataa: Number(plan.gumaata_jiraataa || plan.gumaata_jirataa || 0),
           buusi_daldalaa: Number(plan.buusi_daldalaa || 0),
           inisheetivii_buusaa_gonofaa: Number(
             plan.inisheetivii_buusaa_gonofaa ??

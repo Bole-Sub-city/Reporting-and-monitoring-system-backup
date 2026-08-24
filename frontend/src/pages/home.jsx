@@ -99,10 +99,10 @@ function Home() {
             className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#1a3a5c]
                          border-l-4 border-[#1a3a5c] pl-4 mb-5"
           >
-            Bussaa Gonofaa
+            Buusaa Gonofaa
           </h2>
           <p className="text-[#64748b] text-base leading-relaxed mb-10">
-            Busaa Gonofaa jechuun miira huumaniitarii (namoomaa) irratti
+            Buusaa Gonofaa jechun miira huumaniitarii (namoomaa) irratti
             hundaa'uun caasaa mootummaa Naannoo Oromiyaa keessatti lubbuu dhala
             namaa baraaruu fi jireenya lammiilee sababa adda addaan rakkatan
             salphisuuf hundaa'e dha. Caasaan kun aadaa wal-gargaarsa Oromoo
@@ -116,17 +116,17 @@ function Home() {
             className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#1a3a5c]
                          border-l-4 border-[#1a3a5c] pl-4 mb-5"
           >
-            Revenue
+            Gelii sassaabu
           </h2>
           <p className="text-[#64748b] text-base leading-relaxed">
-            place holder
+           Galii sassaabuun madda maallaqaa mootummaan ykn dhaabbanni tokko tajaajila hawaasaa, misoomaa fi bulchiinsaaf akka ooluuf gibira, taaksii fi kaffaltii garaagaraa daldaltootaa fi lammiirraa seeraan walitti qabudha Faayidaa Galii SassaabuuMisooma Ijaarsaa: Daandii, mana barnootaa fi hospitaala ijaaruuf gargaara.Tajaajila Hawaasaa: Fayyaa, barnoota fi nageenya mirkaneessa.Diinagdee Cimseetti motummaa walabummaan akka hojjetu taasisaa.
           </p>
         </div>
       </section>
 
       {/* ── Footer ── */}
       <footer className="bg-[#1a3a5c] border-t border-[#1e4976] py-6 text-center text-white/60 text-sm">
-        Busaa Gonofaa Reporting System &middot; Adama, Oromia
+         Reporting System &middot; Adama, Oromia
       </footer>
     </div>
   );
