@@ -442,6 +442,123 @@ const getAllReports = async (req, res) => {
   }
 };
 
+// Helper to attach a sector label to each row so the frontend can display it
+function tagRows(rows, sector) {
+  return rows.map((r) => ({ ...r, _sector: sector }));
+}
+
+// GET /api/reports/my-reports
+// Returns all reports submitted by the currently logged-in woreda user
+// across every sector table, merged and sorted newest-first.
+const getMyReports = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [buusaa, carraa, qonna, daldala, atk] = await Promise.all([
+      supabase
+        .from("buusaa_reports")
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false }),
+      supabase
+        .from("carraa_hojii_uumuu")
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false }),
+      supabase
+        .from("qonna")
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false }),
+      supabase
+        .from("Daldala")
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false }),
+      supabase
+        .from("ATK")
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false }),
+    ]);
+
+    const errors = [buusaa, carraa, qonna, daldala, atk]
+      .map((r) => r.error)
+      .filter(Boolean);
+    if (errors.length) {
+      return res.status(400).json({ message: errors[0].message });
+    }
+
+    const merged = [
+      ...tagRows(buusaa.data || [], "buusaa"),
+      ...tagRows(carraa.data || [], "carraaHojii"),
+      ...tagRows(qonna.data || [], "qonna"),
+      ...tagRows(daldala.data || [], "daldala"),
+      ...tagRows(atk.data || [], "atk"),
+    ].sort((a, b) => {
+      const da = a.report_date || a.created_at || "";
+      const db = b.report_date || b.created_at || "";
+      return db.localeCompare(da);
+    });
+
+    res.json(merged);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/reports/all-woreda-reports
+// Returns all reports submitted by any woreda user, all sectors combined.
+// Supports optional query filters: username, sector, report_type, date_from, date_to
+const getAllWoredaReports = async (req, res) => {
+  try {
+    const { username, sector, report_type, date_from, date_to } = req.query;
+
+    const buildQuery = (table) => {
+      let q = supabase.from(table).select("*");
+      if (username) q = q.eq("username", username);
+      if (report_type) q = q.eq("report_type", report_type);
+      if (date_from) q = q.gte("report_date", date_from);
+      if (date_to) q = q.lte("report_date", date_to);
+      return q;
+    };
+
+    const sectorsToFetch =
+      !sector || sector === "all"
+        ? ["buusaa", "carraaHojii", "qonna", "daldala", "atk"]
+        : [sector];
+
+    const tableMap = {
+      buusaa: "buusaa_reports",
+      carraaHojii: "carraa_hojii_uumuu",
+      qonna: "qonna",
+      daldala: "Daldala",
+      atk: "ATK",
+    };
+
+    const results = await Promise.all(
+      sectorsToFetch.map((s) => buildQuery(tableMap[s])),
+    );
+
+    const errors = results.map((r) => r.error).filter(Boolean);
+    if (errors.length) {
+      return res.status(400).json({ message: errors[0].message });
+    }
+
+    const merged = sectorsToFetch
+      .flatMap((s, i) => tagRows(results[i].data || [], s))
+      .sort((a, b) => {
+        const da = a.report_date || a.created_at || "";
+        const db = b.report_date || b.created_at || "";
+        return db.localeCompare(da);
+      });
+
+    res.json(merged);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createReport,
   submitBuusaaReport,
@@ -454,4 +571,6 @@ module.exports = {
   submitDaldalReport,
   submitAtkReport,
   getAllReports,
+  getMyReports,
+  getAllWoredaReports,
 };

@@ -98,3 +98,50 @@ export const getQonnaReports = async (userId) => {
   });
   return response.data;
 };
+
+/**
+ * Fetch all reports submitted by the currently logged-in woreda user
+ * across every sector (buusaa, carraaHojii, qonna, daldala, atk).
+ * Each row includes a _sector field added by the backend.
+ *
+ * @param {Object} filters
+ * @param {string} [filters.report_type]
+ * @param {string} [filters.date_from]  ISO date "YYYY-MM-DD"
+ * @param {string} [filters.date_to]    ISO date "YYYY-MM-DD"
+ */
+export const fetchMyReports = async (filters = {}) => {
+  const token = localStorage.getItem("token");
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v !== "" && v !== null && v !== undefined) params.append(k, v);
+  });
+  const response = await api.get(`/reports/my-reports?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/**
+ * Fetch all reports from all woreda users across every sector.
+ * Used by the sub-city dashboard report history page.
+ * Each row includes a _sector field added by the backend.
+ *
+ * @param {Object} filters
+ * @param {string} [filters.username]
+ * @param {string} [filters.sector]      e.g. "buusaa" | "carraaHojii" | "qonna" | "daldala" | "atk"
+ * @param {string} [filters.report_type]
+ * @param {string} [filters.date_from]   ISO date "YYYY-MM-DD"
+ * @param {string} [filters.date_to]     ISO date "YYYY-MM-DD"
+ */
+export const fetchAllWoredaReports = async (filters = {}) => {
+  const token = localStorage.getItem("token");
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v !== "" && v !== null && v !== undefined) params.append(k, v);
+  });
+  const response = await api.get(
+    `/reports/all-woreda-reports?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return response.data;
+};

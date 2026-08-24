@@ -12,6 +12,8 @@ const {
   submitDaldalReport,
   submitAtkReport,
   getAllReports,
+  getMyReports,
+  getAllWoredaReports,
 } = require("../controllers/reportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -21,6 +23,12 @@ router.post("/", authMiddleware, createReport);
 
 // All reports — for subcity/admin monitoring
 router.get("/all-reports", authMiddleware, getAllReports);
+
+// My reports — for woreda user: all sectors merged
+router.get("/my-reports", authMiddleware, getMyReports);
+
+// All woreda reports — for subcity monitoring: all sectors merged, with filters
+router.get("/all-woreda-reports", authMiddleware, getAllWoredaReports);
 
 // Carraa Hojii Uummuu routes
 router.post("/carraa-hojii", authMiddleware, submitCarraaHojiiReport);

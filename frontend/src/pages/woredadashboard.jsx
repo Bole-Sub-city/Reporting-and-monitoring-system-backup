@@ -8,6 +8,7 @@ import {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  fetchMyReports,
 } from "../api/reportApi";
 import {
   fetchMyPlan,
@@ -4480,184 +4481,154 @@ function RevenueAnalysis() {
   );
 }
 
-// ─── Stub data for Report History (frontend-only until backend connects) ─────
-const STUB_REPORT_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
-const STUB_SECTORS = [
+// ─── Report History constants ─────────────────────────────────────────────────
+const REPORT_PERIOD_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+
+const REPORT_SECTORS = [
   { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
   { id: "qonna", label: "Qonna", color: "#065f46" },
-  { id: "revenue", label: "Galii Sassaabu", color: "#475569" },
   { id: "daldala", label: "Daldala", color: "#854d0e" },
   { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
-// Generate some realistic stub rows
-const STUB_ROWS = [
-  {
-    id: 1,
-    date: "2026-08-15",
-    sector: "buusaa",
-    reportType: "Daily",
-    status: "Approved",
-    data: { hubannoo_uummuu: 14, horannaa_misensaa: 8, buusi_jirataa: 22 },
-  },
-  {
-    id: 2,
-    date: "2026-08-12",
-    sector: "qonna",
-    reportType: "Weekly",
-    status: "Approved",
-    data: { furdisa: 120, annan: 45, lukkuu: 300 },
-  },
-  {
-    id: 3,
-    date: "2026-08-10",
-    sector: "carraaHojii",
-    reportType: "Monthly",
-    status: "Pending",
-    data: { leenjii: 50, carraa_hojii_dhaabbii: 30 },
-  },
-  {
-    id: 4,
-    date: "2026-08-01",
-    sector: "revenue",
-    reportType: "Monthly",
-    status: "Approved",
-    data: { galiiIdilee: 45000, galiiManaQophessaa: 18000 },
-  },
-  {
-    id: 5,
-    date: "2026-07-31",
-    sector: "buusaa",
-    reportType: "Monthly",
-    status: "Approved",
-    data: { hubannoo_uummuu: 62, horannaa_misensaa: 38, buusi_jirataa: 95 },
-  },
-  {
-    id: 6,
-    date: "2026-07-25",
-    sector: "daldala",
-    reportType: "Weekly",
-    status: "Rejected",
-    data: { galmee_haraa: 5, heyyema_haraa: 3 },
-  },
-  {
-    id: 7,
-    date: "2026-07-20",
-    sector: "atk",
-    reportType: "Weekly",
-    status: "Approved",
-    data: { waliigaltee_pilaanii_kennuu: 12 },
-  },
-  {
-    id: 8,
-    date: "2026-07-01",
-    sector: "buusaa",
-    reportType: "Quarterly",
-    status: "Approved",
-    data: { hubannoo_uummuu: 180, horannaa_misensaa: 110, buusi_jirataa: 280 },
-  },
-  {
-    id: 9,
-    date: "2026-06-30",
-    sector: "qonna",
-    reportType: "Monthly",
-    status: "Pending",
-    data: { furdisa: 98, annan: 40 },
-  },
-  {
-    id: 10,
-    date: "2026-04-01",
-    sector: "buusaa",
-    reportType: "Annual",
-    status: "Approved",
-    data: { hubannoo_uummuu: 720, horannaa_misensaa: 450, buusi_jirataa: 1100 },
-  },
-];
+// Fields to hide from the detail modal (system/internal columns)
+const HIDDEN_FIELDS = new Set([
+  "id", "user_id", "username", "role", "_sector",
+  "created_at", "updated_at",
+]);
+
+// Build a clean label from a snake_case key
+function fieldLabel(key) {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Extract only the data fields worth displaying
+function getDisplayFields(row) {
+  return Object.entries(row).filter(
+    ([k, v]) => !HIDDEN_FIELDS.has(k) && k !== "report_date" && k !== "report_type" && v !== null && v !== "",
+  );
+}
+
+// Format a date string with time if created_at is available
+function formatDateTime(row) {
+  if (row.created_at) {
+    const d = new Date(row.created_at);
+    return d.toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+  return row.report_date ?? "";
+}
+
+// Generate and trigger a CSV download for a single report row
+function downloadReportCSV(row, sectorLabel) {
+  const fields = getDisplayFields(row);
+  const lines = [
+    ["Field", "Value"],
+    ["Sector", sectorLabel],
+    ["Report Type", row.report_type ?? ""],
+    ["Date", row.report_date ?? ""],
+    ["Submitted At", row.created_at ? new Date(row.created_at).toLocaleString() : ""],
+    ...fields.map(([k, v]) => [fieldLabel(k), v]),
+  ];
+  const csv = lines
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `report_${sectorLabel.replace(/\s+/g, "_")}_${row.report_date ?? "unknown"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 // ─── Report Detail Modal ──────────────────────────────────────────────────────
 function ReportDetailModal({ row, onClose }) {
   if (!row) return null;
-  const sector = STUB_SECTORS.find((s) => s.id === row.sector);
+  const sector = REPORT_SECTORS.find((s) => s.id === row._sector);
+  const sectorLabel = sector?.label ?? row._sector ?? "Report";
+  const accentColor = sector?.color ?? "#1a3a5c";
+  const displayFields = getDisplayFields(row);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
         <div
-          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{
-            background: `linear-gradient(90deg,${sector?.color ?? "#1a3a5c"} 0%,${sector?.color ?? "#1a3a5c"}cc 100%)`,
-          }}
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between flex-shrink-0"
+          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}
         >
           <div>
-            <p className="text-white font-bold text-base">
-              {sector?.label} Report
-            </p>
+            <p className="text-white font-bold text-base">{sectorLabel} Report</p>
             <p className="text-white/60 text-xs mt-0.5">
-              {row.reportType} · {row.date}
+              {row.report_type ?? ""} · {formatDateTime(row)}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/70 hover:text-white transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        {/* Status badge */}
-        <div className="px-6 pt-4 flex items-center gap-3">
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-              row.status === "Approved"
-                ? "bg-green-100 text-green-700"
-                : row.status === "Rejected"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-amber-100 text-amber-700"
-            }`}
-          >
-            {row.status}
-          </span>
-          <span className="text-xs text-[#94a3b8]">
-            Submitted on {row.date}
-          </span>
-        </div>
-        {/* Data summary */}
-        <div className="px-6 py-4">
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {/* Meta row */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] border border-[#dce8f4] px-3 py-1 rounded-full text-xs font-semibold text-[#1a3a5c]">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+              {sectorLabel}
+            </span>
+            <span className="text-xs text-[#94a3b8]">
+              Submitted {formatDateTime(row)}
+            </span>
+          </div>
+
+          {/* Data fields */}
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
             Report Data
           </p>
-          <div className="space-y-2">
-            {Object.entries(row.data).map(([k, v]) => (
-              <div
-                key={k}
-                className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5"
-              >
-                <span className="text-sm text-[#475569] capitalize">
-                  {k.replace(/_/g, " ")}
-                </span>
-                <span className="text-sm font-bold text-[#1e293b]">
-                  {Number(v).toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
+          {displayFields.length === 0 ? (
+            <p className="text-sm text-[#94a3b8]">No numeric data recorded.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {displayFields.map(([k, v]) => (
+                <div
+                  key={k}
+                  className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
+                >
+                  <span className="text-xs font-medium text-[#475569]">{fieldLabel(k)}</span>
+                  <span className="text-sm font-bold text-[#1e293b] ml-2">
+                    {typeof v === "number" ? v.toLocaleString() : v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="px-6 pb-5 flex justify-end">
+
+        {/* Footer */}
+        <div className="px-6 pb-5 pt-3 flex items-center justify-between border-t border-[#f1f5f9] flex-shrink-0">
+          <button
+            onClick={() => downloadReportCSV(row, sectorLabel)}
+            className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+            </svg>
+            Download CSV
+          </button>
           <button
             onClick={onClose}
-            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             Close
           </button>
@@ -4671,6 +4642,11 @@ function ReportDetailModal({ row, onClose }) {
 function ReportHistorySection({ woreda }) {
   const currentYear = new Date().getFullYear();
 
+  // Data state
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+
   // Filters
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterSector, setFilterSector] = useState("all");
@@ -4683,18 +4659,31 @@ function ReportHistorySection({ woreda }) {
   const [endDay, setEndDay] = useState(30);
   const [customFiscal, setCustomFiscal] = useState(currentYear - 1);
   const [customDateErr, setCustomDateErr] = useState("");
-  const [appliedRange, setAppliedRange] = useState(null); // { from, to } ISO strings
+  const [appliedRange, setAppliedRange] = useState(null);
 
   // Modal
   const [modalRow, setModalRow] = useState(null);
 
-  // Derived filtered list (stub — replace with API fetch when backend is ready)
-  const filteredRows = STUB_ROWS.filter((r) => {
-    const periodMatch = filterPeriod === "all" || r.reportType === filterPeriod;
-    const sectorMatch = filterSector === "all" || r.sector === filterSector;
+  // Fetch on mount
+  useEffect(() => {
+    setLoading(true);
+    setFetchError("");
+    fetchMyReports()
+      .then((data) => setRows(Array.isArray(data) ? data : []))
+      .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Client-side filtering
+  const filteredRows = rows.filter((r) => {
+    const date = r.report_date ?? "";
+    const type = r.report_type ?? "";
+    const sector = r._sector ?? "";
+    const periodMatch = filterPeriod === "all" || type === filterPeriod;
+    const sectorMatch = filterSector === "all" || sector === filterSector;
     let dateMatch = true;
     if (isCustom && appliedRange) {
-      dateMatch = r.date >= appliedRange.from && r.date <= appliedRange.to;
+      dateMatch = date >= appliedRange.from && date <= appliedRange.to;
     }
     return periodMatch && sectorMatch && dateMatch;
   });
@@ -4702,14 +4691,8 @@ function ReportHistorySection({ woreda }) {
   const handleApplyCustom = () => {
     const from = oromoToGregorian(startMonth, startDay, customFiscal);
     const to = oromoToGregorian(endMonth, endDay, customFiscal);
-    if (!from || !to) {
-      setCustomDateErr("Invalid date selection.");
-      return;
-    }
-    if (from > to) {
-      setCustomDateErr("Start date must be before end date.");
-      return;
-    }
+    if (!from || !to) { setCustomDateErr("Invalid date selection."); return; }
+    if (from > to) { setCustomDateErr("Start date must be before end date."); return; }
     setCustomDateErr("");
     setAppliedRange({ from, to });
   };
@@ -4727,11 +4710,9 @@ function ReportHistorySection({ woreda }) {
   };
 
   const statusColor = (s) =>
-    s === "Approved"
-      ? "bg-green-100 text-green-700"
-      : s === "Rejected"
-        ? "bg-red-100 text-red-700"
-        : "bg-amber-100 text-amber-700";
+    s === "Approved" ? "bg-green-100 text-green-700"
+    : s === "Rejected" ? "bg-red-100 text-red-700"
+    : "bg-amber-100 text-amber-700";
 
   return (
     <div>
@@ -4743,57 +4724,72 @@ function ReportHistorySection({ woreda }) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          View and generate reports you have submitted — filter by period,
-          sector, or a custom date range.
+          All reports you have submitted, across every sector. Filter by period, sector, or a custom date range.
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-[#991b1b] text-sm">{fetchError}</p>
+          <button
+            onClick={() => {
+              setFetchError("");
+              setLoading(true);
+              fetchMyReports()
+                .then((d) => setRows(Array.isArray(d) ? d : []))
+                .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
+                .finally(() => setLoading(false));
+            }}
+            className="ml-auto text-xs font-semibold text-[#dc2626] underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Filter bar */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
         <div className="flex flex-wrap gap-4 items-end">
-          {/* Period picker */}
+          {/* Period */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Period
-            </label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
             <select
               value={isCustom ? "custom" : filterPeriod}
               onChange={(e) => handlePeriodChange(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Periods</option>
-              {STUB_REPORT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
+              {REPORT_PERIOD_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
               ))}
               <option value="custom">Custom Date Range</option>
             </select>
           </div>
 
-          {/* Sector picker */}
+          {/* Sector */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Sector
-            </label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Sectors</option>
-              {STUB_SECTORS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
+              {REPORT_SECTORS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
           </div>
 
-          {/* Result count */}
+          {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {filteredRows.length} result{filteredRows.length !== 1 ? "s" : ""}
+              {loading ? "..." : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -4806,9 +4802,7 @@ function ReportHistorySection({ woreda }) {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Fiscal Year
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
                 <input
                   type="number"
                   value={customFiscal}
@@ -4819,67 +4813,29 @@ function ReportHistorySection({ woreda }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Start Date
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
                 <div className="flex gap-2">
-                  <select
-                    value={startMonth}
-                    onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
+                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
                   </select>
-                  <select
-                    value={startDay}
-                    onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
+                  <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  End Date
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
                 <div className="flex gap-2">
-                  <select
-                    value={endMonth}
-                    onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
+                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
                   </select>
-                  <select
-                    value={endDay}
-                    onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
+                  <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
+                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
             </div>
-            {customDateErr && (
-              <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
-            )}
+            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
             {appliedRange && (
               <p className="text-[#16a34a] text-xs mb-2 font-medium">
                 Showing reports from {appliedRange.from} to {appliedRange.to}
@@ -4896,119 +4852,102 @@ function ReportHistorySection({ woreda }) {
         )}
       </div>
 
-      {/* ── Results table ── */}
+      {/* Results table */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
           <p className="text-sm font-semibold text-[#334155]">
             {isCustom && appliedRange
-              ? `Reports from ${appliedRange.from} — ${appliedRange.to}`
+              ? `Reports from ${appliedRange.from} to ${appliedRange.to}`
               : filterSector !== "all"
-                ? `${STUB_SECTORS.find((s) => s.id === filterSector)?.label} Reports`
+                ? `${REPORT_SECTORS.find((s) => s.id === filterSector)?.label ?? filterSector} Reports`
                 : filterPeriod !== "all"
                   ? `${filterPeriod} Reports`
                   : "All Submitted Reports"}
           </p>
-          <p className="text-xs text-[#94a3b8]">{woreda}</p>
+          {!loading && !fetchError && (
+            <span className="text-xs text-[#94a3b8]">{rows.length} total</span>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#f1f5f9]">
-                {[
-                  "Date Submitted",
-                  "Sector",
-                  "Report Type",
-                  "Status",
-                  "Action",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
-                        <HistoryIcon />
-                      </div>
-                      <p className="text-[#94a3b8] text-sm">
-                        No reports match the selected filters.
-                      </p>
-                    </div>
-                  </td>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 gap-3">
+            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <span className="text-sm text-[#64748b]">Loading report history...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9]">
+                  {["Date Submitted", "Sector", "Report Type", "Actions"].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ) : (
-                filteredRows.map((row) => {
-                  const sec = STUB_SECTORS.find((s) => s.id === row.sector);
-                  return (
-                    <tr
-                      key={row.id}
-                      className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
-                    >
-                      <td className="px-5 py-3 text-[#475569] text-sm">
-                        {row.date}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1.5">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: sec?.color ?? "#64748b" }}
-                          />
-                          <span className="text-sm font-medium text-[#1e293b]">
-                            {sec?.label ?? row.sector}
+              </thead>
+              <tbody>
+                {filteredRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-14 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                          <HistoryIcon />
+                        </div>
+                        <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
+                        {rows.length === 0 && !fetchError && (
+                          <p className="text-[#94a3b8] text-xs">Submit your first report from the Works section.</p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRows.map((row, idx) => {
+                    const sec = REPORT_SECTORS.find((s) => s.id === row._sector);
+                    return (
+                      <tr
+                        key={row.id ?? `${row._sector}-${idx}`}
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                      >
+                        <td className="px-5 py-3 text-[#475569] text-sm">{formatDateTime(row)}</td>
+                        <td className="px-5 py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }} />
+                            <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row._sector}</span>
                           </span>
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-sm text-[#475569]">
-                        {row.reportType}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <button
-                          onClick={() => setModalRow(row)}
-                          className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                          </svg>
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setModalRow(row)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View
+                            </button>
+                            <button
+                              onClick={() => downloadReportCSV(row, sec?.label ?? row._sector ?? "Report")}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+                              </svg>
+                              Download
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import {
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
 } from "../api/planApi";
+import { fetchAllWoredaReports } from "../api/reportApi";
 
 // ─── Shared allocation helpers ────────────────────────────────────────────────
 /**
@@ -2187,229 +2188,174 @@ function WorkAnalysisPage({ sector }) {
   return <GenericSubcityAnalysisPage sector={sector} />;
 }
 
-// ─── All Sectors (6) for Report History ──────────────────────────────────────
+// ─── Report History constants ─────────────────────────────────────────────────
 const REPORT_SECTORS_ALL = [
   { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
   { id: "qonna", label: "Qonna", color: "#065f46" },
-  { id: "revenue", label: "Galii Sassaabu", color: "#475569" },
   { id: "daldala", label: "Daldala", color: "#854d0e" },
   { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
-const STUB_PERIOD_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+const REPORT_PERIOD_TYPES_SC = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
 
-// Stub rows — all 4 woredas, all 6 sectors
-const SC_STUB_ROWS = [
-  {
-    id: 1,
-    woredaId: "w1",
-    sector: "buusaa",
-    reportType: "Daily",
-    date: "2026-08-15",
-    status: "Approved",
-    data: { hubannoo_uummuu: 14, buusi_jirataa: 22 },
-  },
-  {
-    id: 2,
-    woredaId: "w2",
-    sector: "qonna",
-    reportType: "Weekly",
-    date: "2026-08-12",
-    status: "Approved",
-    data: { furdisa: 120, lukkuu: 300 },
-  },
-  {
-    id: 3,
-    woredaId: "w3",
-    sector: "carraaHojii",
-    reportType: "Monthly",
-    date: "2026-08-10",
-    status: "Pending",
-    data: { leenjii: 50, carraa_hojii_dhaabbii: 30 },
-  },
-  {
-    id: 4,
-    woredaId: "w4",
-    sector: "revenue",
-    reportType: "Monthly",
-    date: "2026-08-01",
-    status: "Approved",
-    data: { galiiIdilee: 45000 },
-  },
-  {
-    id: 5,
-    woredaId: "w1",
-    sector: "buusaa",
-    reportType: "Monthly",
-    date: "2026-07-31",
-    status: "Approved",
-    data: { hubannoo_uummuu: 62, buusi_jirataa: 95 },
-  },
-  {
-    id: 6,
-    woredaId: "w2",
-    sector: "daldala",
-    reportType: "Weekly",
-    date: "2026-07-25",
-    status: "Rejected",
-    data: { galmee_haraa: 5 },
-  },
-  {
-    id: 7,
-    woredaId: "w3",
-    sector: "atk",
-    reportType: "Weekly",
-    date: "2026-07-20",
-    status: "Approved",
-    data: { waliigaltee_pilaanii_kennuu: 12 },
-  },
-  {
-    id: 8,
-    woredaId: "w4",
-    sector: "buusaa",
-    reportType: "Quarterly",
-    date: "2026-07-01",
-    status: "Approved",
-    data: { hubannoo_uummuu: 180, buusi_jirataa: 280 },
-  },
-  {
-    id: 9,
-    woredaId: "w1",
-    sector: "qonna",
-    reportType: "Monthly",
-    date: "2026-06-30",
-    status: "Pending",
-    data: { furdisa: 98, annan: 40 },
-  },
-  {
-    id: 10,
-    woredaId: "w2",
-    sector: "buusaa",
-    reportType: "Annual",
-    date: "2026-04-01",
-    status: "Approved",
-    data: { hubannoo_uummuu: 720, buusi_jirataa: 1100 },
-  },
-  {
-    id: 11,
-    woredaId: "w3",
-    sector: "revenue",
-    reportType: "Weekly",
-    date: "2026-08-08",
-    status: "Approved",
-    data: { galiiIdilee: 8200 },
-  },
-  {
-    id: 12,
-    woredaId: "w4",
-    sector: "daldala",
-    reportType: "Monthly",
-    date: "2026-07-31",
-    status: "Pending",
-    data: { galmee_haraa: 18 },
-  },
-  {
-    id: 13,
-    woredaId: "w1",
-    sector: "atk",
-    reportType: "Monthly",
-    date: "2026-07-30",
-    status: "Approved",
-    data: { heeyyama_ijaarsaa_kennamee: 9 },
-  },
-  {
-    id: 14,
-    woredaId: "w2",
-    sector: "carraaHojii",
-    reportType: "Quarterly",
-    date: "2026-07-01",
-    status: "Approved",
-    data: { leenjii: 140, kenna_liqii: 60 },
-  },
-];
+// Fields to hide from the detail modal (system/internal columns)
+const SC_HIDDEN_FIELDS = new Set([
+  "id", "user_id", "username", "role", "_sector",
+  "created_at", "updated_at",
+]);
+
+function scFieldLabel(key) {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function scGetDisplayFields(row) {
+  return Object.entries(row).filter(
+    ([k, v]) =>
+      !SC_HIDDEN_FIELDS.has(k) &&
+      k !== "report_date" &&
+      k !== "report_type" &&
+      v !== null &&
+      v !== "",
+  );
+}
+
+// Format a date string with time if created_at is available
+function scFormatDateTime(row) {
+  if (row.created_at) {
+    const d = new Date(row.created_at);
+    return d.toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+  return row.report_date ?? "";
+}
+
+function scDownloadCSV(row, sectorLabel) {
+  const fields = scGetDisplayFields(row);
+  const lines = [
+    ["Field", "Value"],
+    ["Sector", sectorLabel],
+    ["Submitted By", row.username ?? ""],
+    ["Report Type", row.report_type ?? ""],
+    ["Date", row.report_date ?? ""],
+    ["Submitted At", row.created_at ? new Date(row.created_at).toLocaleString() : ""],
+    ...fields.map(([k, v]) => [scFieldLabel(k), v]),
+  ];
+  const csv = lines
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `report_${sectorLabel.replace(/\s+/g, "_")}_${row.report_date ?? "unknown"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 // ─── Report Detail Modal (subcity) ────────────────────────────────────────────
 function SCReportDetailModal({ row, onClose }) {
   if (!row) return null;
-  const sec = REPORT_SECTORS_ALL.find((s) => s.id === row.sector);
-  const woreda = WOREDAS.find((w) => w.id === row.woredaId);
+  const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
+  const sectorLabel = sec?.label ?? row._sector ?? "Report";
+  const accentColor = sec?.color ?? "#1a3a5c";
+  const displayFields = scGetDisplayFields(row);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        {/* Header */}
         <div
-          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between flex-shrink-0"
           style={{
-            background: `linear-gradient(90deg,${sec?.color ?? "#1a3a5c"} 0%,${sec?.color ?? "#1a3a5c"}cc 100%)`,
+            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
           }}
         >
           <div>
-            <p className="text-white font-bold text-base">
-              {sec?.label} Report
-            </p>
+            <p className="text-white font-bold text-base">{sectorLabel} Report</p>
             <p className="text-white/60 text-xs mt-0.5">
-              {woreda?.name} · {row.reportType} · {row.date}
+              {row.username ?? ""} · {row.report_type ?? ""} · {scFormatDateTime(row)}
             </p>
           </div>
           <button
             onClick={onClose}
             className="text-white/70 hover:text-white transition-colors"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="px-6 pt-4 flex items-center gap-3">
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-              row.status === "Approved"
-                ? "bg-green-100 text-green-700"
-                : row.status === "Rejected"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-amber-100 text-amber-700"
-            }`}
-          >
-            {row.status}
-          </span>
-          <span className="text-xs text-[#94a3b8]">
-            Submitted on {row.date}
-          </span>
-        </div>
-        <div className="px-6 py-4">
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border"
+              style={{
+                backgroundColor: `${accentColor}15`,
+                borderColor: `${accentColor}40`,
+                color: accentColor,
+              }}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+              {sectorLabel}
+            </span>
+            {row.username && (
+              <span className="text-xs text-[#64748b] bg-[#f4f6f9] border border-[#e2e8f0] px-3 py-1 rounded-full">
+                {row.username}
+              </span>
+            )}
+            <span className="text-xs text-[#94a3b8]">
+              Submitted {scFormatDateTime(row)}
+            </span>
+          </div>
+
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
             Report Data
           </p>
-          <div className="space-y-2">
-            {Object.entries(row.data).map(([k, v]) => (
-              <div
-                key={k}
-                className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5"
-              >
-                <span className="text-sm text-[#475569] capitalize">
-                  {k.replace(/_/g, " ")}
-                </span>
-                <span className="text-sm font-bold text-[#1e293b]">
-                  {Number(v).toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
+          {displayFields.length === 0 ? (
+            <p className="text-sm text-[#94a3b8]">No numeric data recorded.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {displayFields.map(([k, v]) => (
+                <div
+                  key={k}
+                  className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
+                >
+                  <span className="text-xs font-medium text-[#475569]">{scFieldLabel(k)}</span>
+                  <span className="text-sm font-bold text-[#1e293b] ml-2">
+                    {typeof v === "number" ? v.toLocaleString() : v}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="px-6 pb-5 flex justify-end">
+
+        {/* Footer */}
+        <div className="px-6 pb-5 pt-3 flex items-center justify-between border-t border-[#f1f5f9] flex-shrink-0">
+          <button
+            onClick={() => scDownloadCSV(row, sectorLabel, row.username)}
+            className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+            </svg>
+            Download CSV
+          </button>
           <button
             onClick={onClose}
-            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             Close
           </button>
@@ -2422,6 +2368,11 @@ function SCReportDetailModal({ row, onClose }) {
 // ─── Woreda Reports / Report History Page (Subcity) ───────────────────────────
 function ReportsPage() {
   const currentYear = new Date().getFullYear();
+
+  // Data state
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   // Filters
   const [filterWoreda, setFilterWoreda] = useState("all");
@@ -2441,14 +2392,43 @@ function ReportsPage() {
   // Modal
   const [modalRow, setModalRow] = useState(null);
 
-  // Derived filtered list
-  const filteredRows = SC_STUB_ROWS.filter((r) => {
-    const woredaMatch = filterWoreda === "all" || r.woredaId === filterWoreda;
-    const sectorMatch = filterSector === "all" || r.sector === filterSector;
-    const periodMatch = filterPeriod === "all" || r.reportType === filterPeriod;
+  // Map username to woreda for display
+  const USERNAME_WOREDA_MAP = {
+    "Aanaa Gooroo": "w1",
+    "Aanaa Dhadacha Araaraa": "w2",
+    "Aanaa Dhakaa Adii": "w3",
+    "Aanaa Andoodee": "w4",
+  };
+
+  const loadReports = () => {
+    setLoading(true);
+    setFetchError("");
+    fetchAllWoredaReports()
+      .then((data) => setRows(Array.isArray(data) ? data : []))
+      .catch(() =>
+        setFetchError("Could not load reports. Check your connection and try again."),
+      )
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  // Derive woreda id from username for filtering
+  const rowWoredaId = (row) => USERNAME_WOREDA_MAP[row.username] ?? null;
+
+  const filteredRows = rows.filter((r) => {
+    const date = r.report_date ?? "";
+    const type = r.report_type ?? "";
+    const sector = r._sector ?? "";
+    const woredaId = rowWoredaId(r);
+    const woredaMatch = filterWoreda === "all" || woredaId === filterWoreda;
+    const sectorMatch = filterSector === "all" || sector === filterSector;
+    const periodMatch = filterPeriod === "all" || type === filterPeriod;
     let dateMatch = true;
     if (isCustom && appliedRange) {
-      dateMatch = r.date >= appliedRange.from && r.date <= appliedRange.to;
+      dateMatch = date >= appliedRange.from && date <= appliedRange.to;
     }
     return woredaMatch && sectorMatch && periodMatch && dateMatch;
   });
@@ -2480,26 +2460,10 @@ function ReportsPage() {
     }
   };
 
-  const statusColor = (s) =>
-    s === "Approved"
-      ? "bg-green-100 text-green-700"
-      : s === "Rejected"
-        ? "bg-red-100 text-red-700"
-        : "bg-amber-100 text-amber-700";
-
-  const activeWoredaName =
-    filterWoreda === "all"
-      ? "All Woredas"
-      : WOREDAS.find((w) => w.id === filterWoreda)?.name;
-  const activeSectorLabel =
-    filterSector === "all"
-      ? "All Sectors"
-      : REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.label;
   const activeSectorColor =
     filterSector === "all"
       ? "#1a3a5c"
-      : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ??
-        "#1a3a5c");
+      : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ?? "#1a3a5c");
 
   return (
     <div>
@@ -2511,11 +2475,28 @@ function ReportsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Filter by woreda, sector, and period — or pick a custom date range.
+          All submitted reports from every sector. Filter by woreda, sector, period, or a custom date range.
         </p>
       </div>
 
-      {/* ── Filter bar ── */}
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
+          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-[#991b1b] text-sm">{fetchError}</p>
+          <button
+            onClick={loadReports}
+            className="ml-auto text-xs font-semibold text-[#dc2626] underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Filter bar */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
         <div className="flex flex-wrap gap-4 items-end">
           {/* Woreda */}
@@ -2567,7 +2548,7 @@ function ReportsPage() {
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               <option value="all">All Periods</option>
-              {STUB_PERIOD_TYPES.map((t) => (
+              {REPORT_PERIOD_TYPES_SC.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -2576,10 +2557,10 @@ function ReportsPage() {
             </select>
           </div>
 
-          {/* Result count */}
+          {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {filteredRows.length} result{filteredRows.length !== 1 ? "s" : ""}
+              {loading ? "..." : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -2592,9 +2573,7 @@ function ReportsPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Fiscal Year
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
                 <input
                   type="number"
                   value={customFiscal}
@@ -2605,9 +2584,7 @@ function ReportsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Start Date
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
                 <div className="flex gap-2">
                   <select
                     value={startMonth}
@@ -2615,9 +2592,7 @@ function ReportsPage() {
                     className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
+                      <option key={m.name} value={m.name}>{m.name}</option>
                     ))}
                   </select>
                   <select
@@ -2626,17 +2601,13 @@ function ReportsPage() {
                     className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
+                      <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  End Date
-                </label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
                 <div className="flex gap-2">
                   <select
                     value={endMonth}
@@ -2644,9 +2615,7 @@ function ReportsPage() {
                     className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
+                      <option key={m.name} value={m.name}>{m.name}</option>
                     ))}
                   </select>
                   <select
@@ -2655,9 +2624,7 @@ function ReportsPage() {
                     className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
+                      <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
                 </div>
@@ -2682,7 +2649,7 @@ function ReportsPage() {
         )}
       </div>
 
-      {/* ── Results table ── */}
+      {/* Results table */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
@@ -2693,121 +2660,116 @@ function ReportsPage() {
           <div>
             <p className="text-sm font-semibold text-white">
               {isCustom && appliedRange
-                ? `Reports ${appliedRange.from} — ${appliedRange.to}`
-                : `${activeWoredaName} · ${activeSectorLabel}`}
+                ? `Reports from ${appliedRange.from} to ${appliedRange.to}`
+                : filterSector !== "all"
+                  ? `${REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.label ?? filterSector} Reports`
+                  : filterWoreda !== "all"
+                    ? `${WOREDAS.find((w) => w.id === filterWoreda)?.name ?? filterWoreda} Reports`
+                    : "All Woreda Reports"}
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {filteredRows.length} report{filteredRows.length !== 1 ? "s" : ""}{" "}
-              found
+              {loading ? "Loading..." : `${filteredRows.length} report${filteredRows.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
+          {!loading && !fetchError && (
+            <span className="text-white/60 text-xs">{rows.length} total</span>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                {[
-                  "Date",
-                  "Woreda",
-                  "Sector",
-                  "Report Type",
-                  "Status",
-                  "Action",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
-                        <ListIcon />
-                      </div>
-                      <p className="text-[#94a3b8] text-sm">
-                        No reports match the selected filters.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredRows.map((row) => {
-                  const sec = REPORT_SECTORS_ALL.find(
-                    (s) => s.id === row.sector,
-                  );
-                  const woreda = WOREDAS.find((w) => w.id === row.woredaId);
-                  return (
-                    <tr
-                      key={row.id}
-                      className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 gap-3">
+            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <span className="text-sm text-[#64748b]">Loading reports...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                  {["Date", "Submitted By", "Sector", "Report Type", "Actions"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
                     >
-                      <td className="px-5 py-3 text-[#475569] text-sm">
-                        {row.date}
-                      </td>
-                      <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
-                        {woreda?.name ?? row.woredaId}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1.5">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: sec?.color ?? "#64748b" }}
-                          />
-                          <span className="text-sm font-medium text-[#1e293b]">
-                            {sec?.label ?? row.sector}
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-14 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                          <ListIcon />
+                        </div>
+                        <p className="text-[#94a3b8] text-sm">
+                          No reports match the selected filters.
+                        </p>
+                        {rows.length === 0 && !fetchError && (
+                          <p className="text-[#94a3b8] text-xs">
+                            Reports submitted by woreda users will appear here.
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRows.map((row, idx) => {
+                    const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
+                    return (
+                      <tr
+                        key={row.id ?? `${row._sector}-${idx}`}
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                      >
+                        <td className="px-5 py-3 text-[#475569] text-sm">{scFormatDateTime(row)}</td>
+                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
+                          {row.username ?? ""}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: sec?.color ?? "#64748b" }}
+                            />
+                            <span className="text-sm font-medium text-[#1e293b]">
+                              {sec?.label ?? row._sector}
+                            </span>
                           </span>
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-sm text-[#475569]">
-                        {row.reportType}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor(row.status)}`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <button
-                          onClick={() => setModalRow(row)}
-                          className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                          </svg>
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setModalRow(row)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View
+                            </button>
+                            <button
+                              onClick={() => scDownloadCSV(row, sec?.label ?? row._sector ?? "Report", row.username)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+                              </svg>
+                              Download
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
