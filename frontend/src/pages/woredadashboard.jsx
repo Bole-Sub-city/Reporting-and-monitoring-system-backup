@@ -382,8 +382,8 @@ const PLAN_FIELDS = [
     textColor: "text-[#475569]",
   },
   {
-    key: "gumaata_jirataa",
-    planKey: "gumaata_jirataa_target",
+    key: "gumaata_jiraataa",
+    planKey: "gumaata_jiraataa_target",
     label: "Gumaata Jiraataa",
     description: "Charity beneficiary targets",
     color: "#64748b",
@@ -3582,7 +3582,7 @@ function BuusaaSubmitForm({ u }) {
         buusi_jirataa: Number(form.buuusiJirataa || 0),
         buusi_daldalaa: Number(form.buuusiDaldalaa || 0),
         buusi_daldalaa_fi_gumaataa: Number(form.buuusiDaldalaaFiGumaataa || 0),
-        gumaata_jirataa: Number(form.gumaataJirataa || 0),
+        gumaata_jiraataa: Number(form.gumaataJiraataa || 0),
         inisheetivii_buusaa_gonofaa: Number(
           form.inisheetiviiBuusaaGonofaa || 0,
         ),

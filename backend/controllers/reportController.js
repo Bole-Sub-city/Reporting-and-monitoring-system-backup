@@ -14,7 +14,7 @@ const createReport = async (req, res) => {
       hubannoo_uummuu: req.body.hubannoo_uummuu,
       horannaa_misensaa: req.body.horannaa_misensaa,
       buusi_jirataa: req.body.buusi_jirataa,
-      gumaata_jirataa: req.body.gumaata_jirataa,
+      gumaata_jiraataa: req.body.gumaata_jiraataa,
       buusi_daldalaa: req.body.buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa: req.body.buusi_daldalaa_fi_gumaataa,
       // Map frontend's "inisheetivii..." to database column "inisheetevii..."
@@ -53,7 +53,7 @@ const submitBuusaaReport = async (req, res) => {
       hubannoo_uummuu,
       horannaa_misensaa,
       buusi_jirataa,
-      gumaata_jirataa,
+      gumaata_jiraataa,
       buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa,
       inisheetivii_buusaa_gonofaa, // ← frontend sends this
@@ -76,7 +76,7 @@ const submitBuusaaReport = async (req, res) => {
         hubannoo_uummuu,
         horannaa_misensaa,
         buusi_jirataa,
-        gumaata_jirataa,
+        gumaata_jiraataa,
         buusi_daldalaa,
         buusi_daldalaa_fi_gumaataa,
         // Map to the exact database column name

@@ -101,7 +101,7 @@ const PLAN_FIELDS = [
   { key: "hubannoo_uummuu", label: "Hubannoo Uumuu", color: "#0f766e" },
   { key: "horannaa_misensaa", label: "Horannaa Misensaa", color: "#1e40af" },
   { key: "buusi_jiraataa", label: "Buusi Jiraataa", color: "#475569" },
-  { key: "gumaata_jirataa", label: "Gumaata Jiraataa", color: "#64748b" },
+  { key: "gumaata_jiraataa", label: "Gumaata Jiraataa", color: "#64748b" },
   {
     key: "buusi_daldalaa",
     label: "Buusi Fi Gumaataa  Daldalaa ",
@@ -122,7 +122,7 @@ const EMPTY_PLAN = {
   hubannoo_uummuu: "",
   horannaa_misensaa: "",
   buusi_jiraataa: "",
-  gumaata_jirataa: "",
+  gumaata_jiraataa: "",
   buusi_daldalaa: "",
   inisheetivii_buusaa_gonofaa: "",
   gumaata_mootummaa: "",
