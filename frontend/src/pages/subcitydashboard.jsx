@@ -315,7 +315,15 @@ const CollapseIcon = ({ collapsed }) => (
 );
 
 // ─── Overview Page ────────────────────────────────────────────────────────────
-function OverviewPage({ dbPlan, dbQonnaPlan, u }) {
+function OverviewPage({
+  dbPlan,
+  dbQonnaPlan,
+  dbGaliiPlan,
+  dbCarraPlan,
+  dbDaldalaPlan,
+  dbAtkPlan,
+  u,
+}) {
   const hasPlan =
     dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
   const totalWeight = dbPlan
@@ -601,6 +609,122 @@ function OverviewPage({ dbPlan, dbQonnaPlan, u }) {
           </p>
         </div>
       )}
+
+      {/* ── Generic sector plans (Galii, Carraa, Daldala, ATK) ── */}
+      {[
+        {
+          plan: dbGaliiPlan,
+          fields: GALII_FIELDS,
+          label: "Galii Sassaabu",
+          gradient: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+        },
+        {
+          plan: dbCarraPlan,
+          fields: CARRAA_FIELDS,
+          label: "Carraa Hojii Uumuu",
+          gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+        },
+        {
+          plan: dbDaldalaPlan,
+          fields: DALDALA_FIELDS_SC,
+          label: "Daldala",
+          gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)",
+        },
+        {
+          plan: dbAtkPlan,
+          fields: ATK_FIELDS_SC,
+          label: "ATK",
+          gradient: "linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)",
+        },
+      ].map(({ plan, fields, label, gradient }) => {
+        const hasPlanData =
+          plan && fields.some((f) => Number(plan[f.key] || 0) > 0);
+        return (
+          <div key={label} className="mt-6">
+            {hasPlanData ? (
+              <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                <div
+                  className="px-5 py-3 border-b border-[#e2e8f0]"
+                  style={{ background: gradient }}
+                >
+                  <p className="text-sm font-semibold text-white">
+                    {label} — Annual Plan Per Woreda Allocation
+                  </p>
+                  <p className="text-white/60 text-xs mt-0.5">
+                    Fetched from database · Year {plan.year}
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#f1f5f9]">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                          Category
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                          Subcity Total
+                        </th>
+                        {WOREDAS.map((w) => (
+                          <th
+                            key={w.id}
+                            className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                          >
+                            {w.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fields.map(({ key, label: fLabel, color }) => {
+                        const total = Number(plan[key] || 0);
+                        return (
+                          <tr
+                            key={key}
+                            className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                          >
+                            <td className="px-5 py-3 font-medium text-[#1e293b]">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: color }}
+                                />
+                                {fLabel}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                              {total.toLocaleString()}
+                            </td>
+                            {WOREDAS.map((w) => (
+                              <td
+                                key={w.id}
+                                className="px-5 py-3 text-[#64748b]"
+                              >
+                                {share(w.id, total).toLocaleString()}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-[#f4f6f9] flex items-center justify-center mb-2 text-[#64748b]">
+                  <TargetIcon />
+                </div>
+                <p className="text-[#1e293b] font-semibold text-sm mb-1">
+                  No {label} Plan Yet
+                </p>
+                <p className="text-[#94a3b8] text-xs">
+                  Go to Annual Plan → {label} to enter subcity targets.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1513,8 +1637,16 @@ const DALDALA_FIELDS_SC = [
   { key: "intarshippii", label: "Intarshippii", color: "#dc2626" },
   { key: "ggg", label: "Giddu Gala Gabaa", color: "#475569" },
   { key: "gabayaa_sanbata", label: "Gabaa Sanbata", color: "#854d0e" },
-  { key: "whg_kudraa", label: "Walitti Hidhinsa Gabaa - Kudraa", color: "#166534" },
-  { key: "whg_mudraa", label: "Walitti Hidhinsa Gabaa - Mudraa", color: "#1a3a5c" },
+  {
+    key: "whg_kudraa",
+    label: "Walitti Hidhinsa Gabaa - Kudraa",
+    color: "#166534",
+  },
+  {
+    key: "whg_mudraa",
+    label: "Walitti Hidhinsa Gabaa - Mudraa",
+    color: "#1a3a5c",
+  },
 ];
 
 const ATK_FIELDS_SC = [
@@ -2711,6 +2843,10 @@ export default function SubCityDashboard({ user: propUser }) {
   const [dbPlan, setDbPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [dbQonnaPlan, setDbQonnaPlan] = useState(null);
+  const [dbGaliiPlan, setDbGaliiPlan] = useState(null);
+  const [dbCarraPlan, setDbCarraPlan] = useState(null);
+  const [dbDaldalaPlan, setDbDaldalaPlan] = useState(null);
+  const [dbAtkPlan, setDbAtkPlan] = useState(null);
 
   useEffect(() => {
     fetchSubcityOwnPlan()
@@ -2720,6 +2856,18 @@ export default function SubCityDashboard({ user: propUser }) {
     fetchSubcityQonnaPlan()
       .then((d) => setDbQonnaPlan(d.plan))
       .catch(() => setDbQonnaPlan(null));
+    fetchSubcityGenericPlan("galii")
+      .then((d) => setDbGaliiPlan(d.plan))
+      .catch(() => setDbGaliiPlan(null));
+    fetchSubcityGenericPlan("carraa")
+      .then((d) => setDbCarraPlan(d.plan))
+      .catch(() => setDbCarraPlan(null));
+    fetchSubcityGenericPlan("daldala")
+      .then((d) => setDbDaldalaPlan(d.plan))
+      .catch(() => setDbDaldalaPlan(null));
+    fetchSubcityGenericPlan("atk")
+      .then((d) => setDbAtkPlan(d.plan))
+      .catch(() => setDbAtkPlan(null));
   }, []);
 
   const handleSavePlan = async (data, wForm) => {
@@ -2750,7 +2898,17 @@ export default function SubCityDashboard({ user: propUser }) {
             <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
           </div>
         );
-      return <OverviewPage dbPlan={dbPlan} dbQonnaPlan={dbQonnaPlan} u={u} />;
+      return (
+        <OverviewPage
+          dbPlan={dbPlan}
+          dbQonnaPlan={dbQonnaPlan}
+          dbGaliiPlan={dbGaliiPlan}
+          dbCarraPlan={dbCarraPlan}
+          dbDaldalaPlan={dbDaldalaPlan}
+          dbAtkPlan={dbAtkPlan}
+          u={u}
+        />
+      );
     }
     if (activeNav === "reports") return <ReportsPage />;
     if (activeNav === "plan") {
