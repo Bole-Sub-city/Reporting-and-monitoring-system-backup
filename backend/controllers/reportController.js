@@ -450,36 +450,30 @@ function tagRows(rows, sector) {
 // GET /api/reports/my-reports
 // Returns all reports submitted by the currently logged-in woreda user
 // across every sector table, merged and sorted newest-first.
+// Supports optional query filters: report_type, date_from, date_to
 const getMyReports = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { report_type, date_from, date_to } = req.query;
+
+    const buildQuery = (table) => {
+      let q = supabase
+        .from(table)
+        .select("*")
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false });
+      if (report_type) q = q.eq("report_type", report_type);
+      if (date_from) q = q.gte("report_date", date_from);
+      if (date_to) q = q.lte("report_date", date_to);
+      return q;
+    };
 
     const [buusaa, carraa, qonna, daldala, atk] = await Promise.all([
-      supabase
-        .from("buusaa_reports")
-        .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false }),
-      supabase
-        .from("carraa_hojii_uumuu")
-        .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false }),
-      supabase
-        .from("qonna")
-        .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false }),
-      supabase
-        .from("Daldala")
-        .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false }),
-      supabase
-        .from("ATK")
-        .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false }),
+      buildQuery("buusaa_reports"),
+      buildQuery("carraa_hojii_uumuu"),
+      buildQuery("qonna"),
+      buildQuery("Daldala"),
+      buildQuery("ATK"),
     ]);
 
     const errors = [buusaa, carraa, qonna, daldala, atk]

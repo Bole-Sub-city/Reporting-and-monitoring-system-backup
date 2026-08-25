@@ -182,3 +182,45 @@ export const fetchWoRedaAnalysis = async (sector, woredaId, period) => {
   );
   return res.data;
 };
+
+// ─── Announcements API ────────────────────────────────────────────────────────
+
+/**
+ * POST /api/announcements
+ * Sub-city only: create a new announcement.
+ * @param {{ title: string, body: string }} payload
+ */
+export const createAnnouncement = async (payload) => {
+  const res = await api.post("/announcements", payload, authHeader());
+  return res.data; // { announcement: {...} }
+};
+
+/**
+ * GET /api/announcements
+ * All authenticated users: fetch all announcements, newest first.
+ * @returns {{ announcements: Array }}
+ */
+export const fetchAnnouncements = async () => {
+  const res = await api.get("/announcements", authHeader());
+  return res.data; // { announcements: [...] }
+};
+
+/**
+ * GET /api/announcements/unread-count
+ * Woreda users: returns { count } of announcements newer than last_seen_id.
+ * @returns {{ count: number }}
+ */
+export const fetchUnreadCount = async () => {
+  const res = await api.get("/announcements/unread-count", authHeader());
+  return res.data; // { count: number }
+};
+
+/**
+ * POST /api/announcements/mark-read
+ * Woreda users: mark all current announcements as read up to lastId.
+ * @param {number} lastId - the id of the newest announcement seen
+ */
+export const markAnnouncementsRead = async (lastId) => {
+  const res = await api.post("/announcements/mark-read", { lastId }, authHeader());
+  return res.data; // { ok: true }
+};

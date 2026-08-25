@@ -12,7 +12,14 @@ The work builds entirely on top of the existing `GenericSubcityAnalysisPage`, ad
 
 ```mermaid
 graph TD
-    SC[Subcity Dashboard\nGenericSubcityAnalysisPage] --> TABS[Woreda Tabs\nW1 / W2 / W3 / W4]
+    DASH[Subcity Dashboard\nrenderContent]
+
+    DASH -->|activeNav === analysis\nNO sector selected| LAND[WorkAnalysisLandingPage\n6 sector cards grid]
+    DASH -->|activeNav === analysis\nsector selected| SC[GenericSubcityAnalysisPage\nWorkAnalysisPage]
+
+    LAND -->|onClick: setActiveAnalysisSector| SC
+
+    SC --> TABS[Woreda Tabs\nW1 / W2 / W3 / W4]
     SC --> BTNROW[Button Row\nComparison · Rank]
 
     BTNROW --> CMP[ComparisonView\nSubmitted reports table]
@@ -79,7 +86,91 @@ sequenceDiagram
 
 ---
 
-## Components and Interfaces
+## Work Analysis Landing Page (`WorkAnalysisLandingPage`)
+
+### Overview
+
+When the user navigates to Work Analysis (`activeNav === "analysis"`) and no sector has been selected yet (`activeAnalysisSector` is `null`/falsy), the dashboard renders a **sector card grid** instead of the previous empty-state placeholder. This landing page displays all 6 sectors as clickable cards. Clicking a card calls `setActiveAnalysisSector(s.id)`, which transitions the view to `GenericSubcityAnalysisPage` for that sector.
+
+This is the **same UX pattern** already used by the Annual Plan landing page (`activeNav === "plan"` with no sector selected), which renders an identical `grid grid-cols-2` of sector cards calling `setActivePlanSector(s.id)` on click. The Work Analysis landing page reuses this exact structure, with no new components required — it is a one-for-one replacement of the blank empty-state JSX in `renderContent`.
+
+### Before vs. After
+
+**Before** (existing empty-state):
+```jsx
+// renderContent — activeNav === "analysis", !activeAnalysisSector
+<div>
+  <h1>Work Analysis</h1>
+  <p>Select a sector from the sidebar.</p>
+  <div className="bg-white rounded-xl ... flex flex-col items-center text-center ...">
+    <AnalysisIcon />
+    <p>Choose a sector from the sidebar to view analysis.</p>
+  </div>
+</div>
+```
+
+**After** (sector card grid — mirrors Annual Plan landing):
+```jsx
+// renderContent — activeNav === "analysis", !activeAnalysisSector
+<div>
+  <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Work Analysis</h1>
+  <p className="text-[#64748b] text-sm mb-6">Select a sector to view analysis.</p>
+  <div className="grid grid-cols-2 gap-4">
+    {SECTORS.map((s) => (
+      <button
+        key={s.id}
+        onClick={() => setActiveAnalysisSector(s.id)}
+        className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-6 text-left hover:border-[#1a3a5c]/40 hover:shadow-sm transition-all"
+      >
+        <p className="font-semibold text-[#1e293b]">{s.label}</p>
+        <p className="text-xs text-[#94a3b8] mt-1">Active</p>
+      </button>
+    ))}
+  </div>
+</div>
+```
+
+### Sector Cards
+
+The grid iterates over the existing `SECTORS` constant (already defined in `subcitydashboard.jsx`), which contains exactly the 6 sectors:
+
+| Card | Sector ID | Display Label       |
+|------|-----------|---------------------|
+| 1    | `buusaa`  | Buusaa Gonofaa      |
+| 2    | `qonna`   | Qonna               |
+| 3    | `galii`   | Galii Sassaabu      |
+| 4    | `carraa`  | Carraa Hojii Uumuu  |
+| 5    | `daldala` | Daldala             |
+| 6    | `atk`     | ATK                 |
+
+All 6 are active, so every card shows "Active" as the subtitle. No "Coming soon" variants are needed (unlike the Annual Plan landing, which has conditional logic for this — the Work Analysis landing can omit the condition since all 6 sectors are supported by `WorkAnalysisPage`/`GenericSubcityAnalysisPage`).
+
+### Interaction Flow
+
+```mermaid
+sequenceDiagram
+    participant U as Sub-city User
+    participant DASH as renderContent
+    participant LAND as Sector Cards Grid
+    participant ANALYSIS as GenericSubcityAnalysisPage
+
+    U->>DASH: navigates to "Work Analysis" (activeNav = "analysis")
+    DASH->>LAND: activeAnalysisSector is null → render 6 sector cards
+    U->>LAND: clicks a sector card (e.g. "Buusaa Gonofaa")
+    LAND->>DASH: setActiveAnalysisSector("buusaa")
+    DASH->>ANALYSIS: activeAnalysisSector = "buusaa" → render GenericSubcityAnalysisPage
+```
+
+### Implementation Notes
+
+- **No new component** is needed. The change is entirely inside the `if (activeNav === "analysis")` branch of `renderContent` in `subcitydashboard.jsx`.
+- **No new state** is introduced. `activeAnalysisSector` already exists; this change only replaces the JSX rendered when it is falsy.
+- **No backend changes** required — this is a pure frontend change.
+- The `SECTORS` constant is already defined in scope and shared with the Annual Plan section.
+- The `setActiveAnalysisSector` setter is already wired to the sidebar nav items; this change adds an equivalent trigger from the card grid.
+- The sidebar's sector nav items (`analysisOpen` / sector links) continue to work as before, providing a second way to select a sector.
+
+---
 
 ### Component 1: `GenericSubcityAnalysisPage` (enhanced)
 
@@ -647,3 +738,15 @@ Passing an unknown `sector` value (e.g., `"invalid"`) to either new endpoint ret
 At most one of `{ woreda view, comparison view, rank view }` is active at any time. Clicking "Comparison" while Rank is active immediately switches to Comparison, never showing both simultaneously.
 
 **Validates: Requirements 1.1, 1.2** (Comparison and Rank buttons toggle distinct views)
+
+### Property 11: Work Analysis landing shows all 6 sectors
+
+When `activeNav === "analysis"` and `activeAnalysisSector` is falsy, the rendered grid contains exactly 6 sector cards — one for each entry in `SECTORS` — with no duplicates and no omissions.
+
+**Validates: Requirement 13.1** (All 6 sector cards are displayed on the landing page)
+
+### Property 12: Sector card click navigates to correct sector
+
+For any sector card with `s.id ∈ { "buusaa", "qonna", "galii", "carraa", "daldala", "atk" }`, clicking the card sets `activeAnalysisSector === s.id` and causes `GenericSubcityAnalysisPage` to be rendered for exactly that sector.
+
+**Validates: Requirement 13.2** (Clicking a card navigates to the correct sector analysis page)

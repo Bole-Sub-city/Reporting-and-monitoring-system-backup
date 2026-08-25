@@ -10,6 +10,7 @@ This document specifies requirements for enhancing the Subcity Dashboard's Work 
 
 - **Dashboard**: The Subcity Dashboard application rendered by `subcitydashboard.jsx`.
 - **GenericSubcityAnalysisPage**: The React component implementing the Work Analysis page; the primary component being enhanced.
+- **WorkAnalysisLandingPage**: The sector card grid rendered inside `renderContent` when `activeNav === "analysis"` and no sector has been selected yet. Not a separate component — it is JSX inlined in the `renderContent` function, mirroring the Annual Plan landing page pattern.
 - **ComparisonView**: A new React component that renders a table of actual submitted report data per woreda per field for a selected sector and period.
 - **RankView**: A new React component that ranks the four woredas by completion percentage and allows drill-down per woreda.
 - **WorkAnalysisRingSection**: A new React component that renders a grid of ring charts for the currently selected woreda and sector.
@@ -219,3 +220,19 @@ This document specifies requirements for enhancing the Subcity Dashboard's Work 
 2. THE `ComparisonView` and `RankView` SHALL each issue a single `GET /api/subcity/woreda-reports` request that returns all four woredas' data in one round-trip rather than four separate requests.
 3. THE `RankView` SHALL reuse plan target data already available in the parent component for the initial ranking computation, avoiding a redundant plan fetch.
 4. THE backend `GET /api/subcity/woreda-reports` handler SHALL query only one report table per request, filtered by `username IN (woreda_usernames)` and `report_date BETWEEN from AND to`, leveraging existing indexes on `username` and `report_date`.
+
+---
+
+### Requirement 13: Work Analysis Landing Page — Sector Cards Grid
+
+**User Story:** As a subcity manager, I want to see clickable sector cards when I navigate to Work Analysis without a sector selected, so that I can quickly choose a sector to analyze without having to use the sidebar.
+
+#### Acceptance Criteria
+
+1. WHEN `activeNav === "analysis"` AND `activeAnalysisSector` is falsy, THE `renderContent` function SHALL render a grid of exactly 6 sector cards — one for each entry in the `SECTORS` constant (Buusaa Gonofaa, Qonna, Galii Sassaabu, Carraa Hojii Uumuu, Daldala, ATK) — in a `grid grid-cols-2` layout.
+2. WHEN the user clicks any sector card in the Work Analysis landing grid, THE dashboard SHALL call `setActiveAnalysisSector(s.id)` for that card's sector ID, immediately replacing the landing grid with `GenericSubcityAnalysisPage` for that sector.
+3. THE Work Analysis landing page SHALL NOT render the blank empty-state placeholder (the centered `AnalysisIcon` with "Choose a sector from the sidebar" message) when the sector card grid is shown.
+4. EACH sector card SHALL display the sector's display label (e.g., "Buusaa Gonofaa") as the card title and a subtitle of "Active", consistent with the visual style of the Annual Plan landing page sector cards.
+5. THE sector card grid layout and styling SHALL match the Annual Plan landing page sector cards: `bg-white rounded-xl border border-[#e2e8f0] px-5 py-6` with `hover:border-[#1a3a5c]/40 hover:shadow-sm transition-all`.
+6. THE existing sidebar sector nav links for Work Analysis SHALL continue to function as a second way to select a sector, with both the sidebar links and the landing page cards calling `setActiveAnalysisSector(s.id)`.
+7. THIS change SHALL require no new React components, no new state variables, no new API endpoints, and no backend modifications — it is a pure frontend change replacing the existing empty-state JSX in `renderContent`.

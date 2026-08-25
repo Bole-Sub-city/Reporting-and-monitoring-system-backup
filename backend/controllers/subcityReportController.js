@@ -152,10 +152,10 @@ const SECTOR_PLAN_TABLE_MAP = {
     w4: "annual_atk_plan_wereda_4",
   },
   galii: {
-    w1: "annual_revenue_plan_wereda_1",
-    w2: "annual_revenue_plan_wereda_2",
-    w3: "annual_revenue_plan_wereda_3",
-    w4: "annual_revenue_plan_wereda_4",
+    w1: "annual_galii_plan_wereda_1",
+    w2: "annual_galii_plan_wereda_2",
+    w3: "annual_galii_plan_wereda_3",
+    w4: "annual_galii_plan_wereda_4",
   },
 };
 
@@ -166,7 +166,7 @@ const SECTOR_PLAN_FIELDS = {
     hubannoo_uummuu: "hubannoo_uummuu_target",
     horannaa_misensaa: "horannaa_misensaa_target",
     buusi_jiraataa: "buusi_jiraataa_target",
-    gumaata_jiraataa: "gumaata_jirataa_target",
+    gumaata_jiraataa: "gumaata_jiraataa_target",
     buusi_daldalaa: "buusi_daldalaa_target",
     inisheetivii_buusaa_gonofaa: "inisheetivii_buusaa_gonofaa_target",
     gumaata_mootummaa: "gumaata_mootummaa_target",
@@ -186,9 +186,9 @@ const SECTOR_PLAN_FIELDS = {
     leenjii: "leenjii_target",
     carraa_hojii_dhaabbii: "carraa_hojii_dhaabbii_target",
     carraa_hojii_qacarrii: "carraa_hojii_qacarrii_target",
-    qusannaa_haawaasaa: "qusannaa_target",
+    qusannaa_haawaasaa: "qusannaa_haawaasaa_target",
     qusanna_dirqii: "qusanna_dirqii_target",
-    kenna_liqii: "liqii_target",
+    kenna_liqii: "kenna_liqii_target",
     deebii_liqii_bilchaate: "deebii_liqii_bilchaate_target",
     deebii_liqii_bulee: "deebii_liqii_bulee_target",
     industrii_godoo: "industrii_godoo_target",
@@ -213,8 +213,8 @@ const SECTOR_PLAN_FIELDS = {
     galii_atk_galchuu: "galii_atk_galchuu_target",
   },
   galii: {
-    galii_idilee: "idilee_target",
-    galii_mana_qophessaa: "mana_qophessaa_target",
+    galii_idilee: "galii_idilee_target",
+    galii_mana_qophessaa: "galii_mana_qophessaa_target",
   },
 };
 
@@ -232,6 +232,9 @@ function getDateRange(period) {
     from = d.toISOString().split("T")[0];
   } else if (period === "monthly") {
     from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  } else if (period === "quarterly") {
+    const q = Math.floor(now.getMonth() / 3);
+    from = `${now.getFullYear()}-${String(q * 3 + 1).padStart(2, "0")}-01`;
   } else {
     // annual (default)
     from = `${now.getFullYear()}-01-01`;
@@ -360,11 +363,11 @@ const getAllWoRedaReports = async (req, res) => {
         .json({ message: `Unknown sector: "${sector}". Valid values: buusaa, qonna, galii, carraa, daldala, atk` });
     }
 
-    const validPeriods = ["daily", "weekly", "monthly", "annual"];
+    const validPeriods = ["daily", "weekly", "monthly", "quarterly", "annual"];
     if (!validPeriods.includes(period)) {
       return res
         .status(400)
-        .json({ message: `Unknown period: "${period}". Valid values: daily, weekly, monthly, annual` });
+        .json({ message: `Unknown period: "${period}". Valid values: daily, weekly, monthly, quarterly, annual` });
     }
 
     const { from, to } = getDateRange(period);
@@ -435,11 +438,11 @@ const getWoRedaAnalysis = async (req, res) => {
         .json({ message: `Unknown woredaId: "${woredaId}". Valid values: w1, w2, w3, w4` });
     }
 
-    const validPeriods = ["daily", "weekly", "monthly", "annual"];
+    const validPeriods = ["daily", "weekly", "monthly", "quarterly", "annual"];
     if (!validPeriods.includes(period)) {
       return res
         .status(400)
-        .json({ message: `Unknown period: "${period}". Valid values: daily, weekly, monthly, annual` });
+        .json({ message: `Unknown period: "${period}". Valid values: daily, weekly, monthly, quarterly, annual` });
     }
 
     const { from, to } = getDateRange(period);

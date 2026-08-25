@@ -19,6 +19,10 @@ import {
   fetchWeredaAtkPlan,
   fetchWeredaRevenuePlan,
   fetchWeredaCarraaHojiiPlan,
+  fetchAnnouncements,
+  fetchUnreadCount,
+  markAnnouncementsRead,
+  fetchWoRedaAnalysis,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
@@ -352,6 +356,24 @@ const REPORT_TYPES = [
   "Weekly Report (Gabaasa Torban)",
   "Monthly Report (Gabaasa Ji'aa)",
 ];
+
+// Maps logged-in username to the woreda ID used by the subcity analysis API
+const USERNAME_TO_WOREDA_ID_FE = {
+  "Aanaa Gooroo": "w1",
+  "Aanaa Dhadacha Araaraa": "w2",
+  "Aanaa Dhakaa Adii": "w3",
+  "Aanaa Andoodee": "w4",
+};
+
+// Helper: returns the woredaId for the currently logged-in user
+function getMyWoredaId() {
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    return USERNAME_TO_WOREDA_ID_FE[u?.username] ?? null;
+  } catch {
+    return null;
+  }
+}
 const PLAN_FIELDS = [
   {
     key: "hubannoo_uummuu",
@@ -1641,7 +1663,7 @@ function QonnaAnalysisSection() {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
-  const [summary, setSummary] = useState(null);
+  const [actuals, setActuals] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -1654,15 +1676,17 @@ function QonnaAnalysisSection() {
 
   useEffect(() => {
     if (!localStorage.getItem("token")) { setLoading(false); return; }
+    const woredaId = getMyWoredaId();
+    if (!woredaId) { setLoading(false); return; }
     setLoading(true);
     setError("");
-    fetchSummary(period)
-      .then((d) => setSummary(d.summary))
-      .catch((err) => setError(err && err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to load Qonna summary data."))
+    fetchWoRedaAnalysis("qonna", woredaId, period)
+      .then((d) => setActuals(d.actuals ?? {}))
+      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load Qonna data."))
       .finally(() => setLoading(false));
   }, [period]);
 
-  const activeSummary = summary;
+  const activeSummary = actuals;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -2112,74 +2136,7 @@ function QonnaAnalysisSection() {
             </div>
           </div>
 
-          {/* Period target breakdown */}
-          {plan && (
-            <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-              <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
-                <p className="text-sm font-semibold text-[#334155]">
-                  Period Target Breakdown
-                </p>
-                <p className="text-xs text-[#64748b] mt-0.5">
-                  Annual plan divided — Daily · Weekly · Monthly · Annual
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#f1f5f9]">
-                      {[
-                        "Category",
-                        "Annual",
-                        "Monthly (÷12)",
-                        "Weekly (÷52)",
-                        "Daily (÷365)",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {QONNA_CATS.map((cat) => {
-                      const annual = plan ? (plan[cat.planKey] ?? 0) : 0;
-                      return (
-                        <tr
-                          key={cat.key}
-                          className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                        >
-                          <td className="px-4 py-3 font-medium text-[#1e293b]">
-                            <span className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: cat.color }}
-                              />
-                              {cat.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-bold text-[#1e293b]">
-                            {annual.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 12).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 52).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 365).toLocaleString()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {/* Period target breakdown — removed */}
         </>
       )}
     </div>
@@ -3049,10 +3006,11 @@ function GenericAnalysisSection({
   accentColor,
   accentLight,
   accentBorder,
+  sector, // NEW: "carraa" | "daldala" | "atk" | "galii"
 }) {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
-  const [summary, setSummary] = useState(null);
+  const [actuals, setActuals] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -3061,17 +3019,20 @@ function GenericAnalysisSection({
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null));
   }, [fetchPlanFn]);
+
   useEffect(() => {
     if (!localStorage.getItem("token")) { setLoading(false); return; }
+    const woredaId = getMyWoredaId();
+    if (!woredaId || !sector) { setLoading(false); return; }
     setLoading(true);
     setError("");
-    fetchSummary(period)
-      .then((d) => setSummary(d.summary))
-      .catch((err) => setError(err && err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to load summary."))
+    fetchWoRedaAnalysis(sector, woredaId, period)
+      .then((d) => setActuals(d.actuals ?? {}))
+      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load summary."))
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, sector]);
 
-  const activeSummary = summary;
+  const activeSummary = actuals;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
 
   return (
@@ -3366,74 +3327,7 @@ function GenericAnalysisSection({
             </div>
           </div>
 
-          {/* Period breakdown */}
-          {plan && (
-            <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mt-6">
-              <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
-                <p className="text-sm font-semibold text-[#334155]">
-                  Period Target Breakdown
-                </p>
-                <p className="text-xs text-[#64748b] mt-0.5">
-                  Annual plan divided — Daily · Weekly · Monthly · Annual
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#f1f5f9]">
-                      {[
-                        "Category",
-                        "Annual",
-                        "Monthly (÷12)",
-                        "Weekly (÷52)",
-                        "Daily (÷365)",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cats.map((cat) => {
-                      const annual = plan ? (plan[cat.planKey] ?? 0) : 0;
-                      return (
-                        <tr
-                          key={cat.key}
-                          className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                        >
-                          <td className="px-4 py-3 font-medium text-[#1e293b]">
-                            <span className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: cat.color }}
-                              />
-                              {cat.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-bold text-[#1e293b]">
-                            {annual.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 12).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 52).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-[#64748b]">
-                            {Math.round(annual / 365).toLocaleString()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {/* Period breakdown — removed */}
         </>
       )}
     </div>
@@ -4619,7 +4513,8 @@ function ReportHistorySection({ woreda }) {
     const date = r.report_date ?? "";
     const type = r.report_type ?? "";
     const sector = r._sector ?? "";
-    const periodMatch = filterPeriod === "all" || type === filterPeriod;
+    // Match by prefix: "Daily" matches "Daily Report (Gabaasa Guyyaa)", etc.
+    const periodMatch = filterPeriod === "all" || type.startsWith(filterPeriod);
     const sectorMatch = filterSector === "all" || sector === filterSector;
     let dateMatch = true;
     if (isCustom && appliedRange) {
@@ -4942,6 +4837,94 @@ const USERNAME_TO_WOREDA_NAME = {
   "Aanaa Andoodee": "Aanaa Andoodee",
 };
 
+// ─── Woreda Announcements View Page (read-only + mark-as-read) ────────────────
+function AnnouncementsViewPage({ onRead }) {
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchAnnouncements()
+      .then((d) => {
+        const list = d.announcements || [];
+        setAnnouncements(list);
+        // Mark all as read if there are any
+        if (list.length > 0) {
+          const maxId = Math.max(...list.map((a) => a.id));
+          markAnnouncementsRead(maxId)
+            .then(() => onRead && onRead()) // reset badge to 0
+            .catch(() => {});
+        }
+      })
+      .catch(() => setError("Failed to load announcements."))
+      .finally(() => setLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Announcements</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Updates from the sub-city office.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+          {error}
+        </div>
+      ) : announcements.length === 0 ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-12 text-center">
+          <svg
+            className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <p className="text-[#94a3b8] text-sm">No announcements yet.</p>
+          <p className="text-[#cbd5e1] text-xs mt-1">
+            Check back later for updates from the sub-city office.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {announcements.map((ann) => (
+            <div
+              key={ann.id}
+              className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
+            >
+              <div className="px-5 py-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <p className="font-semibold text-[#1e293b] text-sm leading-snug">
+                    {ann.title}
+                  </p>
+                  <span className="text-[10px] text-[#94a3b8] whitespace-nowrap flex-shrink-0 mt-0.5">
+                    {new Date(ann.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-[#475569] whitespace-pre-wrap leading-relaxed">
+                  {ann.body}
+                </p>
+                <p className="text-[11px] text-[#94a3b8] mt-3">
+                  Posted by {ann.created_by}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
@@ -4971,6 +4954,23 @@ export default function WoRedaDashboard() {
   const [expandedWork, setExpandedWork] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const sideW = collapsed ? "w-16" : "w-64";
+
+  // ── Unread announcements badge ──
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // Initial fetch
+    fetchUnreadCount()
+      .then((d) => setUnreadCount(d.count ?? 0))
+      .catch(() => {});
+    // Poll every 60 s so the badge stays fresh without full re-login
+    const interval = setInterval(() => {
+      fetchUnreadCount()
+        .then((d) => setUnreadCount(d.count ?? 0))
+        .catch(() => {});
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -5182,7 +5182,11 @@ export default function WoRedaDashboard() {
               className="relative text-[#64748b] hover:text-[#1e293b]"
             >
               <BellIcon />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#dc2626] rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-[#dc2626] rounded-full flex items-center justify-center text-white text-[10px] font-bold px-0.5 leading-none">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
@@ -5326,6 +5330,7 @@ export default function WoRedaDashboard() {
                 if (wid === "revenue")
                   return (
                     <GenericAnalysisSection
+                      sector="galii"
                       cats={REVENUE_CATS}
                       fetchPlanFn={fetchWeredaRevenuePlan}
                       title="Galii Sassaabu"
@@ -5338,6 +5343,7 @@ export default function WoRedaDashboard() {
                 if (wid === "carraaHojii")
                   return (
                     <GenericAnalysisSection
+                      sector="carraa"
                       cats={CARRAA_WOREDA_CATS}
                       fetchPlanFn={fetchWeredaCarraaHojiiPlan}
                       title="Carraa Hojii Uumuu"
@@ -5349,6 +5355,7 @@ export default function WoRedaDashboard() {
                 if (wid === "daldala")
                   return (
                     <GenericAnalysisSection
+                      sector="daldala"
                       cats={DALDALA_CATS}
                       fetchPlanFn={fetchWeredaDaldalaPlan}
                       title="Daldala"
@@ -5360,6 +5367,7 @@ export default function WoRedaDashboard() {
                 if (wid === "atk")
                   return (
                     <GenericAnalysisSection
+                      sector="atk"
                       cats={ATK_CATS}
                       fetchPlanFn={fetchWeredaAtkPlan}
                       title="ATK"
@@ -5416,12 +5424,9 @@ export default function WoRedaDashboard() {
 
           {activeNav === "announcements" && (
             <div id="announcements-section">
-              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
-                Announcements
-              </h1>
-              <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-10 text-center">
-                <p className="text-[#94a3b8] text-sm">No announcements yet.</p>
-              </div>
+              <AnnouncementsViewPage
+                onRead={() => setUnreadCount(0)}
+              />
             </div>
           )}
 
