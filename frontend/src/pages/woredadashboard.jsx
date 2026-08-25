@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import {
@@ -1452,189 +1452,104 @@ function QonnaAnnualPlanSection({ u }) {
       </div>
     );
 
-  // Per-category plan field config: 3 keys + 3 display labels
+  // Each category has 3 fields displayed as flat cards
   const QONNA_PLAN_CATS = [
     {
-      key: "furdisa",
-      label: "Furdisa",
-      color: "#065f46",
-      f1key: "furdisa_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Furdisa",
-      f2key: "furdisa_lakk_sheedii_target",
-      f2label: "Lakk Sheedii Furdisa",
-      f3key: "furdisa_lakk_horii_waliigalaa_target",
-      f3label: "Lakk Horii Waliigalaa",
+      key: "furdisa", label: "Furdisa", color: "#065f46",
+      fields: [
+        { planKey: "furdisa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "furdisa_lakk_sheedii_target", label: "Lakk Sheedii" },
+        { planKey: "furdisa_lakk_horii_waliigalaa_target", label: "Lakk Horii Waliigalaa" },
+      ],
     },
     {
-      key: "annan",
-      label: "Annan",
-      color: "#0f766e",
-      f1key: "annan_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Annan",
-      f2key: "annan_lakk_sheedii_target",
-      f2label: "Lakk Sheedii Annan",
-      f3key: "annan_lakk_saa_waliigalaa_target",
-      f3label: "Lakk Sa'a Waliigalaa",
+      key: "annan", label: "Annan", color: "#0f766e",
+      fields: [
+        { planKey: "annan_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "annan_lakk_sheedii_target", label: "Lakk Sheedii" },
+        { planKey: "annan_lakk_saa_waliigalaa_target", label: "Lakk Sa'a Waliigalaa" },
+      ],
     },
     {
-      key: "lukkuu",
-      label: "Lukkuu",
-      color: "#1e40af",
-      f1key: "lukkuu_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Lukkuu",
-      f2key: "lukkuu_lakk_sheedii_target",
-      f2label: "Lakk Sheedii Lukkuu",
-      f3key: "lukkuu_lakk_lukkuu_waliigalaa_target",
-      f3label: "Lakk Lukkuu Waliigalaa",
+      key: "lukkuu", label: "Lukkuu", color: "#1e40af",
+      fields: [
+        { planKey: "lukkuu_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "lukkuu_lakk_sheedii_target", label: "Lakk Sheedii" },
+        { planKey: "lukkuu_lakk_lukkuu_waliigalaa_target", label: "Lakk Lukkuu Waliigalaa" },
+      ],
     },
     {
-      key: "booyee",
-      label: "Booyyee",
-      color: "#7c3aed",
-      f1key: "booyee_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Booyyee",
-      f2key: "booyee_lakk_sheedii_target",
-      f2label: "Lakk Sheedii Booyyee",
-      f3key: "booyee_lakk_booyyee_waliigalaa_target",
-      f3label: "Lakk Booyyee Waliigalaa",
+      key: "booyee", label: "Booyyee", color: "#7c3aed",
+      fields: [
+        { planKey: "booyee_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "booyee_lakk_sheedii_target", label: "Lakk Sheedii" },
+        { planKey: "booyee_lakk_booyyee_waliigalaa_target", label: "Lakk Booyyee Waliigalaa" },
+      ],
     },
     {
-      key: "kannisaa",
-      label: "Kannisaa",
-      color: "#b45309",
-      f1key: "kannisaa_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Kannisaa",
-      f2key: "kannisaa_lakk_gaaguraa_target",
-      f2label: "Lakk Gaaguraa",
-      f3key: "kannisaa_lakk_kannisaa_waliigalaa_target",
-      f3label: "Lakk Kannisaa Waliigalaa",
+      key: "kannisaa", label: "Kannisaa", color: "#b45309",
+      fields: [
+        { planKey: "kannisaa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "kannisaa_lakk_gaaguraa_target", label: "Lakk Gaaguraa" },
+        { planKey: "kannisaa_lakk_kannisaa_waliigalaa_target", label: "Lakk Kannisaa Waliigalaa" },
+      ],
     },
     {
-      key: "qurxummii",
-      label: "Qurxummii",
-      color: "#0369a1",
-      f1key: "qurxummii_qophi_lafa_target",
-      f1label: "Qophi Lafa Waliigalaa Qurxummii",
-      f2key: "qurxummii_lakk_pondii_target",
-      f2label: "Lakk Pondii",
-      f3key: "qurxummii_lakk_qurxummii_waliigalaa_target",
-      f3label: "Lakk Qurxummii Waliigalaa",
+      key: "qurxummii", label: "Qurxummii", color: "#0369a1",
+      fields: [
+        { planKey: "qurxummii_qophi_lafa_target", label: "Qophi Lafa (ha)" },
+        { planKey: "qurxummii_lakk_pondii_target", label: "Lakk Pondii" },
+        { planKey: "qurxummii_lakk_qurxummii_waliigalaa_target", label: "Lakk Qurxummii Waliigalaa" },
+      ],
     },
   ];
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-[#1e293b]">
-          Qonna — Annual Plan
-        </h1>
-        <span className="bg-[#f0fdf4] text-[#065f46] text-xs font-bold px-3 py-1 rounded-full border border-[#bbf7d0]">
-          {year}
-        </span>
-      </div>
-      <p className="text-[#64748b] text-sm mb-6">
-        {u.woreda} · Targets assigned by the sub-city office. Read-only.
-      </p>
-
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
           className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-          style={{
-            background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
-          }}
+          style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
         >
           <PlanIcon />
           <div>
-            <p className="text-white font-bold text-base">
-              Qonna Annual Plan — {year}
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              {u.name} · {u.woreda} · Read-only
-            </p>
+            <p className="text-white font-bold text-base">Annual Plan {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
           </div>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
-          {QONNA_PLAN_CATS.map(
-            ({
-              key,
-              label,
-              color,
-              f1key,
-              f1label,
-              f2key,
-              f2label,
-              f3key,
-              f3label,
-            }) => {
-              const v1 = plan[f1key] ?? 0;
-              const v2 = plan[f2key] ?? 0;
-              const v3 = plan[f3key] ?? 0;
-              return (
-                <div
-                  key={key}
-                  className="rounded-xl border border-[#e2e8f0] overflow-hidden"
-                >
-                  {/* Category header */}
+        <div className="px-6 py-5 space-y-6">
+          {QONNA_PLAN_CATS.map(({ key, label, color, fields }) => (
+            <div key={key}>
+              {/* Category label */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <p className="text-xs font-bold uppercase tracking-wide" style={{ color }}>
+                  {label}
+                </p>
+              </div>
+              {/* Three flat cards — same layout as GenericAnnualPlanSection */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {fields.map(({ planKey, label: fieldLabel }) => (
                   <div
-                    className="px-4 py-2.5 flex items-center gap-2"
-                    style={{
-                      backgroundColor: `${color}15`,
-                      borderBottom: `1px solid ${color}30`,
-                    }}
+                    key={planKey}
+                    className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4"
                   >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: color }}
-                    />
-                    <p className="text-sm font-bold" style={{ color }}>
-                      {label}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">
+                        {fieldLabel}
+                      </p>
+                    </div>
+                    <p className="text-3xl font-extrabold text-[#1e293b]">
+                      {(plan[planKey] ?? 0).toLocaleString()}
                     </p>
+                    <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
                   </div>
-                  {/* Three value cards */}
-                  <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {[
-                      { vkey: f1key, lbl: f1label, val: v1 },
-                      { vkey: f2key, lbl: f2label, val: v2 },
-                      { vkey: f3key, lbl: f3label, val: v3, accent: true },
-                    ].map(({ vkey, lbl, val, accent }) => (
-                      <div
-                        key={vkey}
-                        className="rounded-lg border px-3 py-3 text-center"
-                        style={
-                          accent
-                            ? {
-                                backgroundColor: `${color}18`,
-                                borderColor: `${color}40`,
-                              }
-                            : {
-                                backgroundColor: "#f8fafc",
-                                borderColor: "#e2e8f0",
-                              }
-                        }
-                      >
-                        <p
-                          className="text-[10px] font-bold uppercase tracking-wide mb-1 truncate"
-                          style={accent ? { color } : { color: "#64748b" }}
-                        >
-                          {lbl}
-                        </p>
-                        <p
-                          className="text-2xl font-extrabold"
-                          style={accent ? { color } : { color: "#1e293b" }}
-                        >
-                          {val.toLocaleString()}
-                        </p>
-                        <p className="text-[10px] text-[#94a3b8] mt-0.5">
-                          Annual target
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            },
-          )}
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="mx-6 mb-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
@@ -1649,8 +1564,7 @@ function QonnaAnnualPlanSection({ u }) {
             <path d="M12 8v4M12 16h.01" />
           </svg>
           <p className="text-[#065f46] text-sm">
-            These targets were assigned by your sub-city office. Contact them if
-            you believe the numbers are incorrect.
+            Targets assigned by sub-city. Contact them if numbers need correction.
           </p>
         </div>
       </div>
@@ -1658,12 +1572,68 @@ function QonnaAnnualPlanSection({ u }) {
   );
 }
 // ─── Qonna Work Analysis Section (Woreda) ────────────────────────────────────
-// Shows plan targets (animals) + actual values: houses built, animals, land (ha)
+// Each of the 6 animal categories has 3 sub-metrics that are both planned
+// and reported: land prepared (ha), sheds/ponds/hives built, and total animals.
+// This section analyses all 18 sub-fields individually.
+
+// 6 categories x 3 sub-fields each = 18 analysed metrics
+const QONNA_ANALYSIS_CATS = [
+  {
+    key: "furdisa", label: "Furdisa", color: "#065f46",
+    fields: [
+      { key: "furdisa_qophi_lafa",  label: "Lafa Qophaawe (ha)",  unit: "ha" },
+      { key: "furdisa_lakk_sheedii", label: "Sheedii Ijaaraman",   unit: "" },
+      { key: "furdisa_lakk_horii_waliigalaa",   label: "Lakk Horii",          unit: "" },
+    ],
+  },
+  {
+    key: "annan", label: "Annan", color: "#0f766e",
+    fields: [
+      { key: "annan_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "annan_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
+      { key: "annan_lakk_saa_waliigalaa",     label: "Lakk Sa'a",          unit: "" },
+    ],
+  },
+  {
+    key: "lukkuu", label: "Lukkuu", color: "#1e40af",
+    fields: [
+      { key: "lukkuu_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "lukkuu_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
+      { key: "lukkuu_lakk_lukkuu_waliigalaa",  label: "Lakk Lukkuu",        unit: "" },
+    ],
+  },
+  {
+    key: "booyee", label: "Booyyee", color: "#7c3aed",
+    fields: [
+      { key: "booyee_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "booyee_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
+      { key: "booyee_lakk_booyyee_waliigalaa", label: "Lakk Booyyee",       unit: "" },
+    ],
+  },
+  {
+    key: "kannisaa", label: "Kannisaa", color: "#b45309",
+    fields: [
+      { key: "kannisaa_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "kannisaa_lakk_gaaguraa", label: "Gaaguraa Ijaaraman", unit: "" },
+      { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Lakk Kannisaa",      unit: "" },
+    ],
+  },
+  {
+    key: "qurxummii", label: "Qurxummii", color: "#0369a1",
+    fields: [
+      { key: "qurxummii_qophi_lafa",    label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "qurxummii_lakk_pondii",   label: "Pondii Ijaaraman",   unit: "" },
+      { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Lakk Qurxummii",    unit: "" },
+    ],
+  },
+];
+
 function QonnaAnalysisSection() {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [actuals, setActuals] = useState(null);
+  const [targets, setTargets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -1681,17 +1651,24 @@ function QonnaAnalysisSection() {
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis("qonna", woredaId, period)
-      .then((d) => setActuals(d.actuals ?? {}))
-      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load Qonna data."))
+      .then((d) => {
+        setActuals(d.actuals ?? {});
+        setTargets(d.targets ?? {});
+      })
+      .catch((err) =>
+        setError(err?.response?.data?.message ?? "Failed to load Qonna data."),
+      )
       .finally(() => setLoading(false));
   }, [period]);
 
-  const activeSummary = actuals;
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
+  const accentColor = "#065f46";
+  const accentLight = "#f0fdf4";
+  const accentBorder = "#bbf7d0";
 
   return (
     <div>
-      {/* ── Header + period selector ── */}
+      {/* Header + period selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
@@ -1704,38 +1681,30 @@ function QonnaAnalysisSection() {
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
+              <option key={p.value} value={p.value}>{p.label}</option>
             ))}
           </select>
         </div>
       </div>
 
       {!plan && !planLoading && (
-        <div className="mb-5 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg
-            className="w-5 h-5 text-amber-500 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
+        <div className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: accentLight, borderColor: accentBorder }}>
+          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-[#92400e] text-sm">
-            No Qonna plan assigned yet by sub-city. Targets will be 0 until the
-            plan is set.
+          <p className="text-sm" style={{ color: accentColor }}>
+            No Qonna plan assigned yet. Targets will appear once sub-city saves the plan.
           </p>
         </div>
       )}
 
-      {/* Loading / error states */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            style={{ borderTopColor: accentColor }} />
         </div>
       ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -1744,404 +1713,160 @@ function QonnaAnalysisSection() {
       ) : (
         <>
           {/* Period banner */}
-          <div className="mb-5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-[#065f46] text-xs font-bold uppercase tracking-wide">
+          <div className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border"
+            style={{ background: accentLight, borderColor: accentBorder }}>
+            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
               {periodLabel} View
             </span>
-            <span className="text-[#065f46] text-xs">
+            <span className="text-xs" style={{ color: accentColor }}>
               Targets partitioned from annual plan
             </span>
           </div>
-          {/* Ring charts — animals achieved vs period target */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-            {QONNA_CATS.map((cat) => {
-              const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-              const periodTarget = partitionTarget(annualTarget, period);
-              const actual = activeSummary
-                ? (activeSummary[cat.lakkKey] ?? 0)
-                : 0;
-              const pct =
-                periodTarget > 0
-                  ? Math.min(Math.round((actual / periodTarget) * 100), 100)
-                  : 0;
-              const size = 110,
-                sw = 11,
-                r = (size - sw) / 2,
-                circ = 2 * Math.PI * r;
-              const offset = circ - (pct / 100) * circ;
-              return (
-                <div
-                  key={cat.key}
-                  className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm"
-                >
-                  <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">
-                    {cat.label}
-                  </p>
-                  <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
-                    {cat.description}
-                  </p>
-                  <div
-                    className="relative"
-                    style={{ width: size, height: size }}
-                  >
-                    <svg
-                      width={size}
-                      height={size}
-                      style={{ transform: "rotate(-90deg)" }}
-                    >
-                      <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={r}
-                        fill="none"
-                        stroke="#f3f4f6"
-                        strokeWidth={sw}
-                      />
-                      <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={r}
-                        fill="none"
-                        stroke={cat.color}
-                        strokeWidth={sw}
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
-                        strokeDashoffset={offset}
-                        style={{ transition: "stroke-dashoffset 0.7s ease" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span
-                        className="text-lg font-extrabold leading-none"
-                        style={{ color: cat.color }}
-                      >
-                        {pct}%
-                      </span>
-                      <span className="text-[10px] text-[#94a3b8] mt-0.5">
-                        done
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 w-full space-y-0.5">
-                    <div className="flex justify-between text-[10px] text-[#64748b]">
-                      <span>Actual</span>
-                      <span className="font-semibold text-[#1e293b]">
-                        {actual.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-[#64748b]">
-                      <span>Target</span>
-                      <span className="font-semibold text-[#1e293b]">
-                        {periodTarget.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
-                      <div
-                        className="h-1 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, backgroundColor: cat.color }}
-                      />
-                    </div>
-                  </div>
+
+          {/* Per-category ring charts: 3 rings per category */}
+          <div className="space-y-6 mb-8">
+            {QONNA_ANALYSIS_CATS.map((cat) => (
+              <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                {/* Category header */}
+                <div className="px-5 py-3 border-b border-[#e2e8f0] flex items-center gap-2"
+                  style={{ backgroundColor: `${cat.color}12`, borderLeftColor: cat.color, borderLeftWidth: 4 }}>
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                  <p className="text-sm font-bold" style={{ color: cat.color }}>{cat.label}</p>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Ring charts — Houses / Ponds / Gaaguraa Built and Land Prepared */}
-          {(() => {
-            // Sum houses built across all categories (manaKey fields)
-            const totalHouses = activeSummary
-              ? QONNA_CATS.reduce(
-                  (s, c) => s + (activeSummary[c.manaKey] ?? 0),
-                  0,
-                )
-              : 0;
-            // Qurxummii ponds specifically
-            const totalPonds = activeSummary
-              ? (activeSummary["qurxummii_pondii_ijaaraman"] ?? 0)
-              : 0;
-            // Kannisaa gaaguraa specifically
-            const totalGaaguraa = activeSummary
-              ? (activeSummary["kannisaa_gaaguraa_ijaaraman"] ?? 0)
-              : 0;
-            // Sum land prepared across all categories (_bakka_qophaawe fields)
-            const totalLand = activeSummary
-              ? QONNA_CATS.reduce(
-                  (s, c) => s + (activeSummary[`${c.key}_bakka_qophaawe`] ?? 0),
-                  0,
-                )
-              : 0;
-
-            const extraCharts = [
-              {
-                key: "houses_built",
-                label: "Houses Built",
-                description: "Mana Ijaaraman",
-                color: "#0f766e",
-                value: totalHouses,
-              },
-              {
-                key: "ponds_built",
-                label: "Ponds Built",
-                description: "Dhaabbii Ijaaraman",
-                color: "#0369a1",
-                value: totalPonds,
-              },
-              {
-                key: "gaaguraa_built",
-                label: "Gaaguraa Built",
-                description: "Gaaguraa Ijaaraman",
-                color: "#b45309",
-                value: totalGaaguraa,
-              },
-              {
-                key: "land_prepared",
-                label: "Land Prepared (ha)",
-                description: "Bakka Qophaawe",
-                color: "#065f46",
-                value: totalLand,
-              },
-            ];
-
-            return (
-              <div className="mb-6">
-                <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide mb-3">
-                  Infrastructure &amp; Land
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {extraCharts.map(
-                    ({ key, label, description, color, value }) => {
-                      const size = 110,
-                        sw = 11,
-                        r = (size - sw) / 2,
-                        circ = 2 * Math.PI * r;
-                      // No plan target for these — show raw actuals with a filled ring when > 0
-                      const pct = value > 0 ? 100 : 0;
-                      const offset = circ - (pct / 100) * circ;
-                      return (
-                        <div
-                          key={key}
-                          className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm"
-                        >
-                          <p className="text-xs font-bold text-[#334155] mb-0.5 text-center">
-                            {label}
-                          </p>
-                          <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
-                            {description}
-                          </p>
-                          <div
-                            className="relative"
-                            style={{ width: size, height: size }}
-                          >
-                            <svg
-                              width={size}
-                              height={size}
-                              style={{ transform: "rotate(-90deg)" }}
-                            >
-                              <circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={r}
-                                fill="none"
-                                stroke="#f3f4f6"
-                                strokeWidth={sw}
-                              />
-                              <circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={r}
-                                fill="none"
-                                stroke={color}
-                                strokeWidth={sw}
-                                strokeLinecap="round"
-                                strokeDasharray={circ}
-                                strokeDashoffset={offset}
-                                style={{
-                                  transition: "stroke-dashoffset 0.7s ease",
-                                }}
-                              />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <span
-                                className="text-lg font-extrabold leading-none"
-                                style={{ color }}
-                              >
-                                {value.toLocaleString()}
-                              </span>
-                              <span className="text-[10px] text-[#94a3b8] mt-0.5">
-                                actual
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-2 w-full">
-                            <div className="flex justify-between text-[10px] text-[#64748b]">
-                              <span>Total</span>
-                              <span className="font-semibold text-[#1e293b]">
-                                {value.toLocaleString()}
-                              </span>
-                            </div>
+                {/* 3 ring charts side by side */}
+                <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {cat.fields.map((f) => {
+                    const annualTarget = targets ? (targets[f.key] ?? 0) : 0;
+                    const periodTarget = partitionTarget(annualTarget, period);
+                    const actual = actuals ? (actuals[f.key] ?? 0) : 0;
+                    const pct = periodTarget > 0
+                      ? Math.min(Math.round((actual / periodTarget) * 100), 100)
+                      : 0;
+                    const size = 100, sw = 10, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                    const offset = circ - (pct / 100) * circ;
+                    return (
+                      <div key={f.key} className="flex flex-col items-center">
+                        <p className="text-xs font-semibold text-[#334155] mb-2 text-center">{f.label}</p>
+                        <div className="relative" style={{ width: size, height: size }}>
+                          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                            <circle cx={size/2} cy={size/2} r={r} fill="none"
+                              stroke={cat.color} strokeWidth={sw} strokeLinecap="round"
+                              strokeDasharray={circ} strokeDashoffset={offset}
+                              style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-base font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+                            <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
                           </div>
                         </div>
-                      );
-                    },
-                  )}
+                        <div className="mt-2 w-full space-y-0.5 px-2">
+                          <div className="flex justify-between text-[10px] text-[#64748b]">
+                            <span>Actual</span>
+                            <span className="font-semibold text-[#1e293b]">
+                              {actual.toLocaleString()}{f.unit ? ` ${f.unit}` : ""}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[10px] text-[#64748b]">
+                            <span>Target</span>
+                            <span className="font-semibold text-[#1e293b]">
+                              {periodTarget.toLocaleString()}{f.unit ? ` ${f.unit}` : ""}
+                            </span>
+                          </div>
+                          <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
+                            <div className="h-1 rounded-full transition-all duration-700"
+                              style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            );
-          })()}
+            ))}
+          </div>
 
-          {/* Full plan vs actual — all dimensions */}
-          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mb-6">
-            <div
-              className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{
-                background: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
-              }}
-            >
-              <p className="text-sm font-semibold text-white">
-                Full Plan vs Actual ({periodLabel})
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">
-                Annual target · Period target · Actual animals · Shed/Ponds/Hive
-                built · Land prepared
-              </p>
+          {/* Full summary table — all 18 sub-fields */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            <div className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
+              <p className="text-sm font-semibold text-white">{periodLabel} Summary Table</p>
+              <p className="text-white/60 text-xs mt-0.5">All 6 categories, all 3 sub-metrics each</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {[
-                      "Category",
-                      "Annual Target",
-                      "Period Target",
-                      "Actual Animals",
-                      "Houses / Ponds / Gaaguraa Built",
-                      "Land Prepared (ha)",
-                      "% Complete",
-                      "Remaining (carry-over)",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
-                      >
+                    {["Category", "Metric", "Annual Target", "Period Target", "Actual", "Achievement", "Remaining"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {QONNA_CATS.map((cat) => {
-                    const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-                    const periodTarget = partitionTarget(annualTarget, period);
-                    const actual = activeSummary
-                      ? (activeSummary[cat.lakkKey] ?? 0)
-                      : 0;
-                    const actualMana = activeSummary
-                      ? (activeSummary[cat.manaKey] ?? 0)
-                      : 0;
-                    const actualLand = activeSummary
-                      ? (activeSummary[`${cat.key}_bakka_qophaawe`] ?? 0)
-                      : 0;
-                    const pct =
-                      periodTarget > 0
-                        ? Math.min(
-                            Math.round((actual / periodTarget) * 100),
-                            999,
-                          )
+                  {QONNA_ANALYSIS_CATS.map((cat) =>
+                    cat.fields.map((f, fi) => {
+                      const annualTarget = targets ? (targets[f.key] ?? 0) : 0;
+                      const periodTarget = partitionTarget(annualTarget, period);
+                      const actual = actuals ? (actuals[f.key] ?? 0) : 0;
+                      const pct = periodTarget > 0
+                        ? Math.min(Math.round((actual / periodTarget) * 100), 999)
                         : 0;
-                    const remaining =
-                      periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
-                    return (
-                      <tr
-                        key={cat.key}
-                        className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium text-[#1e293b]">
-                          <span className="flex items-center gap-2">
-                            <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            {cat.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-bold text-[#1e293b]">
-                          {annualTarget.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-[#64748b]">
-                          {periodTarget.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-[#1e293b]">
-                          {actual.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-[#64748b]">
-                          {actualMana.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-[#64748b]">
-                          {actualLand > 0 ? `${actualLand} ha` : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                            style={{
-                              backgroundColor: `${cat.color}22`,
-                              color: cat.color,
-                            }}
-                          >
-                            {pct}%
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {remaining > 0 ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
-                              <svg
-                                className="w-3 h-3 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 4v16m8-8H4"
-                                />
-                              </svg>
-                              {remaining.toLocaleString()}
+                      const remaining = periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
+                      return (
+                        <tr key={f.key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                          {/* Category cell — only shown on the first sub-field row */}
+                          {fi === 0 ? (
+                            <td className="px-4 py-3 font-bold text-[#1e293b] align-top" rowSpan={3}>
+                              <span className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                                {cat.label}
+                              </span>
+                            </td>
+                          ) : null}
+                          <td className="px-4 py-3 text-[#475569]">{f.label}</td>
+                          <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
+                          <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>
+                              {pct}%
                             </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
-                              <svg
-                                className="w-3 h-3 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              Done
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="px-4 py-3">
+                            {remaining > 0 ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                {remaining.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Done
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
-
-          {/* Period target breakdown — removed */}
         </>
       )}
     </div>
   );
 }
+
 // ─── CarraaHojii Annual Plan fields with display metadata ────────────────────
 const CARRAA_PLAN_FIELDS = [
   {
@@ -2374,323 +2099,6 @@ function CarraaHojiiAnnualPlanSection({ u }) {
             yet. Once they do, your targets will appear here automatically.
           </p>
         </div>
-      )}
-    </div>
-  );
-}
-
-// ─── CarraaHojii Work Analysis Section ───────────────────────────────────────
-// Mirrors AnalysisSection (Buusaa) exactly — same period selector, same ring charts + summary table pattern.
-function CarraaHojiiAnalysisSection() {
-  const [period, setPeriod] = useState("monthly");
-  const [plan, setPlan] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetchWeredaPlan()
-      .then((d) => setPlan(d.plan))
-      .catch(() => setPlan(null));
-  }, []);
-
-  useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
-    setLoading(true);
-    setError("");
-    fetchSummary(period)
-      .then((d) => setSummary(d.summary))
-      .catch((err) => setError(err && err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to load summary data."))
-      .finally(() => setLoading(false));
-  }, [period]);
-
-  const activeSummary = summary;
-  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
-
-  return (
-    <div>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
-        </div>
-        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
-          <AnalysisIcon />
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
-          >
-            {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {!plan && (
-        <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg
-            className="w-5 h-5 text-amber-500 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-          <p className="text-[#1a3a5c] text-sm">
-            No annual plan assigned yet. Targets will appear once the sub-city
-            saves the plan.
-          </p>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
-          {error}
-        </div>
-      ) : (
-        <>
-          <div className="mb-5 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-[#1e40af] text-xs font-bold uppercase tracking-wide">
-              {periodLabel} View
-            </span>
-            <>
-              <span className="text-[#1e40af] text-xs">—</span>
-              <span className="text-[#1e40af] text-xs">
-                Targets partitioned from annual plan
-              </span>
-            </>
-          </div>
-
-          {/* Ring charts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {CARRAA_SUMMARY_KEYS.map(({ summaryKey, key, label, color }) => {
-              const annualTarget = plan ? (plan[key] ?? 0) : 0;
-              const periodTarget = partitionTarget(annualTarget, period);
-              const actual = activeSummary
-                ? (activeSummary[summaryKey] ?? 0)
-                : 0;
-              const pct =
-                periodTarget > 0
-                  ? Math.min(Math.round((actual / periodTarget) * 100), 100)
-                  : 0;
-              const size = 130,
-                sw = 13,
-                r = (size - sw) / 2,
-                circ = 2 * Math.PI * r;
-              const offset = circ - (pct / 100) * circ;
-              return (
-                <div
-                  key={key}
-                  className="bg-white rounded-xl border border-[#e2e8f0] p-4 flex flex-col items-center shadow-sm"
-                >
-                  <p className="text-xs font-bold text-[#334155] mb-2 text-center">
-                    {label}
-                  </p>
-                  <div
-                    className="relative"
-                    style={{ width: size, height: size }}
-                  >
-                    <svg
-                      width={size}
-                      height={size}
-                      style={{ transform: "rotate(-90deg)" }}
-                    >
-                      <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={r}
-                        fill="none"
-                        stroke="#f3f4f6"
-                        strokeWidth={sw}
-                      />
-                      <circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={r}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth={sw}
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
-                        strokeDashoffset={offset}
-                        style={{ transition: "stroke-dashoffset 0.7s ease" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span
-                        className="text-xl font-extrabold leading-none"
-                        style={{ color }}
-                      >
-                        {pct}%
-                      </span>
-                      <span className="text-xs text-[#94a3b8] mt-0.5">
-                        done
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-3 w-full space-y-1">
-                    <div className="flex justify-between text-xs text-[#64748b]">
-                      <span>Actual</span>
-                      <span className="font-semibold text-[#1e293b]">
-                        {actual.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-[#64748b]">
-                      <span>Target</span>
-                      <span className="font-semibold text-[#1e293b]">
-                        {periodTarget.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-1">
-                      <div
-                        className="h-1.5 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, backgroundColor: color }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Summary table */}
-          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
-              <p className="text-sm font-semibold text-[#334155]">
-                {periodLabel} Summary Table
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#f1f5f9]">
-                    {[
-                      "Category",
-                      "Annual Target",
-                      "Period Target",
-                      "Actual",
-                      "% Complete",
-                      "Remaining (carry-over)",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {CARRAA_SUMMARY_KEYS.map(
-                    ({ summaryKey, key, label, color }) => {
-                      const annualTarget = plan ? (plan[key] ?? 0) : 0;
-                      const periodTarget = partitionTarget(
-                        annualTarget,
-                        period,
-                      );
-                      const actual = activeSummary
-                        ? (activeSummary[summaryKey] ?? 0)
-                        : 0;
-                      const pct =
-                        periodTarget > 0
-                          ? Math.min(
-                              Math.round((actual / periodTarget) * 100),
-                              999,
-                            )
-                          : 0;
-                      const remaining =
-                        periodTarget > 0
-                          ? Math.max(periodTarget - actual, 0)
-                          : 0;
-                      return (
-                        <tr
-                          key={key}
-                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
-                        >
-                          <td className="px-5 py-3 font-medium text-[#1e293b]">
-                            <span className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: color }}
-                              />
-                              {label}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-[#64748b]">
-                            {annualTarget.toLocaleString()}
-                          </td>
-                          <td className="px-5 py-3 text-[#64748b]">
-                            {periodTarget.toLocaleString()}
-                          </td>
-                          <td className="px-5 py-3 font-semibold text-[#1e293b]">
-                            {actual.toLocaleString()}
-                          </td>
-                          <td className="px-5 py-3">
-                            <span
-                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${color}22`, color }}
-                            >
-                              {pct}%
-                            </span>
-                          </td>
-                          <td className="px-5 py-3">
-                            {remaining > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
-                                <svg
-                                  className="w-3 h-3 flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={2.5}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 4v16m8-8H4"
-                                  />
-                                </svg>
-                                {remaining.toLocaleString()}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
-                                <svg
-                                  className="w-3 h-3 flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={2.5}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                Done
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    },
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
       )}
     </div>
   );
@@ -4359,17 +3767,17 @@ function formatDateTime(row) {
 // Generate and trigger a CSV download for a single report row
 function downloadReportCSV(row, sectorLabel) {
   const fields = getDisplayFields(row);
-  const lines = [
-    ["Field", "Value"],
-    ["Sector", sectorLabel],
+  const submittedAt = row.created_at
+    ? new Date(row.created_at).toLocaleString()
+    : (row.report_date ?? "");
+  const rows = [
     ["Report Type", row.report_type ?? ""],
-    ["Date", row.report_date ?? ""],
-    ["Submitted At", row.created_at ? new Date(row.created_at).toLocaleString() : ""],
+    ["Sector", sectorLabel],
+    ["Submitted At", submittedAt],
     ...fields.map(([k, v]) => [fieldLabel(k), v]),
   ];
-  const csv = lines
-    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-    .join("\n");
+  const escape = (c) => `"${String(c).replace(/"/g, '""')}"`;
+  const csv = rows.map((r) => r.map(escape).join(",")).join("\n");
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -4955,6 +4363,32 @@ export default function WoRedaDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const sideW = collapsed ? "w-16" : "w-64";
 
+  // ── Dashboard stats ──
+  const [dashStats, setDashStats] = useState(null);
+
+  useEffect(() => {
+    fetchMyReports()
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const sorted = [...data].sort((a, b) =>
+          (b.created_at ?? b.report_date ?? "").localeCompare(
+            a.created_at ?? a.report_date ?? "",
+          ),
+        );
+        const lastRow = sorted[0];
+        const lastDate = lastRow
+          ? (lastRow.created_at
+              ? new Date(lastRow.created_at).toLocaleString(undefined, {
+                  month: "short", day: "2-digit", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })
+              : lastRow.report_date)
+          : null;
+        setDashStats({ total: data.length, lastDate });
+      })
+      .catch(() => {});
+  }, []);
+
   // ── Unread announcements badge ──
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -5196,34 +4630,46 @@ export default function WoRedaDashboard() {
               <p className="text-[#1e293b] text-lg font-bold mb-6">
                 Welcome back! {u.name}
               </p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {[
-                  {
-                    label: "Total Submitted",
-                    value: "—",
-                    color: "bg-[#eef4fb] border-[#dce8f4] text-[#1a3a5c]",
-                  },
-                  {
-                    label: "Pending Review",
-                    value: "—",
-                    color: "bg-[#f4f6f9] border-[#dce8f4] text-[#1a3a5c]",
-                  },
-                  {
-                    label: "Approved",
-                    value: "—",
-                    color: "bg-green-50 border-[#bbf7d0] text-[#166534]",
-                  },
-                  {
-                    label: "Rejected",
-                    value: "—",
-                    color: "bg-[#fef2f2] border-[#fecaca] text-[#991b1b]",
-                  },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className={`rounded-xl border p-5 ${color}`}>
-                    <p className="text-2xl font-bold">{value}</p>
-                    <p className="text-sm mt-1 font-medium">{label}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                {/* Total Submitted */}
+                <div className="rounded-xl border bg-[#eef4fb] border-[#dce8f4] text-[#1a3a5c] p-5">
+                  <p className="text-3xl font-bold leading-tight">
+                    {dashStats ? dashStats.total : "…"}
+                  </p>
+                  <p className="text-sm mt-1 font-semibold">Total Submitted</p>
+                  <p className="text-xs mt-0.5 text-[#1a3a5c]/60">all sectors, all time</p>
+                </div>
+
+                {/* Notifications — unread announcements */}
+                <button
+                  onClick={() => setActiveNav("announcements")}
+                  className="rounded-xl border text-left p-5 transition-all hover:shadow-md hover:-translate-y-0.5 focus:outline-none"
+                  style={{
+                    backgroundColor: unreadCount > 0 ? "#fef2f2" : "#f8fafc",
+                    borderColor: unreadCount > 0 ? "#fecaca" : "#e2e8f0",
+                    color: unreadCount > 0 ? "#991b1b" : "#334155",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-3xl font-bold leading-tight">{unreadCount}</p>
+                    {unreadCount > 0 && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] animate-pulse flex-shrink-0" />
+                    )}
                   </div>
-                ))}
+                  <p className="text-sm font-semibold">Notifications</p>
+                  <p className="text-xs mt-0.5 opacity-60">
+                    {unreadCount > 0 ? "unread announcements" : "no new announcements"}
+                  </p>
+                </button>
+
+                {/* Last Submitted */}
+                <div className="rounded-xl border bg-[#f0fdf4] border-[#bbf7d0] text-[#065f46] p-5">
+                  <p className="text-base font-bold leading-tight break-words">
+                    {dashStats?.lastDate ?? (dashStats ? "None yet" : "…")}
+                  </p>
+                  <p className="text-sm mt-1 font-semibold">Last Submitted</p>
+                  <p className="text-xs mt-0.5 text-[#065f46]/60">most recent report</p>
+                </div>
               </div>
               <h2 className="text-base font-semibold text-[#334155] mb-3">
                 Quick Submit

@@ -175,12 +175,27 @@ const SECTOR_PLAN_FIELDS = {
     zayitii: "zayitii_target",
   },
   qonna: {
-    furdisa: "furdisa_lakk_horii_waliigalaa_target",
-    annan: "annan_lakk_saa_waliigalaa_target",
-    lukkuu: "lukkuu_lakk_lukkuu_waliigalaa_target",
-    booyee: "booyee_lakk_booyyee_waliigalaa_target",
-    kannisaa: "kannisaa_lakk_kannisaa_waliigalaa_target",
-    qurxummii: "qurxummii_lakk_qurxummii_waliigalaa_target",
+    // Land prepared (ha) per category
+    furdisa_qophi_lafa:   "furdisa_qophi_lafa_target",
+    annan_qophi_lafa:     "annan_qophi_lafa_target",
+    lukkuu_qophi_lafa:    "lukkuu_qophi_lafa_target",
+    booyee_qophi_lafa:    "booyee_qophi_lafa_target",
+    kannisaa_qophi_lafa:  "kannisaa_qophi_lafa_target",
+    qurxummii_qophi_lafa: "qurxummii_qophi_lafa_target",
+    // Sheds / ponds / hives built per category
+    furdisa_lakk_sheedii:   "furdisa_lakk_sheedii_target",
+    annan_lakk_sheedii:     "annan_lakk_sheedii_target",
+    lukkuu_lakk_sheedii:    "lukkuu_lakk_sheedii_target",
+    booyee_lakk_sheedii:    "booyee_lakk_sheedii_target",
+    kannisaa_lakk_gaaguraa: "kannisaa_lakk_gaaguraa_target",
+    qurxummii_lakk_pondii:  "qurxummii_lakk_pondii_target",
+    // Total animals per category (full _waliigalaa column names)
+    furdisa_lakk_horii_waliigalaa:       "furdisa_lakk_horii_waliigalaa_target",
+    annan_lakk_saa_waliigalaa:           "annan_lakk_saa_waliigalaa_target",
+    lukkuu_lakk_lukkuu_waliigalaa:       "lukkuu_lakk_lukkuu_waliigalaa_target",
+    booyee_lakk_booyyee_waliigalaa:      "booyee_lakk_booyyee_waliigalaa_target",
+    kannisaa_lakk_kannisaa_waliigalaa:   "kannisaa_lakk_kannisaa_waliigalaa_target",
+    qurxummii_lakk_qurxummii_waliigalaa: "qurxummii_lakk_qurxummii_waliigalaa_target",
   },
   carraa: {
     leenjii: "leenjii_target",
@@ -490,12 +505,27 @@ const getWoRedaAnalysis = async (req, res) => {
       };
     } else if (sector === "qonna") {
       actuals = {
-        furdisa: rawSums["furdisa_lakk_horii"] || 0,
-        annan: rawSums["annan_lakk_saaa"] || 0,
-        lukkuu: rawSums["lukkuu_lakk_lukkuu"] || 0,
-        booyee: rawSums["boyyee_lakk_booyyee"] || 0,
-        kannisaa: rawSums["kannisaa_lakk_kannisaa"] || 0,
-        qurxummii: rawSums["qurxummii_lakk_qurxummii"] || 0,
+        // Land prepared (ha)
+        furdisa_qophi_lafa:   rawSums["furdisa_bakka_qophaawe"] || 0,
+        annan_qophi_lafa:     rawSums["annan_bakka_qophaawe"] || 0,
+        lukkuu_qophi_lafa:    rawSums["lukkuu_bakka_qophaawe"] || 0,
+        booyee_qophi_lafa:    rawSums["boyyee_bakka_qophaawe"] || 0,
+        kannisaa_qophi_lafa:  rawSums["kannisaa_bakka_qophaawe"] || 0,
+        qurxummii_qophi_lafa: rawSums["qurxummii_bakka_qophaawe"] || 0,
+        // Sheds / ponds / hives built
+        furdisa_lakk_sheedii:   rawSums["furdisa_sheedii_ijaaraman"] || 0,
+        annan_lakk_sheedii:     rawSums["annan_sheedii_ijaaraman"] || 0,
+        lukkuu_lakk_sheedii:    rawSums["lukkuu_sheedii_ijaaraman"] || 0,
+        booyee_lakk_sheedii:    rawSums["boyyee_sheedii_ijaaraman"] || 0,
+        kannisaa_lakk_gaaguraa: rawSums["kannisaa_gaaguraa_ijaaraman"] || 0,
+        qurxummii_lakk_pondii:  rawSums["qurxummii_pondii_ijaaraman"] || 0,
+        // Total animals (using full _waliigalaa key names to match SECTOR_PLAN_FIELDS)
+        furdisa_lakk_horii_waliigalaa:       rawSums["furdisa_lakk_horii"] || 0,
+        annan_lakk_saa_waliigalaa:           rawSums["annan_lakk_saaa"] || 0,
+        lukkuu_lakk_lukkuu_waliigalaa:       rawSums["lukkuu_lakk_lukkuu"] || 0,
+        booyee_lakk_booyyee_waliigalaa:      rawSums["boyyee_lakk_booyyee"] || 0,
+        kannisaa_lakk_kannisaa_waliigalaa:   rawSums["kannisaa_lakk_kannisaa"] || 0,
+        qurxummii_lakk_qurxummii_waliigalaa: rawSums["qurxummii_lakk_qurxummii"] || 0,
       };
     } else if (sector === "galii") {
       actuals = {

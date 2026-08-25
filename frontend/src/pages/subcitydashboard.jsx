@@ -1856,11 +1856,32 @@ const SECTOR_CFG = {
     fetchFn: fetchSubcityOwnPlan,
   },
   qonna: {
-    fields: QONNA_CATEGORIES.map(({ key, label, color }) => ({
-      key,
-      label,
-      color,
-    })),
+    fields: [
+      // Furdisa
+      { key: "furdisa_qophi_lafa",              label: "Furdisa - Lafa Qophaawe",  color: "#065f46" },
+      { key: "furdisa_lakk_sheedii",            label: "Furdisa - Sheedii",        color: "#065f46" },
+      { key: "furdisa_lakk_horii_waliigalaa",   label: "Furdisa - Lakk Horii",     color: "#065f46" },
+      // Annan
+      { key: "annan_qophi_lafa",                label: "Annan - Lafa Qophaawe",    color: "#0f766e" },
+      { key: "annan_lakk_sheedii",              label: "Annan - Sheedii",          color: "#0f766e" },
+      { key: "annan_lakk_saa_waliigalaa",       label: "Annan - Lakk Sa'a",        color: "#0f766e" },
+      // Lukkuu
+      { key: "lukkuu_qophi_lafa",               label: "Lukkuu - Lafa Qophaawe",   color: "#1e40af" },
+      { key: "lukkuu_lakk_sheedii",             label: "Lukkuu - Sheedii",         color: "#1e40af" },
+      { key: "lukkuu_lakk_lukkuu_waliigalaa",   label: "Lukkuu - Lakk Lukkuu",     color: "#1e40af" },
+      // Booyyee
+      { key: "booyee_qophi_lafa",               label: "Booyyee - Lafa Qophaawe",  color: "#7c3aed" },
+      { key: "booyee_lakk_sheedii",             label: "Booyyee - Sheedii",        color: "#7c3aed" },
+      { key: "booyee_lakk_booyyee_waliigalaa",  label: "Booyyee - Lakk Booyyee",   color: "#7c3aed" },
+      // Kannisaa
+      { key: "kannisaa_qophi_lafa",             label: "Kannisaa - Lafa Qophaawe", color: "#b45309" },
+      { key: "kannisaa_lakk_gaaguraa",          label: "Kannisaa - Gaaguraa",      color: "#b45309" },
+      { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Kannisaa - Lakk Kannisaa", color: "#b45309" },
+      // Qurxummii
+      { key: "qurxummii_qophi_lafa",                label: "Qurxummii - Lafa Qophaawe", color: "#0369a1" },
+      { key: "qurxummii_lakk_pondii",               label: "Qurxummii - Pondii",        color: "#0369a1" },
+      { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Qurxummii - Lakk",          color: "#0369a1" },
+    ],
     label: "Qonna",
     color: "#065f46",
     gradient: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
@@ -2365,7 +2386,7 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={`grid gap-4 ${cfg.fields.length > 9 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
             {cfg.fields.map(({ key, label, color, description }) => {
               const annualTarget = targets ? Number(targets[key] || 0) : 0;
               const periodTarget = partitionTarget(annualTarget, period);
@@ -3019,18 +3040,18 @@ function scFormatDateTime(row) {
 
 function scDownloadCSV(row, sectorLabel) {
   const fields = scGetDisplayFields(row);
-  const lines = [
-    ["Field", "Value"],
+  const submittedAt = row.created_at
+    ? new Date(row.created_at).toLocaleString()
+    : (row.report_date ?? "");
+  const rows = [
+    ["Report Type", row.report_type ?? ""],
     ["Sector", sectorLabel],
     ["Submitted By", row.username ?? ""],
-    ["Report Type", row.report_type ?? ""],
-    ["Date", row.report_date ?? ""],
-    ["Submitted At", row.created_at ? new Date(row.created_at).toLocaleString() : ""],
+    ["Submitted At", submittedAt],
     ...fields.map(([k, v]) => [scFieldLabel(k), v]),
   ];
-  const csv = lines
-    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-    .join("\n");
+  const escape = (c) => `"${String(c).replace(/"/g, '""')}"`;
+  const csv = rows.map((r) => r.map(escape).join(",")).join("\n");
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
