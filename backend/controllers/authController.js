@@ -188,10 +188,118 @@ const updatePassword = async (req, res) => {
   }
 };
 
+// REQUEST EDIT ACCESS (wereda — one request per sector+date, replaces denied)
+const requestEditAccess = async (req, res) => {
+  try {
+    const { sector, report_date, report_type } = req.body;
+    if (!sector || !report_date) {
+      return res
+        .status(400)
+        .json({ message: "sector and report_date are required." });
+    }
+
+    // Prevent duplicate pending requests for same sector+date
+    const { data: existing } = await supabase
+      .from("edit_requests")
+      .select("id, status")
+      .eq("user_id", req.user.id)
+      .eq("sector", sector)
+      .eq("report_date", report_date)
+      .in("status", ["pending", "approved"])
+      .maybeSingle();
+
+    if (existing) {
+      const msg =
+        existing.status === "approved"
+          ? "You already have an approved edit token for this report."
+          : "You already have a pending request for this report.";
+      return res.status(400).json({ message: msg });
+    }
+
+    const { error } = await supabase.from("edit_requests").insert([
+      {
+        user_id: req.user.id,
+        username: req.user.username,
+        sector,
+        report_date,
+        report_type: report_type || "",
+        status: "pending",
+      },
+    ]);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res
+      .status(201)
+      .json({ message: "Edit request submitted. Waiting for admin approval." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET EDIT REQUESTS (admin — all pending/recent requests)
+const getEditRequests = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("edit_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ requests: data || [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET MY EDIT REQUESTS (wereda — their own requests)
+const getMyEditRequests = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("edit_requests")
+      .select("*")
+      .eq("user_id", req.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ requests: data || [] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// APPROVE OR DENY EDIT REQUEST (admin)
+const resolveEditRequest = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { action } = req.body; // "approved" | "denied"
+
+    if (!["approved", "denied"].includes(action)) {
+      return res
+        .status(400)
+        .json({ message: "action must be 'approved' or 'denied'." });
+    }
+
+    const { error } = await supabase
+      .from("edit_requests")
+      .update({ status: action, resolved_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ message: `Request ${action}.` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   register,
   login,
   getUsers,
   deleteUser,
   updatePassword,
+  requestEditAccess,
+  getEditRequests,
+  getMyEditRequests,
+  resolveEditRequest,
 };

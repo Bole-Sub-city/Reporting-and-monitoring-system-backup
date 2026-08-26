@@ -1,5 +1,55 @@
 const supabase = require("../config/supabase");
 
+// ─── Lock / duplicate-check helper ───────────────────────────────────────────
+// Returns null if submission is allowed, or an error object { status, message }
+// if it must be blocked. If an approved edit token exists it is consumed.
+async function checkSubmitLock(userId, sector, reportDate) {
+  const table = {
+    buusaa: "buusaa_reports",
+    carraa: "carraa_hojii_uumuu",
+    qonna: "qonna",
+    daldala: "Daldala",
+    atk: "ATK",
+  }[sector];
+
+  if (!table) return null; // unknown sector — let it through
+
+  // 1. Check if a report already exists for this user + date
+  const { data: existing } = await supabase
+    .from(table)
+    .select("id")
+    .eq("user_id", userId)
+    .eq("report_date", reportDate)
+    .maybeSingle();
+
+  if (!existing) return null; // no prior report — allow
+
+  // 2. Report exists — check for an approved edit token
+  const { data: token } = await supabase
+    .from("edit_requests")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("sector", sector)
+    .eq("report_date", reportDate)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (!token) {
+    return {
+      status: 409,
+      message: `You have already submitted a report for this date. Request edit access from the admin to resubmit.`,
+    };
+  }
+
+  // 3. Consume the token
+  await supabase
+    .from("edit_requests")
+    .update({ status: "used" })
+    .eq("id", token.id);
+
+  return null; // allow
+}
+
 // Existing generic report creation — FIXED mapping
 const createReport = async (req, res) => {
   try {
@@ -7,17 +57,14 @@ const createReport = async (req, res) => {
       user_id: req.user.id,
       username: req.user.username,
       role: req.user.role,
-
       report_date: req.body.report_date,
       report_type: req.body.report_type,
-
       hubannoo_uummuu: req.body.hubannoo_uummuu,
       horannaa_misensaa: req.body.horannaa_misensaa,
       buusi_jirataa: req.body.buusi_jirataa,
       gumaata_jiraataa: req.body.gumaata_jiraataa,
       buusi_daldalaa: req.body.buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa: req.body.buusi_daldalaa_fi_gumaataa,
-      // Map frontend's "inisheetivii..." to database column "inisheetevii..."
       inisheetevii_buusaa_gonofaa: req.body.inisheetivii_buusaa_gonofaa,
       gumaata_midhaani: req.body.gumaata_midhaani,
       nyaata_barataa: req.body.nyaata_barataa,
@@ -26,21 +73,18 @@ const createReport = async (req, res) => {
       yaada_gudinaa: req.body.yaada_gudinaa,
     };
 
+    const lock = await checkSubmitLock(
+      req.user.id,
+      "buusaa",
+      report.report_date,
+    );
+    if (lock) return res.status(lock.status).json({ message: lock.message });
+
     const { error } = await supabase.from("buusaa_reports").insert([report]);
-
-    if (error) {
-      return res.status(400).json({
-        message: error.message,
-      });
-    }
-
-    res.status(201).json({
-      message: "Report submitted successfully.",
-    });
+    if (error) return res.status(400).json({ message: error.message });
+    res.status(201).json({ message: "Report submitted successfully." });
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -64,22 +108,22 @@ const submitBuusaaReport = async (req, res) => {
       yaada_gudinaa,
     } = req.body;
 
+    const lock = await checkSubmitLock(req.user.id, "buusaa", report_date);
+    if (lock) return res.status(lock.status).json({ message: lock.message });
+
     const { error } = await supabase.from("buusaa_reports").insert([
       {
         user_id: req.user.id,
         username: req.user.username,
         role: req.user.role,
-
         report_date,
         report_type,
-
         hubannoo_uummuu,
         horannaa_misensaa,
         buusi_jirataa,
         gumaata_jiraataa,
         buusi_daldalaa,
         buusi_daldalaa_fi_gumaataa,
-        // Map to the exact database column name
         inisheetevii_buusaa_gonofaa: inisheetivii_buusaa_gonofaa,
         gumaata_midhaani,
         nyaata_barataa,
@@ -89,15 +133,8 @@ const submitBuusaaReport = async (req, res) => {
       },
     ]);
 
-    if (error) {
-      return res.status(400).json({
-        message: error.message,
-      });
-    }
-
-    res.status(201).json({
-      message: "Report submitted successfully.",
-    });
+    if (error) return res.status(400).json({ message: error.message });
+    res.status(201).json({ message: "Report submitted successfully." });
   } catch (err) {
     res.status(500).json({
       message: err.message,
@@ -147,6 +184,9 @@ const submitCarraaHojiiReport = async (req, res) => {
       industrii_godoo,
       yaada_gudinaa,
     } = req.body;
+
+    const lock = await checkSubmitLock(req.user.id, "carraa", report_date);
+    if (lock) return res.status(lock.status).json({ message: lock.message });
 
     const { error } = await supabase.from("carraa_hojii_uumuu").insert([
       {
@@ -206,6 +246,9 @@ const submitQonnaReport = async (req, res) => {
       qurxummii_lakk_qurxummii,
       yaada_gudinaa,
     } = req.body;
+
+    const lock = await checkSubmitLock(req.user.id, "qonna", report_date);
+    if (lock) return res.status(lock.status).json({ message: lock.message });
 
     const { error } = await supabase.from("qonna").insert([
       {
@@ -314,6 +357,9 @@ const submitDaldalReport = async (req, res) => {
       yaada_gudinaa,
     } = req.body;
 
+    const lock = await checkSubmitLock(req.user.id, "daldala", report_date);
+    if (lock) return res.status(lock.status).json({ message: lock.message });
+
     const { error } = await supabase.from("Daldala").insert([
       {
         user_id: req.user.id,
@@ -356,6 +402,9 @@ const submitAtkReport = async (req, res) => {
       galii_atk_galchuu,
       yaada_gudinaa,
     } = req.body;
+
+    const lock = await checkSubmitLock(req.user.id, "atk", report_date);
+    if (lock) return res.status(lock.status).json({ message: lock.message });
 
     const { error } = await supabase.from("ATK").insert([
       {
@@ -553,6 +602,38 @@ const getAllWoredaReports = async (req, res) => {
   }
 };
 
+// ─── GET /reports/lock-status?date=YYYY-MM-DD ────────────────────────────────
+// Returns which sectors are already submitted for the given date by this user
+const getLockStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const date = req.query.date || new Date().toISOString().split("T")[0];
+
+    const SECTOR_TABLES = {
+      buusaa: "buusaa_reports",
+      carraa: "carraa_hojii_uumuu",
+      qonna: "qonna",
+      daldala: "Daldala",
+      atk: "ATK",
+    };
+
+    const results = {};
+    for (const [sector, table] of Object.entries(SECTOR_TABLES)) {
+      const { data } = await supabase
+        .from(table)
+        .select("id")
+        .eq("user_id", userId)
+        .eq("report_date", date)
+        .maybeSingle();
+      results[sector] = !!data;
+    }
+
+    res.json({ locked: results, date });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createReport,
   submitBuusaaReport,
@@ -567,4 +648,5 @@ module.exports = {
   getAllReports,
   getMyReports,
   getAllWoredaReports,
+  getLockStatus,
 };
