@@ -33,7 +33,10 @@ import RingChart from "../components/ui/RingChart";
 // ─── Network-aware error message helper ─────────────────────────────────────
 // Returns a human-friendly message that distinguishes network failures from
 // server-side errors (invalid credentials, permission denied, etc.)
-function friendlyError(err, fallback = "Something went wrong. Please try again.") {
+function friendlyError(
+  err,
+  fallback = "Something went wrong. Please try again.",
+) {
   if (!err) return fallback;
   // No response means the request never reached the server (offline / DNS fail)
   if (!err.response) return "No connection. Check your internet and try again.";
@@ -3202,6 +3205,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
       });
       setShowModal(true);
       handleClear();
+      onSubmitSuccess && onSubmitSuccess();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to submit report.");
     }
@@ -3209,6 +3213,15 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+      {locked && (
+        <div className="mb-5">
+          <LockBanner
+            sector="buusaa"
+            reportType={reportType}
+            onUnlocked={onSubmitSuccess}
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
@@ -4813,7 +4826,9 @@ function AnnouncementsViewPage({ onRead }) {
             .catch(() => {});
         }
       })
-      .catch(() => setError("No connection. Check your internet and try again."))
+      .catch(() =>
+        setError("No connection. Check your internet and try again."),
+      )
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -5396,7 +5411,14 @@ export default function WoRedaDashboard() {
                   );
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
               }
-              if (wid === "buusaa") return <BuusaaSubmitForm u={u} />;
+              if (wid === "buusaa")
+                return (
+                  <BuusaaSubmitForm
+                    u={u}
+                    locked={!!locked.buusaa}
+                    onSubmitSuccess={refreshLocks}
+                  />
+                );
               if (wid === "carraaHojii")
                 return (
                   <GenericSubmitForm
@@ -5404,10 +5426,20 @@ export default function WoRedaDashboard() {
                     fields={CARRAA_HOJII_FIELDS}
                     submitFn={submitCarraaHojiiReport}
                     title="Carraa Hojii Uumuu"
+                    sectorKey="carraa"
+                    locked={!!locked.carraa}
+                    onSubmitSuccess={refreshLocks}
                     headerColor="linear-gradient(90deg,#1e40af 0%,#2563eb 100%)"
                   />
                 );
-              if (wid === "qonna") return <QonnaSubmitForm u={u} />;
+              if (wid === "qonna")
+                return (
+                  <QonnaSubmitForm
+                    u={u}
+                    locked={!!locked.qonna}
+                    onSubmitSuccess={refreshLocks}
+                  />
+                );
               if (wid === "revenue") return <RevenueSubmitForm u={u} />;
               if (wid === "daldala")
                 return (
@@ -5416,6 +5448,9 @@ export default function WoRedaDashboard() {
                     fields={DALDALA_FIELDS}
                     submitFn={submitDaldalReport}
                     title="Daldala"
+                    sectorKey="daldala"
+                    locked={!!locked.daldala}
+                    onSubmitSuccess={refreshLocks}
                     headerColor="linear-gradient(90deg,#854d0e 0%,#a16207 100%)"
                   />
                 );
@@ -5426,6 +5461,9 @@ export default function WoRedaDashboard() {
                     fields={ATK_FIELDS}
                     submitFn={submitAtkReport}
                     title="ATK"
+                    sectorKey="atk"
+                    locked={!!locked.atk}
+                    onSubmitSuccess={refreshLocks}
                     headerColor="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
                   />
                 );

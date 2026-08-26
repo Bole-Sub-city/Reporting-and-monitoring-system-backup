@@ -98,9 +98,7 @@ const getSummary = async (req, res) => {
 
     // Days elapsed since Jan 1 (inclusive) — used for cumulative carry-over
     const msPerDay = 1000 * 60 * 60 * 24;
-    const daysElapsed = Math.floor(
-      (now - new Date(yearStart)) / msPerDay
-    ) + 1;
+    const daysElapsed = Math.floor((now - new Date(yearStart)) / msPerDay) + 1;
 
     // Period window start — for the ring chart "current period" actuals
     let from;
@@ -164,7 +162,9 @@ const getSummary = async (req, res) => {
         target.buusi_daldalaa +=
           Number(row.buusi_daldalaa || 0) +
           Number(row.buusi_daldalaa_fi_gumaataa || 0);
-        target.inisheetivii_buusaa_gonofaa += Number(row.inisheetevii_buusaa_gonofaa || 0);
+        target.inisheetivii_buusaa_gonofaa += Number(
+          row.inisheetevii_buusaa_gonofaa || 0,
+        );
         target.gumaata_mootummaa += Number(row.gumaata_midhaani || 0);
         target.nyaata_barataa += Number(row.nyaata_barataa || 0);
         target.sukkaara += Number(row.sukkaara || 0);
@@ -221,11 +221,20 @@ function distributeTotal(total, weights) {
 
   const result = { ...floored };
   let given = 0;
+
+  // Only enforce w2/w3 pairing when weights reflect the default 25.5/24.5 split
+  // (i.e. w2_weight / totalWeight ≈ 0.255 and w3_weight / totalWeight ≈ 0.245)
+  const w2ratio = Number(weights.w2 || 0) / totalWeight;
+  const w3ratio = Number(weights.w3 || 0) / totalWeight;
+  const isDefaultSplit =
+    Math.abs(w2ratio - 0.255) < 0.005 && Math.abs(w3ratio - 0.245) < 0.005;
+
   for (const { id } of fracs) {
     if (given >= remainder) break;
-    // Pairing constraint: w2 and w3 cannot both round up
-    if (id === "w3" && result.w2 > floored.w2) continue;
-    if (id === "w2" && result.w3 > floored.w3) continue;
+    if (isDefaultSplit) {
+      if (id === "w3" && result.w2 > floored.w2) continue;
+      if (id === "w2" && result.w3 > floored.w3) continue;
+    }
     result[id] += 1;
     given++;
   }

@@ -18,7 +18,10 @@ import {
 import { fetchAllWoredaReports } from "../api/reportApi";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
-function friendlyError(err, fallback = "Something went wrong. Please try again.") {
+function friendlyError(
+  err,
+  fallback = "Something went wrong. Please try again.",
+) {
   if (!err) return fallback;
   if (!err.response) return "No connection. Check your internet and try again.";
   return err.response?.data?.message || fallback;
@@ -67,42 +70,47 @@ function validatePcts(pcts) {
 }
 
 /**
- * Distribute `categoryTotal` across all 4 weredas with fixed percentages:
- *   w1=27%, w2=25.5%, w3=24.5%, w4=23%
+ * Distribute `categoryTotal` across all 4 weredas using the user-entered
+ * percentages (`pcts`). Uses the largest-remainder method so the 4 values
+ * always sum exactly to `categoryTotal`.
  *
- * w2 and w3 are a paired fractional split (25.5+24.5=50 exactly).
- * Rule: when w2 rounds UP to 26%, w3 MUST round DOWN to 24% — never both round up.
- *
- * Uses largest-remainder but enforces the w2/w3 pairing constraint explicitly.
+ * Special pairing rule (only when using the DEFAULT 25.5/24.5 split):
+ *   w2 and w3 cannot both round up — when w2 rounds up, w3 must round down.
  */
 function pctShare(pcts, woredaId, categoryTotal) {
   const n = Math.round(Number(categoryTotal || 0));
   if (n === 0) return 0;
 
   const ids = ["w1", "w2", "w3", "w4"];
-  const exact = {
-    w1: n * 0.27,
-    w2: n * 0.255,
-    w3: n * 0.245,
-    w4: n * 0.23,
-  };
+
+  // Use the actual pcts values (user may have changed them)
+  const totalPct = ids.reduce((s, id) => s + Number(pcts[id] || 0), 0);
+  if (totalPct === 0) return 0;
+
+  const exact = Object.fromEntries(
+    ids.map((id) => [id, (Number(pcts[id] || 0) / totalPct) * n]),
+  );
   const floored = Object.fromEntries(
     ids.map((id) => [id, Math.floor(exact[id])]),
   );
   let remainder = n - ids.reduce((s, id) => s + floored[id], 0);
 
-  // Sort by fractional part descending
   const fracs = ids
     .map((id) => ({ id, frac: exact[id] - floored[id] }))
     .sort((a, b) => b.frac - a.frac || (a.id < b.id ? -1 : 1));
 
   const result = { ...floored };
   let given = 0;
+
+  // Only enforce the w2/w3 pairing when they are the default 25.5/24.5 split
+  const isDefaultSplit = Number(pcts.w2) === 25.5 && Number(pcts.w3) === 24.5;
+
   for (const { id } of fracs) {
     if (given >= remainder) break;
-    // Enforce pairing: w2 and w3 cannot both be rounded up
-    if (id === "w3" && result.w2 > floored.w2) continue;
-    if (id === "w2" && result.w3 > floored.w3) continue;
+    if (isDefaultSplit) {
+      if (id === "w3" && result.w2 > floored.w2) continue;
+      if (id === "w2" && result.w3 > floored.w3) continue;
+    }
     result[id] += 1;
     given++;
   }
@@ -391,7 +399,9 @@ function AnnouncementsPage() {
     setLoading(true);
     fetchAnnouncements()
       .then((d) => setAnnouncements(d.announcements || []))
-      .catch(() => setError("No connection. Check your internet and try again."))
+      .catch(() =>
+        setError("No connection. Check your internet and try again."),
+      )
       .finally(() => setLoading(false));
   };
 
@@ -1088,10 +1098,7 @@ function BuusaaPlanPage({ onSave }) {
     // become 255. w2 is forced to 250 (25%) so the backend uses the correct
     // effective percentage for Aanaa Dhadacha Araaraa.
     const wForm = Object.fromEntries(
-      WOREDAS.map((w) => {
-        const effectivePct = w.id === "w2" ? 25 : parsed[w.id];
-        return [w.id, Math.round(effectivePct * 10)];
-      }),
+      WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
     );
     try {
       await onSave(form, wForm);
