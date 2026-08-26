@@ -166,6 +166,55 @@ const getSummary = async (req, res) => {
   }
 };
 
+/**
+ * Distribute `total` across weredas proportionally using the largest-remainder
+ * method so the 4 allocated values always sum exactly to `total`.
+ * weights: { w1, w2, w3, w4 } — any positive numbers (raw weights or percentages)
+ *
+ * Special pairing rule: w2 (25.5%) and w3 (24.5%) are complementary.
+ * When w2 rounds up, w3 must round down — they can never both round up.
+ * Returns: { w1, w2, w3, w4 }
+ */
+function distributeTotal(total, weights) {
+  const ids = ["w1", "w2", "w3", "w4"];
+  const totalWeight = ids.reduce((s, id) => s + Number(weights[id] || 0), 0);
+  const n = Math.round(Number(total || 0));
+
+  if (n === 0 || totalWeight === 0) {
+    const base = Math.floor(n / 4);
+    const rem = n - base * 4;
+    return Object.fromEntries(
+      ids.map((id, i) => [id, base + (i < rem ? 1 : 0)]),
+    );
+  }
+
+  const exact = Object.fromEntries(
+    ids.map((id) => [id, (Number(weights[id] || 0) / totalWeight) * n]),
+  );
+  const floored = Object.fromEntries(
+    ids.map((id) => [id, Math.floor(exact[id])]),
+  );
+  let remainder = n - ids.reduce((s, id) => s + floored[id], 0);
+
+  // Sort by fractional part descending
+  const fracs = ids
+    .map((id) => ({ id, frac: exact[id] - floored[id] }))
+    .sort((a, b) => b.frac - a.frac || (a.id < b.id ? -1 : 1));
+
+  const result = { ...floored };
+  let given = 0;
+  for (const { id } of fracs) {
+    if (given >= remainder) break;
+    // Pairing constraint: w2 and w3 cannot both round up
+    if (id === "w3" && result.w2 > floored.w2) continue;
+    if (id === "w2" && result.w3 > floored.w3) continue;
+    result[id] += 1;
+    given++;
+  }
+
+  return result;
+}
+
 // Maps frontend woreda IDs (w1–w4) to their Supabase table names
 const WEREDA_TABLE_MAP = {
   w1: "annual_plan_wereda_1",
@@ -205,38 +254,37 @@ const saveSubcityPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
 
-    const totalWeight = ["w1", "w2", "w3", "w4"].reduce(
-      (s, id) => s + Number(weights[id] || 0),
-      0,
-    );
-
-    const share = (woredaId, categoryTotal) => {
-      const w = Number(weights[woredaId] || 0);
-      if (totalWeight === 0 || w === 0)
-        return Math.round(Number(categoryTotal || 0) / 4);
-      return Math.round((w / totalWeight) * Number(categoryTotal || 0));
-    };
-
     const errors = [];
+
+    // Build all fields to distribute
+    const fields = [
+      { col: "hubannoo_uummuu_target", src: plan.hubannoo_uummuu },
+      { col: "horannaa_misensaa_target", src: plan.horannaa_misensaa },
+      { col: "buusi_jiraataa_target", src: plan.buusi_jiraataa },
+      { col: "gumaata_jiraataa_target", src: plan.gumaata_jiraataa },
+      { col: "buusi_daldalaa_target", src: plan.buusi_daldalaa },
+      {
+        col: "inisheetivii_buusaa_gonofaa_target",
+        src: plan.inisheetivii_buusaa_gonofaa ?? plan.inisheetiviiBuusaaGonofaa,
+      },
+      { col: "gumaata_mootummaa_target", src: plan.gumaata_mootummaa },
+      { col: "nyaata_barataa_target", src: plan.nyaata_barataa },
+      { col: "sukkaara_target", src: plan.sukkaara },
+      { col: "zayitii_target", src: plan.zayitii },
+    ];
+
+    // Pre-compute largest-remainder distribution for each field
+    const distributions = fields.map(({ col, src }) => ({
+      col,
+      dist: distributeTotal(src, weights),
+    }));
 
     for (const wId of ["w1", "w2", "w3", "w4"]) {
       const tableName = WEREDA_TABLE_MAP[wId];
-      const row = {
-        year,
-        hubannoo_uummuu_target: share(wId, plan.hubannoo_uummuu),
-        horannaa_misensaa_target: share(wId, plan.horannaa_misensaa),
-        buusi_jiraataa_target: share(wId, plan.buusi_jiraataa),
-        gumaata_jiraataa_target: share(wId, plan.gumaata_jiraataa),
-        buusi_daldalaa_target: share(wId, plan.buusi_daldalaa),
-        inisheetivii_buusaa_gonofaa_target: share(
-          wId,
-          plan.inisheetivii_buusaa_gonofaa ?? plan.inisheetiviiBuusaaGonofaa,
-        ),
-        gumaata_mootummaa_target: share(wId, plan.gumaata_mootummaa),
-        nyaata_barataa_target: share(wId, plan.nyaata_barataa),
-        sukkaara_target: share(wId, plan.sukkaara),
-        zayitii_target: share(wId, plan.zayitii),
-      };
+      const row = { year };
+      distributions.forEach(({ col, dist }) => {
+        row[col] = dist[wId];
+      });
 
       const { error } = await supabase
         .from(tableName)
@@ -419,23 +467,20 @@ const saveSubcityQonnaPlan = async (req, res) => {
     if (subcityErr)
       return res.status(400).json({ message: subcityErr.message });
 
-    // 2. Distribute the 3 per-category fields to each wereda table
-    const totalWeight = ["w1", "w2", "w3", "w4"].reduce(
-      (s, id) => s + Number(weights[id] || 0),
-      0,
-    );
-
-    const share = (woredaId, val) => {
-      const w = Number(weights[woredaId] || 0);
-      if (totalWeight === 0 || w === 0) return Math.round(Number(val || 0) / 4);
-      return Math.round((w / totalWeight) * Number(val || 0));
-    };
-
+    // 2. Distribute the 3 per-category fields to each wereda table using
+    //    largest-remainder so the 4 values always sum exactly to the subcity total.
     const errors = [];
+
+    // Pre-compute distribution for every distributed field
+    const qonnaDistributions = QONNA_DISTRIBUTED_FIELDS.map((field) => ({
+      field,
+      dist: distributeTotal(planData[field] || 0, weights),
+    }));
+
     for (const wId of ["w1", "w2", "w3", "w4"]) {
       const row = { year };
-      QONNA_DISTRIBUTED_FIELDS.forEach((field) => {
-        row[`${field}_target`] = share(wId, planData[field] || 0);
+      qonnaDistributions.forEach(({ field, dist }) => {
+        row[`${field}_target`] = dist[wId];
       });
 
       const { error } = await supabase
@@ -615,22 +660,17 @@ const saveSubcityGenericPlan = async (req, res) => {
     if (subcityErr)
       return res.status(400).json({ message: subcityErr.message });
 
-    // 2. Distribute to 4 wereda tables — only allowed fields, suffixed _target
-    const totalWeight = ["w1", "w2", "w3", "w4"].reduce(
-      (s, id) => s + Number(weights[id] || 0),
-      0,
-    );
-    const share = (wId, val) => {
-      const w = Number(weights[wId] || 0);
-      if (totalWeight === 0 || w === 0) return Math.round(Number(val || 0) / 4);
-      return Math.round((w / totalWeight) * Number(val || 0));
-    };
+    // 2. Distribute to 4 wereda tables using largest-remainder method
+    const genericDistributions = allowedFields.map((field) => ({
+      field,
+      dist: distributeTotal(totals[field] || 0, weights),
+    }));
 
     const errors = [];
     for (const wId of ["w1", "w2", "w3", "w4"]) {
       const wRow = { year };
-      allowedFields.forEach((field) => {
-        wRow[`${field}_target`] = share(wId, totals[field] || 0);
+      genericDistributions.forEach(({ field, dist }) => {
+        wRow[`${field}_target`] = dist[wId];
       });
       const { error } = await supabase
         .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
