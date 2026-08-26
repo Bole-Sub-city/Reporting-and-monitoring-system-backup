@@ -188,7 +188,9 @@ const updatePassword = async (req, res) => {
   }
 };
 
-// REQUEST EDIT ACCESS (wereda — one request per sector+date, replaces denied)
+// REQUEST EDIT ACCESS (wereda — one request per sector+date)
+// Blocks only if there is already a "pending" or "approved" request.
+// "used" and "denied" records are cleaned up so the wereda can request again.
 const requestEditAccess = async (req, res) => {
   try {
     const { sector, report_date, report_type } = req.body;
@@ -198,22 +200,28 @@ const requestEditAccess = async (req, res) => {
         .json({ message: "sector and report_date are required." });
     }
 
-    // Prevent duplicate pending requests for same sector+date
+    // Check for any existing request for this user+sector+date
     const { data: existing } = await supabase
       .from("edit_requests")
       .select("id, status")
       .eq("user_id", req.user.id)
       .eq("sector", sector)
       .eq("report_date", report_date)
-      .in("status", ["pending", "approved"])
       .maybeSingle();
 
     if (existing) {
-      const msg =
-        existing.status === "approved"
-          ? "You already have an approved edit token for this report."
-          : "You already have a pending request for this report.";
-      return res.status(400).json({ message: msg });
+      if (existing.status === "approved") {
+        return res.status(400).json({
+          message: "You already have an approved edit token for this report.",
+        });
+      }
+      if (existing.status === "pending") {
+        return res.status(400).json({
+          message: "You already have a pending request for this report.",
+        });
+      }
+      // "denied" or "used" — delete the stale record so a fresh one can be inserted
+      await supabase.from("edit_requests").delete().eq("id", existing.id);
     }
 
     const { error } = await supabase.from("edit_requests").insert([

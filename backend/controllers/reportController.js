@@ -2,7 +2,12 @@ const supabase = require("../config/supabase");
 
 // ─── Lock / duplicate-check helper ───────────────────────────────────────────
 // Returns null if submission is allowed, or an error object { status, message }
-// if it must be blocked. If an approved edit token exists it is consumed.
+// if it must be blocked.
+// When an approved edit token exists:
+//   1. The old report record for that date is DELETED so the new submission
+//      replaces it cleanly (no duplicates).
+//   2. The edit_request row itself is DELETED so the wereda can request again
+//      in the future if needed.
 async function checkSubmitLock(userId, sector, reportDate) {
   const table = {
     buusaa: "buusaa_reports",
@@ -41,13 +46,17 @@ async function checkSubmitLock(userId, sector, reportDate) {
     };
   }
 
-  // 3. Consume the token
+  // 3. Delete the old report record so the new INSERT replaces it cleanly
   await supabase
-    .from("edit_requests")
-    .update({ status: "used" })
-    .eq("id", token.id);
+    .from(table)
+    .delete()
+    .eq("user_id", userId)
+    .eq("report_date", reportDate);
 
-  return null; // allow
+  // 4. Delete the edit_request token so the wereda can request again later
+  await supabase.from("edit_requests").delete().eq("id", token.id);
+
+  return null; // allow the new submission
 }
 
 // Existing generic report creation — FIXED mapping

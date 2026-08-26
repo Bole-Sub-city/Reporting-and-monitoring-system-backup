@@ -447,6 +447,253 @@ function UsersTab({ currentUserId }) {
   );
 }
 
+// ─── Permissions Tab ─────────────────────────────────────────────────────────
+const SECTOR_LABELS = {
+  buusaa: "Buusaa Gonofaa",
+  carraa: "Carraa Hojii Uumuu",
+  qonna: "Qonna",
+  daldala: "Daldala",
+  atk: "ATK",
+};
+
+const STATUS_STYLES = {
+  pending: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
+  approved: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+  denied: "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]",
+  used: "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]",
+};
+
+function PermissionsTab() {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const [filter, setFilter] = useState("pending"); // "all" | "pending" | "approved" | "denied"
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 4000);
+  };
+
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await api.get("/auth/edit-requests", authHeader());
+      setRequests(res.data.requests || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load requests.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  const handleResolve = async (id, action, username, sector) => {
+    try {
+      await api.patch(`/auth/edit-requests/${id}`, { action }, authHeader());
+      showToast(
+        `Request from "${username}" (${SECTOR_LABELS[sector] ?? sector}) ${action}.`,
+      );
+      fetchRequests();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update request.");
+    }
+  };
+
+  const filtered =
+    filter === "all" ? requests : requests.filter((r) => r.status === filter);
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+
+  return (
+    <div>
+      {toast && (
+        <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <CheckIcon />
+          <p className="text-[#166534] text-sm font-medium">{toast}</p>
+        </div>
+      )}
+      {error && (
+        <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Filter bar */}
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {["pending", "all", "approved", "denied"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all capitalize ${
+              filter === f
+                ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
+                : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]/30"
+            }`}
+          >
+            {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === "pending" && pendingCount > 0 && (
+              <span className="ml-1.5 bg-[#dc2626] text-white rounded-full px-1.5 py-0.5 text-[10px]">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+        <button
+          onClick={fetchRequests}
+          className="ml-auto px-4 py-1.5 rounded-full text-xs font-semibold border bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]/30 transition-all"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#e2e8f0] px-6 py-12 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-[#f4f6f9] flex items-center justify-center mx-auto mb-3">
+            <KeyIcon />
+          </div>
+          <p className="text-[#334155] font-semibold mb-1">
+            No {filter === "all" ? "" : filter} requests
+          </p>
+          <p className="text-[#94a3b8] text-sm">
+            Edit permission requests will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Edit Permission Requests ({filtered.length})
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Wereda users requesting to re-submit a locked report
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                  {[
+                    "Wereda",
+                    "Sector",
+                    "Report Date",
+                    "Report Type",
+                    "Requested At",
+                    "Status",
+                    "Actions",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                  >
+                    <td className="px-4 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          {(r.username || "?")[0].toUpperCase()}
+                        </span>
+                        {r.username}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-semibold bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] px-2 py-1 rounded-full">
+                        {SECTOR_LABELS[r.sector] ?? r.sector}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[#64748b] text-xs font-mono">
+                      {r.report_date}
+                    </td>
+                    <td className="px-4 py-3 text-[#64748b] text-xs max-w-[160px] truncate">
+                      {r.report_type || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-[#64748b] text-xs">
+                      {r.created_at
+                        ? new Date(r.created_at).toLocaleString(undefined, {
+                            month: "short",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${STATUS_STYLES[r.status] ?? ""}`}
+                      >
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.status === "pending" ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() =>
+                              handleResolve(
+                                r.id,
+                                "approved",
+                                r.username,
+                                r.sector,
+                              )
+                            }
+                            className="flex items-center gap-1 text-xs font-semibold text-[#166534] bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#bbf7d0] px-2.5 py-1.5 rounded-lg transition-all"
+                          >
+                            <CheckIcon /> Approve
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleResolve(
+                                r.id,
+                                "denied",
+                                r.username,
+                                r.sector,
+                              )
+                            }
+                            className="flex items-center gap-1 text-xs font-semibold text-[#991b1b] bg-[#fef2f2] border border-[#fecaca] hover:bg-[#fecaca] px-2.5 py-1.5 rounded-lg transition-all"
+                          >
+                            <TrashIcon /> Deny
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[#94a3b8]">
+                          {r.resolved_at
+                            ? new Date(r.resolved_at).toLocaleDateString()
+                            : "—"}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -596,10 +843,11 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           {[
             { id: "create", label: "Create User", icon: <PlusIcon /> },
             { id: "users", label: "Manage Users", icon: <UsersIcon /> },
+            { id: "permissions", label: "Permissions", icon: <KeyIcon /> },
           ].map(({ id, label, icon }) => (
             <button
               key={id}
@@ -810,6 +1058,9 @@ export default function AdminDashboard() {
 
         {/* ── Manage Users Tab ── */}
         {activeTab === "users" && <UsersTab currentUserId={user.id} />}
+
+        {/* ── Permissions Tab ── */}
+        {activeTab === "permissions" && <PermissionsTab />}
       </main>
     </div>
   );

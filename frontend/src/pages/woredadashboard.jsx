@@ -31,14 +31,11 @@ import adamaLogo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
-// Returns a human-friendly message that distinguishes network failures from
-// server-side errors (invalid credentials, permission denied, etc.)
 function friendlyError(
   err,
   fallback = "Something went wrong. Please try again.",
 ) {
   if (!err) return fallback;
-  // No response means the request never reached the server (offline / DNS fail)
   if (!err.response) return "No connection. Check your internet and try again.";
   const msg = err.response?.data?.message;
   return msg || fallback;
@@ -502,7 +499,6 @@ const PERIODS = [
 ];
 
 // Afaan Oromo months with their approximate Gregorian date ranges
-// Each month is ~30 days; start dates are approximate Gregorian equivalents
 const OROMO_MONTHS = [
   { name: "Adoolessa", gregStart: "07-08" },
   { name: "Hagayya", gregStart: "08-07" },
@@ -649,8 +645,7 @@ const QONNA_FIELDS = [
   },
 ];
 
-// Qonna category metadata — keeps colours and descriptions consistent across
-// the annual-plan view and the analysis view.
+// Qonna category metadata
 const QONNA_CATS = [
   {
     key: "furdisa",
@@ -716,7 +711,7 @@ const REVENUE_FIELDS = [
   },
 ];
 
-// Revenue categories and their sources
+// Revenue categories
 const REVENUE_CATEGORIES = [
   {
     id: "manaQophessaa",
@@ -800,8 +795,6 @@ function partitionTarget(annual, period) {
   return Math.round(n / (d[period] || 1));
 }
 
-// RingChart is imported from ../components/ui/RingChart — see import at top of file.
-// The following is a placeholder to preserve the closing brace of the previous block.
 function _RingChartPlaceholder() {}
 
 function AnnualPlanSection({ u }) {
@@ -887,9 +880,7 @@ function AnnualPlanSection({ u }) {
 function oromoToGregorian(monthName, day, year) {
   const month = OROMO_MONTHS.find((m) => m.name === monthName);
   if (!month) return null;
-  // Parse the base Gregorian date for this month in the given year
   const [mm, dd] = month.gregStart.split("-").map(Number);
-  // Amajjii-Waxabajjii fall in the next Gregorian year relative to Ethiopian year start
   const gregYear = mm <= 6 ? year + 1 : year;
   const base = new Date(gregYear, mm - 1, dd);
   base.setDate(base.getDate() + (day - 1));
@@ -1053,9 +1044,7 @@ function AnalysisSection() {
                     const at = plan ? (plan[planKey] ?? 0) : 0;
                     const pt = partitionTarget(at, period);
                     const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
-                    const pct =
-                      pt > 0 ? Math.round((ac / pt) * 100) : 0;
-                    // Carry-over: how much should have been done YTD vs what actually was
+                    const pct = pt > 0 ? Math.round((ac / pt) * 100) : 0;
                     const cumulTarget = Math.round((daysElapsed / 365) * at);
                     const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
                     const remaining = Math.max(cumulTarget - acYtd, 0);
@@ -1177,7 +1166,6 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
 }
 
 // ─── Qonna Submit Report Form (Woreda) ───────────────────────────────────────
-// Per category: houses/ponds/gaaguraa built, actual animals, land prepared (ha)
 const QONNA_HOUSE_LABEL = {
   furdisa: {
     house: "Sheedii Ijaaraman",
@@ -1217,7 +1205,7 @@ const QONNA_HOUSE_LABEL = {
   },
 };
 
-function QonnaSubmitForm({ u }) {
+function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
@@ -1244,6 +1232,7 @@ function QonnaSubmitForm({ u }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (locked) return;
     setError("");
     setSaving(true);
     try {
@@ -1262,6 +1251,7 @@ function QonnaSubmitForm({ u }) {
       await submitQonnaReport(payload);
       setShowModal(true);
       handleClear();
+      onSubmitSuccess && onSubmitSuccess();
     } catch (err) {
       setError(friendlyError(err, "Failed to submit report."));
     } finally {
@@ -1274,14 +1264,20 @@ function QonnaSubmitForm({ u }) {
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+      {locked && (
+        <div className="mb-5">
+          <LockBanner
+            sector="qonna"
+            reportType={reportType}
+            onUnlocked={onSubmitSuccess}
+          />
+        </div>
+      )}
 
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
       </div>
 
-      {/* ── Annual Plan Card removed per requirement ── */}
-
-      {/* ── Report Type + Date ── */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
           <p className="text-[#64748b] text-sm font-medium mb-1.5">
@@ -1305,7 +1301,6 @@ function QonnaSubmitForm({ u }) {
         </div>
       </div>
 
-      {/* ── Category fields ── */}
       <form onSubmit={handleSubmit}>
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden mb-5">
           <div
@@ -1332,7 +1327,6 @@ function QonnaSubmitForm({ u }) {
                     key={key}
                     className="rounded-xl border border-[#e2e8f0] overflow-hidden"
                   >
-                    {/* Category header */}
                     <div
                       className="px-4 py-2.5 flex items-center gap-2 flex-wrap"
                       style={{
@@ -1359,7 +1353,6 @@ function QonnaSubmitForm({ u }) {
                         </span>
                       )}
                     </div>
-                    {/* Three inputs: land prepared, houses/ponds/gaaguraa built, actual animals */}
                     <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-[#334155] mb-1.5">
@@ -1412,7 +1405,6 @@ function QonnaSubmitForm({ u }) {
                 );
               },
             )}
-            {/* Yaada Gudinaa */}
             <div>
               <label className="block text-[#334155] text-sm font-medium mb-1.5">
                 Yaada Gudinaa
@@ -1448,8 +1440,8 @@ function QonnaSubmitForm({ u }) {
             </button>
             <button
               type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              disabled={saving || locked}
+              className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <SubmitIcon />
               {saving ? "Submitting..." : "Submit Report"}
@@ -1481,7 +1473,6 @@ function QonnaAnnualPlanSection({ u }) {
       </div>
     );
 
-  // Each category has 3 fields displayed as flat cards
   const QONNA_PLAN_CATS = [
     {
       key: "furdisa",
@@ -1582,7 +1573,6 @@ function QonnaAnnualPlanSection({ u }) {
         <div className="px-6 py-5 space-y-6">
           {QONNA_PLAN_CATS.map(({ key, label, color, fields }) => (
             <div key={key}>
-              {/* Category label */}
               <div className="flex items-center gap-2 mb-3">
                 <span
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -1595,7 +1585,6 @@ function QonnaAnnualPlanSection({ u }) {
                   {label}
                 </p>
               </div>
-              {/* Three flat cards — same layout as GenericAnnualPlanSection */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {fields.map(({ planKey, label: fieldLabel }) => (
                   <div
@@ -1642,12 +1631,8 @@ function QonnaAnnualPlanSection({ u }) {
     </div>
   );
 }
-// ─── Qonna Work Analysis Section (Woreda) ────────────────────────────────────
-// Each of the 6 animal categories has 3 sub-metrics that are both planned
-// and reported: land prepared (ha), sheds/ponds/hives built, and total animals.
-// This section analyses all 18 sub-fields individually.
 
-// 6 categories x 3 sub-fields each = 18 analysed metrics
+// ─── Qonna Work Analysis Section (Woreda) ────────────────────────────────────
 const QONNA_ANALYSIS_CATS = [
   {
     key: "furdisa",
@@ -1773,7 +1758,6 @@ function QonnaAnalysisSection() {
 
   return (
     <div>
-      {/* Header + period selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
@@ -1831,7 +1815,6 @@ function QonnaAnalysisSection() {
         </div>
       ) : (
         <>
-          {/* Period banner */}
           <div
             className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border"
             style={{ background: accentLight, borderColor: accentBorder }}
@@ -1847,14 +1830,12 @@ function QonnaAnalysisSection() {
             </span>
           </div>
 
-          {/* Per-category ring charts: 3 rings per category */}
           <div className="space-y-6 mb-8">
             {QONNA_ANALYSIS_CATS.map((cat) => (
               <div
                 key={cat.key}
                 className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
               >
-                {/* Category header */}
                 <div
                   className="px-5 py-3 border-b border-[#e2e8f0] flex items-center gap-2"
                   style={{
@@ -1871,7 +1852,6 @@ function QonnaAnalysisSection() {
                     {cat.label}
                   </p>
                 </div>
-                {/* 3 ring charts side by side */}
                 <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {cat.fields.map((f) => {
                     const annualTarget = targets ? (targets[f.key] ?? 0) : 0;
@@ -1971,7 +1951,6 @@ function QonnaAnalysisSection() {
             ))}
           </div>
 
-          {/* Full summary table — all 18 sub-fields */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div
               className="px-5 py-3 border-b border-[#e2e8f0]"
@@ -2036,7 +2015,6 @@ function QonnaAnalysisSection() {
                           key={f.key}
                           className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
                         >
-                          {/* Category cell — only shown on the first sub-field row */}
                           {fi === 0 ? (
                             <td
                               className="px-4 py-3 font-bold text-[#1e293b] align-top"
@@ -2201,7 +2179,6 @@ const CARRAA_PLAN_FIELDS = [
   },
 ];
 
-// CarraaHojii summary keys that correspond to the plan keys
 const CARRAA_SUMMARY_KEYS = [
   {
     summaryKey: "leenjii",
@@ -2259,15 +2236,12 @@ const CARRAA_SUMMARY_KEYS = [
   },
 ];
 
-// ─── CarraaHojii Annual Plan Section (read-only, same style as AnnualPlanSection) ──
 function CarraaHojiiAnnualPlanSection({ u }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const year = new Date().getFullYear();
 
   useEffect(() => {
-    // Reuses the existing fetchWeredaPlan endpoint — the backend returns the
-    // woreda's row which already contains all category targets.
     fetchWeredaPlan()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null))
@@ -2362,7 +2336,6 @@ function CarraaHojiiAnnualPlanSection({ u }) {
   );
 }
 
-// ─── Placeholder pages (non-implemented sectors) ─────────────────────────────
 function PlaceholderAnnualPlan({ title, u }) {
   return (
     <div>
@@ -2500,7 +2473,6 @@ const ATK_CATS = ATK_FIELDS.map((f, i) => ({
   color: ["#7e22ce", "#0369a1", "#065f46", "#b45309"][i % 4],
 }));
 
-// Revenue (Galii) and CarraaHojii category lists for GenericAnnualPlanSection
 const REVENUE_CATS = [
   {
     key: "galii_idilee",
@@ -2573,8 +2545,6 @@ const CARRAA_WOREDA_CATS = [
   },
 ];
 
-// ─── Shared GenericAnnualPlanSection ─────────────────────────────────────────
-// Reusable read-only plan display for Daldala and ATK.
 function GenericAnnualPlanSection({
   u,
   cats,
@@ -2664,7 +2634,6 @@ function GenericAnnualPlanSection({
   );
 }
 
-// ─── Shared GenericAnalysisSection ───────────────────────────────────────────
 function GenericAnalysisSection({
   cats,
   fetchPlanFn,
@@ -2672,7 +2641,7 @@ function GenericAnalysisSection({
   accentColor,
   accentLight,
   accentBorder,
-  sector, // NEW: "carraa" | "daldala" | "atk" | "galii"
+  sector,
 }) {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
@@ -2789,18 +2758,15 @@ function GenericAnalysisSection({
             </span>
           </div>
 
-          {/* Ring charts */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
             {cats.map((cat) => {
               const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
               const periodTarget = partitionTarget(annualTarget, period);
               const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
-              // Real pct — uncapped so it can exceed 100%
               const pct =
                 periodTarget > 0
                   ? Math.round((actual / periodTarget) * 100)
                   : 0;
-              // Arc/bar clamped to 100 for visual rendering only
               const arcPct = Math.min(pct, 100);
               const size = 110,
                 sw = 11,
@@ -2873,7 +2839,10 @@ function GenericAnalysisSection({
                     <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
                       <div
                         className="h-1 rounded-full transition-all duration-700"
-                        style={{ width: `${arcPct}%`, backgroundColor: cat.color }}
+                        style={{
+                          width: `${arcPct}%`,
+                          backgroundColor: cat.color,
+                        }}
                       />
                     </div>
                   </div>
@@ -2882,7 +2851,6 @@ function GenericAnalysisSection({
             })}
           </div>
 
-          {/* Summary table */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
             <div
               className="px-5 py-3 border-b border-[#e2e8f0]"
@@ -3014,8 +2982,6 @@ function GenericAnalysisSection({
               </table>
             </div>
           </div>
-
-          {/* Period breakdown — removed */}
         </>
       )}
     </div>
@@ -3083,7 +3049,6 @@ function SuccessModal({ onClose }) {
 }
 
 // ─── LockBanner ──────────────────────────────────────────────────────────────
-// Shown inside a submit form when that sector is already submitted for today.
 function LockBanner({ sector, reportType, onUnlocked }) {
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
@@ -3098,7 +3063,6 @@ function LockBanner({ sector, reportType, onUnlocked }) {
       setRequested(true);
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to send request.";
-      // If already approved, treat as unlocked
       if (msg.toLowerCase().includes("approved")) {
         onUnlocked && onUnlocked();
       } else {
@@ -3187,6 +3151,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (locked) return;
     try {
       await submitBuusaaReport({
         report_type: reportType,
@@ -3207,7 +3172,6 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
         yaada_gudinaa: yaada,
       });
       setShowModal(true);
-      handleClear();
       onSubmitSuccess && onSubmitSuccess();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to submit report.");
@@ -3317,7 +3281,8 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              disabled={locked}
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -3333,6 +3298,9 @@ function GenericSubmitForm({
   fields,
   submitFn,
   title,
+  sectorKey,
+  locked = false,
+  onSubmitSuccess,
   headerColor = "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
 }) {
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
@@ -3341,6 +3309,7 @@ function GenericSubmitForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const handleClear = () => {
@@ -3350,6 +3319,7 @@ function GenericSubmitForm({
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (locked) return;
     setError("");
     setSaving(true);
     try {
@@ -3364,6 +3334,7 @@ function GenericSubmitForm({
       await submitFn(payload);
       setShowModal(true);
       handleClear();
+      onSubmitSuccess && onSubmitSuccess();
     } catch (err) {
       setError(friendlyError(err, "Failed to submit report."));
     } finally {
@@ -3373,6 +3344,15 @@ function GenericSubmitForm({
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+      {locked && sectorKey && (
+        <div className="mb-5">
+          <LockBanner
+            sector={sectorKey}
+            reportType={reportType}
+            onUnlocked={onSubmitSuccess}
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
@@ -3462,8 +3442,8 @@ function GenericSubmitForm({
             </button>
             <button
               type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              disabled={saving || locked}
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon />
               {saving ? "Submitting..." : "Submit Report"}
@@ -3477,7 +3457,6 @@ function GenericSubmitForm({
 
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 function RevenueSubmitForm({ u }) {
-  // ── Submit state ──
   const [category, setCategory] = useState(REVENUE_CATEGORIES[0].id);
   const [source, setSource] = useState(REVENUE_CATEGORIES[0].sources[0]);
   const [amount, setAmount] = useState("");
@@ -3548,7 +3527,6 @@ function RevenueSubmitForm({ u }) {
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
 
-      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
@@ -3559,9 +3537,7 @@ function RevenueSubmitForm({ u }) {
       </div>
 
       <div className="space-y-5">
-        {/* Steps 1+2 side by side — combo boxes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Step 1 — Gosa Galii (Category) */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
               className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
@@ -3598,7 +3574,6 @@ function RevenueSubmitForm({ u }) {
             </div>
           </div>
 
-          {/* Step 2 — Madda Galii (Source) */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
               className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
@@ -3639,7 +3614,6 @@ function RevenueSubmitForm({ u }) {
           </div>
         </div>
 
-        {/* Step 3 — Entry */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
@@ -3658,7 +3632,6 @@ function RevenueSubmitForm({ u }) {
             )}
           </div>
           <div className="px-5 py-4">
-            {/* Context reminder badges */}
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-3 py-1 rounded-full">
                 <span
@@ -3739,7 +3712,6 @@ function RevenueSubmitForm({ u }) {
               </div>
             )}
 
-            {/* Always-visible entries table */}
             <div className="rounded-xl border border-[#e2e8f0] overflow-hidden">
               <div className="px-4 py-2.5 bg-[#f4f6f9] border-b border-[#f1f5f9] flex items-center justify-between">
                 <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
@@ -3838,7 +3810,6 @@ function RevenueSubmitForm({ u }) {
           </div>
         </div>
 
-        {/* Submit footer */}
         {entries.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 shadow-sm">
             <div>
@@ -3890,7 +3861,6 @@ const REVENUE_CHART_FIELDS = [
   },
 ];
 
-// Simple bar chart — better than ring charts for revenue (no target, just totals)
 function RevenueBarChart({ fields, summary }) {
   const max = Math.max(
     ...fields.map((f) => (summary ? (summary[f.key] ?? 0) : 0)),
@@ -3941,11 +3911,9 @@ function RevenueAnalysis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Annual summary — fixed "till today" view, fetched once on mount
   const [annualSummary, setAnnualSummary] = useState(null);
   const [annualLoading, setAnnualLoading] = useState(false);
 
-  // Fetch annual once on mount — always shows current year running totals
   useEffect(() => {
     setAnnualLoading(true);
     fetchSummary("annual")
@@ -3974,7 +3942,6 @@ function RevenueAnalysis() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
@@ -3995,7 +3962,6 @@ function RevenueAnalysis() {
         </div>
       </div>
 
-      {/* Loading / error */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
@@ -4006,7 +3972,6 @@ function RevenueAnalysis() {
         </div>
       ) : (
         <>
-          {/* ── Section 1: Annual / Till Today ── */}
           <div className="mb-7">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-[#334155] uppercase tracking-wide">
@@ -4049,20 +4014,17 @@ function RevenueAnalysis() {
             )}
           </div>
 
-          {/* ── Section 2: Filtered Period Breakdown ── */}
           <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
             <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
               {periodLabel} View
             </span>
           </div>
 
-          {/* Bar chart — filtered */}
           <RevenueBarChart
             fields={REVENUE_CHART_FIELDS}
             summary={activeSummary}
           />
 
-          {/* By-source breakdown table — filtered */}
           {activeSummary?.by_source &&
             Object.keys(activeSummary.by_source).length > 0 && (
               <div className="mt-5 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
@@ -4127,7 +4089,6 @@ const REPORT_SECTORS = [
   { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
-// Fields to hide from the detail modal (system/internal columns)
 const HIDDEN_FIELDS = new Set([
   "id",
   "user_id",
@@ -4138,12 +4099,10 @@ const HIDDEN_FIELDS = new Set([
   "updated_at",
 ]);
 
-// Build a clean label from a snake_case key
 function fieldLabel(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Extract only the data fields worth displaying
 function getDisplayFields(row) {
   return Object.entries(row).filter(
     ([k, v]) =>
@@ -4155,7 +4114,6 @@ function getDisplayFields(row) {
   );
 }
 
-// Format a date string with time if created_at is available
 function formatDateTime(row) {
   if (row.created_at) {
     const d = new Date(row.created_at);
@@ -4170,80 +4128,88 @@ function formatDateTime(row) {
   return row.report_date ?? "";
 }
 
-// ─── Shared sector field definitions for print tables (woreda) ───────────────
 const SECTOR_PRINT_FIELDS = {
   buusaa: [
-    { key: "hubannoo_uummuu",             label: "Hubannoo Uumuu" },
-    { key: "horannaa_misensaa",           label: "Horannaa Misensaa" },
-    { key: "buusi_jirataa",               label: "Buusi Jiraataa" },
-    { key: "gumaata_jiraataa",            label: "Gumaata Jiraataa" },
-    { key: "buusi_daldalaa",              label: "Buusi fi Gumaata Daldalaa" },
-    { key: "buusi_daldalaa_fi_gumaataa",  label: "Buusi Daldalaa fi Gumaataa" },
-    { key: "inisheetevii_buusaa_gonofaa", label: "Inisheetivii Buusaa Gonofaa" },
-    { key: "gumaata_midhaani",            label: "Gumaata Midhaani (Kuntal)" },
-    { key: "nyaata_barataa",              label: "Nyaata Barataa" },
-    { key: "sukkaara",                    label: "Sukkaara (KG)" },
-    { key: "zayitii",                     label: "Zayitii (Litre)" },
+    { key: "hubannoo_uummuu", label: "Hubannoo Uumuu" },
+    { key: "horannaa_misensaa", label: "Horannaa Misensaa" },
+    { key: "buusi_jirataa", label: "Buusi Jiraataa" },
+    { key: "gumaata_jiraataa", label: "Gumaata Jiraataa" },
+    { key: "buusi_daldalaa", label: "Buusi fi Gumaata Daldalaa" },
+    { key: "buusi_daldalaa_fi_gumaataa", label: "Buusi Daldalaa fi Gumaataa" },
+    {
+      key: "inisheetevii_buusaa_gonofaa",
+      label: "Inisheetivii Buusaa Gonofaa",
+    },
+    { key: "gumaata_midhaani", label: "Gumaata Midhaani (Kuntal)" },
+    { key: "nyaata_barataa", label: "Nyaata Barataa" },
+    { key: "sukkaara", label: "Sukkaara (KG)" },
+    { key: "zayitii", label: "Zayitii (Litre)" },
   ],
   carraaHojii: [
-    { key: "leenjii",                  label: "Leenjii" },
-    { key: "carraa_hojii_dhaabbii",    label: "Carraa Hojii Dhaabbii" },
-    { key: "carraa_hojii_qacarrii",    label: "Carraa Hojii Qacarrii" },
-    { key: "qusannaa_haawaasaa",       label: "Qusannaa Haawaasaa" },
-    { key: "qusanna_dirqii",           label: "Qusanna Dirqii" },
-    { key: "kenna_liqii",              label: "Kenna Liqii" },
-    { key: "deebii_liqii_bilchaate",   label: "Deebii Liqii Bilchaate" },
-    { key: "deebii_liqii_bulee",       label: "Deebii Liqii Bulee" },
-    { key: "industrii_godoo",          label: "Industrii Godoo" },
+    { key: "leenjii", label: "Leenjii" },
+    { key: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
+    { key: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
+    { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa" },
+    { key: "qusanna_dirqii", label: "Qusanna Dirqii" },
+    { key: "kenna_liqii", label: "Kenna Liqii" },
+    { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
+    { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
+    { key: "industrii_godoo", label: "Industrii Godoo" },
   ],
   qonna: [
-    { key: "furdisa_bakka_qophaawe",      label: "Furdisa - Bakka Qophaawe" },
-    { key: "furdisa_sheedii_ijaaraman",   label: "Furdisa - Sheedii Ijaaraman" },
-    { key: "furdisa_lakk_horii",          label: "Furdisa - Lakk Horii" },
-    { key: "annan_bakka_qophaawe",        label: "Annan - Bakka Qophaawe" },
-    { key: "annan_sheedii_ijaaraman",     label: "Annan - Sheedii Ijaaraman" },
-    { key: "annan_lakk_saaa",             label: "Annan - Lakk Sa'a" },
-    { key: "lukkuu_bakka_qophaawe",       label: "Lukkuu - Bakka Qophaawe" },
-    { key: "lukkuu_sheedii_ijaaraman",    label: "Lukkuu - Sheedii Ijaaraman" },
-    { key: "lukkuu_lakk_lukkuu",          label: "Lukkuu - Lakk Lukkuu" },
-    { key: "boyyee_bakka_qophaawe",       label: "Booyyee - Bakka Qophaawe" },
-    { key: "boyyee_sheedii_ijaaraman",    label: "Booyyee - Sheedii Ijaaraman" },
-    { key: "boyyee_lakk_booyyee",         label: "Booyyee - Lakk Booyyee" },
-    { key: "kannisaa_bakka_qophaawe",     label: "Kannisaa - Bakka Qophaawe" },
-    { key: "kannisaa_gaaguraa_ijaaraman", label: "Kannisaa - Gaaguraa Ijaaraman" },
-    { key: "kannisaa_lakk_kannisaa",      label: "Kannisaa - Lakk Kannisaa" },
-    { key: "qurxummii_bakka_qophaawe",    label: "Qurxummii - Bakka Qophaawe" },
-    { key: "qurxummii_pondii_ijaaraman",  label: "Qurxummii - Pondii Ijaaraman" },
-    { key: "qurxummii_lakk_qurxummii",    label: "Qurxummii - Lakk Qurxummii" },
+    { key: "furdisa_bakka_qophaawe", label: "Furdisa - Bakka Qophaawe" },
+    { key: "furdisa_sheedii_ijaaraman", label: "Furdisa - Sheedii Ijaaraman" },
+    { key: "furdisa_lakk_horii", label: "Furdisa - Lakk Horii" },
+    { key: "annan_bakka_qophaawe", label: "Annan - Bakka Qophaawe" },
+    { key: "annan_sheedii_ijaaraman", label: "Annan - Sheedii Ijaaraman" },
+    { key: "annan_lakk_saaa", label: "Annan - Lakk Sa'a" },
+    { key: "lukkuu_bakka_qophaawe", label: "Lukkuu - Bakka Qophaawe" },
+    { key: "lukkuu_sheedii_ijaaraman", label: "Lukkuu - Sheedii Ijaaraman" },
+    { key: "lukkuu_lakk_lukkuu", label: "Lukkuu - Lakk Lukkuu" },
+    { key: "boyyee_bakka_qophaawe", label: "Booyyee - Bakka Qophaawe" },
+    { key: "boyyee_sheedii_ijaaraman", label: "Booyyee - Sheedii Ijaaraman" },
+    { key: "boyyee_lakk_booyyee", label: "Booyyee - Lakk Booyyee" },
+    { key: "kannisaa_bakka_qophaawe", label: "Kannisaa - Bakka Qophaawe" },
+    {
+      key: "kannisaa_gaaguraa_ijaaraman",
+      label: "Kannisaa - Gaaguraa Ijaaraman",
+    },
+    { key: "kannisaa_lakk_kannisaa", label: "Kannisaa - Lakk Kannisaa" },
+    { key: "qurxummii_bakka_qophaawe", label: "Qurxummii - Bakka Qophaawe" },
+    {
+      key: "qurxummii_pondii_ijaaraman",
+      label: "Qurxummii - Pondii Ijaaraman",
+    },
+    { key: "qurxummii_lakk_qurxummii", label: "Qurxummii - Lakk Qurxummii" },
   ],
   daldala: [
-    { key: "galmee_haraa",              label: "Galmee Haraa" },
-    { key: "heyyema_haraa",             label: "Heyyema Haraa" },
-    { key: "harahessaa",                label: "Harahessaa" },
-    { key: "galii_daldalarra_galuu",    label: "Galii Daldalarra Galuu" },
-    { key: "toannoo_walii_gala",        label: "To'annoo Walii Gala" },
-    { key: "tmd",                       label: "Leenjii TMD" },
-    { key: "intarshippii",              label: "Intarshippii" },
-    { key: "ggg",                       label: "Giddu Gala Gabaa" },
-    { key: "gabayaa_sanbata",           label: "Gabaa Sanbata" },
-    { key: "whg_kudraa",                label: "WHG - Kudraa" },
-    { key: "whg_mudraa",                label: "WHG - Mudraa" },
+    { key: "galmee_haraa", label: "Galmee Haraa" },
+    { key: "heyyema_haraa", label: "Heyyema Haraa" },
+    { key: "harahessaa", label: "Harahessaa" },
+    { key: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu" },
+    { key: "toannoo_walii_gala", label: "To'annoo Walii Gala" },
+    { key: "tmd", label: "Leenjii TMD" },
+    { key: "intarshippii", label: "Intarshippii" },
+    { key: "ggg", label: "Giddu Gala Gabaa" },
+    { key: "gabayaa_sanbata", label: "Gabaa Sanbata" },
+    { key: "whg_kudraa", label: "WHG - Kudraa" },
+    { key: "whg_mudraa", label: "WHG - Mudraa" },
   ],
   atk: [
-    { key: "waliigaltee_pilaanii_kennuu", label: "Waliigaltee Pilaanii Kennuu" },
-    { key: "heeyyama_ijaarsaa_kennamee",  label: "Heeyyama Ijaarsaa Kennamee" },
-    { key: "toannoo_fi_hordoffii_gamoo",  label: "To'annoo fi Hordoffii Gamoo" },
-    { key: "galii_atk_galchuu",           label: "Galii ATK Galchuu" },
+    {
+      key: "waliigaltee_pilaanii_kennuu",
+      label: "Waliigaltee Pilaanii Kennuu",
+    },
+    { key: "heeyyama_ijaarsaa_kennamee", label: "Heeyyama Ijaarsaa Kennamee" },
+    { key: "toannoo_fi_hordoffii_gamoo", label: "To'annoo fi Hordoffii Gamoo" },
+    { key: "galii_atk_galchuu", label: "Galii ATK Galchuu" },
   ],
 };
 
-// ─── WoRedaPrintModal ────────────────────────────────────────────────────────
-// Woreda users choose sector(s) and layout, then a styled HTML print window opens.
 function WoRedaPrintModal({ rows, woredaName, onClose }) {
   const [sector, setSector] = useState("all");
-  const [combined, setCombined] = useState(true); // true = all sectors on one page
+  const [combined, setCombined] = useState(true);
 
-  // Build the HTML for one sector table
   function buildSectorTable(sectorId, sectorRows) {
     const sec = REPORT_SECTORS.find((s) => s.id === sectorId);
     const sectorLabel = sec?.label ?? sectorId;
@@ -4257,7 +4223,6 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
       </div>`;
     }
 
-    // Column headers: R.No | Date | Report Type | [field labels...]
     const fieldHeaders = fields.map((f) => `<th>${f.label}</th>`).join("");
     const thead = `<thead><tr>
       <th class="rno">R.No</th>
@@ -4266,16 +4231,21 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
       ${fieldHeaders}
     </tr></thead>`;
 
-    const bodyRows = sectorRows.map((row, idx) => {
-      const dateFmt = row.report_date ?? "";
-      const typeFmt = row.report_type ?? "";
-      const cells = fields.map(({ key }) => {
-        const val = row[key];
-        if (val === null || val === undefined || val === "") return `<td class="num">—</td>`;
-        return `<td class="num">${typeof val === "number" ? val.toLocaleString() : val}</td>`;
-      }).join("");
-      return `<tr><td class="rno">${idx + 1}</td><td class="date">${dateFmt}</td><td>${typeFmt}</td>${cells}</tr>`;
-    }).join("");
+    const bodyRows = sectorRows
+      .map((row, idx) => {
+        const dateFmt = row.report_date ?? "";
+        const typeFmt = row.report_type ?? "";
+        const cells = fields
+          .map(({ key }) => {
+            const val = row[key];
+            if (val === null || val === undefined || val === "")
+              return `<td class="num">—</td>`;
+            return `<td class="num">${typeof val === "number" ? val.toLocaleString() : val}</td>`;
+          })
+          .join("");
+        return `<tr><td class="rno">${idx + 1}</td><td class="date">${dateFmt}</td><td>${typeFmt}</td>${cells}</tr>`;
+      })
+      .join("");
 
     return `<div class="sector-block">
       <div class="sector-title">
@@ -4287,25 +4257,26 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
 
   const handlePrint = () => {
     const generatedDate = new Date().toLocaleString();
-
-    // Determine which sectors to include
     const sectorsToInclude =
       sector === "all"
         ? REPORT_SECTORS
         : [REPORT_SECTORS.find((s) => s.id === sector)].filter(Boolean);
 
-    // Build section HTML for each sector
-    const sectionsHTML = sectorsToInclude.map((sec) => {
-      const sectorRows = rows.filter((r) => r._sector === sec.id);
-      const sectionHTML = buildSectorTable(sec.id, sectorRows);
-      // If not combined, wrap each section with a page-break
-      return combined ? sectionHTML : `<div class="page-section">${sectionHTML}</div>`;
-    }).join(combined ? "" : "");
+    const sectionsHTML = sectorsToInclude
+      .map((sec) => {
+        const sectorRows = rows.filter((r) => r._sector === sec.id);
+        const sectionHTML = buildSectorTable(sec.id, sectorRows);
+        return combined
+          ? sectionHTML
+          : `<div class="page-section">${sectionHTML}</div>`;
+      })
+      .join(combined ? "" : "");
 
     const pageTitle =
       sector === "all"
         ? "All Sectors Report"
-        : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector) + " Report";
+        : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector) +
+          " Report";
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -4360,7 +4331,9 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
 
     const win = window.open("", "_blank", "width=1100,height=800");
     if (!win) {
-      alert("Pop-up blocked. Please allow pop-ups for this site and try again.");
+      alert(
+        "Pop-up blocked. Please allow pop-ups for this site and try again.",
+      );
       return;
     }
     win.document.write(html);
@@ -4371,7 +4344,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
   const selectedSectorLabel =
     sector === "all"
       ? "All Sectors"
-      : REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector;
+      : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector);
 
   const rowCountForSector =
     sector === "all"
@@ -4381,28 +4354,44 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
-        {/* Header */}
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+          }}
         >
           <div>
             <p className="text-white font-bold text-base">Download Report</p>
-            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Configure and print as PDF
+            </p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
-        {/* Options */}
         <div className="px-6 py-5 space-y-4">
-          {/* Sector selector */}
           <div>
             <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
               Sector
@@ -4414,12 +4403,13 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
 
-          {/* Layout selector — only relevant when "All Sectors" */}
           {sector === "all" && (
             <div>
               <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-2">
@@ -4457,23 +4447,36 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             </div>
           )}
 
-          {/* Preview summary */}
           <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
-            <svg className="w-5 h-5 text-[#1a3a5c] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+            <svg
+              className="w-5 h-5 text-[#1a3a5c] flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m-3-3v6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+              />
             </svg>
             <div>
-              <p className="text-sm font-semibold text-[#1a3a5c]">{selectedSectorLabel}</p>
+              <p className="text-sm font-semibold text-[#1a3a5c]">
+                {selectedSectorLabel}
+              </p>
               <p className="text-xs text-[#64748b]">
-                {rowCountForSector} report{rowCountForSector !== 1 ? "s" : ""} will be included
+                {rowCountForSector} report{rowCountForSector !== 1 ? "s" : ""}{" "}
+                will be included
               </p>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
-          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P to save as PDF.</p>
+          <p className="text-[#94a3b8] text-xs">
+            Opens in a new window. Use Ctrl+P to save as PDF.
+          </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -4486,8 +4489,18 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
               disabled={rowCountForSector === 0}
               className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+                />
                 <rect x="6" y="14" width="12" height="8" rx="1" />
               </svg>
               Print / Save PDF
@@ -4499,7 +4512,6 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
   );
 }
 
-// Generate and trigger a CSV download for a single report row
 function downloadReportCSV(row, sectorLabel) {
   const fields = getDisplayFields(row);
   const submittedAt = row.created_at
@@ -4524,7 +4536,6 @@ function downloadReportCSV(row, sectorLabel) {
   URL.revokeObjectURL(url);
 }
 
-// ─── Report Detail Modal ──────────────────────────────────────────────────────
 function ReportDetailModal({ row, onClose }) {
   if (!row) return null;
   const sector = REPORT_SECTORS.find((s) => s.id === row._sector);
@@ -4540,7 +4551,6 @@ function ReportDetailModal({ row, onClose }) {
       }}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between flex-shrink-0"
           style={{
@@ -4575,9 +4585,7 @@ function ReportDetailModal({ row, onClose }) {
           </button>
         </div>
 
-        {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {/* Meta row */}
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] border border-[#dce8f4] px-3 py-1 rounded-full text-xs font-semibold text-[#1a3a5c]">
               <span
@@ -4591,7 +4599,6 @@ function ReportDetailModal({ row, onClose }) {
             </span>
           </div>
 
-          {/* Data fields */}
           <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
             Report Data
           </p>
@@ -4616,7 +4623,6 @@ function ReportDetailModal({ row, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 pb-5 pt-3 flex items-center justify-end border-t border-[#f1f5f9] flex-shrink-0">
           <button
             onClick={onClose}
@@ -4630,20 +4636,16 @@ function ReportDetailModal({ row, onClose }) {
   );
 }
 
-// ─── Report History Section (Woreda) ─────────────────────────────────────────
 function ReportHistorySection({ woreda }) {
   const currentYear = new Date().getFullYear();
 
-  // Data state
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
 
-  // Filters
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterSector, setFilterSector] = useState("all");
 
-  // Custom date range
   const [isCustom, setIsCustom] = useState(false);
   const [startMonth, setStartMonth] = useState("Adoolessa");
   const [startDay, setStartDay] = useState(1);
@@ -4653,11 +4655,9 @@ function ReportHistorySection({ woreda }) {
   const [customDateErr, setCustomDateErr] = useState("");
   const [appliedRange, setAppliedRange] = useState(null);
 
-  // Modal
   const [modalRow, setModalRow] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-  // Fetch on mount
   useEffect(() => {
     setLoading(true);
     setFetchError("");
@@ -4675,7 +4675,6 @@ function ReportHistorySection({ woreda }) {
     const date = r.report_date ?? "";
     const type = r.report_type ?? "";
     const sector = r._sector ?? "";
-    // Match by prefix: "Daily" matches "Daily Report (Gabaasa Guyyaa)", etc.
     const periodMatch = filterPeriod === "all" || type.startsWith(filterPeriod);
     const sectorMatch = filterSector === "all" || sector === filterSector;
     let dateMatch = true;
@@ -4732,13 +4731,12 @@ function ReportHistorySection({ woreda }) {
         />
       )}
 
-      {/* Page header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            All reports you have submitted, across every sector. Filter by period,
-            sector, or a custom date range.
+            All reports you have submitted, across every sector. Filter by
+            period, sector, or a custom date range.
           </p>
         </div>
         <button
@@ -4746,15 +4744,24 @@ function ReportHistorySection({ woreda }) {
           disabled={rows.length === 0}
           className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+            />
             <rect x="6" y="14" width="12" height="8" rx="1" />
           </svg>
           Download Report
         </button>
       </div>
 
-      {/* Error banner */}
       {fetchError && (
         <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
           <svg
@@ -4788,10 +4795,8 @@ function ReportHistorySection({ woreda }) {
         </div>
       )}
 
-      {/* Filter bar */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
         <div className="flex flex-wrap gap-4 items-end">
-          {/* Period */}
           <div className="flex-1 min-w-[140px]">
             <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
               Period
@@ -4811,7 +4816,6 @@ function ReportHistorySection({ woreda }) {
             </select>
           </div>
 
-          {/* Sector */}
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
               Sector
@@ -4830,7 +4834,6 @@ function ReportHistorySection({ woreda }) {
             </select>
           </div>
 
-          {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
               {loading
@@ -4840,7 +4843,6 @@ function ReportHistorySection({ woreda }) {
           </div>
         </div>
 
-        {/* Custom date range expander */}
         {isCustom && (
           <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
             <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
@@ -4938,7 +4940,6 @@ function ReportHistorySection({ woreda }) {
         )}
       </div>
 
-      {/* Results table */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
           <p className="text-sm font-semibold text-[#334155]">
@@ -5109,7 +5110,6 @@ function WorksOverview({ u, onSelect }) {
   );
 }
 
-// Maps logged-in username to the aanaa (woreda) name shown in the UI
 const USERNAME_TO_WOREDA_NAME = {
   "Aanaa Gooroo": "Aanaa Gooroo",
   "Aanaa Dhadacha Araaraa": "Aanaa Dhadacha Araaraa",
@@ -5117,7 +5117,6 @@ const USERNAME_TO_WOREDA_NAME = {
   "Aanaa Andoodee": "Aanaa Andoodee",
 };
 
-// ─── Woreda Announcements View Page (read-only + mark-as-read) ────────────────
 function AnnouncementsViewPage({ onRead }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -5128,11 +5127,10 @@ function AnnouncementsViewPage({ onRead }) {
       .then((d) => {
         const list = d.announcements || [];
         setAnnouncements(list);
-        // Mark all as read if there are any
         if (list.length > 0) {
           const maxId = Math.max(...list.map((a) => a.id));
           markAnnouncementsRead(maxId)
-            .then(() => onRead && onRead()) // reset badge to 0
+            .then(() => onRead && onRead())
             .catch(() => {});
         }
       })
@@ -5140,7 +5138,7 @@ function AnnouncementsViewPage({ onRead }) {
         setError("No connection. Check your internet and try again."),
       )
       .finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
@@ -5237,26 +5235,62 @@ export default function WoRedaDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const sideW = collapsed ? "w-16" : "w-64";
 
-  // ── Lock status (which sectors are submitted today) ──
-  const today = new Date().toISOString().split("T")[0];
+  // ── Lock status ──
+  const todayDate = new Date().toISOString().split("T")[0];
   const [locked, setLocked] = useState({});
-  const refreshLocks = useCallback(() => {
-    fetchLockStatus(today)
-      .then((d) => setLocked(d.locked || {}))
-      .catch(() => {});
-  }, [today]);
-  useEffect(() => {
-    refreshLocks();
-  }, [refreshLocks]);
-
-  // ── Dashboard stats ──
   const [dashStats, setDashStats] = useState(null);
 
-  useEffect(() => {
-    fetchMyReports()
-      .then((data) => {
-        if (!Array.isArray(data)) return;
-        const sorted = [...data].sort((a, b) =>
+  // ── Refresh locks based on actual submitted reports and edit requests ──
+  const refreshLocks = useCallback(() => {
+    const date = new Date().toISOString().split("T")[0];
+
+    // Fetch reports and edit requests in parallel
+    Promise.all([fetchMyReports(), fetchMyEditRequests()])
+      .then(([reportsData, editRequestsData]) => {
+        const reports = Array.isArray(reportsData) ? reportsData : [];
+        const editRequests =
+          editRequestsData?.requests ??
+          (Array.isArray(editRequestsData) ? editRequestsData : []);
+
+        // _sector tags from getMyReports use different names than the lock keys
+        // used in edit_requests and checkSubmitLock. Normalize them here.
+        const SECTOR_TAG_TO_LOCK_KEY = {
+          buusaa: "buusaa",
+          carraaHojii: "carraa", // getMyReports tags as "carraaHojii", lock system uses "carraa"
+          qonna: "qonna",
+          daldala: "daldala",
+          atk: "atk",
+        };
+
+        // Compute locked sectors:
+        // A sector is locked if there is a report for today AND no approved edit request for that sector/date.
+        const todayReports = reports.filter((r) => r.report_date === date);
+        const sectorsWithReport = todayReports
+          .map((r) => SECTOR_TAG_TO_LOCK_KEY[r._sector])
+          .filter(Boolean);
+
+        // Find approved edit requests for today's sector/date
+        const approvedRequests = editRequests.filter(
+          (req) =>
+            req.status === "approved" &&
+            req.report_date === date &&
+            sectorsWithReport.includes(req.sector),
+        );
+        const approvedSectors = new Set(
+          approvedRequests.map((req) => req.sector),
+        );
+
+        const newLocked = {};
+        const allSectors = ["buusaa", "carraa", "qonna", "daldala", "atk"];
+        allSectors.forEach((s) => {
+          // Lock if there's a report today and NO approved edit request
+          newLocked[s] =
+            sectorsWithReport.includes(s) && !approvedSectors.has(s);
+        });
+        setLocked(newLocked);
+
+        // Update dashStats
+        const sorted = [...reports].sort((a, b) =>
           (b.created_at ?? b.report_date ?? "").localeCompare(
             a.created_at ?? a.report_date ?? "",
           ),
@@ -5273,25 +5307,31 @@ export default function WoRedaDashboard() {
               })
             : lastRow.report_date
           : null;
-        setDashStats({ total: data.length, lastDate });
+        setDashStats({ total: reports.length, lastDate });
       })
-      .catch(() => {});
+      .catch(() => {
+        // On error, leave locked as empty (allow submission as fallback)
+        setLocked({});
+      });
   }, []);
+
+  // ── Initial load ──
+  useEffect(() => {
+    refreshLocks();
+  }, [refreshLocks]);
 
   // ── Unread announcements badge ──
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // Initial fetch
     fetchUnreadCount()
       .then((d) => setUnreadCount(d.count ?? 0))
       .catch(() => {});
-    // Poll every 60 s so the badge stays fresh without full re-login
     const interval = setInterval(() => {
       fetchUnreadCount()
         .then((d) => setUnreadCount(d.count ?? 0))
         .catch(() => {});
-    }, 60_000);
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -5326,7 +5366,6 @@ export default function WoRedaDashboard() {
       if (id === "announcements") {
         setActiveNav("announcements");
         setActiveWork(null);
-        // Scroll to announcements section after state update
         setTimeout(() => {
           const el = document.getElementById("announcements-section");
           if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -5520,7 +5559,6 @@ export default function WoRedaDashboard() {
                 Welcome back! {u.name}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                {/* Total Submitted */}
                 <div className="rounded-xl border bg-[#eef4fb] border-[#dce8f4] text-[#1a3a5c] p-5">
                   <p className="text-3xl font-bold leading-tight">
                     {dashStats ? dashStats.total : "…"}
@@ -5531,7 +5569,6 @@ export default function WoRedaDashboard() {
                   </p>
                 </div>
 
-                {/* Notifications — unread announcements */}
                 <button
                   onClick={() => setActiveNav("announcements")}
                   className="rounded-xl border text-left p-5 transition-all hover:shadow-md hover:-translate-y-0.5 focus:outline-none"
@@ -5557,7 +5594,6 @@ export default function WoRedaDashboard() {
                   </p>
                 </button>
 
-                {/* Last Submitted */}
                 <div className="rounded-xl border bg-[#f0fdf4] border-[#bbf7d0] text-[#065f46] p-5">
                   <p className="text-base font-bold leading-tight break-words">
                     {dashStats?.lastDate ?? (dashStats ? "None yet" : "…")}
