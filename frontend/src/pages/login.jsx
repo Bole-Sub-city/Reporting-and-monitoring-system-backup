@@ -68,13 +68,13 @@ export default function Login() {
 
       // Redirect based on role – supports both "sub-city" and "subcity"
       if (role === "admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
       } else if (role === "sub-city" || role === "subcity") {
-        navigate("/sub-city/dashboard");
+        navigate("/sub-city/dashboard", { replace: true });
       } else if (role === "wereda") {
-        navigate("/wereda/dashboard");
+        navigate("/wereda/dashboard", { replace: true });
       } else {
-        navigate("/");
+        navigate("/", { replace: true });
       }
     } catch (err) {
       setServerError(
@@ -107,7 +107,10 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
             <div className="w-full text-left">
-              <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-[#334155]">
+              <label
+                htmlFor="username"
+                className="mb-1.5 block text-sm font-medium text-[#334155]"
+              >
                 Username
               </label>
               <input
@@ -126,12 +129,17 @@ export default function Login() {
                 ].join(" ")}
               />
               {errors.username && (
-                <p className="mt-1.5 text-xs text-red-600" role="alert">{errors.username}</p>
+                <p className="mt-1.5 text-xs text-red-600" role="alert">
+                  {errors.username}
+                </p>
               )}
             </div>
 
             <div className="w-full text-left">
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[#334155]">
+              <label
+                htmlFor="password"
+                className="mb-1.5 block text-sm font-medium text-[#334155]"
+              >
                 Password
               </label>
               <input
@@ -150,7 +158,9 @@ export default function Login() {
                 ].join(" ")}
               />
               {errors.password && (
-                <p className="mt-1.5 text-xs text-red-600" role="alert">{errors.password}</p>
+                <p className="mt-1.5 text-xs text-red-600" role="alert">
+                  {errors.password}
+                </p>
               )}
             </div>
 
