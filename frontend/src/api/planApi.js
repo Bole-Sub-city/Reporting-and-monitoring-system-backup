@@ -183,6 +183,22 @@ export const fetchWoRedaAnalysis = async (sector, woredaId, period) => {
   return res.data;
 };
 
+/**
+ * GET /api/subcity/subcity-galii?period=
+ * Returns the subcity's own Galii Sassaabu actuals for the period.
+ * Used by GaliiComparisonView to show the Subcity column.
+ *
+ * @param {string} period - "daily"|"weekly"|"monthly"|"quarterly"|"annual"
+ * @returns {{ username, period, from, to, actuals: { galii_idilee, galii_mana_qophessaa } }}
+ */
+export const fetchSubcityGalii = async (period = "monthly") => {
+  const res = await api.get(
+    `/subcity/subcity-galii?period=${encodeURIComponent(period)}`,
+    authHeader(),
+  );
+  return res.data;
+};
+
 // ─── Announcements API ────────────────────────────────────────────────────────
 
 /**

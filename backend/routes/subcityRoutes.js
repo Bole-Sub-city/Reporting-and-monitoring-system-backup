@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   getAllWoRedaReports,
   getWoRedaAnalysis,
+  getSubcityGalii,
 } = require("../controllers/subcityReportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -15,5 +16,9 @@ router.get("/woreda-reports", authMiddleware, getAllWoRedaReports);
 // GET /api/subcity/woreda-analysis?sector=&woredaId=&period=
 // Returns one woreda's actuals + plan targets (used by ring charts)
 router.get("/woreda-analysis", authMiddleware, getWoRedaAnalysis);
+
+// GET /api/subcity/subcity-galii?period=
+// Returns the subcity's own Galii Sassaabu (revenue) actuals for the period
+router.get("/subcity-galii", authMiddleware, getSubcityGalii);
 
 module.exports = router;

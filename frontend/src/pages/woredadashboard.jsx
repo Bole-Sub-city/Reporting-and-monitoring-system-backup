@@ -346,7 +346,7 @@ const BUUSAA_FIELDS = [
   },
   {
     name: "gumaataMootummaa",
-    label: "Gumaata Midhaani",
+    label: "Gumaata Midhaani (Kuntal)",
     required: true,
     type: "number",
   },
@@ -356,10 +356,10 @@ const BUUSAA_FIELDS = [
     required: true,
     type: "number",
   },
-  { name: "zayitii", label: "Zayitii", required: true, type: "number" },
+  { name: "zayitii", label: "Zayitii (Litre)", required: true, type: "number" },
   {
     name: "sukkaara",
-    label: "Sukkaara",
+    label: "Sukkaara (KG)",
     required: true,
     type: "number",
     fullWidth: true,
@@ -452,7 +452,7 @@ const PLAN_FIELDS = [
   {
     key: "gumaata_mootummaa",
     planKey: "gumaata_mootummaa_target",
-    label: "Gumaata Midhaani",
+    label: "Gumaata Midhaani (Kuntal)",
     description: "Food charity targets",
     color: "#065f46",
     bgColor: "bg-[#f0fdf4]",
@@ -472,8 +472,8 @@ const PLAN_FIELDS = [
   {
     key: "sukkaara",
     planKey: "sukkaara_target",
-    label: "Sukkaara",
-    description: "Sugar targets",
+    label: "Sukkaara (KG)",
+    description: "Sugar targets (KG)",
     color: "#ea580c",
     bgColor: "bg-[#fff7ed]",
     borderColor: "border-[#fed7aa]",
@@ -482,8 +482,8 @@ const PLAN_FIELDS = [
   {
     key: "zayitii",
     planKey: "zayitii_target",
-    label: "Zayitii",
-    description: "Oil targets",
+    label: "Zayitii (Litre)",
+    description: "Oil targets (Litre)",
     color: "#65a30d",
     bgColor: "bg-[#f7fee7]",
     borderColor: "border-[#d9f99d]",
@@ -1051,7 +1051,7 @@ function AnalysisSection() {
                     const pt = partitionTarget(at, period);
                     const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
                     const pct =
-                      pt > 0 ? Math.min(Math.round((ac / pt) * 100), 100) : 0;
+                      pt > 0 ? Math.round((ac / pt) * 100) : 0;
                     // Carry-over: how much should have been done YTD vs what actually was
                     const cumulTarget = Math.round((daysElapsed / 365) * at);
                     const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
@@ -2792,15 +2792,18 @@ function GenericAnalysisSection({
               const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
               const periodTarget = partitionTarget(annualTarget, period);
               const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+              // Real pct — uncapped so it can exceed 100%
               const pct =
                 periodTarget > 0
-                  ? Math.min(Math.round((actual / periodTarget) * 100), 100)
+                  ? Math.round((actual / periodTarget) * 100)
                   : 0;
+              // Arc/bar clamped to 100 for visual rendering only
+              const arcPct = Math.min(pct, 100);
               const size = 110,
                 sw = 11,
                 r = (size - sw) / 2,
                 circ = 2 * Math.PI * r;
-              const offset = circ - (pct / 100) * circ;
+              const offset = circ - (arcPct / 100) * circ;
               return (
                 <div
                   key={cat.key}
@@ -2867,7 +2870,7 @@ function GenericAnalysisSection({
                     <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
                       <div
                         className="h-1 rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                        style={{ width: `${arcPct}%`, backgroundColor: cat.color }}
                       />
                     </div>
                   </div>
@@ -4154,6 +4157,335 @@ function formatDateTime(row) {
   return row.report_date ?? "";
 }
 
+// ─── Shared sector field definitions for print tables (woreda) ───────────────
+const SECTOR_PRINT_FIELDS = {
+  buusaa: [
+    { key: "hubannoo_uummuu",             label: "Hubannoo Uumuu" },
+    { key: "horannaa_misensaa",           label: "Horannaa Misensaa" },
+    { key: "buusi_jirataa",               label: "Buusi Jiraataa" },
+    { key: "gumaata_jiraataa",            label: "Gumaata Jiraataa" },
+    { key: "buusi_daldalaa",              label: "Buusi fi Gumaata Daldalaa" },
+    { key: "buusi_daldalaa_fi_gumaataa",  label: "Buusi Daldalaa fi Gumaataa" },
+    { key: "inisheetevii_buusaa_gonofaa", label: "Inisheetivii Buusaa Gonofaa" },
+    { key: "gumaata_midhaani",            label: "Gumaata Midhaani (Kuntal)" },
+    { key: "nyaata_barataa",              label: "Nyaata Barataa" },
+    { key: "sukkaara",                    label: "Sukkaara (KG)" },
+    { key: "zayitii",                     label: "Zayitii (Litre)" },
+  ],
+  carraaHojii: [
+    { key: "leenjii",                  label: "Leenjii" },
+    { key: "carraa_hojii_dhaabbii",    label: "Carraa Hojii Dhaabbii" },
+    { key: "carraa_hojii_qacarrii",    label: "Carraa Hojii Qacarrii" },
+    { key: "qusannaa_haawaasaa",       label: "Qusannaa Haawaasaa" },
+    { key: "qusanna_dirqii",           label: "Qusanna Dirqii" },
+    { key: "kenna_liqii",              label: "Kenna Liqii" },
+    { key: "deebii_liqii_bilchaate",   label: "Deebii Liqii Bilchaate" },
+    { key: "deebii_liqii_bulee",       label: "Deebii Liqii Bulee" },
+    { key: "industrii_godoo",          label: "Industrii Godoo" },
+  ],
+  qonna: [
+    { key: "furdisa_bakka_qophaawe",      label: "Furdisa - Bakka Qophaawe" },
+    { key: "furdisa_sheedii_ijaaraman",   label: "Furdisa - Sheedii Ijaaraman" },
+    { key: "furdisa_lakk_horii",          label: "Furdisa - Lakk Horii" },
+    { key: "annan_bakka_qophaawe",        label: "Annan - Bakka Qophaawe" },
+    { key: "annan_sheedii_ijaaraman",     label: "Annan - Sheedii Ijaaraman" },
+    { key: "annan_lakk_saaa",             label: "Annan - Lakk Sa'a" },
+    { key: "lukkuu_bakka_qophaawe",       label: "Lukkuu - Bakka Qophaawe" },
+    { key: "lukkuu_sheedii_ijaaraman",    label: "Lukkuu - Sheedii Ijaaraman" },
+    { key: "lukkuu_lakk_lukkuu",          label: "Lukkuu - Lakk Lukkuu" },
+    { key: "boyyee_bakka_qophaawe",       label: "Booyyee - Bakka Qophaawe" },
+    { key: "boyyee_sheedii_ijaaraman",    label: "Booyyee - Sheedii Ijaaraman" },
+    { key: "boyyee_lakk_booyyee",         label: "Booyyee - Lakk Booyyee" },
+    { key: "kannisaa_bakka_qophaawe",     label: "Kannisaa - Bakka Qophaawe" },
+    { key: "kannisaa_gaaguraa_ijaaraman", label: "Kannisaa - Gaaguraa Ijaaraman" },
+    { key: "kannisaa_lakk_kannisaa",      label: "Kannisaa - Lakk Kannisaa" },
+    { key: "qurxummii_bakka_qophaawe",    label: "Qurxummii - Bakka Qophaawe" },
+    { key: "qurxummii_pondii_ijaaraman",  label: "Qurxummii - Pondii Ijaaraman" },
+    { key: "qurxummii_lakk_qurxummii",    label: "Qurxummii - Lakk Qurxummii" },
+  ],
+  daldala: [
+    { key: "galmee_haraa",              label: "Galmee Haraa" },
+    { key: "heyyema_haraa",             label: "Heyyema Haraa" },
+    { key: "harahessaa",                label: "Harahessaa" },
+    { key: "galii_daldalarra_galuu",    label: "Galii Daldalarra Galuu" },
+    { key: "toannoo_walii_gala",        label: "To'annoo Walii Gala" },
+    { key: "tmd",                       label: "Leenjii TMD" },
+    { key: "intarshippii",              label: "Intarshippii" },
+    { key: "ggg",                       label: "Giddu Gala Gabaa" },
+    { key: "gabayaa_sanbata",           label: "Gabaa Sanbata" },
+    { key: "whg_kudraa",                label: "WHG - Kudraa" },
+    { key: "whg_mudraa",                label: "WHG - Mudraa" },
+  ],
+  atk: [
+    { key: "waliigaltee_pilaanii_kennuu", label: "Waliigaltee Pilaanii Kennuu" },
+    { key: "heeyyama_ijaarsaa_kennamee",  label: "Heeyyama Ijaarsaa Kennamee" },
+    { key: "toannoo_fi_hordoffii_gamoo",  label: "To'annoo fi Hordoffii Gamoo" },
+    { key: "galii_atk_galchuu",           label: "Galii ATK Galchuu" },
+  ],
+};
+
+// ─── WoRedaPrintModal ────────────────────────────────────────────────────────
+// Woreda users choose sector(s) and layout, then a styled HTML print window opens.
+function WoRedaPrintModal({ rows, woredaName, onClose }) {
+  const [sector, setSector] = useState("all");
+  const [combined, setCombined] = useState(true); // true = all sectors on one page
+
+  // Build the HTML for one sector table
+  function buildSectorTable(sectorId, sectorRows) {
+    const sec = REPORT_SECTORS.find((s) => s.id === sectorId);
+    const sectorLabel = sec?.label ?? sectorId;
+    const accentColor = sec?.color ?? "#1a3a5c";
+    const fields = SECTOR_PRINT_FIELDS[sectorId] ?? [];
+
+    if (!sectorRows.length) {
+      return `<div class="sector-block">
+        <h2 style="color:${accentColor}">${sectorLabel}</h2>
+        <p class="no-data">No reports submitted for this sector.</p>
+      </div>`;
+    }
+
+    // Column headers: R.No | Date | Report Type | [field labels...]
+    const fieldHeaders = fields.map((f) => `<th>${f.label}</th>`).join("");
+    const thead = `<thead><tr>
+      <th class="rno">R.No</th>
+      <th>Date Submitted</th>
+      <th>Report Type</th>
+      ${fieldHeaders}
+    </tr></thead>`;
+
+    const bodyRows = sectorRows.map((row, idx) => {
+      const dateFmt = row.report_date ?? "";
+      const typeFmt = row.report_type ?? "";
+      const cells = fields.map(({ key }) => {
+        const val = row[key];
+        if (val === null || val === undefined || val === "") return `<td class="num">—</td>`;
+        return `<td class="num">${typeof val === "number" ? val.toLocaleString() : val}</td>`;
+      }).join("");
+      return `<tr><td class="rno">${idx + 1}</td><td class="date">${dateFmt}</td><td>${typeFmt}</td>${cells}</tr>`;
+    }).join("");
+
+    return `<div class="sector-block">
+      <div class="sector-title">
+        <span>${sectorLabel} (${sectorRows.length} report${sectorRows.length !== 1 ? "s" : ""})</span>
+      </div>
+      <table>${thead}<tbody>${bodyRows}</tbody></table>
+    </div>`;
+  }
+
+  const handlePrint = () => {
+    const generatedDate = new Date().toLocaleString();
+
+    // Determine which sectors to include
+    const sectorsToInclude =
+      sector === "all"
+        ? REPORT_SECTORS
+        : [REPORT_SECTORS.find((s) => s.id === sector)].filter(Boolean);
+
+    // Build section HTML for each sector
+    const sectionsHTML = sectorsToInclude.map((sec) => {
+      const sectorRows = rows.filter((r) => r._sector === sec.id);
+      const sectionHTML = buildSectorTable(sec.id, sectorRows);
+      // If not combined, wrap each section with a page-break
+      return combined ? sectionHTML : `<div class="page-section">${sectionHTML}</div>`;
+    }).join(combined ? "" : "");
+
+    const pageTitle =
+      sector === "all"
+        ? "All Sectors Report"
+        : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector) + " Report";
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${pageTitle}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff; padding: 14px; }
+
+    .report-header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .report-header h1 { font-size: 13pt; font-weight: bold; }
+    .meta { display: flex; justify-content: space-between; font-size: 8pt; color: #555; margin-bottom: 14px; }
+
+    .sector-block { margin-bottom: 24px; }
+    .sector-title { font-weight: bold; font-size: 10pt; padding: 4px 0; margin-bottom: 2px; border-bottom: 2px solid #000; }
+    .no-data { padding: 8px; font-style: italic; color: #555; border: 1px solid #000; }
+
+    table { width: 100%; border-collapse: collapse; table-layout: auto; }
+    th, td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
+    thead tr { background: #f0f0f0; font-size: 8pt; font-weight: bold; }
+    th.rno, td.rno { text-align: center; width: 28px; }
+    td.date { white-space: nowrap; font-size: 8pt; }
+    td.num  { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+
+    .page-section { page-break-after: always; }
+    .page-section:last-child { page-break-after: avoid; }
+
+    @media print {
+      body { padding: 0; }
+      @page { size: landscape; margin: 10mm; }
+      thead tr { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tbody tr:nth-child(even) { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-header">
+    <h1>${pageTitle} ${woredaName}</h1>
+  </div>
+  <div class="meta">
+    <span>Generated: ${generatedDate}</span>
+    <span>Adama Sub-city Reporting System</span>
+  </div>
+  ${sectionsHTML}
+  <script>
+    window.onload = function() { window.print(); };
+  <\/script>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank", "width=1100,height=800");
+    if (!win) {
+      alert("Pop-up blocked. Please allow pop-ups for this site and try again.");
+      return;
+    }
+    win.document.write(html);
+    win.document.close();
+    onClose();
+  };
+
+  const selectedSectorLabel =
+    sector === "all"
+      ? "All Sectors"
+      : REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector;
+
+  const rowCountForSector =
+    sector === "all"
+      ? rows.length
+      : rows.filter((r) => r._sector === sector).length;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
+        {/* Header */}
+        <div
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
+          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+        >
+          <div>
+            <p className="text-white font-bold text-base">Download Report</p>
+            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Options */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Sector selector */}
+          <div>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
+            <select
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Sectors</option>
+              {REPORT_SECTORS.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Layout selector — only relevant when "All Sectors" */}
+          {sector === "all" && (
+            <div>
+              <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-2">
+                Layout
+              </label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCombined(true)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
+                    combined
+                      ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
+                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]"
+                  }`}
+                >
+                  All Together
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCombined(false)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
+                    !combined
+                      ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
+                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]"
+                  }`}
+                >
+                  Each Sector Separate
+                </button>
+              </div>
+              <p className="text-xs text-[#94a3b8] mt-1.5">
+                {combined
+                  ? "All sectors printed on consecutive pages."
+                  : "Each sector starts on a new page."}
+              </p>
+            </div>
+          )}
+
+          {/* Preview summary */}
+          <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-[#1a3a5c] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-[#1a3a5c]">{selectedSectorLabel}</p>
+              <p className="text-xs text-[#64748b]">
+                {rowCountForSector} report{rowCountForSector !== 1 ? "s" : ""} will be included
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
+          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P to save as PDF.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePrint}
+              disabled={rowCountForSector === 0}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" rx="1" />
+              </svg>
+              Print / Save PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Generate and trigger a CSV download for a single report row
 function downloadReportCSV(row, sectorLabel) {
   const fields = getDisplayFields(row);
@@ -4272,26 +4604,7 @@ function ReportDetailModal({ row, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-5 pt-3 flex items-center justify-between border-t border-[#f1f5f9] flex-shrink-0">
-          <button
-            onClick={() => downloadReportCSV(row, sectorLabel)}
-            className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
-              />
-            </svg>
-            Download CSV
-          </button>
+        <div className="px-6 pb-5 pt-3 flex items-center justify-end border-t border-[#f1f5f9] flex-shrink-0">
           <button
             onClick={onClose}
             className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
@@ -4329,6 +4642,7 @@ function ReportHistorySection({ woreda }) {
 
   // Modal
   const [modalRow, setModalRow] = useState(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Fetch on mount
   useEffect(() => {
@@ -4397,14 +4711,34 @@ function ReportHistorySection({ woreda }) {
       {modalRow && (
         <ReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
       )}
+      {showPrintModal && (
+        <WoRedaPrintModal
+          rows={filteredRows.length > 0 ? filteredRows : rows}
+          woredaName={woreda?.username ?? "Woreda"}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
 
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
-        <p className="text-[#64748b] text-sm mt-0.5">
-          All reports you have submitted, across every sector. Filter by period,
-          sector, or a custom date range.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            All reports you have submitted, across every sector. Filter by period,
+            sector, or a custom date range.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowPrintModal(true)}
+          disabled={rows.length === 0}
+          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" rx="1" />
+          </svg>
+          Download Report
+        </button>
       </div>
 
       {/* Error banner */}
@@ -4705,30 +5039,6 @@ function ReportHistorySection({ woreda }) {
                                 />
                               </svg>
                               View
-                            </button>
-                            <button
-                              onClick={() =>
-                                downloadReportCSV(
-                                  row,
-                                  sec?.label ?? row._sector ?? "Report",
-                                )
-                              }
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
-                            >
-                              <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
-                                />
-                              </svg>
-                              Download
                             </button>
                           </div>
                         </td>
