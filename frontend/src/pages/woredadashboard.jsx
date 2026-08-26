@@ -777,15 +777,15 @@ function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 function partitionTarget(annual, period) {
-  if (!annual) return 0;
+  const n = Number(annual || 0);
+  if (n === 0) return 0;
   const d = { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 };
-  return Math.round(annual / (d[period] || 1));
+  return Math.round(n / (d[period] || 1));
 }
 
 // RingChart is imported from ../components/ui/RingChart — see import at top of file.
 // The following is a placeholder to preserve the closing brace of the previous block.
-function _RingChartPlaceholder() {
-}
+function _RingChartPlaceholder() {}
 
 function AnnualPlanSection({ u }) {
   const [plan, setPlan] = useState({});
@@ -895,12 +895,21 @@ function AnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchSummary(period)
       .then((d) => setSummary(d.summary))
-      .catch((err) => setError(err && err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to load summary data."))
+      .catch((err) =>
+        setError(
+          err && err.response && err.response.data && err.response.data.message
+            ? err.response.data.message
+            : "Failed to load summary data.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, [period]);
 
@@ -1455,51 +1464,81 @@ function QonnaAnnualPlanSection({ u }) {
   // Each category has 3 fields displayed as flat cards
   const QONNA_PLAN_CATS = [
     {
-      key: "furdisa", label: "Furdisa", color: "#065f46",
+      key: "furdisa",
+      label: "Furdisa",
+      color: "#065f46",
       fields: [
         { planKey: "furdisa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "furdisa_lakk_sheedii_target", label: "Lakk Sheedii" },
-        { planKey: "furdisa_lakk_horii_waliigalaa_target", label: "Lakk Horii Waliigalaa" },
+        {
+          planKey: "furdisa_lakk_horii_waliigalaa_target",
+          label: "Lakk Horii Waliigalaa",
+        },
       ],
     },
     {
-      key: "annan", label: "Annan", color: "#0f766e",
+      key: "annan",
+      label: "Annan",
+      color: "#0f766e",
       fields: [
         { planKey: "annan_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "annan_lakk_sheedii_target", label: "Lakk Sheedii" },
-        { planKey: "annan_lakk_saa_waliigalaa_target", label: "Lakk Sa'a Waliigalaa" },
+        {
+          planKey: "annan_lakk_saa_waliigalaa_target",
+          label: "Lakk Sa'a Waliigalaa",
+        },
       ],
     },
     {
-      key: "lukkuu", label: "Lukkuu", color: "#1e40af",
+      key: "lukkuu",
+      label: "Lukkuu",
+      color: "#1e40af",
       fields: [
         { planKey: "lukkuu_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "lukkuu_lakk_sheedii_target", label: "Lakk Sheedii" },
-        { planKey: "lukkuu_lakk_lukkuu_waliigalaa_target", label: "Lakk Lukkuu Waliigalaa" },
+        {
+          planKey: "lukkuu_lakk_lukkuu_waliigalaa_target",
+          label: "Lakk Lukkuu Waliigalaa",
+        },
       ],
     },
     {
-      key: "booyee", label: "Booyyee", color: "#7c3aed",
+      key: "booyee",
+      label: "Booyyee",
+      color: "#7c3aed",
       fields: [
         { planKey: "booyee_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "booyee_lakk_sheedii_target", label: "Lakk Sheedii" },
-        { planKey: "booyee_lakk_booyyee_waliigalaa_target", label: "Lakk Booyyee Waliigalaa" },
+        {
+          planKey: "booyee_lakk_booyyee_waliigalaa_target",
+          label: "Lakk Booyyee Waliigalaa",
+        },
       ],
     },
     {
-      key: "kannisaa", label: "Kannisaa", color: "#b45309",
+      key: "kannisaa",
+      label: "Kannisaa",
+      color: "#b45309",
       fields: [
         { planKey: "kannisaa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "kannisaa_lakk_gaaguraa_target", label: "Lakk Gaaguraa" },
-        { planKey: "kannisaa_lakk_kannisaa_waliigalaa_target", label: "Lakk Kannisaa Waliigalaa" },
+        {
+          planKey: "kannisaa_lakk_kannisaa_waliigalaa_target",
+          label: "Lakk Kannisaa Waliigalaa",
+        },
       ],
     },
     {
-      key: "qurxummii", label: "Qurxummii", color: "#0369a1",
+      key: "qurxummii",
+      label: "Qurxummii",
+      color: "#0369a1",
       fields: [
         { planKey: "qurxummii_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "qurxummii_lakk_pondii_target", label: "Lakk Pondii" },
-        { planKey: "qurxummii_lakk_qurxummii_waliigalaa_target", label: "Lakk Qurxummii Waliigalaa" },
+        {
+          planKey: "qurxummii_lakk_qurxummii_waliigalaa_target",
+          label: "Lakk Qurxummii Waliigalaa",
+        },
       ],
     },
   ];
@@ -1509,7 +1548,9 @@ function QonnaAnnualPlanSection({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
           className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#065f46 0%,#047857 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+          }}
         >
           <PlanIcon />
           <div>
@@ -1523,8 +1564,14 @@ function QonnaAnnualPlanSection({ u }) {
             <div key={key}>
               {/* Category label */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <p className="text-xs font-bold uppercase tracking-wide" style={{ color }}>
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <p
+                  className="text-xs font-bold uppercase tracking-wide"
+                  style={{ color }}
+                >
                   {label}
                 </p>
               </div>
@@ -1536,7 +1583,10 @@ function QonnaAnnualPlanSection({ u }) {
                     className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
                       <p className="text-xs font-bold uppercase tracking-wide text-[#64748b]">
                         {fieldLabel}
                       </p>
@@ -1564,7 +1614,8 @@ function QonnaAnnualPlanSection({ u }) {
             <path d="M12 8v4M12 16h.01" />
           </svg>
           <p className="text-[#065f46] text-sm">
-            Targets assigned by sub-city. Contact them if numbers need correction.
+            Targets assigned by sub-city. Contact them if numbers need
+            correction.
           </p>
         </div>
       </div>
@@ -1579,51 +1630,75 @@ function QonnaAnnualPlanSection({ u }) {
 // 6 categories x 3 sub-fields each = 18 analysed metrics
 const QONNA_ANALYSIS_CATS = [
   {
-    key: "furdisa", label: "Furdisa", color: "#065f46",
+    key: "furdisa",
+    label: "Furdisa",
+    color: "#065f46",
     fields: [
-      { key: "furdisa_qophi_lafa",  label: "Lafa Qophaawe (ha)",  unit: "ha" },
-      { key: "furdisa_lakk_sheedii", label: "Sheedii Ijaaraman",   unit: "" },
-      { key: "furdisa_lakk_horii_waliigalaa",   label: "Lakk Horii",          unit: "" },
+      { key: "furdisa_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "furdisa_lakk_sheedii", label: "Sheedii Ijaaraman", unit: "" },
+      { key: "furdisa_lakk_horii_waliigalaa", label: "Lakk Horii", unit: "" },
     ],
   },
   {
-    key: "annan", label: "Annan", color: "#0f766e",
+    key: "annan",
+    label: "Annan",
+    color: "#0f766e",
     fields: [
-      { key: "annan_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
-      { key: "annan_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
-      { key: "annan_lakk_saa_waliigalaa",     label: "Lakk Sa'a",          unit: "" },
+      { key: "annan_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "annan_lakk_sheedii", label: "Sheedii Ijaaraman", unit: "" },
+      { key: "annan_lakk_saa_waliigalaa", label: "Lakk Sa'a", unit: "" },
     ],
   },
   {
-    key: "lukkuu", label: "Lukkuu", color: "#1e40af",
+    key: "lukkuu",
+    label: "Lukkuu",
+    color: "#1e40af",
     fields: [
-      { key: "lukkuu_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
-      { key: "lukkuu_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
-      { key: "lukkuu_lakk_lukkuu_waliigalaa",  label: "Lakk Lukkuu",        unit: "" },
+      { key: "lukkuu_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "lukkuu_lakk_sheedii", label: "Sheedii Ijaaraman", unit: "" },
+      { key: "lukkuu_lakk_lukkuu_waliigalaa", label: "Lakk Lukkuu", unit: "" },
     ],
   },
   {
-    key: "booyee", label: "Booyyee", color: "#7c3aed",
+    key: "booyee",
+    label: "Booyyee",
+    color: "#7c3aed",
     fields: [
-      { key: "booyee_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
-      { key: "booyee_lakk_sheedii", label: "Sheedii Ijaaraman",  unit: "" },
-      { key: "booyee_lakk_booyyee_waliigalaa", label: "Lakk Booyyee",       unit: "" },
+      { key: "booyee_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "booyee_lakk_sheedii", label: "Sheedii Ijaaraman", unit: "" },
+      {
+        key: "booyee_lakk_booyyee_waliigalaa",
+        label: "Lakk Booyyee",
+        unit: "",
+      },
     ],
   },
   {
-    key: "kannisaa", label: "Kannisaa", color: "#b45309",
+    key: "kannisaa",
+    label: "Kannisaa",
+    color: "#b45309",
     fields: [
-      { key: "kannisaa_qophi_lafa",   label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "kannisaa_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
       { key: "kannisaa_lakk_gaaguraa", label: "Gaaguraa Ijaaraman", unit: "" },
-      { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Lakk Kannisaa",      unit: "" },
+      {
+        key: "kannisaa_lakk_kannisaa_waliigalaa",
+        label: "Lakk Kannisaa",
+        unit: "",
+      },
     ],
   },
   {
-    key: "qurxummii", label: "Qurxummii", color: "#0369a1",
+    key: "qurxummii",
+    label: "Qurxummii",
+    color: "#0369a1",
     fields: [
-      { key: "qurxummii_qophi_lafa",    label: "Lafa Qophaawe (ha)", unit: "ha" },
-      { key: "qurxummii_lakk_pondii",   label: "Pondii Ijaaraman",   unit: "" },
-      { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Lakk Qurxummii",    unit: "" },
+      { key: "qurxummii_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
+      { key: "qurxummii_lakk_pondii", label: "Pondii Ijaaraman", unit: "" },
+      {
+        key: "qurxummii_lakk_qurxummii_waliigalaa",
+        label: "Lakk Qurxummii",
+        unit: "",
+      },
     ],
   },
 ];
@@ -1645,9 +1720,15 @@ function QonnaAnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     const woredaId = getMyWoredaId();
-    if (!woredaId) { setLoading(false); return; }
+    if (!woredaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis("qonna", woredaId, period)
@@ -1681,30 +1762,44 @@ function QonnaAnalysisSection() {
             className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
           >
             {PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
             ))}
           </select>
         </div>
       </div>
 
       {!plan && !planLoading && (
-        <div className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3"
-          style={{ background: accentLight, borderColor: accentBorder }}>
-          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div
+          className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: accentLight, borderColor: accentBorder }}
+        >
+          <svg
+            className="w-5 h-5 flex-shrink-0"
+            style={{ color: accentColor }}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <p className="text-sm" style={{ color: accentColor }}>
-            No Qonna plan assigned yet. Targets will appear once sub-city saves the plan.
+            No Qonna plan assigned yet. Targets will appear once sub-city saves
+            the plan.
           </p>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
-            style={{ borderTopColor: accentColor }} />
+          <div
+            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            style={{ borderTopColor: accentColor }}
+          />
         </div>
       ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -1713,9 +1808,14 @@ function QonnaAnalysisSection() {
       ) : (
         <>
           {/* Period banner */}
-          <div className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border"
-            style={{ background: accentLight, borderColor: accentBorder }}>
-            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
+          <div
+            className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2 border"
+            style={{ background: accentLight, borderColor: accentBorder }}
+          >
+            <span
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ color: accentColor }}
+            >
               {periodLabel} View
             </span>
             <span className="text-xs" style={{ color: accentColor }}>
@@ -1726,12 +1826,26 @@ function QonnaAnalysisSection() {
           {/* Per-category ring charts: 3 rings per category */}
           <div className="space-y-6 mb-8">
             {QONNA_ANALYSIS_CATS.map((cat) => (
-              <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+              <div
+                key={cat.key}
+                className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
+              >
                 {/* Category header */}
-                <div className="px-5 py-3 border-b border-[#e2e8f0] flex items-center gap-2"
-                  style={{ backgroundColor: `${cat.color}12`, borderLeftColor: cat.color, borderLeftWidth: 4 }}>
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                  <p className="text-sm font-bold" style={{ color: cat.color }}>{cat.label}</p>
+                <div
+                  className="px-5 py-3 border-b border-[#e2e8f0] flex items-center gap-2"
+                  style={{
+                    backgroundColor: `${cat.color}12`,
+                    borderLeftColor: cat.color,
+                    borderLeftWidth: 4,
+                  }}
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  <p className="text-sm font-bold" style={{ color: cat.color }}>
+                    {cat.label}
+                  </p>
                 </div>
                 {/* 3 ring charts side by side */}
                 <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1739,44 +1853,90 @@ function QonnaAnalysisSection() {
                     const annualTarget = targets ? (targets[f.key] ?? 0) : 0;
                     const periodTarget = partitionTarget(annualTarget, period);
                     const actual = actuals ? (actuals[f.key] ?? 0) : 0;
-                    const pct = periodTarget > 0
-                      ? Math.min(Math.round((actual / periodTarget) * 100), 100)
-                      : 0;
-                    const size = 100, sw = 10, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                    const pct =
+                      periodTarget > 0
+                        ? Math.min(
+                            Math.round((actual / periodTarget) * 100),
+                            100,
+                          )
+                        : 0;
+                    const size = 100,
+                      sw = 10,
+                      r = (size - sw) / 2,
+                      circ = 2 * Math.PI * r;
                     const offset = circ - (pct / 100) * circ;
                     return (
                       <div key={f.key} className="flex flex-col items-center">
-                        <p className="text-xs font-semibold text-[#334155] mb-2 text-center">{f.label}</p>
-                        <div className="relative" style={{ width: size, height: size }}>
-                          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-                            <circle cx={size/2} cy={size/2} r={r} fill="none"
-                              stroke={cat.color} strokeWidth={sw} strokeLinecap="round"
-                              strokeDasharray={circ} strokeDashoffset={offset}
-                              style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                        <p className="text-xs font-semibold text-[#334155] mb-2 text-center">
+                          {f.label}
+                        </p>
+                        <div
+                          className="relative"
+                          style={{ width: size, height: size }}
+                        >
+                          <svg
+                            width={size}
+                            height={size}
+                            style={{ transform: "rotate(-90deg)" }}
+                          >
+                            <circle
+                              cx={size / 2}
+                              cy={size / 2}
+                              r={r}
+                              fill="none"
+                              stroke="#f3f4f6"
+                              strokeWidth={sw}
+                            />
+                            <circle
+                              cx={size / 2}
+                              cy={size / 2}
+                              r={r}
+                              fill="none"
+                              stroke={cat.color}
+                              strokeWidth={sw}
+                              strokeLinecap="round"
+                              strokeDasharray={circ}
+                              strokeDashoffset={offset}
+                              style={{
+                                transition: "stroke-dashoffset 0.7s ease",
+                              }}
                             />
                           </svg>
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-base font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
-                            <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                            <span
+                              className="text-base font-extrabold leading-none"
+                              style={{ color: cat.color }}
+                            >
+                              {pct}%
+                            </span>
+                            <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                              done
+                            </span>
                           </div>
                         </div>
                         <div className="mt-2 w-full space-y-0.5 px-2">
                           <div className="flex justify-between text-[10px] text-[#64748b]">
                             <span>Actual</span>
                             <span className="font-semibold text-[#1e293b]">
-                              {actual.toLocaleString()}{f.unit ? ` ${f.unit}` : ""}
+                              {actual.toLocaleString()}
+                              {f.unit ? ` ${f.unit}` : ""}
                             </span>
                           </div>
                           <div className="flex justify-between text-[10px] text-[#64748b]">
                             <span>Target</span>
                             <span className="font-semibold text-[#1e293b]">
-                              {periodTarget.toLocaleString()}{f.unit ? ` ${f.unit}` : ""}
+                              {periodTarget.toLocaleString()}
+                              {f.unit ? ` ${f.unit}` : ""}
                             </span>
                           </div>
                           <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
-                            <div className="h-1 rounded-full transition-all duration-700"
-                              style={{ width: `${pct}%`, backgroundColor: cat.color }} />
+                            <div
+                              className="h-1 rounded-full transition-all duration-700"
+                              style={{
+                                width: `${pct}%`,
+                                backgroundColor: cat.color,
+                              }}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1789,17 +1949,36 @@ function QonnaAnalysisSection() {
 
           {/* Full summary table — all 18 sub-fields */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
-              <p className="text-sm font-semibold text-white">{periodLabel} Summary Table</p>
-              <p className="text-white/60 text-xs mt-0.5">All 6 categories, all 3 sub-metrics each</p>
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{
+                background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+              }}
+            >
+              <p className="text-sm font-semibold text-white">
+                {periodLabel} Summary Table
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                All 6 categories, all 3 sub-metrics each
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {["Category", "Metric", "Annual Target", "Period Target", "Actual", "Achievement", "Remaining"].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">
+                    {[
+                      "Category",
+                      "Metric",
+                      "Annual Target",
+                      "Period Target",
+                      "Actual",
+                      "Achievement",
+                      "Remaining",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
+                      >
                         {h}
                       </th>
                     ))}
@@ -1809,45 +1988,97 @@ function QonnaAnalysisSection() {
                   {QONNA_ANALYSIS_CATS.map((cat) =>
                     cat.fields.map((f, fi) => {
                       const annualTarget = targets ? (targets[f.key] ?? 0) : 0;
-                      const periodTarget = partitionTarget(annualTarget, period);
+                      const periodTarget = partitionTarget(
+                        annualTarget,
+                        period,
+                      );
                       const actual = actuals ? (actuals[f.key] ?? 0) : 0;
-                      const pct = periodTarget > 0
-                        ? Math.min(Math.round((actual / periodTarget) * 100), 999)
-                        : 0;
-                      const remaining = periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
+                      const pct =
+                        periodTarget > 0
+                          ? Math.min(
+                              Math.round((actual / periodTarget) * 100),
+                              999,
+                            )
+                          : 0;
+                      const remaining =
+                        periodTarget > 0
+                          ? Math.max(periodTarget - actual, 0)
+                          : 0;
                       return (
-                        <tr key={f.key} className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors">
+                        <tr
+                          key={f.key}
+                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                        >
                           {/* Category cell — only shown on the first sub-field row */}
                           {fi === 0 ? (
-                            <td className="px-4 py-3 font-bold text-[#1e293b] align-top" rowSpan={3}>
+                            <td
+                              className="px-4 py-3 font-bold text-[#1e293b] align-top"
+                              rowSpan={3}
+                            >
                               <span className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: cat.color }}
+                                />
                                 {cat.label}
                               </span>
                             </td>
                           ) : null}
-                          <td className="px-4 py-3 text-[#475569]">{f.label}</td>
-                          <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
-                          <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#475569]">
+                            {f.label}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-[#1e293b]">
+                            {annualTarget.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-[#64748b]">
+                            {periodTarget.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-[#1e293b]">
+                            {actual.toLocaleString()}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>
+                            <span
+                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{
+                                backgroundColor: `${cat.color}22`,
+                                color: cat.color,
+                              }}
+                            >
                               {pct}%
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             {remaining > 0 ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2.5}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 4v16m8-8H4"
+                                  />
                                 </svg>
                                 {remaining.toLocaleString()}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2.5}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
                                 </svg>
                                 Done
                               </span>
@@ -1855,7 +2086,7 @@ function QonnaAnalysisSection() {
                           </td>
                         </tr>
                       );
-                    })
+                    }),
                   )}
                 </tbody>
               </table>
@@ -2429,14 +2660,22 @@ function GenericAnalysisSection({
   }, [fetchPlanFn]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     const woredaId = getMyWoredaId();
-    if (!woredaId || !sector) { setLoading(false); return; }
+    if (!woredaId || !sector) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis(sector, woredaId, period)
       .then((d) => setActuals(d.actuals ?? {}))
-      .catch((err) => setError(err?.response?.data?.message ?? "Failed to load summary."))
+      .catch((err) =>
+        setError(err?.response?.data?.message ?? "Failed to load summary."),
+      )
       .finally(() => setLoading(false));
   }, [period, sector]);
 
@@ -3573,12 +3812,21 @@ function RevenueAnalysis() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchSummary(period)
       .then((d) => setSummary(d.summary))
-      .catch((err) => setError(err && err.response && err.response.data && err.response.data.message ? err.response.data.message : "Failed to load revenue data."))
+      .catch((err) =>
+        setError(
+          err && err.response && err.response.data && err.response.data.message
+            ? err.response.data.message
+            : "Failed to load revenue data.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, [period]);
 
@@ -3724,7 +3972,13 @@ function RevenueAnalysis() {
 }
 
 // ─── Report History constants ─────────────────────────────────────────────────
-const REPORT_PERIOD_TYPES = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+const REPORT_PERIOD_TYPES = [
+  "Daily",
+  "Weekly",
+  "Monthly",
+  "Quarterly",
+  "Annual",
+];
 
 const REPORT_SECTORS = [
   { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
@@ -3736,8 +3990,13 @@ const REPORT_SECTORS = [
 
 // Fields to hide from the detail modal (system/internal columns)
 const HIDDEN_FIELDS = new Set([
-  "id", "user_id", "username", "role", "_sector",
-  "created_at", "updated_at",
+  "id",
+  "user_id",
+  "username",
+  "role",
+  "_sector",
+  "created_at",
+  "updated_at",
 ]);
 
 // Build a clean label from a snake_case key
@@ -3748,7 +4007,12 @@ function fieldLabel(key) {
 // Extract only the data fields worth displaying
 function getDisplayFields(row) {
   return Object.entries(row).filter(
-    ([k, v]) => !HIDDEN_FIELDS.has(k) && k !== "report_date" && k !== "report_type" && v !== null && v !== "",
+    ([k, v]) =>
+      !HIDDEN_FIELDS.has(k) &&
+      k !== "report_date" &&
+      k !== "report_type" &&
+      v !== null &&
+      v !== "",
   );
 }
 
@@ -3757,8 +4021,11 @@ function formatDateTime(row) {
   if (row.created_at) {
     const d = new Date(row.created_at);
     return d.toLocaleString(undefined, {
-      year: "numeric", month: "short", day: "2-digit",
-      hour: "2-digit", minute: "2-digit",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
   return row.report_date ?? "";
@@ -3800,23 +4067,42 @@ function ReportDetailModal({ row, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between flex-shrink-0"
-          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}
+          style={{
+            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+          }}
         >
           <div>
-            <p className="text-white font-bold text-base">{sectorLabel} Report</p>
+            <p className="text-white font-bold text-base">
+              {sectorLabel} Report
+            </p>
             <p className="text-white/60 text-xs mt-0.5">
               {row.report_type ?? ""} · {formatDateTime(row)}
             </p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -3826,7 +4112,10 @@ function ReportDetailModal({ row, onClose }) {
           {/* Meta row */}
           <div className="flex items-center gap-3 mb-4">
             <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] border border-[#dce8f4] px-3 py-1 rounded-full text-xs font-semibold text-[#1a3a5c]">
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: accentColor }}
+              />
               {sectorLabel}
             </span>
             <span className="text-xs text-[#94a3b8]">
@@ -3847,7 +4136,9 @@ function ReportDetailModal({ row, onClose }) {
                   key={k}
                   className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
                 >
-                  <span className="text-xs font-medium text-[#475569]">{fieldLabel(k)}</span>
+                  <span className="text-xs font-medium text-[#475569]">
+                    {fieldLabel(k)}
+                  </span>
                   <span className="text-sm font-bold text-[#1e293b] ml-2">
                     {typeof v === "number" ? v.toLocaleString() : v}
                   </span>
@@ -3863,8 +4154,18 @@ function ReportDetailModal({ row, onClose }) {
             onClick={() => downloadReportCSV(row, sectorLabel)}
             className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
+              />
             </svg>
             Download CSV
           </button>
@@ -3912,7 +4213,11 @@ function ReportHistorySection({ woreda }) {
     setFetchError("");
     fetchMyReports()
       .then((data) => setRows(Array.isArray(data) ? data : []))
-      .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
+      .catch(() =>
+        setFetchError(
+          "Could not load report history. Check your connection and try again.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -3934,8 +4239,14 @@ function ReportHistorySection({ woreda }) {
   const handleApplyCustom = () => {
     const from = oromoToGregorian(startMonth, startDay, customFiscal);
     const to = oromoToGregorian(endMonth, endDay, customFiscal);
-    if (!from || !to) { setCustomDateErr("Invalid date selection."); return; }
-    if (from > to) { setCustomDateErr("Start date must be before end date."); return; }
+    if (!from || !to) {
+      setCustomDateErr("Invalid date selection.");
+      return;
+    }
+    if (from > to) {
+      setCustomDateErr("Start date must be before end date.");
+      return;
+    }
     setCustomDateErr("");
     setAppliedRange({ from, to });
   };
@@ -3953,9 +4264,11 @@ function ReportHistorySection({ woreda }) {
   };
 
   const statusColor = (s) =>
-    s === "Approved" ? "bg-green-100 text-green-700"
-    : s === "Rejected" ? "bg-red-100 text-red-700"
-    : "bg-amber-100 text-amber-700";
+    s === "Approved"
+      ? "bg-green-100 text-green-700"
+      : s === "Rejected"
+        ? "bg-red-100 text-red-700"
+        : "bg-amber-100 text-amber-700";
 
   return (
     <div>
@@ -3967,14 +4280,21 @@ function ReportHistorySection({ woreda }) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Report History</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          All reports you have submitted, across every sector. Filter by period, sector, or a custom date range.
+          All reports you have submitted, across every sector. Filter by period,
+          sector, or a custom date range.
         </p>
       </div>
 
       {/* Error banner */}
       {fetchError && (
         <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M12 8v4M12 16h.01" />
           </svg>
@@ -3985,7 +4305,11 @@ function ReportHistorySection({ woreda }) {
               setLoading(true);
               fetchMyReports()
                 .then((d) => setRows(Array.isArray(d) ? d : []))
-                .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
+                .catch(() =>
+                  setFetchError(
+                    "Could not load report history. Check your connection and try again.",
+                  ),
+                )
                 .finally(() => setLoading(false));
             }}
             className="ml-auto text-xs font-semibold text-[#dc2626] underline"
@@ -4000,7 +4324,9 @@ function ReportHistorySection({ woreda }) {
         <div className="flex flex-wrap gap-4 items-end">
           {/* Period */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Period
+            </label>
             <select
               value={isCustom ? "custom" : filterPeriod}
               onChange={(e) => handlePeriodChange(e.target.value)}
@@ -4008,7 +4334,9 @@ function ReportHistorySection({ woreda }) {
             >
               <option value="all">All Periods</option>
               {REPORT_PERIOD_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
               <option value="custom">Custom Date Range</option>
             </select>
@@ -4016,7 +4344,9 @@ function ReportHistorySection({ woreda }) {
 
           {/* Sector */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
@@ -4024,7 +4354,9 @@ function ReportHistorySection({ woreda }) {
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
@@ -4032,7 +4364,9 @@ function ReportHistorySection({ woreda }) {
           {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {loading ? "..." : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "..."
+                : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -4045,7 +4379,9 @@ function ReportHistorySection({ woreda }) {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Fiscal Year
+                </label>
                 <input
                   type="number"
                   value={customFiscal}
@@ -4056,29 +4392,67 @@ function ReportHistorySection({ woreda }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Start Date
+                </label>
                 <div className="flex gap-2">
-                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <select
+                    value={startMonth}
+                    onChange={(e) => setStartMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_MONTHS.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
                   </select>
-                  <select value={startDay} onChange={(e) => setStartDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <select
+                    value={startDay}
+                    onChange={(e) => setStartDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_DAYS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  End Date
+                </label>
                 <div className="flex gap-2">
-                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_MONTHS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <select
+                    value={endMonth}
+                    onChange={(e) => setEndMonth(e.target.value)}
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_MONTHS.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
                   </select>
-                  <select value={endDay} onChange={(e) => setEndDay(Number(e.target.value))} className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none">
-                    {OROMO_DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <select
+                    value={endDay}
+                    onChange={(e) => setEndDay(Number(e.target.value))}
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                  >
+                    {OROMO_DAYS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             </div>
-            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
+            {customDateErr && (
+              <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
+            )}
             {appliedRange && (
               <p className="text-[#16a34a] text-xs mb-2 font-medium">
                 Showing reports from {appliedRange.from} to {appliedRange.to}
@@ -4115,18 +4489,25 @@ function ReportHistorySection({ woreda }) {
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3">
             <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
-            <span className="text-sm text-[#64748b]">Loading report history...</span>
+            <span className="text-sm text-[#64748b]">
+              Loading report history...
+            </span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9]">
-                  {["Date Submitted", "Sector", "Report Type", "Actions"].map((h) => (
-                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                      {h}
-                    </th>
-                  ))}
+                  {["Date Submitted", "Sector", "Report Type", "Actions"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -4137,47 +4518,93 @@ function ReportHistorySection({ woreda }) {
                         <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
                           <HistoryIcon />
                         </div>
-                        <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
+                        <p className="text-[#94a3b8] text-sm">
+                          No reports match the selected filters.
+                        </p>
                         {rows.length === 0 && !fetchError && (
-                          <p className="text-[#94a3b8] text-xs">Submit your first report from the Works section.</p>
+                          <p className="text-[#94a3b8] text-xs">
+                            Submit your first report from the Works section.
+                          </p>
                         )}
                       </div>
                     </td>
                   </tr>
                 ) : (
                   filteredRows.map((row, idx) => {
-                    const sec = REPORT_SECTORS.find((s) => s.id === row._sector);
+                    const sec = REPORT_SECTORS.find(
+                      (s) => s.id === row._sector,
+                    );
                     return (
                       <tr
                         key={row.id ?? `${row._sector}-${idx}`}
                         className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                       >
-                        <td className="px-5 py-3 text-[#475569] text-sm">{formatDateTime(row)}</td>
+                        <td className="px-5 py-3 text-[#475569] text-sm">
+                          {formatDateTime(row)}
+                        </td>
                         <td className="px-5 py-3">
                           <span className="inline-flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }} />
-                            <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row._sector}</span>
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: sec?.color ?? "#64748b",
+                              }}
+                            />
+                            <span className="text-sm font-medium text-[#1e293b]">
+                              {sec?.label ?? row._sector}
+                            </span>
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">
+                          {row.report_type ?? ""}
+                        </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setModalRow(row)}
                               className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
                               </svg>
                               View
                             </button>
                             <button
-                              onClick={() => downloadReportCSV(row, sec?.label ?? row._sector ?? "Report")}
+                              onClick={() =>
+                                downloadReportCSV(
+                                  row,
+                                  sec?.label ?? row._sector ?? "Report",
+                                )
+                              }
                               className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
+                                />
                               </svg>
                               Download
                             </button>
@@ -4377,12 +4804,15 @@ export default function WoRedaDashboard() {
         );
         const lastRow = sorted[0];
         const lastDate = lastRow
-          ? (lastRow.created_at
-              ? new Date(lastRow.created_at).toLocaleString(undefined, {
-                  month: "short", day: "2-digit", year: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                })
-              : lastRow.report_date)
+          ? lastRow.created_at
+            ? new Date(lastRow.created_at).toLocaleString(undefined, {
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : lastRow.report_date
           : null;
         setDashStats({ total: data.length, lastDate });
       })
@@ -4637,7 +5067,9 @@ export default function WoRedaDashboard() {
                     {dashStats ? dashStats.total : "…"}
                   </p>
                   <p className="text-sm mt-1 font-semibold">Total Submitted</p>
-                  <p className="text-xs mt-0.5 text-[#1a3a5c]/60">all sectors, all time</p>
+                  <p className="text-xs mt-0.5 text-[#1a3a5c]/60">
+                    all sectors, all time
+                  </p>
                 </div>
 
                 {/* Notifications — unread announcements */}
@@ -4651,14 +5083,18 @@ export default function WoRedaDashboard() {
                   }}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-3xl font-bold leading-tight">{unreadCount}</p>
+                    <p className="text-3xl font-bold leading-tight">
+                      {unreadCount}
+                    </p>
                     {unreadCount > 0 && (
                       <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] animate-pulse flex-shrink-0" />
                     )}
                   </div>
                   <p className="text-sm font-semibold">Notifications</p>
                   <p className="text-xs mt-0.5 opacity-60">
-                    {unreadCount > 0 ? "unread announcements" : "no new announcements"}
+                    {unreadCount > 0
+                      ? "unread announcements"
+                      : "no new announcements"}
                   </p>
                 </button>
 
@@ -4668,7 +5104,9 @@ export default function WoRedaDashboard() {
                     {dashStats?.lastDate ?? (dashStats ? "None yet" : "…")}
                   </p>
                   <p className="text-sm mt-1 font-semibold">Last Submitted</p>
-                  <p className="text-xs mt-0.5 text-[#065f46]/60">most recent report</p>
+                  <p className="text-xs mt-0.5 text-[#065f46]/60">
+                    most recent report
+                  </p>
                 </div>
               </div>
               <h2 className="text-base font-semibold text-[#334155] mb-3">
@@ -4870,9 +5308,7 @@ export default function WoRedaDashboard() {
 
           {activeNav === "announcements" && (
             <div id="announcements-section">
-              <AnnouncementsViewPage
-                onRead={() => setUnreadCount(0)}
-              />
+              <AnnouncementsViewPage onRead={() => setUnreadCount(0)} />
             </div>
           )}
 
@@ -4918,4 +5354,3 @@ export default function WoRedaDashboard() {
     </div>
   );
 }
-

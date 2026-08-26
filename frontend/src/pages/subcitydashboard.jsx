@@ -59,13 +59,48 @@ function validatePcts(pcts) {
   return { ok: true, total: rounded, error: null };
 }
 
-/** Distribute a subcity total to a woreda using validated percentage object.
- *  Special case: w2 (Aanaa Dhadacha Araaraa) uses 25% for actual math even
- *  though the display label shows 25.5%. */
+/**
+ * Distribute `categoryTotal` across all 4 weredas with fixed percentages:
+ *   w1=27%, w2=25.5%, w3=24.5%, w4=23%
+ *
+ * w2 and w3 are a paired fractional split (25.5+24.5=50 exactly).
+ * Rule: when w2 rounds UP to 26%, w3 MUST round DOWN to 24% — never both round up.
+ *
+ * Uses largest-remainder but enforces the w2/w3 pairing constraint explicitly.
+ */
 function pctShare(pcts, woredaId, categoryTotal) {
-  // w2 is always calculated at exactly 25% regardless of the displayed value
-  const effectivePct = woredaId === "w2" ? 25 : Number(pcts[woredaId] || 0);
-  return Math.round((effectivePct / 100) * Number(categoryTotal || 0));
+  const n = Math.round(Number(categoryTotal || 0));
+  if (n === 0) return 0;
+
+  const ids = ["w1", "w2", "w3", "w4"];
+  const exact = {
+    w1: n * 0.27,
+    w2: n * 0.255,
+    w3: n * 0.245,
+    w4: n * 0.23,
+  };
+  const floored = Object.fromEntries(
+    ids.map((id) => [id, Math.floor(exact[id])]),
+  );
+  let remainder = n - ids.reduce((s, id) => s + floored[id], 0);
+
+  // Sort by fractional part descending
+  const fracs = ids
+    .map((id) => ({ id, frac: exact[id] - floored[id] }))
+    .sort((a, b) => b.frac - a.frac || (a.id < b.id ? -1 : 1));
+
+  const result = { ...floored };
+  let given = 0;
+  for (const { id } of fracs) {
+    if (given >= remainder) break;
+    // Enforce pairing: w2 and w3 cannot both be rounded up
+    if (id === "w3" && result.w2 > floored.w2) continue;
+    if (id === "w2" && result.w3 > floored.w3) continue;
+    result[id] += 1;
+    given++;
+  }
+
+  return result[woredaId] ?? 0;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -353,7 +388,9 @@ function AnnouncementsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -371,7 +408,9 @@ function AnnouncementsPage() {
       setSaveSuccess(true);
       load(); // refresh list
     } catch (err) {
-      setSaveError(err?.response?.data?.message || "Failed to post announcement.");
+      setSaveError(
+        err?.response?.data?.message || "Failed to post announcement.",
+      );
     } finally {
       setSaving(false);
     }
@@ -390,7 +429,9 @@ function AnnouncementsPage() {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-8">
         <div
           className="px-5 py-4 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+          }}
         >
           <p className="text-white font-semibold text-sm">New Announcement</p>
           <p className="text-white/60 text-xs mt-0.5">
@@ -462,7 +503,9 @@ function AnnouncementsPage() {
           </div>
         ) : announcements.length === 0 ? (
           <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-10 text-center">
-            <p className="text-[#94a3b8] text-sm">No announcements posted yet.</p>
+            <p className="text-[#94a3b8] text-sm">
+              No announcements posted yet.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -472,7 +515,9 @@ function AnnouncementsPage() {
                 className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="font-semibold text-[#1e293b] text-sm">{ann.title}</p>
+                  <p className="font-semibold text-[#1e293b] text-sm">
+                    {ann.title}
+                  </p>
                   <span className="text-[10px] text-[#94a3b8] whitespace-nowrap flex-shrink-0">
                     {new Date(ann.created_at).toLocaleString()}
                   </span>
@@ -1679,6 +1724,9 @@ function QonnaPlanPage() {
                       Category
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Field
+                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                       Subcity Total
                     </th>
                     {WOREDAS.map((w) => (
@@ -1696,21 +1744,112 @@ function QonnaPlanPage() {
                 </thead>
                 <tbody>
                   {QONNA_CATEGORIES.map((cat) => {
-                    const total = totalAnimals[cat.key];
-                    if (total === 0) return null;
-                    return (
+                    const cfg = CFG_KEYS[cat.key];
+                    const f = forms[cat.key];
+                    const houses = Number(f.houses) || 0;
+                    const haPer = Number(f.haPerHouse) || 0;
+                    const unitsPer = Number(f.unitsPerHouse) || 0;
+                    const totalLand = Math.round(houses * haPer * 100) / 100;
+                    const totalUnits = houses * unitsPer;
+
+                    const rows = [
+                      {
+                        label: cfg.qophi
+                          .replace(`${cat.key}_`, "")
+                          .replace(/_/g, " "),
+                        total: totalLand,
+                      },
+                      {
+                        label: cfg.sheedii
+                          .replace(`${cat.key}_`, "")
+                          .replace(/_/g, " "),
+                        total: houses,
+                      },
+                      {
+                        label: cfg.lakk
+                          .replace(`${cat.key}_`, "")
+                          .replace(/_/g, " "),
+                        total: totalUnits,
+                      },
+                    ];
+
+                    // Use the QONNA_OV_CATS labels for better readability
+                    const ovCat =
+                      [
+                        {
+                          key: "furdisa",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Sheedii" },
+                            { label: "Lakk Horii" },
+                          ],
+                        },
+                        {
+                          key: "annan",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Sheedii" },
+                            { label: "Lakk Sa'a" },
+                          ],
+                        },
+                        {
+                          key: "lukkuu",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Sheedii" },
+                            { label: "Lakk Lukkuu" },
+                          ],
+                        },
+                        {
+                          key: "booyee",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Sheedii" },
+                            { label: "Lakk Booyyee" },
+                          ],
+                        },
+                        {
+                          key: "kannisaa",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Gaaguraa" },
+                            { label: "Lakk Kannisaa" },
+                          ],
+                        },
+                        {
+                          key: "qurxummii",
+                          fields: [
+                            { label: "Qophi Lafa" },
+                            { label: "Lakk Pondii" },
+                            { label: "Lakk Qurxummii" },
+                          ],
+                        },
+                      ].find((c) => c.key === cat.key)?.fields ??
+                      rows.map((r) => ({ label: r.label }));
+
+                    if (houses === 0) return null;
+
+                    return rows.map(({ total }, fi) => (
                       <tr
-                        key={cat.key}
+                        key={`${cat.key}-${fi}`}
                         className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
                       >
-                        <td className="px-5 py-3 font-medium text-[#1e293b]">
-                          <span className="flex items-center gap-2">
-                            <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            {cat.label}
-                          </span>
+                        {fi === 0 && (
+                          <td
+                            className="px-5 py-3 font-bold text-[#1e293b]"
+                            rowSpan={3}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: cat.color }}
+                              />
+                              {cat.label}
+                            </span>
+                          </td>
+                        )}
+                        <td className="px-5 py-3 text-[#64748b] text-xs">
+                          {ovCat[fi]?.label}
                         </td>
                         <td className="px-5 py-3 font-semibold text-[#1e293b]">
                           {total.toLocaleString()}
@@ -1721,7 +1860,7 @@ function QonnaPlanPage() {
                           </td>
                         ))}
                       </tr>
-                    );
+                    ));
                   })}
                 </tbody>
               </table>
@@ -1858,29 +1997,97 @@ const SECTOR_CFG = {
   qonna: {
     fields: [
       // Furdisa
-      { key: "furdisa_qophi_lafa",              label: "Furdisa - Lafa Qophaawe",  color: "#065f46" },
-      { key: "furdisa_lakk_sheedii",            label: "Furdisa - Sheedii",        color: "#065f46" },
-      { key: "furdisa_lakk_horii_waliigalaa",   label: "Furdisa - Lakk Horii",     color: "#065f46" },
+      {
+        key: "furdisa_qophi_lafa",
+        label: "Furdisa - Lafa Qophaawe",
+        color: "#065f46",
+      },
+      {
+        key: "furdisa_lakk_sheedii",
+        label: "Furdisa - Sheedii",
+        color: "#065f46",
+      },
+      {
+        key: "furdisa_lakk_horii_waliigalaa",
+        label: "Furdisa - Lakk Horii",
+        color: "#065f46",
+      },
       // Annan
-      { key: "annan_qophi_lafa",                label: "Annan - Lafa Qophaawe",    color: "#0f766e" },
-      { key: "annan_lakk_sheedii",              label: "Annan - Sheedii",          color: "#0f766e" },
-      { key: "annan_lakk_saa_waliigalaa",       label: "Annan - Lakk Sa'a",        color: "#0f766e" },
+      {
+        key: "annan_qophi_lafa",
+        label: "Annan - Lafa Qophaawe",
+        color: "#0f766e",
+      },
+      { key: "annan_lakk_sheedii", label: "Annan - Sheedii", color: "#0f766e" },
+      {
+        key: "annan_lakk_saa_waliigalaa",
+        label: "Annan - Lakk Sa'a",
+        color: "#0f766e",
+      },
       // Lukkuu
-      { key: "lukkuu_qophi_lafa",               label: "Lukkuu - Lafa Qophaawe",   color: "#1e40af" },
-      { key: "lukkuu_lakk_sheedii",             label: "Lukkuu - Sheedii",         color: "#1e40af" },
-      { key: "lukkuu_lakk_lukkuu_waliigalaa",   label: "Lukkuu - Lakk Lukkuu",     color: "#1e40af" },
+      {
+        key: "lukkuu_qophi_lafa",
+        label: "Lukkuu - Lafa Qophaawe",
+        color: "#1e40af",
+      },
+      {
+        key: "lukkuu_lakk_sheedii",
+        label: "Lukkuu - Sheedii",
+        color: "#1e40af",
+      },
+      {
+        key: "lukkuu_lakk_lukkuu_waliigalaa",
+        label: "Lukkuu - Lakk Lukkuu",
+        color: "#1e40af",
+      },
       // Booyyee
-      { key: "booyee_qophi_lafa",               label: "Booyyee - Lafa Qophaawe",  color: "#7c3aed" },
-      { key: "booyee_lakk_sheedii",             label: "Booyyee - Sheedii",        color: "#7c3aed" },
-      { key: "booyee_lakk_booyyee_waliigalaa",  label: "Booyyee - Lakk Booyyee",   color: "#7c3aed" },
+      {
+        key: "booyee_qophi_lafa",
+        label: "Booyyee - Lafa Qophaawe",
+        color: "#7c3aed",
+      },
+      {
+        key: "booyee_lakk_sheedii",
+        label: "Booyyee - Sheedii",
+        color: "#7c3aed",
+      },
+      {
+        key: "booyee_lakk_booyyee_waliigalaa",
+        label: "Booyyee - Lakk Booyyee",
+        color: "#7c3aed",
+      },
       // Kannisaa
-      { key: "kannisaa_qophi_lafa",             label: "Kannisaa - Lafa Qophaawe", color: "#b45309" },
-      { key: "kannisaa_lakk_gaaguraa",          label: "Kannisaa - Gaaguraa",      color: "#b45309" },
-      { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Kannisaa - Lakk Kannisaa", color: "#b45309" },
+      {
+        key: "kannisaa_qophi_lafa",
+        label: "Kannisaa - Lafa Qophaawe",
+        color: "#b45309",
+      },
+      {
+        key: "kannisaa_lakk_gaaguraa",
+        label: "Kannisaa - Gaaguraa",
+        color: "#b45309",
+      },
+      {
+        key: "kannisaa_lakk_kannisaa_waliigalaa",
+        label: "Kannisaa - Lakk Kannisaa",
+        color: "#b45309",
+      },
       // Qurxummii
-      { key: "qurxummii_qophi_lafa",                label: "Qurxummii - Lafa Qophaawe", color: "#0369a1" },
-      { key: "qurxummii_lakk_pondii",               label: "Qurxummii - Pondii",        color: "#0369a1" },
-      { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Qurxummii - Lakk",          color: "#0369a1" },
+      {
+        key: "qurxummii_qophi_lafa",
+        label: "Qurxummii - Lafa Qophaawe",
+        color: "#0369a1",
+      },
+      {
+        key: "qurxummii_lakk_pondii",
+        label: "Qurxummii - Pondii",
+        color: "#0369a1",
+      },
+      {
+        key: "qurxummii_lakk_qurxummii_waliigalaa",
+        label: "Qurxummii - Lakk",
+        color: "#0369a1",
+      },
     ],
     label: "Qonna",
     color: "#065f46",
@@ -2121,8 +2328,14 @@ function partitionTarget(annual, period) {
 
 // ─── Helper: compute bounded completion % ────────────────────────────────────
 function computeCompletionPct(actuals, targets, fields) {
-  const totalActual = fields.reduce((s, f) => s + Number(actuals[f.key] || 0), 0);
-  const totalTarget = fields.reduce((s, f) => s + Number(targets[f.key] || 0), 0);
+  const totalActual = fields.reduce(
+    (s, f) => s + Number(actuals[f.key] || 0),
+    0,
+  );
+  const totalTarget = fields.reduce(
+    (s, f) => s + Number(targets[f.key] || 0),
+    0,
+  );
   if (totalTarget === 0) return 0;
   return Math.min(100, Math.round((totalActual / totalTarget) * 1000) / 10);
 }
@@ -2155,7 +2368,9 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
         setTargets(d.targets || {});
       })
       .catch((err) => {
-        setError(err?.response?.data?.message || "Failed to load analysis data.");
+        setError(
+          err?.response?.data?.message || "Failed to load analysis data.",
+        );
         setActuals({});
         setTargets({});
       })
@@ -2189,7 +2404,11 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
             style={{ color: "white" }}
           >
             {ANALYSIS_PERIODS.map((p) => (
-              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+              <option
+                key={p.value}
+                value={p.value}
+                style={{ color: "#1e293b" }}
+              >
                 {p.label}
               </option>
             ))}
@@ -2199,8 +2418,16 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
 
       {error && (
         <div className="mx-5 mt-4 mb-2 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
-          <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg
+            className="w-4 h-4 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span className="text-[#dc2626] text-sm">{error}</span>
         </div>
@@ -2224,21 +2451,29 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Target Allocated
                   <span className="block font-normal normal-case text-[#94a3b8]">
-                    {period === "annual" ? "Annual" :
-                     period === "monthly" ? "Monthly (÷12)" :
-                     period === "quarterly" ? "Quarterly (÷4)" :
-                     period === "weekly" ? "Weekly (÷52)" :
-                     "Daily (÷365)"}
+                    {period === "annual"
+                      ? "Annual"
+                      : period === "monthly"
+                        ? "Monthly (÷12)"
+                        : period === "quarterly"
+                          ? "Quarterly (÷4)"
+                          : period === "weekly"
+                            ? "Weekly (÷52)"
+                            : "Daily (÷365)"}
                   </span>
                 </th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Submitted
                   <span className="block font-normal normal-case text-[#94a3b8]">
-                    {period === "annual" ? "This year" :
-                     period === "monthly" ? "This month" :
-                     period === "quarterly" ? "This quarter" :
-                     period === "weekly" ? "This week" :
-                     "Today"}
+                    {period === "annual"
+                      ? "This year"
+                      : period === "monthly"
+                        ? "This month"
+                        : period === "quarterly"
+                          ? "This quarter"
+                          : period === "weekly"
+                            ? "This week"
+                            : "Today"}
                   </span>
                 </th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
@@ -2251,9 +2486,13 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                 const annualTarget = targets ? Number(targets[key] || 0) : 0;
                 const periodTarget = partitionTarget(annualTarget, period);
                 const submitted = actuals ? Number(actuals[key] || 0) : 0;
-                const pct = periodTarget > 0
-                  ? Math.min(100, Math.round((submitted / periodTarget) * 100))
-                  : 0;
+                const pct =
+                  periodTarget > 0
+                    ? Math.min(
+                        100,
+                        Math.round((submitted / periodTarget) * 100),
+                      )
+                    : 0;
                 return (
                   <tr
                     key={key}
@@ -2282,15 +2521,21 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                             style={{
                               width: `${pct}%`,
                               backgroundColor:
-                                pct >= 100 ? "#16a34a" :
-                                pct >= 60  ? "#ca8a04" : cfg.color,
+                                pct >= 100
+                                  ? "#16a34a"
+                                  : pct >= 60
+                                    ? "#ca8a04"
+                                    : cfg.color,
                             }}
                           />
                         </div>
                         <span
                           className={`text-xs font-bold ${
-                            pct >= 100 ? "text-[#16a34a]" :
-                            pct >= 60  ? "text-[#ca8a04]" : "text-[#dc2626]"
+                            pct >= 100
+                              ? "text-[#16a34a]"
+                              : pct >= 60
+                                ? "text-[#ca8a04]"
+                                : "text-[#dc2626]"
                           }`}
                         >
                           {pct}%
@@ -2361,7 +2606,11 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
             style={{ color: "white" }}
           >
             {ANALYSIS_PERIODS.map((p) => (
-              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+              <option
+                key={p.value}
+                value={p.value}
+                style={{ color: "#1e293b" }}
+              >
                 {p.label}
               </option>
             ))}
@@ -2372,8 +2621,16 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
       <div className="px-5 py-5">
         {error && (
           <div className="mb-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
-            <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            <svg
+              className="w-4 h-4 text-[#dc2626] flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <span className="text-[#dc2626] text-sm">{error}</span>
           </div>
@@ -2386,7 +2643,9 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
             />
           </div>
         ) : (
-          <div className={`grid gap-4 ${cfg.fields.length > 9 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
+          <div
+            className={`grid gap-4 ${cfg.fields.length > 9 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}
+          >
             {cfg.fields.map(({ key, label, color, description }) => {
               const annualTarget = targets ? Number(targets[key] || 0) : 0;
               const periodTarget = partitionTarget(annualTarget, period);
@@ -2455,7 +2714,11 @@ function ComparisonView({ sector, cfg }) {
             style={{ color: "white" }}
           >
             {ANALYSIS_PERIODS.map((p) => (
-              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+              <option
+                key={p.value}
+                value={p.value}
+                style={{ color: "#1e293b" }}
+              >
                 {p.label}
               </option>
             ))}
@@ -2465,8 +2728,16 @@ function ComparisonView({ sector, cfg }) {
 
       {error && (
         <div className="mx-5 mt-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
-          <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg
+            className="w-4 h-4 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span className="text-[#dc2626] text-sm">{error}</span>
         </div>
@@ -2474,7 +2745,10 @@ function ComparisonView({ sector, cfg }) {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+          <div
+            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            style={{ borderTopColor: cfg.color }}
+          />
         </div>
       ) : data ? (
         <div className="overflow-x-auto">
@@ -2502,15 +2776,23 @@ function ComparisonView({ sector, cfg }) {
                 >
                   <td className="px-5 py-3 font-medium text-[#1e293b]">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
                       {label}
                     </span>
                   </td>
                   {WOREDAS.map((w) => {
-                    const woredaData = data.woredas?.find((wd) => wd.woredaId === w.id);
+                    const woredaData = data.woredas?.find(
+                      (wd) => wd.woredaId === w.id,
+                    );
                     const val = woredaData?.actuals?.[key] ?? 0;
                     return (
-                      <td key={w.id} className="px-5 py-3 font-semibold text-[#1e293b]">
+                      <td
+                        key={w.id}
+                        className="px-5 py-3 font-semibold text-[#1e293b]"
+                      >
                         {Number(val).toLocaleString()}
                       </td>
                     );
@@ -2595,7 +2877,9 @@ function RankView({ sector, cfg }) {
       const completionPct = computeCompletionPct(actuals, targets, cfg.fields);
       return { ...w, actuals, targets, completionPct };
     })
-      .sort((a, b) => b.completionPct - a.completionPct || a.id.localeCompare(b.id))
+      .sort(
+        (a, b) => b.completionPct - a.completionPct || a.id.localeCompare(b.id),
+      )
       .map((w, i) => ({ ...w, rank: i + 1 }));
   })();
 
@@ -2626,7 +2910,11 @@ function RankView({ sector, cfg }) {
             style={{ color: "white" }}
           >
             {ANALYSIS_PERIODS.map((p) => (
-              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+              <option
+                key={p.value}
+                value={p.value}
+                style={{ color: "#1e293b" }}
+              >
                 {p.label}
               </option>
             ))}
@@ -2636,8 +2924,16 @@ function RankView({ sector, cfg }) {
 
       {error && (
         <div className="mx-5 mt-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
-          <svg className="w-4 h-4 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <svg
+            className="w-4 h-4 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span className="text-[#dc2626] text-sm">{error}</span>
         </div>
@@ -2645,7 +2941,10 @@ function RankView({ sector, cfg }) {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+          <div
+            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            style={{ borderTopColor: cfg.color }}
+          />
         </div>
       ) : (
         <div className="divide-y divide-[#f1f5f9]">
@@ -2662,8 +2961,13 @@ function RankView({ sector, cfg }) {
                   className="w-full px-5 py-4 flex items-center gap-4 hover:bg-[#f8fafc] transition-colors text-left"
                 >
                   {/* Rank badge */}
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold"
-                    style={{ backgroundColor: `${rankColors[rankIdx]}22`, color: rankColors[rankIdx] }}>
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold"
+                    style={{
+                      backgroundColor: `${rankColors[rankIdx]}22`,
+                      color: rankColors[rankIdx],
+                    }}
+                  >
                     {rankLabels[rankIdx]}
                   </div>
 
@@ -2671,7 +2975,8 @@ function RankView({ sector, cfg }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-[#1e293b] text-sm">{w.name}</p>
                     <p className="text-xs text-[#94a3b8] mt-0.5">
-                      Click to {isExpanded ? "collapse" : "view"} plan vs. submitted detail
+                      Click to {isExpanded ? "collapse" : "view"} plan vs.
+                      submitted detail
                     </p>
                   </div>
 
@@ -2686,14 +2991,22 @@ function RankView({ sector, cfg }) {
                     <div className="w-full bg-[#f1f5f9] rounded-full h-2">
                       <div
                         className="h-2 rounded-full transition-all duration-700"
-                        style={{ width: `${w.completionPct}%`, backgroundColor: cfg.color }}
+                        style={{
+                          width: `${w.completionPct}%`,
+                          backgroundColor: cfg.color,
+                        }}
                       />
                     </div>
                   </div>
 
                   {/* Chevron */}
-                  <svg className={`w-4 h-4 text-[#94a3b8] flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                    fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg
+                    className={`w-4 h-4 text-[#94a3b8] flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
@@ -2714,7 +3027,9 @@ function RankView({ sector, cfg }) {
                           className="text-xs border border-[#e2e8f0] rounded-lg px-2 py-1.5 bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                         >
                           {ANALYSIS_PERIODS.map((p) => (
-                            <option key={p.value} value={p.value}>{p.label}</option>
+                            <option key={p.value} value={p.value}>
+                              {p.label}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -2722,45 +3037,85 @@ function RankView({ sector, cfg }) {
 
                     {detail?.error && (
                       <div className="mb-3 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-2.5">
-                        <span className="text-[#dc2626] text-xs">{detail.error}</span>
+                        <span className="text-[#dc2626] text-xs">
+                          {detail.error}
+                        </span>
                       </div>
                     )}
 
                     {detail?.loading ? (
                       <div className="flex items-center justify-center h-20">
-                        <div className="w-6 h-6 border-4 border-[#dce8f4] rounded-full animate-spin" style={{ borderTopColor: cfg.color }} />
+                        <div
+                          className="w-6 h-6 border-4 border-[#dce8f4] rounded-full animate-spin"
+                          style={{ borderTopColor: cfg.color }}
+                        />
                       </div>
                     ) : (
                       <div className="overflow-x-auto rounded-xl border border-[#e2e8f0] bg-white">
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="border-b border-[#f1f5f9]">
-                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Field</th>
-                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Targeted (Annual)</th>
-                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Period Target</th>
-                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Submitted</th>
-                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">% Done</th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                                Field
+                              </th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                                Targeted (Annual)
+                              </th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                                Period Target
+                              </th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                                Submitted
+                              </th>
+                              <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                                % Done
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {cfg.fields.map(({ key, label, color }) => {
-                              const annualTarget = Number(detail?.targets?.[key] || 0);
-                              const periodTgt = partitionTarget(annualTarget, detailPeriod);
+                              const annualTarget = Number(
+                                detail?.targets?.[key] || 0,
+                              );
+                              const periodTgt = partitionTarget(
+                                annualTarget,
+                                detailPeriod,
+                              );
                               const actual = Number(w.actuals?.[key] || 0);
-                              const pct = periodTgt > 0 ? Math.min(100, Math.round((actual / periodTgt) * 100)) : 0;
+                              const pct =
+                                periodTgt > 0
+                                  ? Math.min(
+                                      100,
+                                      Math.round((actual / periodTgt) * 100),
+                                    )
+                                  : 0;
                               return (
-                                <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+                                <tr
+                                  key={key}
+                                  className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                                >
                                   <td className="px-4 py-3 font-medium text-[#1e293b]">
                                     <span className="flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                                      <span
+                                        className="w-2 h-2 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: color }}
+                                      />
                                       {label}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-3 text-[#64748b]">{annualTarget.toLocaleString()}</td>
-                                  <td className="px-4 py-3 text-[#64748b]">{periodTgt.toLocaleString()}</td>
-                                  <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                                  <td className="px-4 py-3 text-[#64748b]">
+                                    {annualTarget.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-3 text-[#64748b]">
+                                    {periodTgt.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-3 font-semibold text-[#1e293b]">
+                                    {actual.toLocaleString()}
+                                  </td>
                                   <td className="px-4 py-3">
-                                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-green-100 text-green-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
+                                    <span
+                                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-green-100 text-green-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
+                                    >
                                       {pct}%
                                     </span>
                                   </td>
@@ -2858,7 +3213,11 @@ function GenericSubcityAnalysisPage({ sector }) {
                 ? "text-white shadow"
                 : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
             }`}
-            style={activeView === "woreda" && activeWoreda === w.id ? { background: cfg.gradient } : {}}
+            style={
+              activeView === "woreda" && activeWoreda === w.id
+                ? { background: cfg.gradient }
+                : {}
+            }
           >
             {w.name}
           </button>
@@ -2874,10 +3233,19 @@ function GenericSubcityAnalysisPage({ sector }) {
               ? "text-white shadow border-transparent"
               : "bg-white border-[#e2e8f0] text-[#1a3a5c] hover:border-[#1a3a5c] hover:bg-[#eef4fb]"
           }`}
-          style={activeView === "comparison" ? { background: cfg.gradient } : {}}
+          style={
+            activeView === "comparison" ? { background: cfg.gradient } : {}
+          }
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <rect x="3" y="3" width="8" height="18" rx="1" /><rect x="13" y="3" width="8" height="18" rx="1" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <rect x="3" y="3" width="8" height="18" rx="1" />
+            <rect x="13" y="3" width="8" height="18" rx="1" />
           </svg>
           Comparison
         </button>
@@ -2890,8 +3258,16 @@ function GenericSubcityAnalysisPage({ sector }) {
           }`}
           style={activeView === "rank" ? { background: cfg.gradient } : {}}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
           </svg>
           Rank
         </button>
@@ -2904,56 +3280,58 @@ function GenericSubcityAnalysisPage({ sector }) {
         <RankView sector={sector} cfg={cfg} />
       ) : (
         <>
-      {/* Subcity totals overview */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
-        <div
-          className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: cfg.gradient }}
-        >
-          <p className="text-sm font-semibold text-white">
-            Subcity Total Annual Plan
-          </p>
-          <p className="text-white/60 text-xs mt-0.5">All 4 woredas combined</p>
-        </div>
-        <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {cfg.fields.map(({ key, label, color }) => {
-            const total = getPlanTotal(key);
-            return (
-              <div
-                key={key}
-                className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center"
-              >
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: color }}
-                  />
-                  <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">
-                    {label}
-                  </p>
-                </div>
-                <p className="text-xl font-extrabold text-[#1e293b]">
-                  {total.toLocaleString()}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+          {/* Subcity totals overview */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{ background: cfg.gradient }}
+            >
+              <p className="text-sm font-semibold text-white">
+                Subcity Total Annual Plan
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                All 4 woredas combined
+              </p>
+            </div>
+            <div className="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {cfg.fields.map(({ key, label, color }) => {
+                const total = getPlanTotal(key);
+                return (
+                  <div
+                    key={key}
+                    className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center"
+                  >
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                      <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">
+                        {label}
+                      </p>
+                    </div>
+                    <p className="text-xl font-extrabold text-[#1e293b]">
+                      {total.toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Per-woreda: Category / Target Allocated / Submitted table */}
-      <WoredaAnalysisTable
-        sector={sector}
-        woredaId={activeWoreda}
-        cfg={cfg}
-      />
+          {/* Per-woreda: Category / Target Allocated / Submitted table */}
+          <WoredaAnalysisTable
+            sector={sector}
+            woredaId={activeWoreda}
+            cfg={cfg}
+          />
 
-      {/* Ring charts — actual vs target for selected woreda */}
-      <WorkAnalysisRingSection
-        sector={sector}
-        woredaId={activeWoreda}
-        cfg={cfg}
-      />
+          {/* Ring charts — actual vs target for selected woreda */}
+          <WorkAnalysisRingSection
+            sector={sector}
+            woredaId={activeWoreda}
+            cfg={cfg}
+          />
         </>
       )}
     </div>
@@ -3003,12 +3381,23 @@ const REPORT_SECTORS_ALL = [
   { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
-const REPORT_PERIOD_TYPES_SC = ["Daily", "Weekly", "Monthly", "Quarterly", "Annual"];
+const REPORT_PERIOD_TYPES_SC = [
+  "Daily",
+  "Weekly",
+  "Monthly",
+  "Quarterly",
+  "Annual",
+];
 
 // Fields to hide from the detail modal (system/internal columns)
 const SC_HIDDEN_FIELDS = new Set([
-  "id", "user_id", "username", "role", "_sector",
-  "created_at", "updated_at",
+  "id",
+  "user_id",
+  "username",
+  "role",
+  "_sector",
+  "created_at",
+  "updated_at",
 ]);
 
 function scFieldLabel(key) {
@@ -3031,8 +3420,11 @@ function scFormatDateTime(row) {
   if (row.created_at) {
     const d = new Date(row.created_at);
     return d.toLocaleString(undefined, {
-      year: "numeric", month: "short", day: "2-digit",
-      hour: "2-digit", minute: "2-digit",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
   return row.report_date ?? "";
@@ -3087,17 +3479,30 @@ function SCReportDetailModal({ row, onClose }) {
           }}
         >
           <div>
-            <p className="text-white font-bold text-base">{sectorLabel} Report</p>
+            <p className="text-white font-bold text-base">
+              {sectorLabel} Report
+            </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {row.username ?? ""} · {row.report_type ?? ""} · {scFormatDateTime(row)}
+              {row.username ?? ""} · {row.report_type ?? ""} ·{" "}
+              {scFormatDateTime(row)}
             </p>
           </div>
           <button
             onClick={onClose}
             className="text-white/70 hover:text-white transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -3113,7 +3518,10 @@ function SCReportDetailModal({ row, onClose }) {
                 color: accentColor,
               }}
             >
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: accentColor }}
+              />
               {sectorLabel}
             </span>
             {row.username && (
@@ -3138,7 +3546,9 @@ function SCReportDetailModal({ row, onClose }) {
                   key={k}
                   className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
                 >
-                  <span className="text-xs font-medium text-[#475569]">{scFieldLabel(k)}</span>
+                  <span className="text-xs font-medium text-[#475569]">
+                    {scFieldLabel(k)}
+                  </span>
                   <span className="text-sm font-bold text-[#1e293b] ml-2">
                     {typeof v === "number" ? v.toLocaleString() : v}
                   </span>
@@ -3154,8 +3564,18 @@ function SCReportDetailModal({ row, onClose }) {
             onClick={() => scDownloadCSV(row, sectorLabel, row.username)}
             className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
+              />
             </svg>
             Download CSV
           </button>
@@ -3212,7 +3632,9 @@ function ReportsPage() {
     fetchAllWoredaReports()
       .then((data) => setRows(Array.isArray(data) ? data : []))
       .catch(() =>
-        setFetchError("Could not load reports. Check your connection and try again."),
+        setFetchError(
+          "Could not load reports. Check your connection and try again.",
+        ),
       )
       .finally(() => setLoading(false));
   };
@@ -3270,7 +3692,8 @@ function ReportsPage() {
   const activeSectorColor =
     filterSector === "all"
       ? "#1a3a5c"
-      : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ?? "#1a3a5c");
+      : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ??
+        "#1a3a5c");
 
   return (
     <div>
@@ -3282,14 +3705,21 @@ function ReportsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          All submitted reports from every sector. Filter by woreda, sector, period, or a custom date range.
+          All submitted reports from every sector. Filter by woreda, sector,
+          period, or a custom date range.
         </p>
       </div>
 
       {/* Error banner */}
       {fetchError && (
         <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M12 8v4M12 16h.01" />
           </svg>
@@ -3367,7 +3797,9 @@ function ReportsPage() {
           {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {loading ? "..." : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "..."
+                : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -3380,7 +3812,9 @@ function ReportsPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Fiscal Year</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Fiscal Year
+                </label>
                 <input
                   type="number"
                   value={customFiscal}
@@ -3391,7 +3825,9 @@ function ReportsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Start Date
+                </label>
                 <div className="flex gap-2">
                   <select
                     value={startMonth}
@@ -3399,7 +3835,9 @@ function ReportsPage() {
                     className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
-                      <option key={m.name} value={m.name}>{m.name}</option>
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
                     ))}
                   </select>
                   <select
@@ -3408,13 +3846,17 @@ function ReportsPage() {
                     className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
-                      <option key={d} value={d}>{d}</option>
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  End Date
+                </label>
                 <div className="flex gap-2">
                   <select
                     value={endMonth}
@@ -3422,7 +3864,9 @@ function ReportsPage() {
                     className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
-                      <option key={m.name} value={m.name}>{m.name}</option>
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
                     ))}
                   </select>
                   <select
@@ -3431,7 +3875,9 @@ function ReportsPage() {
                     className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
-                      <option key={d} value={d}>{d}</option>
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -3475,7 +3921,9 @@ function ReportsPage() {
                     : "All Woreda Reports"}
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {loading ? "Loading..." : `${filteredRows.length} report${filteredRows.length !== 1 ? "s" : ""} found`}
+              {loading
+                ? "Loading..."
+                : `${filteredRows.length} report${filteredRows.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
           {!loading && !fetchError && (
@@ -3493,7 +3941,13 @@ function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                  {["Date", "Submitted By", "Sector", "Report Type", "Actions"].map((h) => (
+                  {[
+                    "Date",
+                    "Submitted By",
+                    "Sector",
+                    "Report Type",
+                    "Actions",
+                  ].map((h) => (
                     <th
                       key={h}
                       className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
@@ -3524,13 +3978,17 @@ function ReportsPage() {
                   </tr>
                 ) : (
                   filteredRows.map((row, idx) => {
-                    const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
+                    const sec = REPORT_SECTORS_ALL.find(
+                      (s) => s.id === row._sector,
+                    );
                     return (
                       <tr
                         key={row.id ?? `${row._sector}-${idx}`}
                         className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                       >
-                        <td className="px-5 py-3 text-[#475569] text-sm">{scFormatDateTime(row)}</td>
+                        <td className="px-5 py-3 text-[#475569] text-sm">
+                          {scFormatDateTime(row)}
+                        </td>
                         <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
                           {row.username ?? ""}
                         </td>
@@ -3538,32 +3996,66 @@ function ReportsPage() {
                           <span className="inline-flex items-center gap-1.5">
                             <span
                               className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: sec?.color ?? "#64748b" }}
+                              style={{
+                                backgroundColor: sec?.color ?? "#64748b",
+                              }}
                             />
                             <span className="text-sm font-medium text-[#1e293b]">
                               {sec?.label ?? row._sector}
                             </span>
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">
+                          {row.report_type ?? ""}
+                        </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setModalRow(row)}
                               className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
                               </svg>
                               View
                             </button>
                             <button
-                              onClick={() => scDownloadCSV(row, sec?.label ?? row._sector ?? "Report", row.username)}
+                              onClick={() =>
+                                scDownloadCSV(
+                                  row,
+                                  sec?.label ?? row._sector ?? "Report",
+                                  row.username,
+                                )
+                              }
                               className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4" />
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
+                                />
                               </svg>
                               Download
                             </button>
