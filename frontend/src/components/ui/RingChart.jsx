@@ -10,13 +10,15 @@
  *   description {string} – subtitle shown below the label
  */
 export default function RingChart({ actual, target, color, label, description }) {
-  const pct =
-    target > 0 ? Math.min(Math.round((actual / target) * 100), 100) : 0;
+  // Raw percentage — can exceed 100% when actual surpasses the target
+  const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+  // Arc is visually capped at 100% so it doesn't wrap; the number still shows the real %
+  const arcPct = Math.min(pct, 100);
   const size = 140,
     sw = 14,
     r = (size - sw) / 2,
     circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
+  const offset = circ - (arcPct / 100) * circ;
 
   return (
     <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 flex flex-col items-center shadow-sm">
@@ -73,7 +75,7 @@ export default function RingChart({ actual, target, color, label, description })
         <div className="w-full bg-[#f1f5f9] rounded-full h-1.5 mt-2">
           <div
             className="h-1.5 rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, backgroundColor: color }}
+            style={{ width: `${arcPct}%`, backgroundColor: color }}
           />
         </div>
       </div>

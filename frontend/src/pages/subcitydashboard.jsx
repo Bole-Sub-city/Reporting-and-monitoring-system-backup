@@ -12,10 +12,11 @@ import {
   fetchSubcityGenericPlan,
   fetchWoRedaReports,
   fetchWoRedaAnalysis,
+  fetchSubcityGalii,
   createAnnouncement,
   fetchAnnouncements,
 } from "../api/planApi";
-import { fetchAllWoredaReports } from "../api/reportApi";
+import { fetchAllWoredaReports, submitSubcityRevenueReport } from "../api/reportApi";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
 function friendlyError(
@@ -168,10 +169,10 @@ const PLAN_FIELDS = [
     label: "inisheetivii Buusaa Gonofaa",
     color: "#64748b",
   },
-  { key: "gumaata_mootummaa", label: "Gumaata Midhaani", color: "#64748b" },
+  { key: "gumaata_mootummaa", label: "Gumaata Midhaani (Kuntal)", color: "#64748b" },
   { key: "nyaata_barataa", label: "Nyaata Barataa", color: "#64748b" },
-  { key: "sukkaara", label: "Sukkaara", color: "#ea580c" },
-  { key: "zayitii", label: "Zayitii", color: "#65a30d" },
+  { key: "sukkaara", label: "Sukkaara (KG)", color: "#ea580c" },
+  { key: "zayitii", label: "Zayitii (Litre)", color: "#65a30d" },
 ];
 
 const EMPTY_PLAN = {
@@ -379,6 +380,18 @@ const MegaphoneIcon = () => (
   >
     <path d="M3 11l18-5v12L3 13v-2z" />
     <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+  </svg>
+);
+const RevenueNavIcon = () => (
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    viewBox="0 0 24 24"
+  >
+    <line x1="12" y1="1" x2="12" y2="23" />
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
   </svg>
 );
 
@@ -2351,7 +2364,8 @@ function computeCompletionPct(actuals, targets, fields) {
     0,
   );
   if (totalTarget === 0) return 0;
-  return Math.min(100, Math.round((totalActual / totalTarget) * 1000) / 10);
+  // Uncapped — can exceed 100% when actuals surpass the target
+  return Math.round((totalActual / totalTarget) * 1000) / 10;
 }
 
 // ─── Period selector options for work analysis ────────────────────────────────
@@ -2498,10 +2512,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                 const submitted = actuals ? Number(actuals[key] || 0) : 0;
                 const pct =
                   periodTarget > 0
-                    ? Math.min(
-                        100,
-                        Math.round((submitted / periodTarget) * 100),
-                      )
+                    ? Math.round((submitted / periodTarget) * 100)
                     : 0;
                 return (
                   <tr
@@ -2529,7 +2540,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                           <div
                             className="h-1.5 rounded-full transition-all duration-500"
                             style={{
-                              width: `${pct}%`,
+                              width: `${Math.min(pct, 100)}%`,
                               backgroundColor:
                                 pct >= 100
                                   ? "#16a34a"
@@ -2676,8 +2687,432 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
   );
 }
 
+// ─── SubcityGaliiSubmitForm ───────────────────────────────────────────────────
+// Subcity revenue (Galii Sassaabu) submission form.
+// Entries are batched locally then submitted via POST /reports/revenue.
+function SubcitySuccessModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl px-10 py-10 flex flex-col items-center gap-4 min-w-[320px]">
+        <div className="w-20 h-20 rounded-full bg-[#f0faf4] flex items-center justify-center">
+          <svg
+            className="w-10 h-10 text-[#166534]"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-[#1e293b]">Report Submitted</h2>
+        <p className="text-[#64748b] text-sm text-center">
+          Your report has been submitted successfully.
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const SUBCITY_REVENUE_CATEGORIES = [
+  {
+    id: "manaQophessaa",
+    label: "Mana Qophessaa",
+    color: "#0f766e",
+    bgColor: "bg-[#f0fdf9]",
+    borderColor: "border-[#99f6e4]",
+    textColor: "text-[#0f766e]",
+    sources: [
+      "Lizii",
+      "Kiraa",
+      "Baaxii fi Gooroo",
+      "Kiraa Mana Daldalaa",
+      "Kiraa Mana Jireenyaa",
+      "Other",
+    ],
+  },
+  {
+    id: "idilee",
+    label: "Idilee",
+    color: "#1e40af",
+    bgColor: "bg-[#eff6ff]",
+    borderColor: "border-[#bfdbfe]",
+    textColor: "text-[#1e40af]",
+    sources: [
+      "Idilee Madda Galii 1",
+      "Idilee Madda Galii 2",
+      "Idilee Madda Galii 3",
+      "Idilee Madda Galii 4",
+    ],
+  },
+];
+
+function SubcityGaliiSubmitForm({ u }) {
+  const [category, setCategory] = useState(SUBCITY_REVENUE_CATEGORIES[0].id);
+  const [source, setSource] = useState(SUBCITY_REVENUE_CATEGORIES[0].sources[0]);
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [entries, setEntries] = useState([]);
+  const [entryError, setEntryError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  const catObj = SUBCITY_REVENUE_CATEGORIES.find((c) => c.id === category);
+
+  const handleCategoryChange = (val) => {
+    setCategory(val);
+    const cat = SUBCITY_REVENUE_CATEGORIES.find((c) => c.id === val);
+    setSource(cat.sources[0]);
+    setEntryError("");
+  };
+
+  const handleAddEntry = () => {
+    if (!amount || Number(amount) <= 0) {
+      setEntryError("Enter a valid amount greater than zero.");
+      return;
+    }
+    if (!date) {
+      setEntryError("Select a date.");
+      return;
+    }
+    setEntryError("");
+    setEntries((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        category: catObj.label,
+        categoryId: category,
+        source,
+        amount: Number(amount),
+        date,
+      },
+    ]);
+    setAmount("");
+    setDate(new Date().toISOString().split("T")[0]);
+  };
+
+  const handleRemoveEntry = (id) =>
+    setEntries((prev) => prev.filter((e) => e.id !== id));
+
+  const total = entries.reduce((sum, e) => sum + e.amount, 0);
+
+  const handleSubmitReport = async () => {
+    if (entries.length === 0) {
+      setEntryError("Add at least one entry before submitting.");
+      return;
+    }
+    setSubmitting(true);
+    setEntryError("");
+    try {
+      await submitSubcityRevenueReport({
+        entries,
+        total,
+        report_date: new Date().toISOString().split("T")[0],
+      });
+      setEntries([]);
+      setShowModal(true);
+    } catch (err) {
+      setEntryError(err.response?.data?.message || "Failed to submit report.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+      {showModal && <SubcitySuccessModal onClose={() => setShowModal(false)} />}
+
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Galii Sassaabu — complete all required fields
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        {/* Category + Source selectors */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Step 1: Category */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+            >
+              <p className="text-sm font-semibold text-white">1. Select Category</p>
+            </div>
+            <div className="px-5 py-4">
+              <div className="grid grid-cols-1 gap-2">
+                {SUBCITY_REVENUE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                      category === cat.id
+                        ? `${cat.borderColor} ${cat.bgColor}`
+                        : "border-[#e2e8f0] hover:border-[#cbd5e1]"
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    <span
+                      className={`text-sm font-semibold ${
+                        category === cat.id ? cat.textColor : "text-[#475569]"
+                      }`}
+                    >
+                      {cat.label}
+                    </span>
+                    {category === cat.id && (
+                      <svg
+                        className="w-4 h-4 ml-auto flex-shrink-0"
+                        style={{ color: cat.color }}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2: Source */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+            >
+              <p className="text-sm font-semibold text-white">2. Select Source</p>
+            </div>
+            <div className="px-5 py-4">
+              <div className="grid grid-cols-1 gap-2">
+                {catObj.sources.map((src) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => setSource(src)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-left text-sm transition-all ${
+                      source === src
+                        ? "border-[#1e40af] bg-[#eff6ff] text-[#1e40af] font-semibold"
+                        : "border-[#e2e8f0] text-[#475569] hover:border-[#cbd5e1]"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        source === src ? "bg-[#1e40af]" : "bg-[#cbd5e1]"
+                      }`}
+                    />
+                    {src}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Amount + Date + Add Entry */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: "linear-gradient(90deg,#475569 0%,#64748b 100%)" }}
+          >
+            <p className="text-sm font-semibold text-white">3. Enter Amount and Date</p>
+          </div>
+          <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+                Amount (ETB)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent placeholder-gray-400 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+                Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent transition-all"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleAddEntry}
+              className="flex items-center justify-center gap-2 bg-[#0f766e] hover:bg-[#0d9488] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                viewBox="0 0 24 24"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Entry
+            </button>
+          </div>
+        </div>
+
+        {/* Error */}
+        {entryError && (
+          <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {entryError}
+          </div>
+        )}
+
+        {/* Entries table */}
+        {entries.length > 0 && (
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
+              <p className="text-sm font-semibold text-[#1e293b]">
+                Entries ({entries.length})
+              </p>
+              <p className="text-sm font-bold text-[#0f766e]">
+                Total:{" "}
+                <span className="text-[#1e293b]">{total.toLocaleString()} ETB</span>
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Category
+                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Source
+                    </th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                      Amount (ETB)
+                    </th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((e) => (
+                    <tr
+                      key={e.id}
+                      className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                    >
+                      <td className="px-5 py-3 font-medium text-[#1e293b]">
+                        {e.category}
+                      </td>
+                      <td className="px-5 py-3 text-[#64748b]">{e.source}</td>
+                      <td className="px-5 py-3 text-[#64748b]">{e.date}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                        {e.amount.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEntry(e.id)}
+                          className="text-[#dc2626] hover:text-[#b91c1c] transition-colors"
+                          title="Remove"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Submit bar */}
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">
+            Add all entries then click Submit Report.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setEntries([]); setEntryError(""); }}
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmitReport}
+              disabled={submitting || entries.length === 0}
+              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path d="M22 2L11 13" />
+                <path d="M22 2L15 22l-4-9-9-4 20-7z" />
+              </svg>
+              {submitting ? "Submitting..." : "Submit Report"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── ComparisonView ───────────────────────────────────────────────────────────
-// Shows a table of actual submitted reports across all 4 woredas.
+// Shows a table of actual submitted reports across all 4 woredas + a Total column.
+// Used for all sectors except galii (which uses GaliiComparisonView instead).
 function ComparisonView({ sector, cfg }) {
   const [period, setPeriod] = useState("monthly");
   const [data, setData] = useState(null);
@@ -2772,39 +3207,213 @@ function ComparisonView({ sector, cfg }) {
                     {w.name}
                   </th>
                 ))}
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1a3a5c] uppercase tracking-wide bg-[#eef4fb]">
+                  Total
+                </th>
               </tr>
             </thead>
             <tbody>
-              {cfg.fields.map(({ key, label, color }) => (
-                <tr
-                  key={key}
-                  className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
-                >
-                  <td className="px-5 py-3 font-medium text-[#1e293b]">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      />
-                      {label}
-                    </span>
-                  </td>
-                  {WOREDAS.map((w) => {
-                    const woredaData = data.woredas?.find(
-                      (wd) => wd.woredaId === w.id,
-                    );
-                    const val = woredaData?.actuals?.[key] ?? 0;
-                    return (
-                      <td
-                        key={w.id}
-                        className="px-5 py-3 font-semibold text-[#1e293b]"
-                      >
-                        {Number(val).toLocaleString()}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {cfg.fields.map(({ key, label, color }) => {
+                const rowTotal = WOREDAS.reduce((sum, w) => {
+                  const wd = data.woredas?.find((d) => d.woredaId === w.id);
+                  return sum + Number(wd?.actuals?.[key] ?? 0);
+                }, 0);
+                return (
+                  <tr
+                    key={key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                  >
+                    <td className="px-5 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        {label}
+                      </span>
+                    </td>
+                    {WOREDAS.map((w) => {
+                      const wd = data.woredas?.find(
+                        (d) => d.woredaId === w.id,
+                      );
+                      return (
+                        <td
+                          key={w.id}
+                          className="px-5 py-3 font-semibold text-[#1e293b]"
+                        >
+                          {Number(wd?.actuals?.[key] ?? 0).toLocaleString()}
+                        </td>
+                      );
+                    })}
+                    <td className="px-5 py-3 font-bold text-[#1a3a5c] bg-[#eef4fb]">
+                      {rowTotal.toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── GaliiComparisonView ──────────────────────────────────────────────────────
+// Galii Sassaabu-specific comparison table.
+// Columns: Field | W1 | W2 | W3 | W4 | Subcity | Total (Woredas + Subcity)
+function GaliiComparisonView({ cfg }) {
+  const [period, setPeriod] = useState("monthly");
+  const [woredaData, setWoredaData] = useState(null);
+  const [subcityActuals, setSubcityActuals] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    Promise.all([
+      fetchWoRedaReports("galii", period),
+      fetchSubcityGalii(period),
+    ])
+      .then(([woredaRes, subcityRes]) => {
+        setWoredaData(woredaRes);
+        setSubcityActuals(subcityRes.actuals || {});
+      })
+      .catch((err) => {
+        setError(friendlyError(err, "Failed to load Galii comparison data."));
+        setWoredaData(null);
+        setSubcityActuals(null);
+      })
+      .finally(() => setLoading(false));
+  }, [period]);
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between flex-wrap gap-3"
+        style={{ background: cfg.gradient }}
+      >
+        <div>
+          <p className="text-sm font-semibold text-white">
+            Galii Sassaabu — Comparison (Woredas + Subcity)
+          </p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Submitted revenue per field across all 4 woredas and the sub-city
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1.5">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-white font-medium bg-transparent focus:outline-none cursor-pointer"
+            style={{ color: "white" }}
+          >
+            {ANALYSIS_PERIODS.map((p) => (
+              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mx-5 mt-4 flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
+          <svg
+            className="w-4 h-4 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span className="text-[#dc2626] text-sm">{error}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center h-40">
+          <div
+            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            style={{ borderTopColor: cfg.color }}
+          />
+        </div>
+      ) : woredaData ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Field
+                </th>
+                {WOREDAS.map((w) => (
+                  <th
+                    key={w.id}
+                    className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                  >
+                    {w.name}
+                  </th>
+                ))}
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f766e] uppercase tracking-wide bg-[#f0fdf9]">
+                  Subcity
+                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1a3a5c] uppercase tracking-wide bg-[#eef4fb]">
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {cfg.fields.map(({ key, label, color }) => {
+                const woredaSum = WOREDAS.reduce((sum, w) => {
+                  const wd = woredaData.woredas?.find(
+                    (d) => d.woredaId === w.id,
+                  );
+                  return sum + Number(wd?.actuals?.[key] ?? 0);
+                }, 0);
+                const subcityVal = Number(subcityActuals?.[key] ?? 0);
+                const rowTotal = woredaSum + subcityVal;
+                return (
+                  <tr
+                    key={key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                  >
+                    <td className="px-5 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        {label}
+                      </span>
+                    </td>
+                    {WOREDAS.map((w) => {
+                      const wd = woredaData.woredas?.find(
+                        (d) => d.woredaId === w.id,
+                      );
+                      return (
+                        <td
+                          key={w.id}
+                          className="px-5 py-3 font-semibold text-[#1e293b]"
+                        >
+                          {Number(wd?.actuals?.[key] ?? 0).toLocaleString()}
+                        </td>
+                      );
+                    })}
+                    <td className="px-5 py-3 font-bold text-[#0f766e] bg-[#f0fdf9]">
+                      {subcityVal.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 font-bold text-[#1a3a5c] bg-[#eef4fb]">
+                      {rowTotal.toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -2998,7 +3607,7 @@ function RankView({ sector, cfg }) {
                       <div
                         className="h-2 rounded-full transition-all duration-700"
                         style={{
-                          width: `${w.completionPct}%`,
+                          width: `${Math.min(w.completionPct, 100)}%`,
                           backgroundColor: cfg.color,
                         }}
                       />
@@ -3090,10 +3699,7 @@ function RankView({ sector, cfg }) {
                               const actual = Number(w.actuals?.[key] || 0);
                               const pct =
                                 periodTgt > 0
-                                  ? Math.min(
-                                      100,
-                                      Math.round((actual / periodTgt) * 100),
-                                    )
+                                  ? Math.round((actual / periodTgt) * 100)
                                   : 0;
                               return (
                                 <tr
@@ -3281,7 +3887,11 @@ function GenericSubcityAnalysisPage({ sector }) {
 
       {/* ── View-conditional content ── */}
       {activeView === "comparison" ? (
-        <ComparisonView sector={sector} cfg={cfg} />
+        sector === "galii" ? (
+          <GaliiComparisonView cfg={cfg} />
+        ) : (
+          <ComparisonView sector={sector} cfg={cfg} />
+        )
       ) : activeView === "rank" ? (
         <RankView sector={sector} cfg={cfg} />
       ) : (
@@ -3565,32 +4175,393 @@ function SCReportDetailModal({ row, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-5 pt-3 flex items-center justify-between border-t border-[#f1f5f9] flex-shrink-0">
-          <button
-            onClick={() => scDownloadCSV(row, sectorLabel, row.username)}
-            className="flex items-center gap-2 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] border border-[#dce8f4] px-4 py-2 rounded-lg transition-all"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
-              />
-            </svg>
-            Download CSV
-          </button>
+        <div className="px-6 pb-5 pt-3 flex items-center justify-end border-t border-[#f1f5f9] flex-shrink-0">
           <button
             onClick={onClose}
             className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             Close
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Shared sector field definitions for print tables ────────────────────────
+const SECTOR_PRINT_FIELDS = {
+  buusaa: [
+    { key: "hubannoo_uummuu",             label: "Hubannoo Uumuu" },
+    { key: "horannaa_misensaa",           label: "Horannaa Misensaa" },
+    { key: "buusi_jiraataa",              label: "Buusi Jiraataa" },
+    { key: "gumaata_jiraataa",            label: "Gumaata Jiraataa" },
+    { key: "buusi_daldalaa",              label: "Buusi fi Gumaata Daldalaa" },
+    { key: "inisheetivii_buusaa_gonofaa", label: "Inisheetivii Buusaa Gonofaa" },
+    { key: "gumaata_mootummaa",           label: "Gumaata Midhaani (Kuntal)" },
+    { key: "nyaata_barataa",              label: "Nyaata Barataa" },
+    { key: "sukkaara",                    label: "Sukkaara (KG)" },
+    { key: "zayitii",                     label: "Zayitii (Litre)" },
+  ],
+  carraa: [
+    { key: "leenjii",                  label: "Leenjii" },
+    { key: "carraa_hojii_dhaabbii",    label: "Carraa Hojii Dhaabbii" },
+    { key: "carraa_hojii_qacarrii",    label: "Carraa Hojii Qacarrii" },
+    { key: "qusannaa_haawaasaa",       label: "Qusannaa Haawaasaa" },
+    { key: "qusanna_dirqii",           label: "Qusanna Dirqii" },
+    { key: "kenna_liqii",              label: "Kenna Liqii" },
+    { key: "deebii_liqii_bilchaate",   label: "Deebii Liqii Bilchaate" },
+    { key: "deebii_liqii_bulee",       label: "Deebii Liqii Bulee" },
+    { key: "industrii_godoo",          label: "Industrii Godoo" },
+  ],
+  qonna: [
+    { key: "furdisa_qophi_lafa",               label: "Furdisa - Qophi Lafa" },
+    { key: "furdisa_lakk_sheedii",             label: "Furdisa - Lakk Sheedii" },
+    { key: "furdisa_lakk_horii_waliigalaa",    label: "Furdisa - Lakk Horii" },
+    { key: "annan_qophi_lafa",                 label: "Annan - Qophi Lafa" },
+    { key: "annan_lakk_sheedii",               label: "Annan - Lakk Sheedii" },
+    { key: "annan_lakk_saa_waliigalaa",        label: "Annan - Lakk Sa'a" },
+    { key: "lukkuu_qophi_lafa",                label: "Lukkuu - Qophi Lafa" },
+    { key: "lukkuu_lakk_sheedii",              label: "Lukkuu - Lakk Sheedii" },
+    { key: "lukkuu_lakk_lukkuu_waliigalaa",    label: "Lukkuu - Lakk Lukkuu" },
+    { key: "booyee_qophi_lafa",                label: "Booyyee - Qophi Lafa" },
+    { key: "booyee_lakk_sheedii",              label: "Booyyee - Lakk Sheedii" },
+    { key: "booyee_lakk_booyyee_waliigalaa",   label: "Booyyee - Lakk Booyyee" },
+    { key: "kannisaa_qophi_lafa",              label: "Kannisaa - Qophi Lafa" },
+    { key: "kannisaa_lakk_gaaguraa",           label: "Kannisaa - Lakk Gaaguraa" },
+    { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Kannisaa - Lakk Kannisaa" },
+    { key: "qurxummii_qophi_lafa",             label: "Qurxummii - Qophi Lafa" },
+    { key: "qurxummii_lakk_pondii",            label: "Qurxummii - Lakk Pondii" },
+    { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Qurxummii - Lakk Qurxummii" },
+  ],
+  daldala: [
+    { key: "galmee_haraa",              label: "Galmee Haraa" },
+    { key: "heyyema_haraa",             label: "Heyyema Haraa" },
+    { key: "harahessaa",                label: "Harahessaa" },
+    { key: "galii_daldalarra_galuu",    label: "Galii Daldalarra Galuu" },
+    { key: "toannoo_walii_gala",        label: "To'annoo Walii Gala" },
+    { key: "tmd",                       label: "Leenjii TMD" },
+    { key: "intarshippii",              label: "Intarshippii" },
+    { key: "ggg",                       label: "Giddu Gala Gabaa" },
+    { key: "gabayaa_sanbata",           label: "Gabaa Sanbata" },
+    { key: "whg_kudraa",                label: "WHG - Kudraa" },
+    { key: "whg_mudraa",                label: "WHG - Mudraa" },
+  ],
+  atk: [
+    { key: "waliigaltee_pilaanii_kennuu", label: "Waliigaltee Pilaanii Kennuu" },
+    { key: "heeyyama_ijaarsaa_kennamee",  label: "Heeyyama Ijaarsaa Kennamee" },
+    { key: "toannoo_fi_hordoffii_gamoo",  label: "To'annoo fi Hordoffii Gamoo" },
+    { key: "galii_atk_galchuu",           label: "Galii ATK Galchuu" },
+  ],
+  galii: [
+    { key: "galii_idilee",         label: "Galii Idilee" },
+    { key: "galii_mana_qophessaa", label: "Galii Mana Qophessaa" },
+  ],
+};
+
+// ─── Build print HTML for the subcity structured table ───────────────────────
+// Returns a full HTML string ready to be written into a new window.
+function buildSubcityPrintHTML({
+  sector,
+  period,
+  showPct,
+  showPlan,
+  woredaData,  // { woredas: [{woredaId, name, actuals}] }
+  planData,    // { w1: {targets}, w2: ..., w3: ..., w4: ... }
+  reportType,
+  generatedDate,
+}) {
+  const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+  const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
+
+  const WOREDAS_PRINT = [
+    { id: "w1", name: "Aanaa Gooroo" },
+    { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+    { id: "w3", name: "Aanaa Dhakaa Adii" },
+    { id: "w4", name: "Aanaa Andoodee" },
+  ];
+
+  // How many sub-columns per woreda?
+  // Always: Actual (number). Optionally: % of plan. Optionally: Annual Plan.
+  const subCols = ["Actual"];
+  if (showPct) subCols.push("% of Plan");
+  if (showPlan) subCols.push("Annual Plan");
+  const numSubCols = subCols.length;
+
+  // Build header row 1: R.No | Gosa Hoji | [W1 span] | [W2 span] | [W3 span] | [W4 span]
+  let thead = `<thead>
+    <tr class="top-header">
+      <th rowspan="2" class="rno">R.No</th>
+      <th rowspan="2" class="gosa">Gosa Hoji</th>`;
+  for (const w of WOREDAS_PRINT) {
+    thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
+  }
+  thead += `</tr><tr class="sub-header">`;
+  // Sub-columns for each woreda
+  for (let i = 0; i < 4; i++) {
+    for (const sc of subCols) {
+      thead += `<th class="sub-col">${sc}</th>`;
+    }
+  }
+  thead += `</tr></thead>`;
+
+  // Build body rows
+  let tbody = "<tbody>";
+  fields.forEach(({ key, label }, idx) => {
+    tbody += `<tr>`;
+    tbody += `<td class="rno">${idx + 1}</td>`;
+    tbody += `<td class="gosa">${label}</td>`;
+
+    for (const w of WOREDAS_PRINT) {
+      const wActuals = woredaData?.woredas?.find((d) => d.woredaId === w.id)?.actuals ?? {};
+      const wTargets = planData?.[w.id] ?? {};
+      const actual = Number(wActuals[key] ?? 0);
+      const target = Number(wTargets[key] ?? 0);
+      const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+
+      tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+      if (showPct)  tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+      if (showPlan) tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+    }
+    tbody += `</tr>`;
+  });
+  tbody += "</tbody>";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${sectorLabel} Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; background: #fff; padding: 16px; }
+
+    .report-title { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .report-title h1 { font-size: 14pt; font-weight: bold; }
+    .meta { display: flex; justify-content: space-between; font-size: 8pt; color: #555; margin-bottom: 12px; }
+
+    table { width: 100%; border-collapse: collapse; table-layout: auto; }
+    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
+    thead tr.top-header th { background: #fff; color: #000; text-align: center; font-size: 9pt; font-weight: bold; border: 1px solid #000; }
+    thead tr.sub-header th { background: #f0f0f0; color: #000; text-align: center; font-size: 8pt; font-weight: bold; border: 1px solid #000; }
+    th.rno, td.rno { text-align: center; width: 32px; font-size: 8pt; }
+    th.gosa { text-align: left; min-width: 140px; }
+    td.gosa { text-align: left; font-weight: 500; }
+    td.num  { text-align: right; font-variant-numeric: tabular-nums; }
+    td.pct  { text-align: right; }
+    td.plan { text-align: right; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+
+    @media print {
+      body { padding: 0; }
+      @page { size: landscape; margin: 12mm; }
+      tbody tr:nth-child(even) { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr.sub-header th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-title">
+    <h1>${sectorLabel} Report</h1>
+  </div>
+  <div class="meta">
+    <span>Generated: ${generatedDate}</span>
+    <span>Adama Sub-city Reporting System</span>
+  </div>
+  <table>
+    ${thead}
+    ${tbody}
+  </table>
+  <script>
+    window.onload = function() { window.print(); };
+  <\/script>
+</body>
+</html>`;
+}
+
+// ─── SubcityPrintModal ────────────────────────────────────────────────────────
+// Configuration dialog that collects options then opens a new print window.
+function SubcityPrintModal({ rows, onClose }) {
+  const [sector, setSector] = useState("buusaa");
+  const [period, setPeriod] = useState("monthly");
+  const [showPct, setShowPct] = useState(true);
+  const [showPlan, setShowPlan] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const PERIODS_PRINT = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "quarterly", label: "Quarterly" },
+    { value: "annual", label: "Annual" },
+  ];
+
+  const handlePrint = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // Fetch actuals for all 4 woredas for the selected sector + period
+      const woredaData = await fetchWoRedaReports(sector, period);
+
+      // Fetch plan targets for all 4 woredas in parallel
+      const planData = {};
+      if (showPct || showPlan) {
+        const wIds = ["w1", "w2", "w3", "w4"];
+        const results = await Promise.all(
+          wIds.map((wId) => fetchWoRedaAnalysis(sector, wId, period).catch(() => null))
+        );
+        wIds.forEach((wId, i) => {
+          planData[wId] = results[i]?.targets ?? {};
+        });
+      }
+
+      const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+      // Use the report_type from the first matching row, or just the sector label
+      const sampleRow = rows.find((r) => r._sector === sector);
+      const reportType = sampleRow?.report_type ?? sectorLabel;
+      const generatedDate = new Date().toLocaleString();
+
+      const html = buildSubcityPrintHTML({
+        sector,
+        period,
+        showPct,
+        showPlan,
+        woredaData,
+        planData,
+        reportType,
+        generatedDate,
+      });
+
+      const win = window.open("", "_blank", "width=1100,height=800");
+      if (!win) {
+        setError("Pop-up blocked. Please allow pop-ups for this site.");
+        return;
+      }
+      win.document.write(html);
+      win.document.close();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to load data for print.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
+        {/* Header */}
+        <div
+          className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
+          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+        >
+          <div>
+            <p className="text-white font-bold text-base">Download Report</p>
+            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Options */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Sector */}
+          <div>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
+            <select
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              {REPORT_SECTORS_ALL.map((s) => (
+                <option key={s.id} value={s.id}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Period */}
+          <div>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Period
+            </label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              {PERIODS_PRINT.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Toggles */}
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">
+              Sub-columns per Woreda
+            </label>
+            {/* Show % always included as actual; these two are optional */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPct((v) => !v)}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`} />
+              </button>
+              <span className="text-sm text-[#1e293b]">Show <strong>% of Annual Plan</strong> column</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPlan((v) => !v)}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`} />
+              </button>
+              <span className="text-sm text-[#1e293b]">Show <strong>Annual Plan</strong> column</span>
+            </div>
+            <p className="text-xs text-[#94a3b8]">
+              Actual value is always included. {showPct && showPlan ? "3 sub-columns per woreda." : showPct || showPlan ? "2 sub-columns per woreda." : "1 sub-column per woreda."}
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
+          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P or Cmd+P to save as PDF.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePrint}
+              disabled={loading}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-60 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" rx="1" />
+              </svg>
+              {loading ? "Loading..." : "Print / Save PDF"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -3623,6 +4594,7 @@ function ReportsPage() {
 
   // Modal
   const [modalRow, setModalRow] = useState(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   // Map username to woreda for display
   const USERNAME_WOREDA_MAP = {
@@ -3704,14 +4676,29 @@ function ReportsPage() {
       {modalRow && (
         <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
       )}
+      {showPrintModal && (
+        <SubcityPrintModal rows={rows} onClose={() => setShowPrintModal(false)} />
+      )}
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
-        <p className="text-[#64748b] text-sm mt-0.5">
-          All submitted reports from every sector. Filter by woreda, sector,
-          period, or a custom date range.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Reports</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            All submitted reports from every sector. Filter by woreda, sector,
+            period, or a custom date range.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowPrintModal(true)}
+          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" rx="1" />
+          </svg>
+          Download Report
+        </button>
       </div>
 
       {/* Error banner */}
@@ -4038,31 +5025,6 @@ function ReportsPage() {
                               </svg>
                               View
                             </button>
-                            <button
-                              onClick={() =>
-                                scDownloadCSV(
-                                  row,
-                                  sec?.label ?? row._sector ?? "Report",
-                                  row.username,
-                                )
-                              }
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1e293b] bg-[#f4f6f9] hover:bg-[#e2e8f0] px-3 py-1.5 rounded-lg transition-all"
-                            >
-                              <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m-4-4l4 4 4-4"
-                                />
-                              </svg>
-                              Download
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -4176,6 +5138,7 @@ export default function SubCityDashboard({ user: propUser }) {
       );
     }
     if (activeNav === "reports") return <ReportsPage />;
+    if (activeNav === "galii_submit") return <SubcityGaliiSubmitForm u={u} />;
     if (activeNav === "announcements") return <AnnouncementsPage />;
     if (activeNav === "plan") {
       if (!activePlanSector)
@@ -4353,6 +5316,23 @@ export default function SubCityDashboard({ user: propUser }) {
               </div>
             )}
           </div>
+
+          {/* ── Galii Sassaabu (subcity revenue submit) — between Plan and Analysis ── */}
+          <button
+            onClick={() => {
+              setActiveNav("galii_submit");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "galii_submit"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <RevenueNavIcon />
+            {!collapsed && <span className="truncate">Galii Sassaabu</span>}
+          </button>
 
           {/* ── Work Analysis (dropdown) ── */}
           <div>

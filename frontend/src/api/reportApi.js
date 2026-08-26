@@ -24,6 +24,19 @@ export const submitRevenueReport = async (reportData) => {
   return response.data;
 };
 
+/**
+ * Submit a Galii Sassaabu (revenue) report from the sub-city dashboard.
+ * Reuses the same /reports/revenue endpoint — the backend stores the
+ * username from the JWT, so subcity entries are tagged with the subcity username.
+ */
+export const submitSubcityRevenueReport = async (reportData) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post("/reports/revenue", reportData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const submitDaldalReport = async (reportData) => {
   const token = localStorage.getItem("token");
   const response = await api.post("/reports/daldala", reportData, {

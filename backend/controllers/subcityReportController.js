@@ -600,7 +600,62 @@ const getWoRedaAnalysis = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/subcity/subcity-galii?period=
+ *
+ * Returns the subcity's own summed Galii Sassaabu (revenue) actuals for the
+ * given period. Used by GaliiComparisonView to show the subcity column.
+ * The subcity user's username is taken from the JWT (req.user.username).
+ */
+const getSubcityGalii = async (req, res) => {
+  try {
+    const { period = "monthly" } = req.query;
+
+    const validPeriods = ["daily", "weekly", "monthly", "quarterly", "annual"];
+    if (!validPeriods.includes(period)) {
+      return res.status(400).json({ message: `Unknown period: "${period}"` });
+    }
+
+    const { from, to } = getDateRange(period);
+    const subcityUsername = req.user?.username;
+
+    if (!subcityUsername) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    // Fetch all revenue_entries rows for this subcity user in the date range
+    const { data, error } = await supabase
+      .from("revenue_entries")
+      .select("baasii")
+      .eq("username", subcityUsername)
+      .gte("report_date", from)
+      .lte("report_date", to);
+
+    if (error) return res.status(500).json({ message: error.message });
+
+    const total = (data || []).reduce(
+      (sum, row) => sum + Number(row.baasii || 0),
+      0,
+    );
+
+    // Both galii frontend fields map to the same baasii total
+    res.json({
+      username: subcityUsername,
+      period,
+      from,
+      to,
+      actuals: {
+        galii_idilee: total,
+        galii_mana_qophessaa: total,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getAllWoRedaReports,
   getWoRedaAnalysis,
+  getSubcityGalii,
 };
