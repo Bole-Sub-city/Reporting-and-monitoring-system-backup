@@ -785,8 +785,14 @@ const WORKS = [
     color: "bg-[#fdf4ff] text-[#7e22ce]",
   },
 ];
+// Returns today's date in YYYY-MM-DD using LOCAL timezone (not UTC).
+// Using toISOString() would return UTC which can be a day behind in UTC+3.
 function todayStr() {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 function partitionTarget(annual, period) {
   const n = Number(annual || 0);
@@ -5242,7 +5248,7 @@ export default function WoRedaDashboard() {
 
   // ── Refresh locks based on actual submitted reports and edit requests ──
   const refreshLocks = useCallback(() => {
-    const date = new Date().toISOString().split("T")[0];
+    const date = todayStr();
 
     // Fetch reports and edit requests in parallel
     Promise.all([fetchMyReports(), fetchMyEditRequests()])

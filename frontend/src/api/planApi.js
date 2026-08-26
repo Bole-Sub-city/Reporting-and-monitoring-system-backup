@@ -232,11 +232,24 @@ export const fetchUnreadCount = async () => {
 };
 
 /**
+ * DELETE /api/announcements/:id
+ * Sub-city only: delete an announcement by id.
+ * @param {number} id
+ */
+export const deleteAnnouncement = async (id) => {
+  const res = await api.delete(`/announcements/${id}`, authHeader());
+  return res.data; // { message: "Announcement deleted." }
+};
+/**
  * POST /api/announcements/mark-read
  * Woreda users: mark all current announcements as read up to lastId.
  * @param {number} lastId - the id of the newest announcement seen
  */
 export const markAnnouncementsRead = async (lastId) => {
-  const res = await api.post("/announcements/mark-read", { lastId }, authHeader());
+  const res = await api.post(
+    "/announcements/mark-read",
+    { lastId },
+    authHeader(),
+  );
   return res.data; // { ok: true }
 };

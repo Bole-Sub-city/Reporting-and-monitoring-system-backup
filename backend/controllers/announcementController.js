@@ -101,4 +101,32 @@ const markRead = async (req, res) => {
   }
 };
 
-module.exports = { createAnnouncement, getAnnouncements, getUnreadCount, markRead };
+/**
+ * DELETE /api/announcements/:id
+ * Sub-city only: delete an announcement by id.
+ */
+const deleteAnnouncement = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ message: "Invalid id." });
+
+    const { error } = await supabase
+      .from("announcements")
+      .delete()
+      .eq("id", id);
+
+    if (error) return res.status(500).json({ message: error.message });
+
+    res.json({ message: "Announcement deleted." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  createAnnouncement,
+  getAnnouncements,
+  getUnreadCount,
+  markRead,
+  deleteAnnouncement,
+};

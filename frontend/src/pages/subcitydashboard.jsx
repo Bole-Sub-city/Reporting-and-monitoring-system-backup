@@ -15,8 +15,12 @@ import {
   fetchSubcityGalii,
   createAnnouncement,
   fetchAnnouncements,
+  deleteAnnouncement,
 } from "../api/planApi";
-import { fetchAllWoredaReports, submitSubcityRevenueReport } from "../api/reportApi";
+import {
+  fetchAllWoredaReports,
+  submitSubcityRevenueReport,
+} from "../api/reportApi";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
 function friendlyError(
@@ -169,7 +173,11 @@ const PLAN_FIELDS = [
     label: "inisheetivii Buusaa Gonofaa",
     color: "#64748b",
   },
-  { key: "gumaata_mootummaa", label: "Gumaata Midhaani (Kuntal)", color: "#64748b" },
+  {
+    key: "gumaata_mootummaa",
+    label: "Gumaata Midhaani (Kuntal)",
+    color: "#64748b",
+  },
   { key: "nyaata_barataa", label: "Nyaata Barataa", color: "#64748b" },
   { key: "sukkaara", label: "Sukkaara (KG)", color: "#ea580c" },
   { key: "zayitii", label: "Zayitii (Litre)", color: "#65a30d" },
@@ -408,6 +416,11 @@ function AnnouncementsPage() {
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Delete state: id being deleted, or null
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+
   const load = () => {
     setLoading(true);
     fetchAnnouncements()
@@ -436,7 +449,7 @@ function AnnouncementsPage() {
       setTitle("");
       setBody("");
       setSaveSuccess(true);
-      load(); // refresh list
+      load();
     } catch (err) {
       setSaveError(
         err?.response?.data?.message || "Failed to post announcement.",
@@ -446,8 +459,78 @@ function AnnouncementsPage() {
     }
   };
 
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    setDeleteError("");
+    try {
+      await deleteAnnouncement(id);
+      setConfirmId(null);
+      load();
+    } catch (err) {
+      setDeleteError(
+        err?.response?.data?.message || "Failed to delete announcement.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div>
+      {/* Delete confirm modal */}
+      {confirmId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm px-6 py-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#fef2f2] flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-5 h-5 text-[#dc2626]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-[#1e293b] text-sm">
+                  Delete Announcement
+                </p>
+                <p className="text-[#64748b] text-xs mt-0.5">
+                  This will remove it from all woreda dashboards.
+                </p>
+              </div>
+            </div>
+            {deleteError && (
+              <p className="text-xs text-[#dc2626] bg-[#fef2f2] border border-[#fecaca] rounded-lg px-3 py-2">
+                {deleteError}
+              </p>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setConfirmId(null);
+                  setDeleteError("");
+                }}
+                className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmId)}
+                disabled={deletingId === confirmId}
+                className="bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+              >
+                {deletingId === confirmId ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Announcements</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
@@ -548,9 +631,31 @@ function AnnouncementsPage() {
                   <p className="font-semibold text-[#1e293b] text-sm">
                     {ann.title}
                   </p>
-                  <span className="text-[10px] text-[#94a3b8] whitespace-nowrap flex-shrink-0">
-                    {new Date(ann.created_at).toLocaleString()}
-                  </span>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-[10px] text-[#94a3b8] whitespace-nowrap">
+                      {new Date(ann.created_at).toLocaleString()}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setConfirmId(ann.id);
+                        setDeleteError("");
+                      }}
+                      title="Delete announcement"
+                      className="text-[#94a3b8] hover:text-[#dc2626] hover:bg-[#fef2f2] p-1.5 rounded-lg transition-all"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <p className="text-sm text-[#475569] mt-2 whitespace-pre-wrap leading-relaxed">
                   {ann.body}
@@ -2702,7 +2807,11 @@ function SubcitySuccessModal({ onClose }) {
             strokeWidth={2.5}
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
         <h2 className="text-xl font-bold text-[#1e293b]">Report Submitted</h2>
@@ -2755,9 +2864,13 @@ const SUBCITY_REVENUE_CATEGORIES = [
 
 function SubcityGaliiSubmitForm({ u }) {
   const [category, setCategory] = useState(SUBCITY_REVENUE_CATEGORIES[0].id);
-  const [source, setSource] = useState(SUBCITY_REVENUE_CATEGORIES[0].sources[0]);
+  const [source, setSource] = useState(
+    SUBCITY_REVENUE_CATEGORIES[0].sources[0],
+  );
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
   const [entries, setEntries] = useState([]);
   const [entryError, setEntryError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -2844,9 +2957,13 @@ function SubcityGaliiSubmitForm({ u }) {
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
               className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+              style={{
+                background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+              }}
             >
-              <p className="text-sm font-semibold text-white">1. Select Category</p>
+              <p className="text-sm font-semibold text-white">
+                1. Select Category
+              </p>
             </div>
             <div className="px-5 py-4">
               <div className="grid grid-cols-1 gap-2">
@@ -2896,9 +3013,13 @@ function SubcityGaliiSubmitForm({ u }) {
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div
               className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+              style={{
+                background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+              }}
             >
-              <p className="text-sm font-semibold text-white">2. Select Source</p>
+              <p className="text-sm font-semibold text-white">
+                2. Select Source
+              </p>
             </div>
             <div className="px-5 py-4">
               <div className="grid grid-cols-1 gap-2">
@@ -2930,9 +3051,13 @@ function SubcityGaliiSubmitForm({ u }) {
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{ background: "linear-gradient(90deg,#475569 0%,#64748b 100%)" }}
+            style={{
+              background: "linear-gradient(90deg,#475569 0%,#64748b 100%)",
+            }}
           >
-            <p className="text-sm font-semibold text-white">3. Enter Amount and Date</p>
+            <p className="text-sm font-semibold text-white">
+              3. Enter Amount and Date
+            </p>
           </div>
           <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
             <div>
@@ -3007,7 +3132,9 @@ function SubcityGaliiSubmitForm({ u }) {
               </p>
               <p className="text-sm font-bold text-[#0f766e]">
                 Total:{" "}
-                <span className="text-[#1e293b]">{total.toLocaleString()} ETB</span>
+                <span className="text-[#1e293b]">
+                  {total.toLocaleString()} ETB
+                </span>
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -3080,7 +3207,10 @@ function SubcityGaliiSubmitForm({ u }) {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => { setEntries([]); setEntryError(""); }}
+              onClick={() => {
+                setEntries([]);
+                setEntryError("");
+              }}
               className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
             >
               Clear
@@ -3233,9 +3363,7 @@ function ComparisonView({ sector, cfg }) {
                       </span>
                     </td>
                     {WOREDAS.map((w) => {
-                      const wd = data.woredas?.find(
-                        (d) => d.woredaId === w.id,
-                      );
+                      const wd = data.woredas?.find((d) => d.woredaId === w.id);
                       return (
                         <td
                           key={w.id}
@@ -3312,7 +3440,11 @@ function GaliiComparisonView({ cfg }) {
             style={{ color: "white" }}
           >
             {ANALYSIS_PERIODS.map((p) => (
-              <option key={p.value} value={p.value} style={{ color: "#1e293b" }}>
+              <option
+                key={p.value}
+                value={p.value}
+                style={{ color: "#1e293b" }}
+              >
                 {p.label}
               </option>
             ))}
@@ -4191,69 +4323,81 @@ function SCReportDetailModal({ row, onClose }) {
 // ─── Shared sector field definitions for print tables ────────────────────────
 const SECTOR_PRINT_FIELDS = {
   buusaa: [
-    { key: "hubannoo_uummuu",             label: "Hubannoo Uumuu" },
-    { key: "horannaa_misensaa",           label: "Horannaa Misensaa" },
-    { key: "buusi_jiraataa",              label: "Buusi Jiraataa" },
-    { key: "gumaata_jiraataa",            label: "Gumaata Jiraataa" },
-    { key: "buusi_daldalaa",              label: "Buusi fi Gumaata Daldalaa" },
-    { key: "inisheetivii_buusaa_gonofaa", label: "Inisheetivii Buusaa Gonofaa" },
-    { key: "gumaata_mootummaa",           label: "Gumaata Midhaani (Kuntal)" },
-    { key: "nyaata_barataa",              label: "Nyaata Barataa" },
-    { key: "sukkaara",                    label: "Sukkaara (KG)" },
-    { key: "zayitii",                     label: "Zayitii (Litre)" },
+    { key: "hubannoo_uummuu", label: "Hubannoo Uumuu" },
+    { key: "horannaa_misensaa", label: "Horannaa Misensaa" },
+    { key: "buusi_jiraataa", label: "Buusi Jiraataa" },
+    { key: "gumaata_jiraataa", label: "Gumaata Jiraataa" },
+    { key: "buusi_daldalaa", label: "Buusi fi Gumaata Daldalaa" },
+    {
+      key: "inisheetivii_buusaa_gonofaa",
+      label: "Inisheetivii Buusaa Gonofaa",
+    },
+    { key: "gumaata_mootummaa", label: "Gumaata Midhaani (Kuntal)" },
+    { key: "nyaata_barataa", label: "Nyaata Barataa" },
+    { key: "sukkaara", label: "Sukkaara (KG)" },
+    { key: "zayitii", label: "Zayitii (Litre)" },
   ],
   carraa: [
-    { key: "leenjii",                  label: "Leenjii" },
-    { key: "carraa_hojii_dhaabbii",    label: "Carraa Hojii Dhaabbii" },
-    { key: "carraa_hojii_qacarrii",    label: "Carraa Hojii Qacarrii" },
-    { key: "qusannaa_haawaasaa",       label: "Qusannaa Haawaasaa" },
-    { key: "qusanna_dirqii",           label: "Qusanna Dirqii" },
-    { key: "kenna_liqii",              label: "Kenna Liqii" },
-    { key: "deebii_liqii_bilchaate",   label: "Deebii Liqii Bilchaate" },
-    { key: "deebii_liqii_bulee",       label: "Deebii Liqii Bulee" },
-    { key: "industrii_godoo",          label: "Industrii Godoo" },
+    { key: "leenjii", label: "Leenjii" },
+    { key: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
+    { key: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
+    { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa" },
+    { key: "qusanna_dirqii", label: "Qusanna Dirqii" },
+    { key: "kenna_liqii", label: "Kenna Liqii" },
+    { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
+    { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
+    { key: "industrii_godoo", label: "Industrii Godoo" },
   ],
   qonna: [
-    { key: "furdisa_qophi_lafa",               label: "Furdisa - Qophi Lafa" },
-    { key: "furdisa_lakk_sheedii",             label: "Furdisa - Lakk Sheedii" },
-    { key: "furdisa_lakk_horii_waliigalaa",    label: "Furdisa - Lakk Horii" },
-    { key: "annan_qophi_lafa",                 label: "Annan - Qophi Lafa" },
-    { key: "annan_lakk_sheedii",               label: "Annan - Lakk Sheedii" },
-    { key: "annan_lakk_saa_waliigalaa",        label: "Annan - Lakk Sa'a" },
-    { key: "lukkuu_qophi_lafa",                label: "Lukkuu - Qophi Lafa" },
-    { key: "lukkuu_lakk_sheedii",              label: "Lukkuu - Lakk Sheedii" },
-    { key: "lukkuu_lakk_lukkuu_waliigalaa",    label: "Lukkuu - Lakk Lukkuu" },
-    { key: "booyee_qophi_lafa",                label: "Booyyee - Qophi Lafa" },
-    { key: "booyee_lakk_sheedii",              label: "Booyyee - Lakk Sheedii" },
-    { key: "booyee_lakk_booyyee_waliigalaa",   label: "Booyyee - Lakk Booyyee" },
-    { key: "kannisaa_qophi_lafa",              label: "Kannisaa - Qophi Lafa" },
-    { key: "kannisaa_lakk_gaaguraa",           label: "Kannisaa - Lakk Gaaguraa" },
-    { key: "kannisaa_lakk_kannisaa_waliigalaa", label: "Kannisaa - Lakk Kannisaa" },
-    { key: "qurxummii_qophi_lafa",             label: "Qurxummii - Qophi Lafa" },
-    { key: "qurxummii_lakk_pondii",            label: "Qurxummii - Lakk Pondii" },
-    { key: "qurxummii_lakk_qurxummii_waliigalaa", label: "Qurxummii - Lakk Qurxummii" },
+    { key: "furdisa_qophi_lafa", label: "Furdisa - Qophi Lafa" },
+    { key: "furdisa_lakk_sheedii", label: "Furdisa - Lakk Sheedii" },
+    { key: "furdisa_lakk_horii_waliigalaa", label: "Furdisa - Lakk Horii" },
+    { key: "annan_qophi_lafa", label: "Annan - Qophi Lafa" },
+    { key: "annan_lakk_sheedii", label: "Annan - Lakk Sheedii" },
+    { key: "annan_lakk_saa_waliigalaa", label: "Annan - Lakk Sa'a" },
+    { key: "lukkuu_qophi_lafa", label: "Lukkuu - Qophi Lafa" },
+    { key: "lukkuu_lakk_sheedii", label: "Lukkuu - Lakk Sheedii" },
+    { key: "lukkuu_lakk_lukkuu_waliigalaa", label: "Lukkuu - Lakk Lukkuu" },
+    { key: "booyee_qophi_lafa", label: "Booyyee - Qophi Lafa" },
+    { key: "booyee_lakk_sheedii", label: "Booyyee - Lakk Sheedii" },
+    { key: "booyee_lakk_booyyee_waliigalaa", label: "Booyyee - Lakk Booyyee" },
+    { key: "kannisaa_qophi_lafa", label: "Kannisaa - Qophi Lafa" },
+    { key: "kannisaa_lakk_gaaguraa", label: "Kannisaa - Lakk Gaaguraa" },
+    {
+      key: "kannisaa_lakk_kannisaa_waliigalaa",
+      label: "Kannisaa - Lakk Kannisaa",
+    },
+    { key: "qurxummii_qophi_lafa", label: "Qurxummii - Qophi Lafa" },
+    { key: "qurxummii_lakk_pondii", label: "Qurxummii - Lakk Pondii" },
+    {
+      key: "qurxummii_lakk_qurxummii_waliigalaa",
+      label: "Qurxummii - Lakk Qurxummii",
+    },
   ],
   daldala: [
-    { key: "galmee_haraa",              label: "Galmee Haraa" },
-    { key: "heyyema_haraa",             label: "Heyyema Haraa" },
-    { key: "harahessaa",                label: "Harahessaa" },
-    { key: "galii_daldalarra_galuu",    label: "Galii Daldalarra Galuu" },
-    { key: "toannoo_walii_gala",        label: "To'annoo Walii Gala" },
-    { key: "tmd",                       label: "Leenjii TMD" },
-    { key: "intarshippii",              label: "Intarshippii" },
-    { key: "ggg",                       label: "Giddu Gala Gabaa" },
-    { key: "gabayaa_sanbata",           label: "Gabaa Sanbata" },
-    { key: "whg_kudraa",                label: "WHG - Kudraa" },
-    { key: "whg_mudraa",                label: "WHG - Mudraa" },
+    { key: "galmee_haraa", label: "Galmee Haraa" },
+    { key: "heyyema_haraa", label: "Heyyema Haraa" },
+    { key: "harahessaa", label: "Harahessaa" },
+    { key: "galii_daldalarra_galuu", label: "Galii Daldalarra Galuu" },
+    { key: "toannoo_walii_gala", label: "To'annoo Walii Gala" },
+    { key: "tmd", label: "Leenjii TMD" },
+    { key: "intarshippii", label: "Intarshippii" },
+    { key: "ggg", label: "Giddu Gala Gabaa" },
+    { key: "gabayaa_sanbata", label: "Gabaa Sanbata" },
+    { key: "whg_kudraa", label: "WHG - Kudraa" },
+    { key: "whg_mudraa", label: "WHG - Mudraa" },
   ],
   atk: [
-    { key: "waliigaltee_pilaanii_kennuu", label: "Waliigaltee Pilaanii Kennuu" },
-    { key: "heeyyama_ijaarsaa_kennamee",  label: "Heeyyama Ijaarsaa Kennamee" },
-    { key: "toannoo_fi_hordoffii_gamoo",  label: "To'annoo fi Hordoffii Gamoo" },
-    { key: "galii_atk_galchuu",           label: "Galii ATK Galchuu" },
+    {
+      key: "waliigaltee_pilaanii_kennuu",
+      label: "Waliigaltee Pilaanii Kennuu",
+    },
+    { key: "heeyyama_ijaarsaa_kennamee", label: "Heeyyama Ijaarsaa Kennamee" },
+    { key: "toannoo_fi_hordoffii_gamoo", label: "To'annoo fi Hordoffii Gamoo" },
+    { key: "galii_atk_galchuu", label: "Galii ATK Galchuu" },
   ],
   galii: [
-    { key: "galii_idilee",         label: "Galii Idilee" },
+    { key: "galii_idilee", label: "Galii Idilee" },
     { key: "galii_mana_qophessaa", label: "Galii Mana Qophessaa" },
   ],
 };
@@ -4265,12 +4409,13 @@ function buildSubcityPrintHTML({
   period,
   showPct,
   showPlan,
-  woredaData,  // { woredas: [{woredaId, name, actuals}] }
-  planData,    // { w1: {targets}, w2: ..., w3: ..., w4: ... }
+  woredaData, // { woredas: [{woredaId, name, actuals}] }
+  planData, // { w1: {targets}, w2: ..., w3: ..., w4: ... }
   reportType,
   generatedDate,
 }) {
-  const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+  const sectorLabel =
+    REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
   const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
 
   const WOREDAS_PRINT = [
@@ -4312,15 +4457,18 @@ function buildSubcityPrintHTML({
     tbody += `<td class="gosa">${label}</td>`;
 
     for (const w of WOREDAS_PRINT) {
-      const wActuals = woredaData?.woredas?.find((d) => d.woredaId === w.id)?.actuals ?? {};
+      const wActuals =
+        woredaData?.woredas?.find((d) => d.woredaId === w.id)?.actuals ?? {};
       const wTargets = planData?.[w.id] ?? {};
       const actual = Number(wActuals[key] ?? 0);
       const target = Number(wTargets[key] ?? 0);
       const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
 
       tbody += `<td class="num">${actual.toLocaleString()}</td>`;
-      if (showPct)  tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
-      if (showPlan) tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+      if (showPct)
+        tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+      if (showPlan)
+        tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
     }
     tbody += `</tr>`;
   });
@@ -4408,14 +4556,17 @@ function SubcityPrintModal({ rows, onClose }) {
       if (showPct || showPlan) {
         const wIds = ["w1", "w2", "w3", "w4"];
         const results = await Promise.all(
-          wIds.map((wId) => fetchWoRedaAnalysis(sector, wId, period).catch(() => null))
+          wIds.map((wId) =>
+            fetchWoRedaAnalysis(sector, wId, period).catch(() => null),
+          ),
         );
         wIds.forEach((wId, i) => {
           planData[wId] = results[i]?.targets ?? {};
         });
       }
 
-      const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+      const sectorLabel =
+        REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
       // Use the report_type from the first matching row, or just the sector label
       const sampleRow = rows.find((r) => r._sector === sector);
       const reportType = sampleRow?.report_type ?? sectorLabel;
@@ -4440,7 +4591,9 @@ function SubcityPrintModal({ rows, onClose }) {
       win.document.write(html);
       win.document.close();
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to load data for print.");
+      setError(
+        err?.response?.data?.message || "Failed to load data for print.",
+      );
     } finally {
       setLoading(false);
     }
@@ -4449,21 +4602,40 @@ function SubcityPrintModal({ rows, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
         {/* Header */}
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+          }}
         >
           <div>
             <p className="text-white font-bold text-base">Download Report</p>
-            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Configure and print as PDF
+            </p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -4481,7 +4653,9 @@ function SubcityPrintModal({ rows, onClose }) {
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               {REPORT_SECTORS_ALL.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
@@ -4497,7 +4671,9 @@ function SubcityPrintModal({ rows, onClose }) {
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
             >
               {PERIODS_PRINT.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
               ))}
             </select>
           </div>
@@ -4514,9 +4690,13 @@ function SubcityPrintModal({ rows, onClose }) {
                 onClick={() => setShowPct((v) => !v)}
                 className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`} />
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`}
+                />
               </button>
-              <span className="text-sm text-[#1e293b]">Show <strong>% of Annual Plan</strong> column</span>
+              <span className="text-sm text-[#1e293b]">
+                Show <strong>% of Annual Plan</strong> column
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -4524,12 +4704,21 @@ function SubcityPrintModal({ rows, onClose }) {
                 onClick={() => setShowPlan((v) => !v)}
                 className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`} />
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`}
+                />
               </button>
-              <span className="text-sm text-[#1e293b]">Show <strong>Annual Plan</strong> column</span>
+              <span className="text-sm text-[#1e293b]">
+                Show <strong>Annual Plan</strong> column
+              </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
-              Actual value is always included. {showPct && showPlan ? "3 sub-columns per woreda." : showPct || showPlan ? "2 sub-columns per woreda." : "1 sub-column per woreda."}
+              Actual value is always included.{" "}
+              {showPct && showPlan
+                ? "3 sub-columns per woreda."
+                : showPct || showPlan
+                  ? "2 sub-columns per woreda."
+                  : "1 sub-column per woreda."}
             </p>
           </div>
 
@@ -4542,7 +4731,9 @@ function SubcityPrintModal({ rows, onClose }) {
 
         {/* Footer */}
         <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
-          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P or Cmd+P to save as PDF.</p>
+          <p className="text-[#94a3b8] text-xs">
+            Opens in a new window. Use Ctrl+P or Cmd+P to save as PDF.
+          </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -4555,8 +4746,18 @@ function SubcityPrintModal({ rows, onClose }) {
               disabled={loading}
               className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-60 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+                />
                 <rect x="6" y="14" width="12" height="8" rx="1" />
               </svg>
               {loading ? "Loading..." : "Print / Save PDF"}
@@ -4677,7 +4878,10 @@ function ReportsPage() {
         <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
       )}
       {showPrintModal && (
-        <SubcityPrintModal rows={rows} onClose={() => setShowPrintModal(false)} />
+        <SubcityPrintModal
+          rows={rows}
+          onClose={() => setShowPrintModal(false)}
+        />
       )}
 
       {/* Header */}
@@ -4693,8 +4897,18 @@ function ReportsPage() {
           onClick={() => setShowPrintModal(true)}
           className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+            />
             <rect x="6" y="14" width="12" height="8" rx="1" />
           </svg>
           Download Report
