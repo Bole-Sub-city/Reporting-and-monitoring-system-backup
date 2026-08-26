@@ -14,9 +14,13 @@ const {
   getAllReports,
   getMyReports,
   getAllWoredaReports,
+  getLockStatus,
 } = require("../controllers/reportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+
+// Lock status — check which sectors are already submitted for a given date
+router.get("/lock-status", authMiddleware, getLockStatus);
 
 // General reports
 router.post("/", authMiddleware, createReport);
