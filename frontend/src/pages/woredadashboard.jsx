@@ -883,26 +883,27 @@ function AnalysisSection() {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [summaryYtd, setSummaryYtd] = useState(null);
+  const [daysElapsed, setDaysElapsed] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Use fetchWeredaPlan (reads annual_plan_wereda_N with _target columns)
-    // instead of fetchMyPlan (reads annual_plans which lacks _target columns)
     fetchWeredaPlan()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null));
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      setLoading(false);
-      return;
-    }
+    if (!localStorage.getItem("token")) { setLoading(false); return; }
     setLoading(true);
     setError("");
     fetchSummary(period)
-      .then((d) => setSummary(d.summary))
+      .then((d) => {
+        setSummary(d.summary);
+        setSummaryYtd(d.summaryYtd ?? d.summary);
+        setDaysElapsed(d.daysElapsed ?? 1);
+      })
       .catch((err) =>
         setError(
           err && err.response && err.response.data && err.response.data.message
@@ -1038,7 +1039,10 @@ function AnalysisSection() {
                     const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
                     const pct =
                       pt > 0 ? Math.min(Math.round((ac / pt) * 100), 100) : 0;
-                    const remaining = pt > 0 ? Math.max(pt - ac, 0) : 0;
+                    // Carry-over: how much should have been done YTD vs what actually was
+                    const cumulTarget = Math.round((daysElapsed / 365) * at);
+                    const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
+                    const remaining = Math.max(cumulTarget - acYtd, 0);
                     return (
                       <tr
                         key={key}
@@ -1708,6 +1712,8 @@ function QonnaAnalysisSection() {
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [actuals, setActuals] = useState(null);
+  const [actualsYtd, setActualsYtd] = useState(null);
+  const [daysElapsed, setDaysElapsed] = useState(1);
   const [targets, setTargets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1720,20 +1726,16 @@ function QonnaAnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      setLoading(false);
-      return;
-    }
+    if (!localStorage.getItem("token")) { setLoading(false); return; }
     const woredaId = getMyWoredaId();
-    if (!woredaId) {
-      setLoading(false);
-      return;
-    }
+    if (!woredaId) { setLoading(false); return; }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis("qonna", woredaId, period)
       .then((d) => {
         setActuals(d.actuals ?? {});
+        setActualsYtd(d.actualsYtd ?? d.actuals ?? {});
+        setDaysElapsed(d.daysElapsed ?? 1);
         setTargets(d.targets ?? {});
       })
       .catch((err) =>
@@ -2000,10 +2002,9 @@ function QonnaAnalysisSection() {
                               999,
                             )
                           : 0;
-                      const remaining =
-                        periodTarget > 0
-                          ? Math.max(periodTarget - actual, 0)
-                          : 0;
+                      const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
+                      const actualYtd = actualsYtd ? (actualsYtd[f.key] ?? 0) : 0;
+                      const remaining = Math.max(cumulTarget - actualYtd, 0);
                       return (
                         <tr
                           key={f.key}
@@ -2650,6 +2651,8 @@ function GenericAnalysisSection({
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [actuals, setActuals] = useState(null);
+  const [actualsYtd, setActualsYtd] = useState(null);
+  const [daysElapsed, setDaysElapsed] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -2660,19 +2663,17 @@ function GenericAnalysisSection({
   }, [fetchPlanFn]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      setLoading(false);
-      return;
-    }
+    if (!localStorage.getItem("token")) { setLoading(false); return; }
     const woredaId = getMyWoredaId();
-    if (!woredaId || !sector) {
-      setLoading(false);
-      return;
-    }
+    if (!woredaId || !sector) { setLoading(false); return; }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis(sector, woredaId, period)
-      .then((d) => setActuals(d.actuals ?? {}))
+      .then((d) => {
+        setActuals(d.actuals ?? {});
+        setActualsYtd(d.actualsYtd ?? d.actuals ?? {});
+        setDaysElapsed(d.daysElapsed ?? 1);
+      })
       .catch((err) =>
         setError(err?.response?.data?.message ?? "Failed to load summary."),
       )
@@ -2893,8 +2894,9 @@ function GenericAnalysisSection({
                             999,
                           )
                         : 0;
-                    const remaining =
-                      periodTarget > 0 ? Math.max(periodTarget - actual, 0) : 0;
+                    const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
+                    const actualYtd = actualsYtd ? (actualsYtd[cat.key] ?? 0) : 0;
+                    const remaining = Math.max(cumulTarget - actualYtd, 0);
                     return (
                       <tr
                         key={cat.key}

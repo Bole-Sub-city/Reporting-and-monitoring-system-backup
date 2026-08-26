@@ -461,11 +461,18 @@ const getWoRedaAnalysis = async (req, res) => {
     }
 
     const { from, to } = getDateRange(period);
+    const yearStart = `${new Date().getFullYear()}-01-01`;
+
+    // Days elapsed since Jan 1 (inclusive)
+    const now2 = new Date();
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysElapsed = Math.floor((now2 - new Date(yearStart)) / msPerDay) + 1;
+
     const username = WOREDA_ID_TO_USERNAME[woredaId];
     const reportTable = SECTOR_REPORT_TABLE_MAP[sector];
     const dbFields = SECTOR_REPORT_FIELDS[sector];
 
-    // Fetch report rows for this woreda in the date range
+    // Fetch period actuals (for ring chart display)
     const { data: reportData, error: reportError } = await supabase
       .from(reportTable)
       .select(`username, ${dbFields.join(", ")}`)
@@ -475,66 +482,82 @@ const getWoRedaAnalysis = async (req, res) => {
 
     if (reportError) return res.status(500).json({ message: reportError.message });
 
-    // Aggregate rows into a single object
-    const rows = reportData || [];
-    const rawSums = {};
-    for (const f of dbFields) rawSums[f] = 0;
-    for (const row of rows) {
-      for (const f of dbFields) {
-        rawSums[f] = (rawSums[f] || 0) + Number(row[f] || 0);
+    // Fetch YTD actuals (for carry-over remaining)
+    const { data: ytdData, error: ytdError } = await supabase
+      .from(reportTable)
+      .select(`username, ${dbFields.join(", ")}`)
+      .eq("username", username)
+      .gte("report_date", yearStart)
+      .lte("report_date", to);
+
+    if (ytdError) return res.status(500).json({ message: ytdError.message });
+
+    // Aggregate helper
+    const sumRows = (rows) => {
+      const sums = {};
+      for (const f of dbFields) sums[f] = 0;
+      for (const row of (rows || [])) {
+        for (const f of dbFields) {
+          sums[f] = (sums[f] || 0) + Number(row[f] || 0);
+        }
       }
-    }
+      return sums;
+    };
+
+    const rawSums = sumRows(reportData);
+    const rawYtd  = sumRows(ytdData);
 
     // Normalize actuals to frontend field keys
+    const normalizeQonna = (raw) => ({
+      furdisa_qophi_lafa:   raw["furdisa_bakka_qophaawe"] || 0,
+      annan_qophi_lafa:     raw["annan_bakka_qophaawe"] || 0,
+      lukkuu_qophi_lafa:    raw["lukkuu_bakka_qophaawe"] || 0,
+      booyee_qophi_lafa:    raw["boyyee_bakka_qophaawe"] || 0,
+      kannisaa_qophi_lafa:  raw["kannisaa_bakka_qophaawe"] || 0,
+      qurxummii_qophi_lafa: raw["qurxummii_bakka_qophaawe"] || 0,
+      furdisa_lakk_sheedii:   raw["furdisa_sheedii_ijaaraman"] || 0,
+      annan_lakk_sheedii:     raw["annan_sheedii_ijaaraman"] || 0,
+      lukkuu_lakk_sheedii:    raw["lukkuu_sheedii_ijaaraman"] || 0,
+      booyee_lakk_sheedii:    raw["boyyee_sheedii_ijaaraman"] || 0,
+      kannisaa_lakk_gaaguraa: raw["kannisaa_gaaguraa_ijaaraman"] || 0,
+      qurxummii_lakk_pondii:  raw["qurxummii_pondii_ijaaraman"] || 0,
+      furdisa_lakk_horii_waliigalaa:       raw["furdisa_lakk_horii"] || 0,
+      annan_lakk_saa_waliigalaa:           raw["annan_lakk_saaa"] || 0,
+      lukkuu_lakk_lukkuu_waliigalaa:       raw["lukkuu_lakk_lukkuu"] || 0,
+      booyee_lakk_booyyee_waliigalaa:      raw["boyyee_lakk_booyyee"] || 0,
+      kannisaa_lakk_kannisaa_waliigalaa:   raw["kannisaa_lakk_kannisaa"] || 0,
+      qurxummii_lakk_qurxummii_waliigalaa: raw["qurxummii_lakk_qurxummii"] || 0,
+    });
+
+    const normalizeBuusaa = (raw) => ({
+      hubannoo_uummuu: raw["hubannoo_uummuu"] || 0,
+      horannaa_misensaa: raw["horannaa_misensaa"] || 0,
+      buusi_jiraataa: raw["buusi_jirataa"] || 0,
+      gumaata_jiraataa: raw["gumaata_jiraataa"] || 0,
+      buusi_daldalaa: (raw["buusi_daldalaa"] || 0) + (raw["buusi_daldalaa_fi_gumaataa"] || 0),
+      inisheetivii_buusaa_gonofaa: raw["inisheetevii_buusaa_gonofaa"] || 0,
+      gumaata_mootummaa: raw["gumaata_midhaani"] || 0,
+      nyaata_barataa: raw["nyaata_barataa"] || 0,
+      sukkaara: raw["sukkaara"] || 0,
+      zayitii: raw["zayitii"] || 0,
+    });
+
     let actuals = {};
+    let actualsYtd = {};
+
     if (sector === "buusaa") {
-      actuals = {
-        hubannoo_uummuu: rawSums["hubannoo_uummuu"] || 0,
-        horannaa_misensaa: rawSums["horannaa_misensaa"] || 0,
-        buusi_jiraataa: rawSums["buusi_jirataa"] || 0,
-        gumaata_jiraataa: rawSums["gumaata_jiraataa"] || 0,
-        buusi_daldalaa:
-          (rawSums["buusi_daldalaa"] || 0) +
-          (rawSums["buusi_daldalaa_fi_gumaataa"] || 0),
-        inisheetivii_buusaa_gonofaa:
-          rawSums["inisheetevii_buusaa_gonofaa"] || 0,
-        gumaata_mootummaa: rawSums["gumaata_midhaani"] || 0,
-        nyaata_barataa: rawSums["nyaata_barataa"] || 0,
-        sukkaara: rawSums["sukkaara"] || 0,
-        zayitii: rawSums["zayitii"] || 0,
-      };
+      actuals    = normalizeBuusaa(rawSums);
+      actualsYtd = normalizeBuusaa(rawYtd);
     } else if (sector === "qonna") {
-      actuals = {
-        // Land prepared (ha)
-        furdisa_qophi_lafa:   rawSums["furdisa_bakka_qophaawe"] || 0,
-        annan_qophi_lafa:     rawSums["annan_bakka_qophaawe"] || 0,
-        lukkuu_qophi_lafa:    rawSums["lukkuu_bakka_qophaawe"] || 0,
-        booyee_qophi_lafa:    rawSums["boyyee_bakka_qophaawe"] || 0,
-        kannisaa_qophi_lafa:  rawSums["kannisaa_bakka_qophaawe"] || 0,
-        qurxummii_qophi_lafa: rawSums["qurxummii_bakka_qophaawe"] || 0,
-        // Sheds / ponds / hives built
-        furdisa_lakk_sheedii:   rawSums["furdisa_sheedii_ijaaraman"] || 0,
-        annan_lakk_sheedii:     rawSums["annan_sheedii_ijaaraman"] || 0,
-        lukkuu_lakk_sheedii:    rawSums["lukkuu_sheedii_ijaaraman"] || 0,
-        booyee_lakk_sheedii:    rawSums["boyyee_sheedii_ijaaraman"] || 0,
-        kannisaa_lakk_gaaguraa: rawSums["kannisaa_gaaguraa_ijaaraman"] || 0,
-        qurxummii_lakk_pondii:  rawSums["qurxummii_pondii_ijaaraman"] || 0,
-        // Total animals (using full _waliigalaa key names to match SECTOR_PLAN_FIELDS)
-        furdisa_lakk_horii_waliigalaa:       rawSums["furdisa_lakk_horii"] || 0,
-        annan_lakk_saa_waliigalaa:           rawSums["annan_lakk_saaa"] || 0,
-        lukkuu_lakk_lukkuu_waliigalaa:       rawSums["lukkuu_lakk_lukkuu"] || 0,
-        booyee_lakk_booyyee_waliigalaa:      rawSums["boyyee_lakk_booyyee"] || 0,
-        kannisaa_lakk_kannisaa_waliigalaa:   rawSums["kannisaa_lakk_kannisaa"] || 0,
-        qurxummii_lakk_qurxummii_waliigalaa: rawSums["qurxummii_lakk_qurxummii"] || 0,
-      };
+      actuals    = normalizeQonna(rawSums);
+      actualsYtd = normalizeQonna(rawYtd);
     } else if (sector === "galii") {
-      actuals = {
-        galii_idilee: rawSums["baasii"] || 0,
-        galii_mana_qophessaa: rawSums["baasii"] || 0,
-      };
+      actuals    = { galii_idilee: rawSums["baasii"] || 0, galii_mana_qophessaa: rawSums["baasii"] || 0 };
+      actualsYtd = { galii_idilee: rawYtd["baasii"]  || 0, galii_mana_qophessaa: rawYtd["baasii"]  || 0 };
     } else {
       // carraa, daldala, atk — DB keys match frontend keys
-      actuals = { ...rawSums };
+      actuals    = { ...rawSums };
+      actualsYtd = { ...rawYtd };
     }
 
     // Fetch plan targets from the appropriate woreda plan table
@@ -568,6 +591,8 @@ const getWoRedaAnalysis = async (req, res) => {
       from,
       to,
       actuals,
+      actualsYtd,
+      daysElapsed,
       targets,
     });
   } catch (err) {

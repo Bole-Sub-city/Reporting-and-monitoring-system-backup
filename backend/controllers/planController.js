@@ -90,17 +90,25 @@ const getMyPlan = async (req, res) => {
 const getSummary = async (req, res) => {
   try {
     const user_id = req.user.id;
-    const period = req.query.period || "annual"; // daily|weekly|monthly|quarterly|annual
+    const period = req.query.period || "annual";
 
     const now = new Date();
-    let from = null;
-    let to = now.toISOString().split("T")[0];
+    const yearStart = `${now.getFullYear()}-01-01`;
+    const to = now.toISOString().split("T")[0];
 
+    // Days elapsed since Jan 1 (inclusive) — used for cumulative carry-over
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysElapsed = Math.floor(
+      (now - new Date(yearStart)) / msPerDay
+    ) + 1;
+
+    // Period window start — for the ring chart "current period" actuals
+    let from;
     if (period === "daily") {
-      from = to; // today only
+      from = to;
     } else if (period === "weekly") {
       const d = new Date(now);
-      d.setDate(d.getDate() - d.getDay()); // start of week (Sunday)
+      d.setDate(d.getDate() - d.getDay());
       from = d.toISOString().split("T")[0];
     } else if (period === "monthly") {
       from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -108,25 +116,33 @@ const getSummary = async (req, res) => {
       const q = Math.floor(now.getMonth() / 3);
       from = `${now.getFullYear()}-${String(q * 3 + 1).padStart(2, "0")}-01`;
     } else {
-      // annual
-      from = `${now.getFullYear()}-01-01`;
+      from = yearStart;
     }
 
-    let query = supabase
+    const selectFields =
+      "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, gumaata_jiraataa, buusi_daldalaa, buusi_daldalaa_fi_gumaataa, inisheetevii_buusaa_gonofaa, gumaata_midhaani, nyaata_barataa, zayitii, sukkaara, report_date";
+
+    // Fetch period actuals (for ring charts)
+    const { data: periodData, error: periodErr } = await supabase
       .from("buusaa_reports")
-      .select(
-        "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, gumaata_jiraataa, buusi_daldalaa, buusi_daldalaa_fi_gumaataa, inisheetevii_buusaa_gonofaa, gumaata_midhaani, nyaata_barataa, zayitii, sukkaara, report_date",
-      )
+      .select(selectFields)
       .eq("user_id", user_id)
       .gte("report_date", from)
       .lte("report_date", to);
 
-    const { data, error } = await query;
+    if (periodErr) return res.status(400).json({ message: periodErr.message });
 
-    if (error) return res.status(400).json({ message: error.message });
+    // Fetch YTD actuals (for carry-over remaining)
+    const { data: ytdData, error: ytdErr } = await supabase
+      .from("buusaa_reports")
+      .select(selectFields)
+      .eq("user_id", user_id)
+      .gte("report_date", yearStart)
+      .lte("report_date", to);
 
-    // Sum up each field — keys must exactly match PLAN_FIELDS keys in frontend
-    const summary = {
+    if (ytdErr) return res.status(400).json({ message: ytdErr.message });
+
+    const zeroSummary = () => ({
       hubannoo_uummuu: 0,
       horannaa_misensaa: 0,
       buusi_jiraataa: 0,
@@ -137,30 +153,32 @@ const getSummary = async (req, res) => {
       nyaata_barataa: 0,
       sukkaara: 0,
       zayitii: 0,
-    };
-
-    (data || []).forEach((row) => {
-      summary.hubannoo_uummuu += Number(row.hubannoo_uummuu || 0);
-      summary.horannaa_misensaa += Number(row.horannaa_misensaa || 0);
-      // report col is buusi_jirataa; PLAN_FIELDS key is buusi_jiraataa
-      summary.buusi_jiraataa += Number(row.buusi_jirataa || 0);
-      summary.gumaata_jiraataa += Number(row.gumaata_jiraataa || 0);
-      // combine both daldalaa fields under the single PLAN_FIELDS key
-      summary.buusi_daldalaa +=
-        Number(row.buusi_daldalaa || 0) +
-        Number(row.buusi_daldalaa_fi_gumaataa || 0);
-      // DB stores as inisheetevii_ (one i); frontend key is inisheetivii_
-      summary.inisheetivii_buusaa_gonofaa += Number(
-        row.inisheetevii_buusaa_gonofaa || 0,
-      );
-      // DB stores as gumaata_midhaani; PLAN_FIELDS key is gumaata_mootummaa
-      summary.gumaata_mootummaa += Number(row.gumaata_midhaani || 0);
-      summary.nyaata_barataa += Number(row.nyaata_barataa || 0);
-      summary.sukkaara += Number(row.sukkaara || 0);
-      summary.zayitii += Number(row.zayitii || 0);
     });
 
-    res.json({ summary, period, from, to });
+    const accumulateRows = (rows, target) => {
+      (rows || []).forEach((row) => {
+        target.hubannoo_uummuu += Number(row.hubannoo_uummuu || 0);
+        target.horannaa_misensaa += Number(row.horannaa_misensaa || 0);
+        target.buusi_jiraataa += Number(row.buusi_jirataa || 0);
+        target.gumaata_jiraataa += Number(row.gumaata_jiraataa || 0);
+        target.buusi_daldalaa +=
+          Number(row.buusi_daldalaa || 0) +
+          Number(row.buusi_daldalaa_fi_gumaataa || 0);
+        target.inisheetivii_buusaa_gonofaa += Number(row.inisheetevii_buusaa_gonofaa || 0);
+        target.gumaata_mootummaa += Number(row.gumaata_midhaani || 0);
+        target.nyaata_barataa += Number(row.nyaata_barataa || 0);
+        target.sukkaara += Number(row.sukkaara || 0);
+        target.zayitii += Number(row.zayitii || 0);
+      });
+    };
+
+    const summary = zeroSummary();
+    accumulateRows(periodData, summary);
+
+    const summaryYtd = zeroSummary();
+    accumulateRows(ytdData, summaryYtd);
+
+    res.json({ summary, summaryYtd, daysElapsed, period, from, to });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
