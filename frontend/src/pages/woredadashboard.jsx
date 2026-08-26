@@ -27,6 +27,17 @@ import {
 import adamaLogo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
 
+// ─── Network-aware error message helper ─────────────────────────────────────
+// Returns a human-friendly message that distinguishes network failures from
+// server-side errors (invalid credentials, permission denied, etc.)
+function friendlyError(err, fallback = "Something went wrong. Please try again.") {
+  if (!err) return fallback;
+  // No response means the request never reached the server (offline / DNS fail)
+  if (!err.response) return "No connection. Check your internet and try again.";
+  const msg = err.response?.data?.message;
+  return msg || fallback;
+}
+
 function DashboardIcon() {
   return (
     <svg
@@ -905,11 +916,7 @@ function AnalysisSection() {
         setDaysElapsed(d.daysElapsed ?? 1);
       })
       .catch((err) =>
-        setError(
-          err && err.response && err.response.data && err.response.data.message
-            ? err.response.data.message
-            : "Failed to load summary data.",
-        ),
+        setError(friendlyError(err, "Failed to load summary data.")),
       )
       .finally(() => setLoading(false));
   }, [period]);
@@ -1247,7 +1254,7 @@ function QonnaSubmitForm({ u }) {
       setShowModal(true);
       handleClear();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to submit report.");
+      setError(friendlyError(err, "Failed to submit report."));
     } finally {
       setSaving(false);
     }
@@ -1739,7 +1746,7 @@ function QonnaAnalysisSection() {
         setTargets(d.targets ?? {});
       })
       .catch((err) =>
-        setError(err?.response?.data?.message ?? "Failed to load Qonna data."),
+        setError(friendlyError(err, "Failed to load Qonna data.")),
       )
       .finally(() => setLoading(false));
   }, [period]);
@@ -2675,7 +2682,7 @@ function GenericAnalysisSection({
         setDaysElapsed(d.daysElapsed ?? 1);
       })
       .catch((err) =>
-        setError(err?.response?.data?.message ?? "Failed to load summary."),
+        setError(friendlyError(err, "Failed to load work analysis.")),
       )
       .finally(() => setLoading(false));
   }, [period, sector]);
@@ -3224,7 +3231,7 @@ function GenericSubmitForm({
       setShowModal(true);
       handleClear();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to submit report.");
+      setError(friendlyError(err, "Failed to submit report."));
     } finally {
       setSaving(false);
     }
@@ -3823,11 +3830,7 @@ function RevenueAnalysis() {
     fetchSummary(period)
       .then((d) => setSummary(d.summary))
       .catch((err) =>
-        setError(
-          err && err.response && err.response.data && err.response.data.message
-            ? err.response.data.message
-            : "Failed to load revenue data.",
-        ),
+        setError(friendlyError(err, "Failed to load revenue data.")),
       )
       .finally(() => setLoading(false));
   }, [period]);
@@ -4223,7 +4226,6 @@ function ReportHistorySection({ woreda }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Client-side filtering
   const filteredRows = rows.filter((r) => {
     const date = r.report_date ?? "";
     const type = r.report_type ?? "";
@@ -4693,7 +4695,7 @@ function AnnouncementsViewPage({ onRead }) {
             .catch(() => {});
         }
       })
-      .catch(() => setError("Failed to load announcements."))
+      .catch(() => setError("No connection. Check your internet and try again."))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

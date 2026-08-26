@@ -78,7 +78,9 @@ export default function Login() {
       }
     } catch (err) {
       setServerError(
-        err.response?.data?.message || "Invalid username or password.",
+        !err.response
+          ? "No connection. Check your internet and try again."
+          : err.response?.data?.message || "Invalid username or password.",
       );
     } finally {
       setIsSubmitting(false);

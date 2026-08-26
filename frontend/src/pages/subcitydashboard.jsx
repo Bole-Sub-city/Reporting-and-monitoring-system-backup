@@ -17,6 +17,13 @@ import {
 } from "../api/planApi";
 import { fetchAllWoredaReports } from "../api/reportApi";
 
+// ─── Network-aware error message helper ─────────────────────────────────────
+function friendlyError(err, fallback = "Something went wrong. Please try again.") {
+  if (!err) return fallback;
+  if (!err.response) return "No connection. Check your internet and try again.";
+  return err.response?.data?.message || fallback;
+}
+
 // ─── Shared allocation helpers ────────────────────────────────────────────────
 /**
  * Parse four woreda percentage strings into numbers.
@@ -384,7 +391,7 @@ function AnnouncementsPage() {
     setLoading(true);
     fetchAnnouncements()
       .then((d) => setAnnouncements(d.announcements || []))
-      .catch(() => setError("Failed to load announcements."))
+      .catch(() => setError("No connection. Check your internet and try again."))
       .finally(() => setLoading(false));
   };
 
@@ -2368,11 +2375,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
         setTargets(d.targets || {});
       })
       .catch((err) => {
-        setError(
-          err?.response?.data?.message || "Failed to load analysis data.",
-        );
-        setActuals({});
-        setTargets({});
+        setError(friendlyError(err, "Failed to load analysis data."));
       })
       .finally(() => setLoading(false));
   }, [sector, woredaId, period]);
@@ -2570,9 +2573,7 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
         setTargets(d.targets || {});
       })
       .catch((err) => {
-        setError(
-          err?.response?.data?.message || "Failed to load ring chart data.",
-        );
+        setError(friendlyError(err, "Failed to load ring chart data."));
         setActuals({});
         setTargets({});
       })
@@ -2682,9 +2683,7 @@ function ComparisonView({ sector, cfg }) {
     fetchWoRedaReports(sector, period)
       .then((d) => setData(d))
       .catch((err) => {
-        setError(
-          err?.response?.data?.message || "Failed to load comparison data.",
-        );
+        setError(friendlyError(err, "Failed to load comparison data."));
         setData(null);
       })
       .finally(() => setLoading(false));
@@ -2826,7 +2825,7 @@ function RankView({ sector, cfg }) {
     fetchWoRedaReports(sector, period)
       .then((d) => setData(d))
       .catch((err) => {
-        setError(err?.response?.data?.message || "Failed to load rank data.");
+        setError(friendlyError(err, "Failed to load rank data."));
         setData(null);
       })
       .finally(() => setLoading(false));
@@ -3632,9 +3631,7 @@ function ReportsPage() {
     fetchAllWoredaReports()
       .then((data) => setRows(Array.isArray(data) ? data : []))
       .catch(() =>
-        setFetchError(
-          "Could not load reports. Check your connection and try again.",
-        ),
+        setFetchError("No connection. Check your internet and try again."),
       )
       .finally(() => setLoading(false));
   };
