@@ -145,3 +145,35 @@ export const fetchAllWoredaReports = async (filters = {}) => {
   );
   return response.data;
 };
+
+// ─── Lock status ─────────────────────────────────────────────────────────────
+/** Returns { locked: { buusaa, carraa, qonna, daldala, atk }, date } */
+export const fetchLockStatus = async (date) => {
+  const token = localStorage.getItem("token");
+  const d = date || new Date().toISOString().split("T")[0];
+  const response = await api.get(`/reports/lock-status?date=${d}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// ─── Edit permission requests ─────────────────────────────────────────────────
+/** Wereda requests edit access for a locked report */
+export const requestEditAccess = async (sector, report_date, report_type) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post(
+    "/auth/edit-requests",
+    { sector, report_date, report_type },
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return response.data;
+};
+
+/** Wereda fetches their own edit requests */
+export const fetchMyEditRequests = async () => {
+  const token = localStorage.getItem("token");
+  const response = await api.get("/auth/edit-requests/mine", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};

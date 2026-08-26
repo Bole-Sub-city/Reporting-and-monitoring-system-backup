@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import {
@@ -9,6 +9,9 @@ import {
   submitDaldalReport,
   submitAtkReport,
   fetchMyReports,
+  fetchLockStatus,
+  requestEditAccess,
+  fetchMyEditRequests,
 } from "../api/reportApi";
 import {
   fetchMyPlan,
@@ -895,7 +898,10 @@ function AnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchSummary(period)
@@ -1726,9 +1732,15 @@ function QonnaAnalysisSection() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     const woredaId = getMyWoredaId();
-    if (!woredaId) { setLoading(false); return; }
+    if (!woredaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis("qonna", woredaId, period)
@@ -2002,8 +2014,12 @@ function QonnaAnalysisSection() {
                               999,
                             )
                           : 0;
-                      const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
-                      const actualYtd = actualsYtd ? (actualsYtd[f.key] ?? 0) : 0;
+                      const cumulTarget = Math.round(
+                        (daysElapsed / 365) * annualTarget,
+                      );
+                      const actualYtd = actualsYtd
+                        ? (actualsYtd[f.key] ?? 0)
+                        : 0;
                       const remaining = Math.max(cumulTarget - actualYtd, 0);
                       return (
                         <tr
@@ -2663,9 +2679,15 @@ function GenericAnalysisSection({
   }, [fetchPlanFn]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     const woredaId = getMyWoredaId();
-    if (!woredaId || !sector) { setLoading(false); return; }
+    if (!woredaId || !sector) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis(sector, woredaId, period)
@@ -2894,8 +2916,12 @@ function GenericAnalysisSection({
                             999,
                           )
                         : 0;
-                    const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
-                    const actualYtd = actualsYtd ? (actualsYtd[cat.key] ?? 0) : 0;
+                    const cumulTarget = Math.round(
+                      (daysElapsed / 365) * annualTarget,
+                    );
+                    const actualYtd = actualsYtd
+                      ? (actualsYtd[cat.key] ?? 0)
+                      : 0;
                     const remaining = Math.max(cumulTarget - actualYtd, 0);
                     return (
                       <tr
@@ -3043,7 +3069,99 @@ function SuccessModal({ onClose }) {
   );
 }
 
-function BuusaaSubmitForm({ u }) {
+// ─── LockBanner ──────────────────────────────────────────────────────────────
+// Shown inside a submit form when that sector is already submitted for today.
+function LockBanner({ sector, reportType, onUnlocked }) {
+  const [requesting, setRequesting] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [reqError, setReqError] = useState("");
+
+  const handleRequest = async () => {
+    setRequesting(true);
+    setReqError("");
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      await requestEditAccess(sector, today, reportType || "");
+      setRequested(true);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to send request.";
+      // If already approved, treat as unlocked
+      if (msg.toLowerCase().includes("approved")) {
+        onUnlocked && onUnlocked();
+      } else {
+        setReqError(msg);
+      }
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <svg
+          className="w-5 h-5 text-[#b45309] flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <div>
+          <p className="text-sm font-semibold text-[#b45309]">
+            Report already submitted for today
+          </p>
+          <p className="text-xs text-[#92400e] mt-0.5">
+            You can only submit once per day. Request edit access from the admin
+            to resubmit.
+          </p>
+        </div>
+      </div>
+      {reqError && <p className="text-xs text-[#dc2626]">{reqError}</p>}
+      {requested ? (
+        <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-3 py-2">
+          <svg
+            className="w-4 h-4 text-[#166534] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          <p className="text-xs font-medium text-[#166534]">
+            Request sent. The admin will review and grant access.
+          </p>
+        </div>
+      ) : (
+        <button
+          onClick={handleRequest}
+          disabled={requesting}
+          className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+        >
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+          </svg>
+          {requesting ? "Sending..." : "Request Edit Access"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
   const [form, setForm] = useState({});
   const [yaada, setYaada] = useState("");
@@ -4791,6 +4909,18 @@ export default function WoRedaDashboard() {
   const [expandedWork, setExpandedWork] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const sideW = collapsed ? "w-16" : "w-64";
+
+  // ── Lock status (which sectors are submitted today) ──
+  const today = new Date().toISOString().split("T")[0];
+  const [locked, setLocked] = useState({});
+  const refreshLocks = useCallback(() => {
+    fetchLockStatus(today)
+      .then((d) => setLocked(d.locked || {}))
+      .catch(() => {});
+  }, [today]);
+  useEffect(() => {
+    refreshLocks();
+  }, [refreshLocks]);
 
   // ── Dashboard stats ──
   const [dashStats, setDashStats] = useState(null);
