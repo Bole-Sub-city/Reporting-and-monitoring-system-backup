@@ -515,7 +515,7 @@ function AnnouncementsPage() {
                   setConfirmId(null);
                   setDeleteError("");
                 }}
-                className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+                className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
               >
                 Cancel
               </button>
@@ -543,7 +543,7 @@ function AnnouncementsPage() {
         <div
           className="px-5 py-4 border-b border-[#e2e8f0]"
           style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
           }}
         >
           <p className="text-white font-semibold text-sm">New Announcement</p>
@@ -561,7 +561,7 @@ function AnnouncementsPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Announcement title…"
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 placeholder-gray-400"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 placeholder-gray-400"
             />
           </div>
           <div>
@@ -573,7 +573,7 @@ function AnnouncementsPage() {
               onChange={(e) => setBody(e.target.value)}
               placeholder="Announcement body…"
               rows={4}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 placeholder-gray-400 resize-none"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 placeholder-gray-400 resize-none"
             />
           </div>
 
@@ -592,7 +592,7 @@ function AnnouncementsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <MegaphoneIcon />
               {saving ? "Posting…" : "Post Announcement"}
@@ -608,7 +608,7 @@ function AnnouncementsPage() {
         </h2>
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
           </div>
         ) : error ? (
           <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -780,13 +780,13 @@ function OverviewPage({
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center mb-2 text-white"
               style={{
-                background: "linear-gradient(135deg,#1a3a5c 0%,#1e4976 100%)",
+                background: "linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)",
               }}
             >
               <BuildingIcon />
             </div>
             <p className="text-sm font-bold text-[#1e293b]">{w.name}</p>
-            <span className="mt-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#f4f6f9] text-[#64748b]">
+            <span className="mt-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#f8fafc] text-[#64748b]">
               Active
             </span>
           </div>
@@ -799,7 +799,7 @@ function OverviewPage({
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
             }}
           >
             <p className="text-sm font-semibold text-white">
@@ -835,7 +835,7 @@ function OverviewPage({
                   return (
                     <tr
                       key={key}
-                      className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                      className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                     >
                       <td className="px-5 py-3 font-medium text-[#1e293b]">
                         <span className="flex items-center gap-2">
@@ -863,7 +863,7 @@ function OverviewPage({
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-8 flex flex-col items-center text-center shadow-sm mb-6">
-          <div className="w-14 h-14 rounded-full bg-[#eef4fb] flex items-center justify-center mb-3 text-[#1a3a5c]">
+          <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3 text-[#0f172a]">
             <TargetIcon />
           </div>
           <p className="text-[#1e293b] font-semibold mb-1">
@@ -921,7 +921,7 @@ function OverviewPage({
                     return (
                       <tr
                         key={col}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                       >
                         {fi === 0 && (
                           <td
@@ -1038,7 +1038,7 @@ function OverviewPage({
                         return (
                           <tr
                             key={key}
-                            className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                            className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                           >
                             <td className="px-5 py-3 font-medium text-[#1e293b]">
                               <span className="flex items-center gap-2">
@@ -1069,7 +1069,7 @@ function OverviewPage({
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-[#f4f6f9] flex items-center justify-center mb-2 text-[#64748b]">
+                <div className="w-12 h-12 rounded-full bg-[#f8fafc] flex items-center justify-center mb-2 text-[#64748b]">
                   <TargetIcon />
                 </div>
                 <p className="text-[#1e293b] font-semibold text-sm mb-1">
@@ -1097,7 +1097,7 @@ function WoRedaPctInputs({ pcts, onChange }) {
     <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
       <div
         className="px-5 py-3 border-b border-[#e2e8f0]"
-        style={{ background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)" }}
+        style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
       >
         <p className="text-sm font-semibold text-white">
           Woreda Allocation (%)
@@ -1123,7 +1123,7 @@ function WoRedaPctInputs({ pcts, onChange }) {
                   value={pcts[w.id]}
                   onChange={(e) => onChange(w.id, e.target.value)}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg pl-3 pr-8 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                  className="w-full border border-[#e2e8f0] rounded-lg pl-3 pr-8 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#94a3b8] pointer-events-none">
                   %
@@ -1175,7 +1175,7 @@ function WoRedaPctInputs({ pcts, onChange }) {
             </div>
           )
         ) : (
-          <div className="bg-[#f4f6f9] border border-[#e2e8f0] rounded-lg px-4 py-2.5">
+          <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg px-4 py-2.5">
             <span className="text-[#94a3b8] text-sm">
               Enter percentages above — total must equal 100%.
             </span>
@@ -1248,7 +1248,7 @@ function BuusaaPlanPage({ onSave }) {
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
             }}
           >
             <p className="text-sm font-semibold text-white">
@@ -1277,7 +1277,7 @@ function BuusaaPlanPage({ onSave }) {
                   value={form[key]}
                   onChange={handleField}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
                 />
               </div>
             ))}
@@ -1287,7 +1287,7 @@ function BuusaaPlanPage({ onSave }) {
         {/* Allocation preview */}
         {hasValues && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
+            <div className="px-5 py-3 bg-[#f8fafc] border-b border-[#e2e8f0]">
               <p className="text-sm font-semibold text-[#1e293b]">
                 Allocation Preview
               </p>
@@ -1325,7 +1325,7 @@ function BuusaaPlanPage({ onSave }) {
                     return (
                       <tr
                         key={key}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                       >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
@@ -1372,7 +1372,7 @@ function BuusaaPlanPage({ onSave }) {
             type="submit"
             disabled={saving || !canSubmit}
             className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "#1a3a5c" }}
+            style={{ backgroundColor: "#0f172a" }}
           >
             {saving ? (
               <>
@@ -1476,7 +1476,7 @@ function QonnaPlanRow({ cat, form, onChange }) {
     houses > 0 && unitsPerHouse > 0 ? houses * unitsPerHouse : null;
 
   const inputCls =
-    "w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]";
+    "w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]";
   const readonlyCls =
     "w-full border-2 rounded-lg px-3 py-2.5 text-sm font-bold bg-white";
   const emptyReadonly =
@@ -1776,7 +1776,7 @@ function QonnaPlanPage() {
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#b45309 0%,#d97706 100%)",
+              background: "linear-gradient(90deg,#b45309 0%,#2563eb 100%)",
             }}
           >
             <p className="text-sm font-semibold text-white">Kannisaa</p>
@@ -1840,7 +1840,7 @@ function QonnaPlanPage() {
         {/* ── Allocation preview ── */}
         {hasAnyTarget && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
+            <div className="px-5 py-3 bg-[#f8fafc] border-b border-[#e2e8f0]">
               <p className="text-sm font-semibold text-[#1e293b]">
                 Woreda Allocation Preview
               </p>
@@ -1964,7 +1964,7 @@ function QonnaPlanPage() {
                     return rows.map(({ total }, fi) => (
                       <tr
                         key={`${cat.key}-${fi}`}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                       >
                         {fi === 0 && (
                           <td
@@ -2094,7 +2094,7 @@ const DALDALA_FIELDS_SC = [
   {
     key: "whg_mudraa",
     label: "Walitti Hidhinsa Gabaa - Mudraa",
-    color: "#1a3a5c",
+    color: "#0f172a",
   },
 ];
 
@@ -2122,8 +2122,8 @@ const SECTOR_CFG = {
   buusaa: {
     fields: PLAN_FIELDS.map(({ key, label, color }) => ({ key, label, color })),
     label: "Buusaa Gonofaa",
-    color: "#1a3a5c",
-    gradient: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+    color: "#0f172a",
+    gradient: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
     fetchFn: fetchSubcityOwnPlan,
   },
   qonna: {
@@ -2339,7 +2339,7 @@ function GenericSubcityPlanPage({ sector }) {
                   value={form[key]}
                   onChange={handleField}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
                 />
               </div>
             ))}
@@ -2348,7 +2348,7 @@ function GenericSubcityPlanPage({ sector }) {
 
         {hasValues && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#e2e8f0]">
+            <div className="px-5 py-3 bg-[#f8fafc] border-b border-[#e2e8f0]">
               <p className="text-sm font-semibold text-[#1e293b]">
                 Allocation Preview
               </p>
@@ -2386,7 +2386,7 @@ function GenericSubcityPlanPage({ sector }) {
                     return (
                       <tr
                         key={key}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                       >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
@@ -2565,7 +2565,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
       {loading ? (
         <div className="flex items-center justify-center h-32">
           <div
-            className="w-7 h-7 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-7 h-7 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: cfg.color }}
           />
         </div>
@@ -2622,7 +2622,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                 return (
                   <tr
                     key={key}
-                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                   >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
@@ -2762,7 +2762,7 @@ function WorkAnalysisRingSection({ sector, woredaId, cfg }) {
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <div
-              className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+              className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
               style={{ borderTopColor: cfg.color }}
             />
           </div>
@@ -3071,7 +3071,7 @@ function SubcityGaliiSubmitForm({ u }) {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent placeholder-gray-400 transition-all"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent placeholder-gray-400 transition-all"
               />
             </div>
             <div>
@@ -3082,7 +3082,7 @@ function SubcityGaliiSubmitForm({ u }) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent transition-all"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20 focus:border-transparent transition-all"
               />
             </div>
             <button
@@ -3211,7 +3211,7 @@ function SubcityGaliiSubmitForm({ u }) {
                 setEntries([]);
                 setEntryError("");
               }}
-              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Clear
             </button>
@@ -3317,7 +3317,7 @@ function ComparisonView({ sector, cfg }) {
       {loading ? (
         <div className="flex items-center justify-center h-40">
           <div
-            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: cfg.color }}
           />
         </div>
@@ -3337,7 +3337,7 @@ function ComparisonView({ sector, cfg }) {
                     {w.name}
                   </th>
                 ))}
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1a3a5c] uppercase tracking-wide bg-[#eef4fb]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f172a] uppercase tracking-wide bg-[#eff6ff]">
                   Total
                 </th>
               </tr>
@@ -3351,7 +3351,7 @@ function ComparisonView({ sector, cfg }) {
                 return (
                   <tr
                     key={key}
-                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                   >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
@@ -3373,7 +3373,7 @@ function ComparisonView({ sector, cfg }) {
                         </td>
                       );
                     })}
-                    <td className="px-5 py-3 font-bold text-[#1a3a5c] bg-[#eef4fb]">
+                    <td className="px-5 py-3 font-bold text-[#0f172a] bg-[#eff6ff]">
                       {rowTotal.toLocaleString()}
                     </td>
                   </tr>
@@ -3472,7 +3472,7 @@ function GaliiComparisonView({ cfg }) {
       {loading ? (
         <div className="flex items-center justify-center h-40">
           <div
-            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: cfg.color }}
           />
         </div>
@@ -3495,7 +3495,7 @@ function GaliiComparisonView({ cfg }) {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f766e] uppercase tracking-wide bg-[#f0fdf9]">
                   Subcity
                 </th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1a3a5c] uppercase tracking-wide bg-[#eef4fb]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f172a] uppercase tracking-wide bg-[#eff6ff]">
                   Total
                 </th>
               </tr>
@@ -3513,7 +3513,7 @@ function GaliiComparisonView({ cfg }) {
                 return (
                   <tr
                     key={key}
-                    className="border-b border-[#f1f5f9] hover:bg-[#f4f6f9] transition-colors"
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                   >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
@@ -3540,7 +3540,7 @@ function GaliiComparisonView({ cfg }) {
                     <td className="px-5 py-3 font-bold text-[#0f766e] bg-[#f0fdf9]">
                       {subcityVal.toLocaleString()}
                     </td>
-                    <td className="px-5 py-3 font-bold text-[#1a3a5c] bg-[#eef4fb]">
+                    <td className="px-5 py-3 font-bold text-[#0f172a] bg-[#eff6ff]">
                       {rowTotal.toLocaleString()}
                     </td>
                   </tr>
@@ -3630,7 +3630,7 @@ function RankView({ sector, cfg }) {
       .map((w, i) => ({ ...w, rank: i + 1 }));
   })();
 
-  const rankColors = ["#f59e0b", "#94a3b8", "#b45309", "#64748b"];
+  const rankColors = ["#3b82f6", "#94a3b8", "#b45309", "#64748b"];
   const rankLabels = ["🥇", "🥈", "🥉", "4th"];
 
   return (
@@ -3689,7 +3689,7 @@ function RankView({ sector, cfg }) {
       {loading ? (
         <div className="flex items-center justify-center h-40">
           <div
-            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: cfg.color }}
           />
         </div>
@@ -3771,7 +3771,7 @@ function RankView({ sector, cfg }) {
                         <select
                           value={detailPeriod}
                           onChange={(e) => setDetailPeriod(e.target.value)}
-                          className="text-xs border border-[#e2e8f0] rounded-lg px-2 py-1.5 bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                          className="text-xs border border-[#e2e8f0] rounded-lg px-2 py-1.5 bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
                         >
                           {ANALYSIS_PERIODS.map((p) => (
                             <option key={p.value} value={p.value}>
@@ -3793,7 +3793,7 @@ function RankView({ sector, cfg }) {
                     {detail?.loading ? (
                       <div className="flex items-center justify-center h-20">
                         <div
-                          className="w-6 h-6 border-4 border-[#dce8f4] rounded-full animate-spin"
+                          className="w-6 h-6 border-4 border-[#dbeafe] rounded-full animate-spin"
                           style={{ borderTopColor: cfg.color }}
                         />
                       </div>
@@ -3908,7 +3908,7 @@ function GenericSubcityAnalysisPage({ sector }) {
     return (
       <div className="flex items-center justify-center h-48">
         <div
-          className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+          className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
           style={{ borderTopColor: cfg.color }}
         />
       </div>
@@ -3955,7 +3955,7 @@ function GenericSubcityAnalysisPage({ sector }) {
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               activeView === "woreda" && activeWoreda === w.id
                 ? "text-white shadow"
-                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c]"
+                : "bg-white border border-[#e2e8f0] text-[#64748b] hover:border-[#0f172a] hover:text-[#0f172a]"
             }`}
             style={
               activeView === "woreda" && activeWoreda === w.id
@@ -3975,7 +3975,7 @@ function GenericSubcityAnalysisPage({ sector }) {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
             activeView === "comparison"
               ? "text-white shadow border-transparent"
-              : "bg-white border-[#e2e8f0] text-[#1a3a5c] hover:border-[#1a3a5c] hover:bg-[#eef4fb]"
+              : "bg-white border-[#e2e8f0] text-[#0f172a] hover:border-[#0f172a] hover:bg-[#eff6ff]"
           }`}
           style={
             activeView === "comparison" ? { background: cfg.gradient } : {}
@@ -3998,7 +3998,7 @@ function GenericSubcityAnalysisPage({ sector }) {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
             activeView === "rank"
               ? "text-white shadow border-transparent"
-              : "bg-white border-[#e2e8f0] text-[#1a3a5c] hover:border-[#1a3a5c] hover:bg-[#eef4fb]"
+              : "bg-white border-[#e2e8f0] text-[#0f172a] hover:border-[#0f172a] hover:bg-[#eff6ff]"
           }`}
           style={activeView === "rank" ? { background: cfg.gradient } : {}}
         >
@@ -4099,7 +4099,7 @@ function ComingSoonPage({ title }) {
         </p>
       </div>
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-14 flex flex-col items-center text-center shadow-sm">
-        <div className="w-14 h-14 rounded-full bg-[#eef4fb] flex items-center justify-center mb-4 text-[#1a3a5c]">
+        <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-4 text-[#0f172a]">
           <TargetIcon />
         </div>
         <p className="text-[#1e293b] font-semibold mb-2">Coming Soon</p>
@@ -4107,7 +4107,7 @@ function ComingSoonPage({ title }) {
           Annual plan management for <strong>{title}</strong> will be available
           here
         </p>
-        <span className="mt-4 inline-block bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-4 py-2 rounded-full">
+        <span className="mt-4 inline-block bg-[#eff6ff] text-[#0f172a] border border-[#dbeafe] text-xs font-semibold px-4 py-2 rounded-full">
           Under Development
         </span>
       </div>
@@ -4122,7 +4122,7 @@ function WorkAnalysisPage({ sector }) {
 }
 // ─── All Sectors (6) for Report History ──────────────────────────────────────
 const REPORT_SECTORS_ALL = [
-  { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
+  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
   { id: "qonna", label: "Qonna", color: "#065f46" },
   { id: "daldala", label: "Daldala", color: "#854d0e" },
@@ -4208,7 +4208,7 @@ function SCReportDetailModal({ row, onClose }) {
   if (!row) return null;
   const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
   const sectorLabel = sec?.label ?? row._sector ?? "Report";
-  const accentColor = sec?.color ?? "#1a3a5c";
+  const accentColor = sec?.color ?? "#0f172a";
   const displayFields = scGetDisplayFields(row);
 
   return (
@@ -4273,7 +4273,7 @@ function SCReportDetailModal({ row, onClose }) {
               {sectorLabel}
             </span>
             {row.username && (
-              <span className="text-xs text-[#64748b] bg-[#f4f6f9] border border-[#e2e8f0] px-3 py-1 rounded-full">
+              <span className="text-xs text-[#64748b] bg-[#f8fafc] border border-[#e2e8f0] px-3 py-1 rounded-full">
                 {row.username}
               </span>
             )}
@@ -4310,7 +4310,7 @@ function SCReportDetailModal({ row, onClose }) {
         <div className="px-6 pb-5 pt-3 flex items-center justify-end border-t border-[#f1f5f9] flex-shrink-0">
           <button
             onClick={onClose}
-            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
+            className="bg-[#0f172a] hover:bg-[#0f172a] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             Close
           </button>
@@ -4411,28 +4411,42 @@ function buildSubcityPrintHTML({
   showPlan,
   woredaData, // { woredas: [{woredaId, name, actuals}] }
   planData, // { w1: {targets}, w2: ..., w3: ..., w4: ... }
-  reportType,
   generatedDate,
+  selectedWoreda,      // "all" | "w1" | "w2" | "w3" | "w4"
+  subcityGaliiActuals, // actuals object for subcity galii, or null
 }) {
   const sectorLabel =
     REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
   const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
 
-  const WOREDAS_PRINT = [
+  const ALL_WOREDAS_PRINT = [
     { id: "w1", name: "Aanaa Gooroo" },
     { id: "w2", name: "Aanaa Dhadacha Araaraa" },
     { id: "w3", name: "Aanaa Dhakaa Adii" },
     { id: "w4", name: "Aanaa Andoodee" },
   ];
 
-  // How many sub-columns per woreda?
-  // Always: Actual (number). Optionally: % of plan. Optionally: Annual Plan.
-  const subCols = ["Actual"];
-  if (showPct) subCols.push("% of Plan");
-  if (showPlan) subCols.push("Annual Plan");
+  // Filter to selected woreda if one is chosen
+  const WOREDAS_PRINT =
+    selectedWoreda === "all"
+      ? ALL_WOREDAS_PRINT
+      : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
+
+  // For Galii only: show subcity column when "all woredas" is selected
+  const showSubcityCol = sector === "galii" && selectedWoreda === "all";
+
+  // Sub-columns order: Karora (plan), Raawwi (actual), % — always Karora first
+  // Build sub-col definitions: we always show Raawwi; Karora/% are optional
+  const subCols = [];
+  if (showPlan) subCols.push({ key: "plan",   label: "Karora" });
+  subCols.push(            { key: "actual", label: "Raawwi" });
+  if (showPct)  subCols.push({ key: "pct",    label: "%" });
   const numSubCols = subCols.length;
 
-  // Build header row 1: R.No | Gosa Hoji | [W1 span] | [W2 span] | [W3 span] | [W4 span]
+  // Show total column only when all woredas are selected
+  const showTotal = selectedWoreda === "all";
+
+  // ── Header row 1: R.No | Gosa Hoji | [Woreda spans] | [Subcity?] | [Waliigala?]
   let thead = `<thead>
     <tr class="top-header">
       <th rowspan="2" class="rno">R.No</th>
@@ -4440,36 +4454,70 @@ function buildSubcityPrintHTML({
   for (const w of WOREDAS_PRINT) {
     thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
   }
+  if (showSubcityCol) {
+    thead += `<th colspan="${numSubCols}" class="woreda-header subcity-header">Subcity</th>`;
+  }
+  if (showTotal) {
+    thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+  }
   thead += `</tr><tr class="sub-header">`;
-  // Sub-columns for each woreda
-  for (let i = 0; i < 4; i++) {
+  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  for (let i = 0; i < totalGroupCount; i++) {
     for (const sc of subCols) {
-      thead += `<th class="sub-col">${sc}</th>`;
+      thead += `<th class="sub-col">${sc.label}</th>`;
     }
   }
   thead += `</tr></thead>`;
 
-  // Build body rows
+  // ── Body rows
   let tbody = "<tbody>";
   fields.forEach(({ key, label }, idx) => {
     tbody += `<tr>`;
     tbody += `<td class="rno">${idx + 1}</td>`;
     tbody += `<td class="gosa">${label}</td>`;
 
-    for (const w of WOREDAS_PRINT) {
-      const wActuals =
-        woredaData?.woredas?.find((d) => d.woredaId === w.id)?.actuals ?? {};
-      const wTargets = planData?.[w.id] ?? {};
-      const actual = Number(wActuals[key] ?? 0);
-      const target = Number(wTargets[key] ?? 0);
-      const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+    let totalActual = 0;
+    let totalPlan   = 0;
 
-      tbody += `<td class="num">${actual.toLocaleString()}</td>`;
-      if (showPct)
-        tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
-      if (showPlan)
-        tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+    for (const w of WOREDAS_PRINT) {
+      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const wActuals = wEntry?.actuals ?? {};
+      const wTargets = planData?.[w.id] ?? {};
+      const actual   = Number(wActuals[key] ?? 0);
+      const target   = Number(wTargets[key] ?? 0);
+      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
+
+      totalActual += actual;
+      totalPlan   += target;
+
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+      }
     }
+
+    // Subcity column (Galii + all-woredas only)
+    if (showSubcityCol) {
+      const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
+      totalActual += scActual;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
+      }
+    }
+
+    // Total column (all-woredas only)
+    if (showTotal) {
+      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+      }
+    }
+
     tbody += `</tr>`;
   });
   tbody += "</tbody>";
@@ -4496,7 +4544,11 @@ function buildSubcityPrintHTML({
     td.gosa { text-align: left; font-weight: 500; }
     td.num  { text-align: right; font-variant-numeric: tabular-nums; }
     td.pct  { text-align: right; }
-    td.plan { text-align: right; }
+    td.plan { text-align: right; color: #555; }
+    td.total-val { font-weight: bold; background: #f0f4ff; }
+    td.subcity-val { background: #f0fdf4; }
+    th.total-header { background: #e8eeff !important; }
+    th.subcity-header { background: #e8fff4 !important; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
 
     @media print {
@@ -4504,12 +4556,16 @@ function buildSubcityPrintHTML({
       @page { size: landscape; margin: 12mm; }
       tbody tr:nth-child(even) { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       thead tr.sub-header th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      td.total-val { background: #f0f4ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      td.subcity-val { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th.total-header { background: #e8eeff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th.subcity-header { background: #e8fff4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
   <div class="report-title">
-    <h1>${sectorLabel} Report</h1>
+    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find(w => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
   </div>
   <div class="meta">
     <span>Generated: ${generatedDate}</span>
@@ -4531,6 +4587,7 @@ function buildSubcityPrintHTML({
 function SubcityPrintModal({ rows, onClose }) {
   const [sector, setSector] = useState("buusaa");
   const [period, setPeriod] = useState("monthly");
+  const [selectedWoreda, setSelectedWoreda] = useState("all"); // NEW
   const [showPct, setShowPct] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -4565,11 +4622,19 @@ function SubcityPrintModal({ rows, onClose }) {
         });
       }
 
+      // For Galii Sassaabu, also fetch subcity actuals
+      let subcityGaliiActuals = null;
+      if (sector === "galii") {
+        try {
+          const galiiRes = await fetchSubcityGalii(period);
+          subcityGaliiActuals = galiiRes?.actuals ?? null;
+        } catch {
+          subcityGaliiActuals = null;
+        }
+      }
+
       const sectorLabel =
         REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
-      // Use the report_type from the first matching row, or just the sector label
-      const sampleRow = rows.find((r) => r._sector === sector);
-      const reportType = sampleRow?.report_type ?? sectorLabel;
       const generatedDate = new Date().toLocaleString();
 
       const html = buildSubcityPrintHTML({
@@ -4579,8 +4644,9 @@ function SubcityPrintModal({ rows, onClose }) {
         showPlan,
         woredaData,
         planData,
-        reportType,
         generatedDate,
+        selectedWoreda,
+        subcityGaliiActuals,
       });
 
       const win = window.open("", "_blank", "width=1100,height=800");
@@ -4611,7 +4677,7 @@ function SubcityPrintModal({ rows, onClose }) {
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
           style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
           }}
         >
           <div>
@@ -4650,11 +4716,30 @@ function SubcityPrintModal({ rows, onClose }) {
             <select
               value={sector}
               onChange={(e) => setSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               {REPORT_SECTORS_ALL.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Woreda — NEW */}
+          <div>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Woreda
+            </label>
+            <select
+              value={selectedWoreda}
+              onChange={(e) => setSelectedWoreda(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+            >
+              <option value="all">All Woredas</option>
+              {WOREDAS.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
                 </option>
               ))}
             </select>
@@ -4668,7 +4753,7 @@ function SubcityPrintModal({ rows, onClose }) {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               {PERIODS_PRINT.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -4683,12 +4768,11 @@ function SubcityPrintModal({ rows, onClose }) {
             <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">
               Sub-columns per Woreda
             </label>
-            {/* Show % always included as actual; these two are optional */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowPct((v) => !v)}
-                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
               >
                 <span
                   className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`}
@@ -4702,7 +4786,7 @@ function SubcityPrintModal({ rows, onClose }) {
               <button
                 type="button"
                 onClick={() => setShowPlan((v) => !v)}
-                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#1a3a5c]" : "bg-[#e2e8f0]"}`}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
               >
                 <span
                   className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`}
@@ -4713,7 +4797,7 @@ function SubcityPrintModal({ rows, onClose }) {
               </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
-              Actual value is always included.{" "}
+              Sub-columns order: Karora, Raawwi, %.{" "}
               {showPct && showPlan
                 ? "3 sub-columns per woreda."
                 : showPct || showPlan
@@ -4737,14 +4821,14 @@ function SubcityPrintModal({ rows, onClose }) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Cancel
             </button>
             <button
               onClick={handlePrint}
               disabled={loading}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-60 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] disabled:opacity-60 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
               <svg
                 className="w-4 h-4"
@@ -4868,9 +4952,9 @@ function ReportsPage() {
 
   const activeSectorColor =
     filterSector === "all"
-      ? "#1a3a5c"
+      ? "#0f172a"
       : (REPORT_SECTORS_ALL.find((s) => s.id === filterSector)?.color ??
-        "#1a3a5c");
+        "#0f172a");
 
   return (
     <div>
@@ -4895,7 +4979,7 @@ function ReportsPage() {
         </div>
         <button
           onClick={() => setShowPrintModal(true)}
-          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+          className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
         >
           <svg
             className="w-4 h-4"
@@ -4949,7 +5033,7 @@ function ReportsPage() {
             <select
               value={filterWoreda}
               onChange={(e) => setFilterWoreda(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Woredas</option>
               {WOREDAS.map((w) => (
@@ -4968,7 +5052,7 @@ function ReportsPage() {
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS_ALL.map((s) => (
@@ -4987,7 +5071,7 @@ function ReportsPage() {
             <select
               value={isCustom ? "custom" : filterPeriod}
               onChange={(e) => handlePeriodChange(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Periods</option>
               {REPORT_PERIOD_TYPES_SC.map((t) => (
@@ -5001,7 +5085,7 @@ function ReportsPage() {
 
           {/* Count badge */}
           <div className="flex-shrink-0 pb-0.5">
-            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
+            <span className="inline-block bg-[#eff6ff] text-[#0f172a] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dbeafe]">
               {loading
                 ? "..."
                 : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
@@ -5026,7 +5110,7 @@ function ReportsPage() {
                   onChange={(e) => setCustomFiscal(Number(e.target.value))}
                   min="2000"
                   max="2100"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
                 />
               </div>
               <div>
@@ -5037,7 +5121,7 @@ function ReportsPage() {
                   <select
                     value={startMonth}
                     onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
                       <option key={m.name} value={m.name}>
@@ -5048,7 +5132,7 @@ function ReportsPage() {
                   <select
                     value={startDay}
                     onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
                       <option key={d} value={d}>
@@ -5066,7 +5150,7 @@ function ReportsPage() {
                   <select
                     value={endMonth}
                     onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_MONTHS_SC.map((m) => (
                       <option key={m.name} value={m.name}>
@@ -5077,7 +5161,7 @@ function ReportsPage() {
                   <select
                     value={endDay}
                     onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_DAYS_SC.map((d) => (
                       <option key={d} value={d}>
@@ -5098,7 +5182,7 @@ function ReportsPage() {
             )}
             <button
               onClick={handleApplyCustom}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
               <AnalysisIcon />
               Apply Date Range
@@ -5138,7 +5222,7 @@ function ReportsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3">
-            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
             <span className="text-sm text-[#64748b]">Loading reports...</span>
           </div>
         ) : (
@@ -5167,7 +5251,7 @@ function ReportsPage() {
                   <tr>
                     <td colSpan={5} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                        <div className="w-10 h-10 rounded-full bg-[#f8fafc] flex items-center justify-center text-[#94a3b8]">
                           <ListIcon />
                         </div>
                         <p className="text-[#94a3b8] text-sm">
@@ -5217,7 +5301,7 @@ function ReportsPage() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setModalRow(row)}
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#0f172a] hover:text-[#1e3a5f] bg-[#eff6ff] hover:bg-[#dbeafe] px-3 py-1.5 rounded-lg transition-all"
                             >
                               <svg
                                 className="w-3.5 h-3.5"
@@ -5336,7 +5420,7 @@ export default function SubCityDashboard({ user: propUser }) {
       if (planLoading)
         return (
           <div className="flex items-center justify-center h-48">
-            <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
           </div>
         );
       return (
@@ -5372,7 +5456,7 @@ export default function SubCityDashboard({ user: propUser }) {
                     setActivePlanSector(s.id);
                     setPlanOpen(true);
                   }}
-                  className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-6 text-left hover:border-[#1a3a5c]/40 hover:shadow-sm transition-all"
+                  className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-6 text-left hover:border-[#0f172a]/40 hover:shadow-sm transition-all"
                 >
                   <p className="font-semibold text-[#1e293b]">{s.label}</p>
                   <p className="text-xs text-[#94a3b8] mt-1">
@@ -5424,7 +5508,7 @@ export default function SubCityDashboard({ user: propUser }) {
                     setActiveAnalysisSector(s.id);
                     setAnalysisOpen(true);
                   }}
-                  className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-6 text-left hover:border-[#1a3a5c]/40 hover:shadow-sm transition-all"
+                  className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-6 text-left hover:border-[#0f172a]/40 hover:shadow-sm transition-all"
                 >
                   <p className="font-semibold text-[#1e293b]">{s.label}</p>
                   <p className="text-xs text-[#94a3b8] mt-1">Active</p>
@@ -5440,14 +5524,14 @@ export default function SubCityDashboard({ user: propUser }) {
 
   return (
     <div
-      className="flex h-screen max-h-screen bg-[#f4f6f9] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
+      className="flex h-screen max-h-screen bg-[#f8fafc] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
       style={{ position: "fixed", inset: 0 }}
     >
       {/* ── Sidebar ── */}
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
         style={{
-          background: "linear-gradient(180deg,#1a3a5c 0%,#0d1f35 100%)",
+          background: "linear-gradient(180deg,#0f172a 0%,#020617 100%)",
         }}
       >
         {/* Logo row */}

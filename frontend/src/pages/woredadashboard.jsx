@@ -749,7 +749,7 @@ const WORKS = [
     id: "buusaa",
     label: "Buusaa Gonofaa",
     icon: BuusaaIcon,
-    color: "bg-[#eef4fb] text-[#1a3a5c]",
+    color: "bg-[#eff6ff] text-[#0f172a]",
   },
   {
     id: "carraaHojii",
@@ -801,6 +801,52 @@ function partitionTarget(annual, period) {
   return Math.round(n / (d[period] || 1));
 }
 
+/**
+ * Compute an adjusted period target that accounts for carry-over deficit.
+ *
+ * Rules:
+ *  - If actual YTD >= cumulative target so far → you're on track or ahead.
+ *    Return the static partition (don't reduce future targets for extra work).
+ *  - If actual YTD < cumulative target so far → there's a deficit (carry-over).
+ *    Spread the remaining annual gap across the remaining periods.
+ *    adjusted = (annual - acYtd) / periodsRemaining
+ *
+ * @param {number} annual      - annual plan target
+ * @param {string} period      - "daily"|"weekly"|"monthly"|"quarterly"|"annual"
+ * @param {number} daysElapsed - days elapsed in the fiscal year (from API)
+ * @param {number} acYtd       - actual YTD total submitted so far
+ */
+function adjustedTarget(annual, period, daysElapsed, acYtd) {
+  const n = Number(annual || 0);
+  if (n === 0) return 0;
+
+  const TOTAL = { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 };
+  const total = TOTAL[period] || 1;
+  const staticTarget = Math.round(n / total);
+
+  // How many periods have elapsed so far?
+  const elapsed = {
+    daily:     daysElapsed,
+    weekly:    Math.ceil(daysElapsed / 7),
+    monthly:   Math.ceil(daysElapsed / 30.4),
+    quarterly: Math.ceil(daysElapsed / 91.25),
+    annual:    1,
+  }[period] ?? 1;
+
+  const periodsRemaining = Math.max(total - elapsed, 1);
+
+  // Cumulative target up to today using the static daily rate
+  const cumulTarget = Math.round((daysElapsed / 365) * n);
+  const ytd = Number(acYtd || 0);
+
+  // On track or ahead → use static target (extra work only improves overall %)
+  if (ytd >= cumulTarget) return staticTarget;
+
+  // Behind → spread remaining gap across remaining periods
+  const remaining = n - ytd;
+  return Math.max(Math.round(remaining / periodsRemaining), 0);
+}
+
 function _RingChartPlaceholder() {}
 
 function AnnualPlanSection({ u }) {
@@ -818,7 +864,7 @@ function AnnualPlanSection({ u }) {
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
       </div>
     );
 
@@ -828,7 +874,7 @@ function AnnualPlanSection({ u }) {
         <div
           className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
           style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
           }}
         >
           <PlanIcon />
@@ -860,9 +906,9 @@ function AnnualPlanSection({ u }) {
               ),
             )}
           </div>
-          <div className="mt-5 flex items-center gap-2 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3">
+          <div className="mt-5 flex items-center gap-2 bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3">
             <svg
-              className="w-5 h-5 text-[#1a3a5c] flex-shrink-0"
+              className="w-5 h-5 text-[#0f172a] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -871,7 +917,7 @@ function AnnualPlanSection({ u }) {
               <circle cx="12" cy="12" r="9" />
               <path d="M12 8v4M12 16h.01" />
             </svg>
-            <p className="text-[#1a3a5c] text-sm">
+            <p className="text-[#0f172a] text-sm">
               These targets were assigned by your sub-city office. Contact them
               if you believe the numbers are incorrect.
             </p>
@@ -955,7 +1001,7 @@ function AnalysisSection() {
 
       {/* No plan warning */}
       {!plan && (
-        <div className="mb-5 bg-[#f4f6f9] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
+        <div className="mb-5 bg-[#f8fafc] border border-[#dbeafe] rounded-xl px-4 py-3 flex items-center gap-3">
           <svg
             className="w-5 h-5 text-amber-500 flex-shrink-0"
             fill="none"
@@ -967,7 +1013,7 @@ function AnalysisSection() {
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p className="text-[#1a3a5c] text-sm">
+          <p className="text-[#0f172a] text-sm">
             No annual plan set. Please submit your Annual Plan first to see
             targets in the charts.
           </p>
@@ -977,7 +1023,7 @@ function AnalysisSection() {
       {/* ── Loading / error ── */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
         </div>
       ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -986,13 +1032,13 @@ function AnalysisSection() {
       ) : (
         <>
           {/* Period label banner */}
-          <div className="mb-5 bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2">
-            <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
+          <div className="mb-5 bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[#0f172a] text-xs font-bold uppercase tracking-wide">
               {periodLabel} View
             </span>
             <>
-              <span className="text-[#1a3a5c] text-xs">—</span>
-              <span className="text-[#1a3a5c] text-xs">
+              <span className="text-[#0f172a] text-xs">—</span>
+              <span className="text-[#0f172a] text-xs">
                 Targets are auto-partitioned from the annual plan
               </span>
             </>
@@ -1002,7 +1048,10 @@ function AnalysisSection() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
               const at = plan ? (plan[planKey] ?? 0) : 0;
-              const pt = partitionTarget(at, period);
+              const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
+              // Use adjusted target so carry-over deficit raises the bar,
+              // but overperformance never lowers it
+              const pt = adjustedTarget(at, period, daysElapsed, acYtd);
               const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
               return (
                 <RingChart
@@ -1019,7 +1068,7 @@ function AnalysisSection() {
 
           {/* Summary table */}
           <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f8fafc]">
               <p className="text-sm font-semibold text-[#334155]">
                 {periodLabel} Summary Table
               </p>
@@ -1031,7 +1080,8 @@ function AnalysisSection() {
                     {[
                       "Category",
                       "Annual Target",
-                      "Period Target",
+                      "Static Target",
+                      "Adjusted Target",
                       "Actual",
                       "% Complete",
                       "Remaining (carry-over)",
@@ -1048,16 +1098,18 @@ function AnalysisSection() {
                 <tbody>
                   {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
                     const at = plan ? (plan[planKey] ?? 0) : 0;
-                    const pt = partitionTarget(at, period);
-                    const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
-                    const pct = pt > 0 ? Math.round((ac / pt) * 100) : 0;
-                    const cumulTarget = Math.round((daysElapsed / 365) * at);
+                    const staticPt = partitionTarget(at, period);
                     const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
+                    const adjPt = adjustedTarget(at, period, daysElapsed, acYtd);
+                    const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+                    // % is against the adjusted target so carry-over is reflected
+                    const pct = adjPt > 0 ? Math.round((ac / adjPt) * 100) : 0;
+                    const cumulTarget = Math.round((daysElapsed / 365) * at);
                     const remaining = Math.max(cumulTarget - acYtd, 0);
                     return (
                       <tr
                         key={key}
-                        className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                       >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
@@ -1072,7 +1124,10 @@ function AnalysisSection() {
                           {at.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 text-[#64748b]">
-                          {pt.toLocaleString()}
+                          {staticPt.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                          {adjPt.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 font-semibold text-[#1e293b]">
                           {ac.toLocaleString()}
@@ -1163,7 +1218,7 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
           <br />
           It will be available here for <strong>{u.woreda}</strong>.
         </p>
-        <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-4 py-2 rounded-full">
+        <span className="inline-block bg-[#eff6ff] text-[#0f172a] text-xs font-semibold px-4 py-2 rounded-full">
           Coming Soon
         </span>
       </div>
@@ -1373,7 +1428,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                             handleField(`${key}_bakka_qophaawe`, e.target.value)
                           }
                           placeholder="0"
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
                         />
                       </div>
                       <div>
@@ -1388,7 +1443,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                           onChange={(e) => handleField(manaKey, e.target.value)}
                           placeholder={cfg.housePH}
                           required
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
                         />
                       </div>
                       <div>
@@ -1403,7 +1458,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                           onChange={(e) => handleField(lakkKey, e.target.value)}
                           placeholder={cfg.animalPH}
                           required
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
                         />
                       </div>
                     </div>
@@ -1420,7 +1475,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Yaada Gudinaa galchi…"
                 rows={3}
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 resize-none"
               />
             </div>
           </div>
@@ -1440,7 +1495,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
             <button
               type="button"
               onClick={handleClear}
-              className="border border-[#e2e8f0] text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-[#e2e8f0] text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Clear Form
             </button>
@@ -1475,7 +1530,7 @@ function QonnaAnnualPlanSection({ u }) {
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#065f46] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#065f46] rounded-full animate-spin" />
       </div>
     );
 
@@ -1811,7 +1866,7 @@ function QonnaAnalysisSection() {
       {loading ? (
         <div className="flex items-center justify-center h-48">
           <div
-            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: accentColor }}
           />
         </div>
@@ -2019,7 +2074,7 @@ function QonnaAnalysisSection() {
                       return (
                         <tr
                           key={f.key}
-                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                          className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                         >
                           {fi === 0 ? (
                             <td
@@ -2257,7 +2312,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1e40af] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#1e40af] rounded-full animate-spin" />
       </div>
     );
 
@@ -2352,7 +2407,7 @@ function PlaceholderAnnualPlan({ title, u }) {
         {u.woreda} &middot; {u.subcity}
       </p>
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 rounded-full bg-[#eef4fb] text-[#64748b] flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-full bg-[#eff6ff] text-[#64748b] flex items-center justify-center mb-4">
           <PlanIcon />
         </div>
         <h2 className="text-lg font-semibold text-[#334155] mb-2">
@@ -2362,7 +2417,7 @@ function PlaceholderAnnualPlan({ title, u }) {
           The annual plan for <strong>{title}</strong> will be managed here
           targets and progress tracking for <strong>{u.woreda}</strong>.
         </p>
-        <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-4 py-2 rounded-full">
+        <span className="inline-block bg-[#eff6ff] text-[#0f172a] text-xs font-semibold px-4 py-2 rounded-full">
           Coming Soon
         </span>
       </div>
@@ -2440,7 +2495,7 @@ const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
     "#475569",
     "#854d0e",
     "#166534",
-    "#1a3a5c",
+    "#0f172a",
   ][i % 11],
 }));
 
@@ -2573,7 +2628,7 @@ function GenericAnnualPlanSection({
     return (
       <div className="flex items-center justify-center h-48">
         <div
-          className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+          className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
           style={{ borderTopColor: accentColor }}
         />
       </div>
@@ -2739,7 +2794,7 @@ function GenericAnalysisSection({
       {loading ? (
         <div className="flex items-center justify-center h-48">
           <div
-            className="w-8 h-8 border-4 border-[#dce8f4] rounded-full animate-spin"
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
             style={{ borderTopColor: accentColor }}
           />
         </div>
@@ -2913,7 +2968,7 @@ function GenericAnalysisSection({
                     return (
                       <tr
                         key={cat.key}
-                        className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                       >
                         <td className="px-4 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
@@ -3211,7 +3266,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -3230,7 +3285,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
           <div
             className="px-5 py-4"
             style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
             }}
           >
             <p className="text-white font-bold text-base">Gabaasa Guyyaa</p>
@@ -3255,7 +3310,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
                   required={required}
                   placeholder="0"
                   min="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent placeholder-gray-400 transition-all"
                 />
               </div>
             ))}
@@ -3268,7 +3323,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Enter Yaada Gudinaa"
                 rows={4}
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
               />
             </div>
           </div>
@@ -3281,7 +3336,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
             <button
               type="button"
               onClick={handleClear}
-              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Clear Form
             </button>
@@ -3307,7 +3362,7 @@ function GenericSubmitForm({
   sectorKey,
   locked = false,
   onSubmitSuccess,
-  headerColor = "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+  headerColor = "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
 }) {
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
   const [form, setForm] = useState({});
@@ -3375,7 +3430,7 @@ function GenericSubmitForm({
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -3411,7 +3466,7 @@ function GenericSubmitForm({
                   required={required}
                   placeholder="0"
                   min="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent placeholder-gray-400 transition-all"
                 />
               </div>
             ))}
@@ -3424,7 +3479,7 @@ function GenericSubmitForm({
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Enter Yaada Gudinaa"
                 rows={4}
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-transparent placeholder-gray-400 transition-all resize-none"
               />
             </div>
           </div>
@@ -3442,7 +3497,7 @@ function GenericSubmitForm({
             <button
               type="button"
               onClick={handleClear}
-              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Clear Form
             </button>
@@ -3548,7 +3603,7 @@ function RevenueSubmitForm({ u }) {
             <div
               className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
               style={{
-                background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+                background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
               }}
             >
               <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -3563,7 +3618,7 @@ function RevenueSubmitForm({ u }) {
               <select
                 value={category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c] cursor-pointer"
+                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a] cursor-pointer"
               >
                 {REVENUE_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -3573,7 +3628,7 @@ function RevenueSubmitForm({ u }) {
               </select>
               <p className="text-xs text-[#94a3b8] mt-2">
                 Filatame:{" "}
-                <span className="font-semibold text-[#1a3a5c]">
+                <span className="font-semibold text-[#0f172a]">
                   {catObj.label}
                 </span>
               </p>
@@ -3584,7 +3639,7 @@ function RevenueSubmitForm({ u }) {
             <div
               className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
               style={{
-                background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+                background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
               }}
             >
               <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -3604,7 +3659,7 @@ function RevenueSubmitForm({ u }) {
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c] cursor-pointer"
+                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a] cursor-pointer"
               >
                 {catObj.sources.map((s) => (
                   <option key={s} value={s}>
@@ -3614,7 +3669,7 @@ function RevenueSubmitForm({ u }) {
               </select>
               <p className="text-xs text-[#94a3b8] mt-2">
                 Filatame:{" "}
-                <span className="font-semibold text-[#1a3a5c]">{source}</span>
+                <span className="font-semibold text-[#0f172a]">{source}</span>
               </p>
             </div>
           </div>
@@ -3624,7 +3679,7 @@ function RevenueSubmitForm({ u }) {
           <div
             className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
             style={{
-              background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
             }}
           >
             <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -3639,14 +3694,14 @@ function RevenueSubmitForm({ u }) {
           </div>
           <div className="px-5 py-4">
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] text-[#0f172a] border border-[#dbeafe] text-xs font-semibold px-3 py-1 rounded-full">
                 <span
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: catObj.color }}
                 />
                 {catObj.label}
               </span>
-              <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] text-[#1a3a5c] border border-[#dce8f4] text-xs font-semibold px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] text-[#0f172a] border border-[#dbeafe] text-xs font-semibold px-3 py-1 rounded-full">
                 {source}
               </span>
             </div>
@@ -3664,7 +3719,7 @@ function RevenueSubmitForm({ u }) {
                   onChange={(e) => setAmount(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
                   placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
                 />
               </div>
               <div>
@@ -3675,14 +3730,14 @@ function RevenueSubmitForm({ u }) {
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   onClick={handleAddEntry}
                   className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
-                  style={{ backgroundColor: "#1a3a5c" }}
+                  style={{ backgroundColor: "#0f172a" }}
                 >
                   <svg
                     className="w-4 h-4"
@@ -3719,12 +3774,12 @@ function RevenueSubmitForm({ u }) {
             )}
 
             <div className="rounded-xl border border-[#e2e8f0] overflow-hidden">
-              <div className="px-4 py-2.5 bg-[#f4f6f9] border-b border-[#f1f5f9] flex items-center justify-between">
+              <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#f1f5f9] flex items-center justify-between">
                 <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
                   Galmeewwan Galame
                 </p>
                 {entries.length > 0 && (
-                  <span className="text-xs font-bold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] px-2.5 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-[#0f172a] bg-[#eff6ff] border border-[#dbeafe] px-2.5 py-0.5 rounded-full">
                     Walii Galii: ETB {total.toLocaleString()}
                   </span>
                 )}
@@ -3738,7 +3793,7 @@ function RevenueSubmitForm({ u }) {
                 </div>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="bg-[#f4f6f9] border-b border-[#f1f5f9]">
+                  <thead className="bg-[#f8fafc] border-b border-[#f1f5f9]">
                     <tr>
                       {[
                         "Gosa Galii",
@@ -3760,7 +3815,7 @@ function RevenueSubmitForm({ u }) {
                     {entries.map((e) => (
                       <tr
                         key={e.id}
-                        className="border-b border-gray-50 hover:bg-[#eef4fb]/50 transition-colors"
+                        className="border-b border-gray-50 hover:bg-[#eff6ff]/50 transition-colors"
                       >
                         <td className="px-4 py-2.5">
                           <span className="inline-flex items-center gap-1.5">
@@ -3797,14 +3852,14 @@ function RevenueSubmitForm({ u }) {
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-[#f4f6f9] border-t border-[#e2e8f0]">
+                    <tr className="bg-[#f8fafc] border-t border-[#e2e8f0]">
                       <td
                         colSpan={2}
-                        className="px-4 py-3 font-bold text-[#1a3a5c] text-sm"
+                        className="px-4 py-3 font-bold text-[#0f172a] text-sm"
                       >
                         Walii Galii
                       </td>
-                      <td className="px-4 py-3 font-extrabold text-[#1a3a5c] text-base">
+                      <td className="px-4 py-3 font-extrabold text-[#0f172a] text-base">
                         ETB {total.toLocaleString()}
                       </td>
                       <td colSpan={2} />
@@ -3863,7 +3918,7 @@ const REVENUE_CHART_FIELDS = [
     key: "total",
     label: "Total Revenue",
     description: "Combined all categories",
-    color: "#1a3a5c",
+    color: "#0f172a",
   },
 ];
 
@@ -3874,7 +3929,7 @@ function RevenueBarChart({ fields, summary }) {
   );
   return (
     <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-      <div className="px-5 py-3 bg-[#f4f6f9] border-b border-[#f1f5f9]">
+      <div className="px-5 py-3 bg-[#f8fafc] border-b border-[#f1f5f9]">
         <p className="text-sm font-semibold text-[#334155]">
           Revenue by Category
         </p>
@@ -3970,7 +4025,7 @@ function RevenueAnalysis() {
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
         </div>
       ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -3989,7 +4044,7 @@ function RevenueAnalysis() {
             </div>
             {annualLoading ? (
               <div className="flex items-center justify-center h-24">
-                <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+                <div className="w-6 h-6 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -4020,8 +4075,8 @@ function RevenueAnalysis() {
             )}
           </div>
 
-          <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
-            <span className="text-[#1a3a5c] text-xs font-bold uppercase tracking-wide">
+          <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-2.5 flex items-center gap-2 mb-5">
+            <span className="text-[#0f172a] text-xs font-bold uppercase tracking-wide">
               {periodLabel} View
             </span>
           </div>
@@ -4034,7 +4089,7 @@ function RevenueAnalysis() {
           {activeSummary?.by_source &&
             Object.keys(activeSummary.by_source).length > 0 && (
               <div className="mt-5 bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-                <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f4f6f9]">
+                <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f8fafc]">
                   <p className="text-sm font-semibold text-[#334155]">
                     {periodLabel} — By Revenue Source
                   </p>
@@ -4058,7 +4113,7 @@ function RevenueAnalysis() {
                       .map(([src, val]) => (
                         <tr
                           key={src}
-                          className="border-b border-gray-50 hover:bg-[#f4f6f9] transition-colors"
+                          className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
                         >
                           <td className="px-5 py-3 font-medium text-[#1e293b]">
                             {src}
@@ -4088,7 +4143,7 @@ const REPORT_PERIOD_TYPES = [
 ];
 
 const REPORT_SECTORS = [
-  { id: "buusaa", label: "Buusaa Gonofaa", color: "#1a3a5c" },
+  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
   { id: "qonna", label: "Qonna", color: "#065f46" },
   { id: "daldala", label: "Daldala", color: "#854d0e" },
@@ -4219,7 +4274,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
   function buildSectorTable(sectorId, sectorRows) {
     const sec = REPORT_SECTORS.find((s) => s.id === sectorId);
     const sectorLabel = sec?.label ?? sectorId;
-    const accentColor = sec?.color ?? "#1a3a5c";
+    const accentColor = sec?.color ?? "#0f172a";
     const fields = SECTOR_PRINT_FIELDS[sectorId] ?? [];
 
     if (!sectorRows.length) {
@@ -4368,7 +4423,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
           style={{
-            background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
+            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
           }}
         >
           <div>
@@ -4405,7 +4460,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             <select
               value={sector}
               onChange={(e) => setSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
@@ -4427,8 +4482,8 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
                   onClick={() => setCombined(true)}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
                     combined
-                      ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
-                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]"
+                      ? "bg-[#0f172a] text-white border-[#0f172a]"
+                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"
                   }`}
                 >
                   All Together
@@ -4438,8 +4493,8 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
                   onClick={() => setCombined(false)}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
                     !combined
-                      ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
-                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#1a3a5c]"
+                      ? "bg-[#0f172a] text-white border-[#0f172a]"
+                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"
                   }`}
                 >
                   Each Sector Separate
@@ -4453,9 +4508,9 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             </div>
           )}
 
-          <div className="bg-[#eef4fb] border border-[#dce8f4] rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3 flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-[#1a3a5c] flex-shrink-0"
+              className="w-5 h-5 text-[#0f172a] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
@@ -4468,7 +4523,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
               />
             </svg>
             <div>
-              <p className="text-sm font-semibold text-[#1a3a5c]">
+              <p className="text-sm font-semibold text-[#0f172a]">
                 {selectedSectorLabel}
               </p>
               <p className="text-xs text-[#64748b]">
@@ -4486,14 +4541,14 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              className="border border-[#e2e8f0] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
             >
               Cancel
             </button>
             <button
               onClick={handlePrint}
               disabled={rowCountForSector === 0}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
               <svg
                 className="w-4 h-4"
@@ -4546,7 +4601,7 @@ function ReportDetailModal({ row, onClose }) {
   if (!row) return null;
   const sector = REPORT_SECTORS.find((s) => s.id === row._sector);
   const sectorLabel = sector?.label ?? row._sector ?? "Report";
-  const accentColor = sector?.color ?? "#1a3a5c";
+  const accentColor = sector?.color ?? "#0f172a";
   const displayFields = getDisplayFields(row);
 
   return (
@@ -4593,7 +4648,7 @@ function ReportDetailModal({ row, onClose }) {
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="flex items-center gap-3 mb-4">
-            <span className="inline-flex items-center gap-1.5 bg-[#eef4fb] border border-[#dce8f4] px-3 py-1 rounded-full text-xs font-semibold text-[#1a3a5c]">
+            <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] border border-[#dbeafe] px-3 py-1 rounded-full text-xs font-semibold text-[#0f172a]">
               <span
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: accentColor }}
@@ -4632,7 +4687,7 @@ function ReportDetailModal({ row, onClose }) {
         <div className="px-6 pb-5 pt-3 flex items-center justify-end border-t border-[#f1f5f9] flex-shrink-0">
           <button
             onClick={onClose}
-            className="bg-[#1a3a5c] hover:bg-[#122840] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
+            className="bg-[#0f172a] hover:bg-[#0f172a] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all"
           >
             Close
           </button>
@@ -4748,7 +4803,7 @@ function ReportHistorySection({ woreda }) {
         <button
           onClick={() => setShowPrintModal(true)}
           disabled={rows.length === 0}
-          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+          className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
         >
           <svg
             className="w-4 h-4"
@@ -4810,7 +4865,7 @@ function ReportHistorySection({ woreda }) {
             <select
               value={isCustom ? "custom" : filterPeriod}
               onChange={(e) => handlePeriodChange(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Periods</option>
               {REPORT_PERIOD_TYPES.map((t) => (
@@ -4829,7 +4884,7 @@ function ReportHistorySection({ woreda }) {
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
@@ -4841,7 +4896,7 @@ function ReportHistorySection({ woreda }) {
           </div>
 
           <div className="flex-shrink-0 pb-0.5">
-            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
+            <span className="inline-block bg-[#eff6ff] text-[#0f172a] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dbeafe]">
               {loading
                 ? "..."
                 : `${filteredRows.length} result${filteredRows.length !== 1 ? "s" : ""}`}
@@ -4865,7 +4920,7 @@ function ReportHistorySection({ woreda }) {
                   onChange={(e) => setCustomFiscal(Number(e.target.value))}
                   min="2000"
                   max="2100"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
                 />
               </div>
               <div>
@@ -4876,7 +4931,7 @@ function ReportHistorySection({ woreda }) {
                   <select
                     value={startMonth}
                     onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_MONTHS.map((m) => (
                       <option key={m.name} value={m.name}>
@@ -4887,7 +4942,7 @@ function ReportHistorySection({ woreda }) {
                   <select
                     value={startDay}
                     onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_DAYS.map((d) => (
                       <option key={d} value={d}>
@@ -4905,7 +4960,7 @@ function ReportHistorySection({ woreda }) {
                   <select
                     value={endMonth}
                     onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_MONTHS.map((m) => (
                       <option key={m.name} value={m.name}>
@@ -4916,7 +4971,7 @@ function ReportHistorySection({ woreda }) {
                   <select
                     value={endDay}
                     onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f4f6f9] focus:outline-none"
+                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
                   >
                     {OROMO_DAYS.map((d) => (
                       <option key={d} value={d}>
@@ -4937,7 +4992,7 @@ function ReportHistorySection({ woreda }) {
             )}
             <button
               onClick={handleApplyCustom}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
               <AnalysisIcon />
               Apply Date Range
@@ -4964,7 +5019,7 @@ function ReportHistorySection({ woreda }) {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3">
-            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
             <span className="text-sm text-[#64748b]">
               Loading report history...
             </span>
@@ -4991,7 +5046,7 @@ function ReportHistorySection({ woreda }) {
                   <tr>
                     <td colSpan={4} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                        <div className="w-10 h-10 rounded-full bg-[#f8fafc] flex items-center justify-center text-[#94a3b8]">
                           <HistoryIcon />
                         </div>
                         <p className="text-[#94a3b8] text-sm">
@@ -5038,7 +5093,7 @@ function ReportHistorySection({ woreda }) {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setModalRow(row)}
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#0f172a] hover:text-[#1e3a5f] bg-[#eff6ff] hover:bg-[#dbeafe] px-3 py-1.5 rounded-lg transition-all"
                             >
                               <svg
                                 className="w-3.5 h-3.5"
@@ -5157,7 +5212,7 @@ function AnnouncementsViewPage({ onRead }) {
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
         </div>
       ) : error ? (
         <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
@@ -5399,14 +5454,14 @@ export default function WoRedaDashboard() {
 
   return (
     <div
-      className="flex h-screen max-h-screen bg-[#f4f6f9] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
+      className="flex h-screen max-h-screen bg-[#f8fafc] font-['DM_Sans',system-ui,sans-serif] overflow-hidden"
       style={{ position: "fixed", inset: 0 }}
     >
       {/* ════ SIDEBAR ════ */}
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
         style={{
-          background: "linear-gradient(180deg,#1a3a5c 0%,#0d1f35 100%)",
+          background: "linear-gradient(180deg,#0f172a 0%,#020617 100%)",
         }}
       >
         <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10 flex-shrink-0">
@@ -5565,12 +5620,12 @@ export default function WoRedaDashboard() {
                 Welcome back! {u.name}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="rounded-xl border bg-[#eef4fb] border-[#dce8f4] text-[#1a3a5c] p-5">
+                <div className="rounded-xl border bg-[#eff6ff] border-[#dbeafe] text-[#0f172a] p-5">
                   <p className="text-3xl font-bold leading-tight">
                     {dashStats ? dashStats.total : "…"}
                   </p>
                   <p className="text-sm mt-1 font-semibold">Total Submitted</p>
-                  <p className="text-xs mt-0.5 text-[#1a3a5c]/60">
+                  <p className="text-xs mt-0.5 text-[#0f172a]/60">
                     all sectors, all time
                   </p>
                 </div>
@@ -5843,7 +5898,7 @@ export default function WoRedaDashboard() {
               </h1>
               <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 max-w-lg">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-lg font-bold">
+                  <div className="w-14 h-14 rounded-full bg-[#0f172a] flex items-center justify-center text-white text-lg font-bold">
                     {u.initials}
                   </div>
                   <div>
@@ -5864,7 +5919,7 @@ export default function WoRedaDashboard() {
                       <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
                         {label}
                       </p>
-                      <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
+                      <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f8fafc]">
                         {value}
                       </p>
                     </div>

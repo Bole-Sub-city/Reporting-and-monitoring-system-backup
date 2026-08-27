@@ -1,132 +1,275 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
+import { useState } from "react";
 import logo from "../assets/adamalogo.png";
 
-function Home() {
-  return (
-    <div className="min-h-screen bg-[#f4f6f9] text-[#1e293b] font-['DM_Sans',system-ui,sans-serif]">
+/* ─────────────────────────────────────────────────────────────
+   TAB DEFINITIONS
+   Each tab has a label, a card header title, and body content.
+   Tabs without real text yet use "placeholder".
+───────────────────────────────────────────────────────────────*/
+const TABS = [
+  {
+    label: "Buusaa Gonofaa",
+    heading: "Buusaa Gonofaa fi Hawaasa Of-dandachisuu",
+    body: (
+      <>
+        <p className="text-[#475569] text-sm leading-relaxed">
+          Buusaa Gonofaa jechun miira huumaniitarii (namoomaa) irratti
+          hundaa&apos;uun caasaa mootummaa Naannoo Oromiyaa keessatti lubbuu dhala
+          namaa baraaruu fi jireenya lammiilee sababa adda addaan rakkatan
+          salphisuuf hundaa&apos;e dha. Caasaan kun aadaa wal-gargaarsa Oromoo
+          durii guutuu biyyattii keessatti beekamu irratti hundaa&apos;uun,
+          Balaawwan Ittisuu fi Qophaa&apos;ummaa, Gargaarsa Hatattamaa
+          Qaqqabsiisuu, Deeggarsa Buqqaatotaa (IDPs), Sagantaa Nyaata Mana
+          Barumsaa fi Hawaasa Of-dandachisuu.
+        </p>
+      </>
+    ),
+  },
+  {
+    label: "Qonna",
+    heading: "Qonna",
+    body: (
+      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+    ),
+  },
+  {
+    label: "Galii Sassaabu",
+    heading: "Gelii sassaabu",
+    body: (
+      <p className="text-[#475569] text-sm leading-relaxed">
+        Galii sassaabuun madda maallaqaa mootummaan ykn dhaabbanni tokko
+        tajaajila hawaasaa, misoomaa fi bulchiinsaaf akka ooluuf gibira, taaksii
+        fi kaffaltii garaagaraa daldaltootaa fi lammiirraa seeraan walitti
+        qabudha. Faayidaa Galii Sassaabuun Misooma Ijaarsaa: Daandii, mana
+        barnootaa fi hospitaala ijaaruuf gargaara. Tajaajila Hawaasaa: Fayyaa,
+        barnoota fi nageenya mirkaneessa. Diinagdee Cimseetti motummaa
+        walabummaan akka hojjetu taasisaa.
+      </p>
+    ),
+  },
+  {
+    label: "Carraa Hojii Uumuu",
+    heading: "Carraa Hojii Uumuu",
+    body: (
+      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+    ),
+  },
+  {
+    label: "Daldalaa",
+    heading: "Daldalaa",
+    body: (
+      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+    ),
+  },
+  {
+    label: "ATK",
+    heading: "ATK",
+    body: (
+      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+    ),
+  },
+];
 
-      {/* ── Header ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-end px-6 py-5 pointer-events-none bg-[#f4f6f9]/90 backdrop-blur-sm border-b border-[#e2e8f0]">
-        <nav className="pointer-events-auto">
+/* ─────────────────────────────────────────────────────────────
+   HOME PAGE
+───────────────────────────────────────────────────────────────*/
+function Home() {
+  const [activeTab, setActiveTab] = useState(0);
+  const currentTab = TABS[activeTab];
+
+  return (
+    <div className="min-h-screen bg-white text-[#1e293b] font-['DM_Sans',system-ui,sans-serif]">
+
+      {/* ══════════════════════════════════════════
+          HEADER
+      ══════════════════════════════════════════ */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 bg-[#0a1628]/95 backdrop-blur-sm">
+        {/* Logo + brand */}
+        <div className="flex items-center gap-3">
+          <img
+            src={logo}
+            alt="logo"
+            className="w-9 h-9 rounded-full object-cover ring-2 ring-white/20"
+          />
+          <span className="text-white text-sm font-semibold leading-tight hidden sm:block">
+            Bulchiinsa Kuutaa<br />
+            <span className="text-[#93c5fd] font-normal text-xs">Magaalaa Adaamaa Boolee</span>
+          </span>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex items-center gap-6">
           <Link
             to="/login"
-            className="bg-[#1a3a5c] text-white px-6 py-2 rounded-full text-sm font-medium
-                       hover:bg-[#1e4976] transition-all duration-200"
-          >
-            Login
+            className="bg-[#3b82f6] hover:bg-[#2563eb] text-[#0a1628] font-bold
+                       px-7 py-3 rounded-full text-sm tracking-wide transition-all duration-200
+                       hover:-translate-y-0.5 shadow-lg">
+           Login
           </Link>
         </nav>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="min-h-screen flex items-center justify-center text-center px-4 pt-16 relative overflow-hidden bg-[#f4f6f9]">
-        {/* Subtle top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-[#1a3a5c]" />
+      {/* ══════════════════════════════════════════
+          HERO  (dark navy background)
+      ══════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-20 pb-10 overflow-hidden bg-[#0a1628]">
 
-        <div className="relative z-10 max-w-3xl mx-auto animate-rise">
-          {/* Logo */}
-          <div className="flex justify-center mb-8">
-            <img
-              src={logo}
-              alt="Buusaa Gonofaa logo"
-              className="w-28 h-28 rounded-full object-cover shadow-lg ring-4 ring-[#e2e8f0]"
-            />
-          </div>
+        {/* Radial glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-[#1d6fce]/20 blur-[120px] pointer-events-none" />
 
-          {/* Location badge */}
-          <p className="inline-block mb-4 tracking-[0.2em] uppercase text-xs font-semibold text-[#64748b] bg-[#eef4fb] border border-[#dce8f4] px-3 py-1 rounded-full">
-            Adama, Oromia
-          </p>
-
-          {/* Title */}
-          <h1 className="font-['Fraunces',Georgia,serif] text-4xl md:text-5xl font-bold leading-tight text-[#1a3a5c] mb-5 mt-4">
-            Bulchiinsa Kutaa Magaalaa Adaamaa Boolee
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-[#64748b] text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10">
-            Reporting and monitoring for Sub-city, Wereda, and Section teams —
-            daily, weekly, and monthly submissions in one place.
-          </p>
-
-          {/* CTA buttons */}
-          <div className="flex flex-wrap gap-3 justify-center">
-            <a
-              href="#about"
-              className="bg-[#1a3a5c] hover:bg-[#1e4976] text-white font-semibold
-                         px-7 py-3 rounded-full text-sm tracking-wide transition-all duration-200
-                         hover:-translate-y-0.5 shadow-sm"
-            >
-              About System
-            </a>
-            <a
-              href="#about2"
-              className="border border-[#1a3a5c]/30 text-[#1a3a5c] font-semibold
-                         px-7 py-3 rounded-full text-sm tracking-wide bg-white
-                         hover:bg-[#eef4fb] hover:border-[#1a3a5c]/60 transition-all duration-200"
-            >
-              About Service
-            </a>
+        {/* Logo */}
+        <div className="relative z-10 mb-6">
+          <div className="w-24 h-24 rounded-full bg-[#1a3a6e] ring-4 ring-[#1d6fce]/50 shadow-xl flex items-center justify-center overflow-hidden">
+            <img src={logo} alt="logo" className="w-full h-full object-cover" />
           </div>
         </div>
-      </section>
 
-      {/* ── About System ── */}
-      <section
-        id="about"
-        className="py-20 border-t border-[#e2e8f0] bg-white"
-      >
-        <div className="max-w-3xl mx-auto px-6">
-          <h2
-            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#1a3a5c]
-                         border-l-4 border-[#1a3a5c] pl-4 mb-5"
+        {/* Title */}
+        <h1 className="relative z-10 font-['Fraunces',Georgia,serif] text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white mb-4 animate-rise">
+          Bulchiinsa Kuutaa<br />
+          Magaalaa{" "}
+          <span className="text-[#3b82f6]">Adaamaa<br />Boolee</span>
+        </h1>
+
+        {/* Subtitle — exact original text */}
+        <p className="relative z-10 text-white/60 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10 animate-rise">
+          Reporting and monitoring for Sub-city, Wereda, and Section teams —
+          daily, weekly, and monthly submissions in one place.
+        </p>
+
+        {/* CTA buttons — exact original text */}
+        <div className="relative z-10 flex flex-wrap gap-3 justify-center mb-16 animate-rise">
+          <a
+            href="#about"
+            className="bg-[#3b82f6] hover:bg-[#2563eb] text-[#0a1628] font-bold
+                       px-7 py-3 rounded-full text-sm tracking-wide transition-all duration-200
+                       hover:-translate-y-0.5 shadow-lg"
           >
-            Bulchiinsa Kutaa magaalaa Adaamaa Booleetiif kan qophaa'e
-          </h2>
-          <p className="text-[#64748b] text-base leading-relaxed">
-            place holder
-          </p>
+            About System
+          </a>
+          <a
+            href="#about2"
+            className="border border-white/30 text-white font-semibold
+                       px-7 py-3 rounded-full text-sm tracking-wide
+                       hover:bg-white/10 hover:border-white/50 transition-all duration-200"
+          >
+            About Service
+          </a>
+        </div>
+
+        {/* Stats bar */}
+        <div className="relative z-10 w-full max-w-3xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-2xl grid grid-cols-2 md:grid-cols-4">
+            {[
+              { value: "4",    label: "Woredas",              numColor: "text-[#1d6fce]", bg: "bg-[#eff6ff]" },
+              { value: "6",    label: "Sectors",              numColor: "text-[#7c3aed]", bg: "bg-[#f5f3ff]" },
+              { value: "100%", label: "Annual plan Division", numColor: "text-[#059669]", bg: "bg-[#ecfdf5]" },
+              { value: "24/7", label: "working",              numColor: "text-[#3b82f6]", bg: "bg-[#fffbeb]" },
+            ].map((stat, i) => (
+              <div key={i} className={`flex flex-col items-center justify-center py-6 px-4 ${i < 3 ? "border-r border-[#e2e8f0]" : ""}`}>
+                <div className={`w-14 h-14 rounded-full ${stat.bg} flex items-center justify-center mb-2`}>
+                  <span className={`${stat.numColor} font-['Fraunces',Georgia,serif] text-xl font-bold`}>
+                    {stat.value}
+                  </span>
+                </div>
+                <span className="text-[#64748b] text-xs text-center leading-snug">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── About Service ── */}
-      <section
-        id="about2"
-        className="py-20 border-t border-[#e2e8f0] bg-[#f4f6f9]"
-      >
-        <div className="max-w-3xl mx-auto px-6">
-          <h2
-            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#1a3a5c]
-                         border-l-4 border-[#1a3a5c] pl-4 mb-5"
-          >
-            Buusaa Gonofaa
-          </h2>
-          <p className="text-[#64748b] text-base leading-relaxed mb-10">
-            Buusaa Gonofaa jechun miira huumaniitarii (namoomaa) irratti
-            hundaa'uun caasaa mootummaa Naannoo Oromiyaa keessatti lubbuu dhala
-            namaa baraaruu fi jireenya lammiilee sababa adda addaan rakkatan
-            salphisuuf hundaa'e dha. Caasaan kun aadaa wal-gargaarsa Oromoo
-            durii guutuu biyyattii keessatti beekamu irratti hundaa'uun,
-            Balaawwan Ittisuu fi Qophaa'ummaa, Gargaarsa Hatattamaa
-            Qaqqabsiisuu, Deeggarsa Buqqaatotaa (IDPs), Sagantaa Nyaata Mana
-            Barumsaa fi Hawaasa Of-dandachisuu.
-          </p>
+      {/* ══════════════════════════════════════════
+          ABOUT SYSTEM  (white bg, tabs)
+      ══════════════════════════════════════════ */}
+      <section id="about" className="py-20 bg-white">
+        <div className="max-w-5xl mx-auto px-6">
 
-          <h2
-            className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#1a3a5c]
-                         border-l-4 border-[#1a3a5c] pl-4 mb-5"
-          >
-            Gelii sassaabu
+          {/* Heading — exact original text */}
+          <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#0a1628] text-center mb-10">
+            Bulchiinsa Kutaa magaalaa Adaamaa Booleetiif kan qophaa&apos;e
           </h2>
-          <p className="text-[#64748b] text-base leading-relaxed">
-           Galii sassaabuun madda maallaqaa mootummaan ykn dhaabbanni tokko tajaajila hawaasaa, misoomaa fi bulchiinsaaf akka ooluuf gibira, taaksii fi kaffaltii garaagaraa daldaltootaa fi lammiirraa seeraan walitti qabudha Faayidaa Galii SassaabuuMisooma Ijaarsaa: Daandii, mana barnootaa fi hospitaala ijaaruuf gargaara.Tajaajila Hawaasaa: Fayyaa, barnoota fi nageenya mirkaneessa.Diinagdee Cimseetti motummaa walabummaan akka hojjetu taasisaa.
-          </p>
+
+          {/* Tabs */}
+          <div className="flex flex-wrap gap-2 justify-center mb-10">
+            {TABS.map((tab, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTab(i)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  activeTab === i
+                    ? "bg-[#0a1628] text-white shadow-md"
+                    : "bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content card — driven by activeTab */}
+          <div className="rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+            {/* Card header */}
+            <div className="bg-[#f8fafc] border-b border-[#e2e8f0] px-6 py-4">
+              <h3 className="font-['Fraunces',Georgia,serif] text-xl font-bold text-[#0a1628]">
+                {currentTab.heading}
+              </h3>
+            </div>
+            {/* Card body */}
+            <div className="bg-white px-6 py-6">
+              {currentTab.body}
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="about2" className="py-20 bg-[#0a1628]">
+        <div className="max-w-5xl mx-auto px-6">
+
+          {/* Heading — exact original text */}
+          <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-white text-center mb-4">
+            About service
+          </h2>
+         
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {[
+              {
+                num: "01",
+                title: "Annual Plan Distribution & Woreda Allocation",
+                body: "The system enables sub-city administrators to create and distribute annual work plans across all woredas. Each woreda receives a clearly defined share of targets based on capacity and population. Plans can be broken down by sector, time period, and responsible unit. This ensures every woreda operates from a unified, traceable plan aligned with the sub-city's overall goals.",
+              },
+              {
+                num: "02",
+                title: "Report Submission & Progress Tracking",
+                body: "Woredas and sector offices submit their daily, weekly, and monthly reports directly through the system. Each submission is tied to the original plan, making it easy to measure actual progress against set targets. Supervisors can review, approve, or flag reports in real time. This creates a transparent, accountable chain of reporting from the field level up to sub-city management.",
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className="bg-[#0f2040] border border-white/10 rounded-2xl p-6 hover:border-[#1d6fce]/50 transition-all duration-200 hover:-translate-y-1"
+              >
+                <span className="inline-block text-[#1d6fce] font-['Fraunces',Georgia,serif] text-4xl font-bold mb-4 leading-none">
+                  {card.num}
+                </span>
+                <h3 className="text-white font-semibold text-base mb-3">
+                  {card.title}
+                </h3>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="bg-[#1a3a5c] border-t border-[#1e4976] py-6 text-center text-white/60 text-sm">
-         Reporting System &middot; Adama, Oromia
+      {/* ══════════════════════════════════════════
+          FOOTER
+      ══════════════════════════════════════════ */}
+      <footer className="bg-[#060e1c] border-t border-white/10 py-6 text-center text-white/40 text-sm">
+        Reporting System &middot; Adama, Oromia
       </footer>
     </div>
   );

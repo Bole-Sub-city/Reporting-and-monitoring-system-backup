@@ -1,8 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AuthLayout from "../components/layout/AuthLayout";
 import api from "../api/api";
+import logo from "../assets/adamalogo.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -90,12 +91,23 @@ export default function Login() {
   return (
     <AuthLayout>
       <div className="w-full max-w-md">
-        <div className="rounded-xl border border-[#e2e8f0] bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-center font-serif text-2xl font-semibold text-[#1a3a5c]">
+        {/* Gradient border wrapper — amber → navy on all sides */}
+        <div className="rounded-2xl bg-gradient-to-r from-[#3b82f6] to-[#0f172a] p-[4px] shadow-lg">
+          <div className="rounded-2xl bg-white p-8 sm:p-10">
+
+          {/* Small logo inside card */}
+          <div className="flex justify-center mb-6">
+            <img
+              src={logo}
+              alt="logo"
+              className="w-14 h-14 rounded-full object-cover shadow-sm ring-2 ring-[#e2e8f0]"
+            />
+          </div>
+
+          <h2 className="text-center text-2xl font-semibold text-[#0f172a]">
             Sign in to your account
           </h2>
-
-          <p className="mt-2 text-center text-sm text-[#64748b]">
+          <p className="mt-1 text-center text-xs font-semibold tracking-widest text-[#475569]">
             Enter your credentials to access your dashboard.
           </p>
 
@@ -105,11 +117,11 @@ export default function Login() {
             </p>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+          <form onSubmit={handleSubmit} className="mt-7 space-y-5" noValidate>
             <div className="w-full text-left">
               <label
                 htmlFor="username"
-                className="mb-1.5 block text-sm font-medium text-[#334155]"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-[#334155]"
               >
                 Username
               </label>
@@ -122,9 +134,9 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="username"
                 className={[
-                  "w-full rounded-lg border bg-[#f4f6f9] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#94a3b8]",
+                  "w-full rounded-lg border bg-[#f8fafc] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#cbd5e1]",
                   "transition-colors duration-200",
-                  "focus:border-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/15",
+                  "focus:border-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/15",
                   errors.username ? "border-red-400" : "border-[#e2e8f0]",
                 ].join(" ")}
               />
@@ -138,7 +150,7 @@ export default function Login() {
             <div className="w-full text-left">
               <label
                 htmlFor="password"
-                className="mb-1.5 block text-sm font-medium text-[#334155]"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-[#334155]"
               >
                 Password
               </label>
@@ -151,9 +163,9 @@ export default function Login() {
                 onChange={handleChange}
                 autoComplete="current-password"
                 className={[
-                  "w-full rounded-lg border bg-[#f4f6f9] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#94a3b8]",
+                  "w-full rounded-lg border bg-[#f8fafc] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#cbd5e1]",
                   "transition-colors duration-200",
-                  "focus:border-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/15",
+                  "focus:border-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/15",
                   errors.password ? "border-red-400" : "border-[#e2e8f0]",
                 ].join(" ")}
               />
@@ -167,14 +179,15 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-lg bg-[#1a3a5c] px-8 py-3 text-base font-semibold text-white
-                         transition-all duration-200 hover:bg-[#1e4976]
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a3a5c]/40
-                         disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+              className="w-full rounded-lg bg-[#3b82f6] hover:bg-[#2563eb] px-8 py-3 text-base font-bold text-white
+                         transition-all duration-200 hover:-translate-y-0.5 shadow-md
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/40
+                         disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
           </form>
+        </div>
         </div>
       </div>
     </AuthLayout>
