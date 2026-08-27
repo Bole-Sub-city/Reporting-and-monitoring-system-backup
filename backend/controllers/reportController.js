@@ -508,11 +508,24 @@ function tagRows(rows, sector) {
 // GET /api/reports/my-reports
 // Returns all reports submitted by the currently logged-in woreda user
 // across every sector table, merged and sorted newest-first.
-// Supports optional query filters: report_type, date_from, date_to
+// Supports optional query filters: sector, report_type, date_from, date_to
 const getMyReports = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { report_type, date_from, date_to } = req.query;
+    const { sector, report_type, date_from, date_to } = req.query;
+
+    const TABLE_MAP = {
+      buusaa:      "buusaa_reports",
+      carraaHojii: "carraa_hojii_uumuu",
+      qonna:       "qonna",
+      daldala:     "Daldala",
+      atk:         "ATK",
+    };
+
+    const sectorsToFetch =
+      sector && sector !== "all" && TABLE_MAP[sector]
+        ? [sector]
+        : Object.keys(TABLE_MAP);
 
     const buildQuery = (table) => {
       let q = supabase
@@ -521,37 +534,27 @@ const getMyReports = async (req, res) => {
         .eq("user_id", userId)
         .order("report_date", { ascending: false });
       if (report_type) q = q.eq("report_type", report_type);
-      if (date_from) q = q.gte("report_date", date_from);
-      if (date_to) q = q.lte("report_date", date_to);
+      if (date_from)   q = q.gte("report_date", date_from);
+      if (date_to)     q = q.lte("report_date", date_to);
       return q;
     };
 
-    const [buusaa, carraa, qonna, daldala, atk] = await Promise.all([
-      buildQuery("buusaa_reports"),
-      buildQuery("carraa_hojii_uumuu"),
-      buildQuery("qonna"),
-      buildQuery("Daldala"),
-      buildQuery("ATK"),
-    ]);
+    const results = await Promise.all(
+      sectorsToFetch.map((s) => buildQuery(TABLE_MAP[s])),
+    );
 
-    const errors = [buusaa, carraa, qonna, daldala, atk]
-      .map((r) => r.error)
-      .filter(Boolean);
+    const errors = results.map((r) => r.error).filter(Boolean);
     if (errors.length) {
       return res.status(400).json({ message: errors[0].message });
     }
 
-    const merged = [
-      ...tagRows(buusaa.data || [], "buusaa"),
-      ...tagRows(carraa.data || [], "carraaHojii"),
-      ...tagRows(qonna.data || [], "qonna"),
-      ...tagRows(daldala.data || [], "daldala"),
-      ...tagRows(atk.data || [], "atk"),
-    ].sort((a, b) => {
-      const da = a.report_date || a.created_at || "";
-      const db = b.report_date || b.created_at || "";
-      return db.localeCompare(da);
-    });
+    const merged = sectorsToFetch
+      .flatMap((s, i) => tagRows(results[i].data || [], s))
+      .sort((a, b) => {
+        const da = a.report_date || a.created_at || "";
+        const db = b.report_date || b.created_at || "";
+        return db.localeCompare(da);
+      });
 
     res.json(merged);
   } catch (err) {
