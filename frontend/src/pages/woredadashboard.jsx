@@ -4956,14 +4956,6 @@ function ReportHistorySection({ woreda }) {
                   Start Date
                 </label>
                 <input
-<<<<<<< Updated upstream
-                  type="number"
-                  value={customFiscal}
-                  onChange={(e) => setCustomFiscal(Number(e.target.value))}
-                  min="2000"
-                  max="2100"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
-=======
                   type="date"
                   value={customFrom}
                   onChange={(e) => {
@@ -4971,68 +4963,10 @@ function ReportHistorySection({ woreda }) {
                     setAppliedRange(null);
                   }}
                   className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
->>>>>>> Stashed changes
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[#64748b] mb-1">
-<<<<<<< Updated upstream
-                  Start Date
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={startMonth}
-                    onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={startDay}
-                    onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  End Date
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={endMonth}
-                    onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={endDay}
-                    onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-=======
                   End Date
                 </label>
                 <input
@@ -5044,7 +4978,6 @@ function ReportHistorySection({ woreda }) {
                   }}
                   className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
                 />
->>>>>>> Stashed changes
               </div>
             </div>
             {customDateErr && (
@@ -6247,45 +6180,7 @@ export default function WoRedaDashboard() {
           )}
 
           {activeNav === "profile" && (
-<<<<<<< Updated upstream
-            <div>
-              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
-                Profile & Settings
-              </h1>
-              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 max-w-lg">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-[#0f172a] flex items-center justify-center text-white text-lg font-bold">
-                    {u.initials}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#1e293b] text-lg">{u.name}</p>
-                    <p className="text-[#64748b] text-sm">
-                      {u.subcity} &middot; {u.woreda}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: "Full Name", value: u.name },
-                    { label: "Role", value: u.role },
-                    { label: "Woreda", value: u.woreda },
-                    { label: "Sub-city", value: u.subcity },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
-                        {label}
-                      </p>
-                      <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f8fafc]">
-                        {value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-=======
             <WoRedaProfilePage u={u} />
->>>>>>> Stashed changes
           )}
         </main>
       </div>
