@@ -16,14 +16,13 @@ import {
   createAnnouncement,
   fetchAnnouncements,
   deleteAnnouncement,
+  fetchAllPhotos,
+  fetchLatestPhotosPerWoreda,
 } from "../api/planApi";
 import {
   fetchAllWoredaReports,
-  fetchAllWoredaReportsByFiscalYear,
-  currentFiscalYear,
   submitSubcityRevenueReport,
 } from "../api/reportApi";
-import { fetchArchivedPlans, fetchSubcityLivePlans } from "../api/planApi";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
 function friendlyError(
@@ -406,110 +405,39 @@ const RevenueNavIcon = () => (
   </svg>
 );
 const ProfileNavIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    viewBox="0 0 24 24"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
   </svg>
 );
 const ArchiveNavIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    viewBox="0 0 24 24"
-  >
-    <polyline points="21 8 21 21 3 21 3 8" />
-    <rect x="1" y="3" width="22" height="5" />
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" />
     <line x1="10" y1="12" x2="14" y2="12" />
   </svg>
 );
-const EyeIconSC = ({ show }) =>
-  show ? (
-    <svg
-      className="w-4 h-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-    >
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  ) : (
-    <svg
-      className="w-4 h-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-    >
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
+const EyeIconSC = ({ show }) => show ? (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+) : (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+  </svg>
+);
 const CameraIconSC = () => (
-  <svg
-    className="w-3.5 h-3.5 text-white"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    viewBox="0 0 24 24"
-  >
+  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
     <circle cx="12" cy="13" r="4" />
   </svg>
 );
 const UnlockNavIcon = () => (
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    viewBox="0 0 24 24"
-  >
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 9.9-1" />
   </svg>
 );
-
-// ─── Shared image resize helper ───────────────────────────────────────────────
-function resizeImageToBase64(file, maxPx = 800, quality = 0.75) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Failed to read file."));
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Failed to load image."));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxPx || height > maxPx) {
-          if (width >= height) {
-            height = Math.round((height / width) * maxPx);
-            width = maxPx;
-          } else {
-            width = Math.round((width / height) * maxPx);
-            height = maxPx;
-          }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 // ─── Subcity Profile Page ─────────────────────────────────────────────────────
 function SubcityProfilePage({ user }) {
@@ -528,66 +456,48 @@ function SubcityProfilePage({ user }) {
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
 
-  const authHdr = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  });
+  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setPhotoError("Please select an image file.");
-      return;
-    }
-    setPhotoError("");
-    setPhotoLoading(true);
-    try {
-      const resized = await resizeImageToBase64(file, 800, 0.75);
-      const apiInst = (await import("../api/api")).default;
-      await apiInst.post("/auth/profile/photo", { photo: resized }, authHdr());
-      setPhoto(resized);
-      const stored = JSON.parse(localStorage.getItem("user") || "{}");
-      stored.profile_photo = resized;
-      localStorage.setItem("user", JSON.stringify(stored));
-      setPhotoSuccess("Profile photo updated.");
-      setTimeout(() => setPhotoSuccess(""), 3000);
-    } catch (err) {
-      setPhotoError(err.response?.data?.message || "Failed to upload photo.");
-    } finally {
-      setPhotoLoading(false);
-    }
+    if (!file.type.startsWith("image/")) { setPhotoError("Please select an image file."); return; }
+    if (file.size > 2_000_000) { setPhotoError("Image must be under 2 MB."); return; }
+    setPhotoError(""); setPhotoLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64 = ev.target.result;
+      try {
+        const apiInst = (await import("../api/api")).default;
+        await apiInst.post("/auth/profile/photo", { photo: base64 }, authHdr());
+        setPhoto(base64);
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        stored.profile_photo = base64;
+        localStorage.setItem("user", JSON.stringify(stored));
+        setPhotoSuccess("Profile photo updated.");
+        setTimeout(() => setPhotoSuccess(""), 3000);
+      } catch (err) {
+        setPhotoError(err.response?.data?.message || "Failed to upload photo.");
+      } finally { setPhotoLoading(false); }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    setPwError("");
-    setPwSuccess("");
-    if (!oldPw) {
-      setPwError("Enter your current password.");
-      return;
-    }
-    if (newPw.length < 6) {
-      setPwError("New password must be at least 6 characters.");
-      return;
-    }
+    setPwError(""); setPwSuccess("");
+    if (!oldPw) { setPwError("Enter your current password."); return; }
+    if (newPw.length < 6) { setPwError("New password must be at least 6 characters."); return; }
     setPwLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      await apiInst.post(
-        "/auth/change-password",
-        { old_password: oldPw, new_password: newPw },
-        authHdr(),
-      );
+      await apiInst.post("/auth/change-password", { old_password: oldPw, new_password: newPw }, authHdr());
       setPwSuccess("Password changed successfully.");
-      setOldPw("");
-      setNewPw("");
-      setShowPwSection(false);
+      setOldPw(""); setNewPw(""); setShowPwSection(false);
       setTimeout(() => setPwSuccess(""), 4000);
     } catch (err) {
       setPwError(err.response?.data?.message || "Failed to change password.");
-    } finally {
-      setPwLoading(false);
-    }
+    } finally { setPwLoading(false); }
   };
 
   const ROLE_COLORS_SC = {
@@ -599,71 +509,37 @@ function SubcityProfilePage({ user }) {
   return (
     <div className="max-w-lg">
       <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Profile</h1>
-      <p className="text-[#64748b] text-sm mb-6">
-        Manage your account information and security.
-      </p>
+      <p className="text-[#64748b] text-sm mb-6">Manage your account information and security.</p>
 
       {/* Photo + info card */}
       <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6 mb-4">
         <div className="flex items-center gap-5 mb-6">
           <div className="relative flex-shrink-0">
             {photo ? (
-              <img
-                src={photo}
-                alt="Profile"
-                className="w-20 h-20 rounded-full object-cover border-2 border-[#dce8f4]"
-              />
+              <img src={photo} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-[#dce8f4]" />
             ) : (
               <div className="w-20 h-20 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-2xl font-bold border-2 border-[#dce8f4]">
                 {(u.username || "SC")[0].toUpperCase()}
               </div>
             )}
-            <label
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#1a3a5c] border-2 border-white flex items-center justify-center cursor-pointer hover:bg-[#1e4976] transition-colors"
-              title="Change photo"
-            >
+            <label className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#1a3a5c] border-2 border-white flex items-center justify-center cursor-pointer hover:bg-[#1e4976] transition-colors" title="Change photo">
               <CameraIconSC />
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={handlePhotoChange}
-                disabled={photoLoading}
-              />
+              <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={photoLoading} />
             </label>
           </div>
           <div>
-            <p className="font-bold text-[#1e293b] text-lg">
-              {u.username || "Sub-city"}
-            </p>
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ROLE_COLORS_SC[u.role] ?? "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]"}`}
-            >
-              {u.role || "sub-city"}
-            </span>
+            <p className="font-bold text-[#1e293b] text-lg">{u.username || "Sub-city"}</p>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ROLE_COLORS_SC[u.role] ?? "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]"}`}>{u.role || "sub-city"}</span>
           </div>
         </div>
-        {photoLoading && (
-          <p className="text-xs text-[#64748b] mb-2">Uploading…</p>
-        )}
-        {photoError && (
-          <p className="text-xs text-red-600 mb-2">{photoError}</p>
-        )}
-        {photoSuccess && (
-          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
-        )}
+        {photoLoading && <p className="text-xs text-[#64748b] mb-2">Uploading…</p>}
+        {photoError && <p className="text-xs text-red-600 mb-2">{photoError}</p>}
+        {photoSuccess && <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>}
         <div className="space-y-3">
-          {[
-            { label: "Username", value: u.username || "—" },
-            { label: "Role", value: u.role || "sub-city" },
-          ].map(({ label, value }) => (
+          {[{ label: "Username", value: u.username || "—" }, { label: "Role", value: u.role || "sub-city" }].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
-                {label}
-              </p>
-              <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
-                {value}
-              </p>
+              <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">{label}</p>
+              <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">{value}</p>
             </div>
           ))}
         </div>
@@ -676,77 +552,35 @@ function SubcityProfilePage({ user }) {
             <p className="font-semibold text-[#1e293b]">Password</p>
             <p className="text-xs text-[#94a3b8]">Change your login password</p>
           </div>
-          <button
-            onClick={() => {
-              setShowPwSection((p) => !p);
-              setPwError("");
-              setPwSuccess("");
-              setOldPw("");
-              setNewPw("");
-            }}
-            className="text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-          >
+          <button onClick={() => { setShowPwSection(p => !p); setPwError(""); setPwSuccess(""); setOldPw(""); setNewPw(""); }}
+            className="text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all">
             {showPwSection ? "Cancel" : "Change Password"}
           </button>
         </div>
         {pwSuccess && (
           <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-            <CheckIcon />
-            <p className="text-[#166534] text-sm">{pwSuccess}</p>
+            <CheckIcon /><p className="text-[#166534] text-sm">{pwSuccess}</p>
           </div>
         )}
         {showPwSection && (
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="relative">
-              <label className="block text-sm font-medium text-[#334155] mb-1.5">
-                Current Password
-              </label>
-              <input
-                type={showOld ? "text" : "password"}
-                value={oldPw}
-                onChange={(e) => {
-                  setOldPw(e.target.value);
-                  setPwError("");
-                }}
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">Current Password</label>
+              <input type={showOld ? "text" : "password"} value={oldPw} onChange={e => { setOldPw(e.target.value); setPwError(""); }}
                 placeholder="Your current password"
-                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-              <button
-                type="button"
-                onClick={() => setShowOld((v) => !v)}
-                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
-              >
-                <EyeIconSC show={showOld} />
-              </button>
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+              <button type="button" onClick={() => setShowOld(v => !v)} className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"><EyeIconSC show={showOld} /></button>
             </div>
             <div className="relative">
-              <label className="block text-sm font-medium text-[#334155] mb-1.5">
-                New Password
-              </label>
-              <input
-                type={showNew ? "text" : "password"}
-                value={newPw}
-                onChange={(e) => {
-                  setNewPw(e.target.value);
-                  setPwError("");
-                }}
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">New Password</label>
+              <input type={showNew ? "text" : "password"} value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(""); }}
                 placeholder="Min. 6 characters"
-                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew((v) => !v)}
-                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
-              >
-                <EyeIconSC show={showNew} />
-              </button>
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
+              <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"><EyeIconSC show={showNew} /></button>
             </div>
             {pwError && <p className="text-xs text-red-600">{pwError}</p>}
-            <button
-              type="submit"
-              disabled={pwLoading}
-              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
-            >
+            <button type="submit" disabled={pwLoading}
+              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
               {pwLoading ? "Saving…" : "Update Password"}
             </button>
           </form>
@@ -757,75 +591,68 @@ function SubcityProfilePage({ user }) {
 }
 
 // ─── Plan Unlock Request Banner ───────────────────────────────────────────────
-// Uses the same edit_requests table/endpoints as woreda report edit requests.
-// report_date  = "YYYY-07-08"  (fiscal year start — unique key per year)
-// report_type  = "annual_plan" (distinguishes from daily report requests)
 function PlanUnlockBanner({ sector }) {
-  // status: null | "pending" | "approved" | "denied" | "used"
+  // status: null | "pending" | "approved" | "denied" | "expired"
   const [status, setStatus] = useState(null);
+  const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // fiscal year start date used as the unique report_date for this plan year
-  const fiscalYear = currentFiscalYear();
-  const reportDate = `${fiscalYear}-07-08`;
-  const reportType = "annual_plan";
-
-  const authHdr = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  });
+  const year = new Date().getFullYear();
+  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
   const fetchStatus = useCallback(async () => {
     setLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.get("/auth/edit-requests/mine", authHdr());
+      const res = await apiInst.get("/auth/plan-unlock-requests/mine", authHdr());
       const requests = res.data.requests || [];
-      // Match on sector + report_date + report_type
-      const mine = requests.find(
-        (r) =>
-          r.sector === sector &&
-          r.report_date === reportDate &&
-          r.report_type === reportType,
-      );
-      setStatus(mine ? mine.status : null);
-    } catch {
-      /* silent — don't break the form if the request fails */
-    } finally {
-      setLoading(false);
-    }
-  }, [sector, reportDate]);
+      const mine = requests.find(r => r.sector === sector && r.plan_year === year);
+      if (mine) {
+        // Client-side expiry check as well
+        const isClientExpired =
+          mine.status === "pending" &&
+          mine.expires_at &&
+          new Date(mine.expires_at) < new Date();
+        setStatus(isClientExpired ? "expired" : mine.status);
+        setExpiresAt(mine.expires_at || null);
+      } else {
+        setStatus(null);
+        setExpiresAt(null);
+      }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }, [sector, year]);
 
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
-  const handleRequest = async () => {
-    setRequesting(true);
-    setError("");
+  // Compute days remaining for a pending request
+  const daysRemaining = () => {
+    if (!expiresAt) return null;
+    const ms = new Date(expiresAt) - new Date();
+    if (ms <= 0) return 0;
+    return Math.ceil(ms / (1000 * 60 * 60 * 24));
+  };
+
+  const handleRequest = async (e) => {
+    e.preventDefault();
+    setRequesting(true); setError("");
     try {
       const apiInst = (await import("../api/api")).default;
-      await apiInst.post(
-        "/auth/edit-requests",
-        { sector, report_date: reportDate, report_type: reportType },
-        authHdr(),
-      );
+      const res = await apiInst.post("/auth/plan-unlock-requests", { sector, plan_year: year, reason }, authHdr());
       setStatus("pending");
-      setSuccess("Request sent. Waiting for admin approval.");
+      setExpiresAt(res.data?.expires_at || null);
+      setShowForm(false);
+      setReason("");
+      setSuccess("Unlock request submitted. Waiting for admin approval.");
       setTimeout(() => setSuccess(""), 5000);
     } catch (err) {
-      const msg = err.response?.data?.message || "Failed to submit request.";
-      // If already approved, refresh to pick up the approved state
-      if (msg.toLowerCase().includes("approved")) {
-        fetchStatus();
-      } else {
-        setError(msg);
-      }
-    } finally {
-      setRequesting(false);
-    }
+      setError(err.response?.data?.message || "Failed to submit request.");
+    } finally { setRequesting(false); }
   };
 
   if (loading) return null;
@@ -835,906 +662,165 @@ function PlanUnlockBanner({ sector }) {
     return (
       <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
         <CheckIcon />
-        <p className="text-[#166534] text-sm font-medium">
-          Plan unlock approved. You can now re-save the plan.
-        </p>
+        <p className="text-[#166534] text-sm font-medium">Plan unlock approved. You can now re-save the plan.</p>
       </div>
     );
   }
 
   // ── Pending ──
   if (status === "pending") {
+    const days = daysRemaining();
     return (
       <div className="mb-5 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3">
-        <div className="flex items-center gap-3">
-          <svg
-            className="w-4 h-4 text-[#b45309] flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 8v4M12 16h.01" />
-          </svg>
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[#92400e] text-sm font-medium">
-              Unlock request pending admin approval.
-            </p>
-            <p className="text-[#78350f] text-xs mt-0.5">
-              You will be able to re-save the plan once the admin approves.
-            </p>
+            <p className="text-[#92400e] text-sm font-medium">Unlock request pending admin approval.</p>
+            <p className="text-[#78350f] text-xs mt-0.5">You will be able to re-save the plan once the admin approves.</p>
           </div>
+          {days !== null && (
+            <span className={`flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${days <= 1 ? "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]" : "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"}`}>
+              {days === 0 ? "Expiring soon" : `${days}d left`}
+            </span>
+          )}
         </div>
       </div>
     );
   }
 
-  // ── Request button (null / denied / used) ──
+  // ── Expired or denied — allow re-requesting ──
+  const canReRequest = status === "expired" || status === "denied";
+
   return (
     <div className="mb-5">
       {success && (
         <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-          <CheckIcon />
-          <p className="text-[#166534] text-sm">{success}</p>
+          <CheckIcon /><p className="text-[#166534] text-sm">{success}</p>
         </div>
       )}
 
-      {status === "denied" && (
-        <div className="mb-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
-          <p className="text-[#991b1b] text-sm font-medium">
-            Previous request was denied.
-          </p>
-          <p className="text-[#94a3b8] text-xs mt-0.5">
-            You can request again below.
-          </p>
+      {/* Expired notice */}
+      {status === "expired" && (
+        <div className="mb-3 bg-[#f4f6f9] border border-[#cbd5e1] rounded-xl px-4 py-3">
+          <p className="text-[#475569] text-sm font-medium">Previous unlock request expired.</p>
+          <p className="text-[#94a3b8] text-xs mt-0.5">You can submit a new request below.</p>
         </div>
       )}
 
-      <div className="bg-[#f4f6f9] border border-[#e2e8f0] rounded-xl px-4 py-3 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-[#334155]">
-            {status === "denied"
-              ? "Request a new plan unlock"
-              : "Want to update this annual plan?"}
-          </p>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
-            Admin approval is needed to re-save an annual plan.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleRequest}
-            disabled={requesting}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all disabled:opacity-60"
-          >
-            {requesting ? (
-              <>
-                <svg
-                  className="w-3 h-3 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
-                </svg>
-                Sending…
-              </>
-            ) : (
-              <>
-                <UnlockNavIcon /> Request Unlock
-              </>
-            )}
-          </button>
-          {error && (
-            <p className="text-xs text-[#dc2626] text-right">{error}</p>
+      <div className="bg-[#f4f6f9] border border-[#e2e8f0] rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-[#334155]">
+              {canReRequest ? "Request a new plan unlock" : "Want to update this annual plan?"}
+            </p>
+            <p className="text-xs text-[#94a3b8] mt-0.5">
+              {canReRequest
+                ? "Your previous request expired or was denied. Submit a new one."
+                : "After a plan is saved, you need admin approval to re-save it. Requests expire after 5 days."}
+            </p>
+          </div>
+          {!showForm && (
+            <button onClick={() => setShowForm(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ml-3">
+              <UnlockNavIcon /> Request Unlock
+            </button>
           )}
         </div>
+        {showForm && (
+          <form onSubmit={handleRequest} className="mt-3 space-y-2">
+            <textarea value={reason} onChange={e => { setReason(e.target.value); setError(""); }}
+              placeholder="Reason for requesting plan unlock (optional)"
+              rows={2}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 resize-none" />
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { setShowForm(false); setReason(""); setError(""); }}
+                className="px-3 py-1.5 text-xs font-medium text-[#64748b] border border-[#e2e8f0] rounded-lg hover:bg-white transition-all">Cancel</button>
+              <button type="submit" disabled={requesting}
+                className="px-4 py-1.5 text-xs font-semibold text-white bg-[#1a3a5c] hover:bg-[#1e4976] rounded-lg transition-all disabled:opacity-60">
+                {requesting ? "Submitting…" : "Submit Request"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
 }
 
 // ─── Archive Annual Plans Section ─────────────────────────────────────────────
-// ─── History Section (replaces Archive Plans tab) ─────────────────────────────
-// Shows all past-year woreda reports with year filter + plan download per year.
-// The "Archive & Reset" action is kept here, accessible to sub-city users.
+function ArchivePlansSection() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [confirm, setConfirm] = useState(false);
 
-// Readable label for an archive source_table name
-function archiveTableLabel(tableName) {
-  const map = {
-    subcity_buusaa_gonofaa_plan: "Subcity – Buusaa Gonofaa Plan",
-    subcity_qonna_plan: "Subcity – Qonna Plan",
-    subcity_carraa_plan: "Subcity – Carraa Hojii Plan",
-    subcity_daldala_plan: "Subcity – Daldala Plan",
-    subcity_atk_plan: "Subcity – ATK Plan",
-    subcity_galii_plan: "Subcity – Galii Plan",
-    annual_plan_wereda_1: "Aanaa Gooroo – Buusaa Plan",
-    annual_plan_wereda_2: "Aanaa Dhadacha Araaraa – Buusaa Plan",
-    annual_plan_wereda_3: "Aanaa Dhakaa Adii – Buusaa Plan",
-    annual_plan_wereda_4: "Aanaa Andoodee – Buusaa Plan",
-    annual_qonna_plan_wereda_1: "Aanaa Gooroo – Qonna Plan",
-    annual_qonna_plan_wereda_2: "Aanaa Dhadacha Araaraa – Qonna Plan",
-    annual_qonna_plan_wereda_3: "Aanaa Dhakaa Adii – Qonna Plan",
-    annual_qonna_plan_wereda_4: "Aanaa Andoodee – Qonna Plan",
-    annual_carraa_plan_wereda_1: "Aanaa Gooroo – Carraa Hojii Plan",
-    annual_carraa_plan_wereda_2: "Aanaa Dhadacha Araaraa – Carraa Hojii Plan",
-    annual_carraa_plan_wereda_3: "Aanaa Dhakaa Adii – Carraa Hojii Plan",
-    annual_carraa_plan_wereda_4: "Aanaa Andoodee – Carraa Hojii Plan",
-    annual_daldala_plan_wereda_1: "Aanaa Gooroo – Daldala Plan",
-    annual_daldala_plan_wereda_2: "Aanaa Dhadacha Araaraa – Daldala Plan",
-    annual_daldala_plan_wereda_3: "Aanaa Dhakaa Adii – Daldala Plan",
-    annual_daldala_plan_wereda_4: "Aanaa Andoodee – Daldala Plan",
-    annual_atk_plan_wereda_1: "Aanaa Gooroo – ATK Plan",
-    annual_atk_plan_wereda_2: "Aanaa Dhadacha Araaraa – ATK Plan",
-    annual_atk_plan_wereda_3: "Aanaa Dhakaa Adii – ATK Plan",
-    annual_atk_plan_wereda_4: "Aanaa Andoodee – ATK Plan",
-    annual_galii_plan_wereda_1: "Aanaa Gooroo – Galii Plan",
-    annual_galii_plan_wereda_2: "Aanaa Dhadacha Araaraa – Galii Plan",
-    annual_galii_plan_wereda_3: "Aanaa Dhakaa Adii – Galii Plan",
-    annual_galii_plan_wereda_4: "Aanaa Andoodee – Galii Plan",
-  };
-  return (
-    map[tableName] ??
-    tableName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-  );
-}
+  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
-// Download a single archived plan row as CSV
-function downloadPlanAsCSV(archiveRow) {
-  const planData = archiveRow.data ?? {};
-  const label = archiveTableLabel(archiveRow.source_table);
-  const year = archiveRow.plan_year;
-
-  const hidden = new Set(["id", "year", "created_at", "updated_at"]);
-  const rows = [
-    ["Plan", label],
-    ["Fiscal Year", `${year}–${year + 1}`],
-    ["Archived At", new Date(archiveRow.archived_at).toLocaleString()],
-    [],
-    ["Field", "Value"],
-    ...Object.entries(planData)
-      .filter(([k]) => !hidden.has(k))
-      .map(([k, v]) => [
-        k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        v ?? "",
-      ]),
-  ];
-
-  const escape = (c) => `"${String(c).replace(/"/g, '""')}"`;
-  const csv = rows
-    .map((r) => (r.length ? r.map(escape).join(",") : ""))
-    .join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `plan_${archiveRow.source_table}_${year}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// Download all records for a fiscal year as CSV
-function downloadRecordsAsCSV(rows, fiscalYear) {
-  if (!rows.length) return;
-
-  // Collect all unique keys (union of all row fields minus system fields)
-  const hidden = new Set([
-    "id",
-    "user_id",
-    "created_at",
-    "updated_at",
-    "_sector",
-  ]);
-  const allKeys = [];
-  const seenKeys = new Set();
-  rows.forEach((row) => {
-    Object.keys(row).forEach((k) => {
-      if (!hidden.has(k) && !seenKeys.has(k)) {
-        seenKeys.add(k);
-        allKeys.push(k);
-      }
-    });
-  });
-
-  const escape = (c) => `"${String(c ?? "").replace(/"/g, '""')}"`;
-  const header = [
-    "Sector",
-    "Woreda",
-    ...allKeys.map((k) =>
-      k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    ),
-  ];
-
-  const dataRows = rows.map((row) => {
-    const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
-    return [
-      escape(sec?.label ?? row._sector ?? ""),
-      escape(row.username ?? ""),
-      ...allKeys.map((k) => escape(row[k])),
-    ].join(",");
-  });
-
-  const csv = [header.map(escape).join(","), ...dataRows].join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `woreda_records_${fiscalYear}_${fiscalYear + 1}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function HistorySection() {
-  const thisFiscalYear = currentFiscalYear();
-
-  // ── year filter ────────────────────────────────────────────────────────────
-  // Default to the CURRENT fiscal year so plans are visible immediately
-  const [selectedYear, setSelectedYear] = useState(thisFiscalYear);
-  const [availableYears, setAvailableYears] = useState([]);
-
-  // ── plan rows (merged archive + live) ─────────────────────────────────────
-  const [planRows, setPlanRows] = useState([]);
-  const [plansLoading, setPlansLoading] = useState(true);
-  const [plansError, setPlansError] = useState("");
-
-  // ── woreda records ─────────────────────────────────────────────────────────
-  const [records, setRecords] = useState([]);
-  const [recordsLoading, setRecordsLoading] = useState(true);
-  const [recordsError, setRecordsError] = useState("");
-  const [modalRow, setModalRow] = useState(null);
-
-  // ── woreda / sector sub-filters ────────────────────────────────────────────
-  const [fWoreda, setFWoreda] = useState("all");
-  const [fSector, setFSector] = useState("all");
-
-  // ── archive & reset action ─────────────────────────────────────────────────
-  const [showArchivePanel, setShowArchivePanel] = useState(false);
-  const [archiveConfirm, setArchiveConfirm] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-  const [archiveResult, setArchiveResult] = useState(null);
-  const [archiveError, setArchiveError] = useState("");
-
-  const authHdr = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  });
-
-  // ── load available years for the picker ───────────────────────────────────
-  useEffect(() => {
-    fetchArchivedPlans()
-      .then((d) => {
-        const archivedYears = d.availableYears ?? [];
-        // Always include current fiscal year even if nothing is archived yet
-        const all = [...new Set([thisFiscalYear, ...archivedYears])].sort(
-          (a, b) => b - a,
-        );
-        setAvailableYears(all);
-      })
-      .catch(() => {
-        setAvailableYears([thisFiscalYear]);
-      });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── load plan rows (archive + live fallback) when year changes ─────────────
-  useEffect(() => {
-    setPlansLoading(true);
-    setPlansError("");
-
-    // Run both fetches in parallel; live plans fill gaps not covered by archive
-    Promise.all([
-      fetchArchivedPlans(selectedYear).catch(() => ({ archives: [] })),
-      fetchSubcityLivePlans(selectedYear).catch(() => ({ plans: [] })),
-    ])
-      .then(([archiveData, liveData]) => {
-        const archived = archiveData.archives ?? [];
-        const live = liveData.plans ?? [];
-
-        // Index archived rows by source_table so we can detect gaps
-        const archivedTables = new Set(archived.map((a) => a.source_table));
-
-        // Build merged list: archived rows first, then live rows for tables
-        // not yet in the archive (i.e. current year before archiving)
-        const liveFill = live.filter(
-          (l) => !archivedTables.has(l.source_table),
-        );
-
-        setPlanRows([...archived, ...liveFill]);
-      })
-      .catch((err) =>
-        setPlansError(friendlyError(err, "Failed to load plan data.")),
-      )
-      .finally(() => setPlansLoading(false));
-  }, [selectedYear]);
-
-  // ── load records when year / sub-filters change ────────────────────────────
-  useEffect(() => {
-    setRecordsLoading(true);
-    setRecordsError("");
-    const extra = {};
-    if (fWoreda !== "all") extra.username = fWoreda;
-    if (fSector !== "all") extra.sector = fSector;
-    fetchAllWoredaReportsByFiscalYear(selectedYear, extra)
-      .then((data) => setRecords(Array.isArray(data) ? data : []))
-      .catch((err) =>
-        setRecordsError(friendlyError(err, "Failed to load records.")),
-      )
-      .finally(() => setRecordsLoading(false));
-  }, [selectedYear, fWoreda, fSector]);
-
-  // ── archive action ─────────────────────────────────────────────────────────
   const handleArchive = async () => {
-    setArchiveConfirm(false);
-    setArchiving(true);
-    setArchiveResult(null);
-    setArchiveError("");
+    setConfirm(false); setLoading(true); setResult(null); setError("");
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.post(
-        "/auth/archive-annual-plans",
-        {},
-        authHdr(),
-      );
-      setArchiveResult(res.data.message);
-      // Refresh available years + plan rows after archiving
-      fetchArchivedPlans()
-        .then((d) => {
-          const archivedYears = d.availableYears ?? [];
-          const all = [...new Set([thisFiscalYear, ...archivedYears])].sort(
-            (a, b) => b - a,
-          );
-          setAvailableYears(all);
-        })
-        .catch(() => {});
-      // Trigger a re-fetch of the current year's plans
-      setSelectedYear((y) => y);
+      const res = await apiInst.post("/auth/archive-annual-plans", {}, authHdr());
+      setResult(res.data.message);
     } catch (err) {
       const msg = err.response?.data?.message || "Archive failed.";
       const errs = err.response?.data?.errors;
-      setArchiveError(errs ? `${msg}\n${errs.join("\n")}` : msg);
-    } finally {
-      setArchiving(false);
-    }
+      setError(errs ? `${msg}\n${errs.join("\n")}` : msg);
+    } finally { setLoading(false); }
   };
 
   const now = new Date();
-  const isAfterJul8 =
-    now.getMonth() > 5 || (now.getMonth() === 6 && now.getDate() >= 8);
-  const accentColor = "#1a3a5c";
-
-  // Year options: always include current + all archived years
-  const yearOptions = availableYears.length ? availableYears : [thisFiscalYear];
+  const isAfterJul8 = now.getMonth() > 5 || (now.getMonth() === 6 && now.getDate() >= 8);
 
   return (
-    <div>
-      {modalRow && (
-        <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
-      )}
+    <div className="max-w-xl">
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Archive Annual Plans</h1>
+      <p className="text-[#64748b] text-sm mb-6">After July 8, archive the current year's annual plans and reset all targets to zero for the new year.</p>
 
-      {/* ── Page header ────────────────────────────────────────────────────── */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">History</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Annual plans and woreda records by fiscal year (July 8 → July 7).
-          </p>
-        </div>
-
-        {/* Archive & Reset toggle */}
-        <button
-          onClick={() => setShowArchivePanel((p) => !p)}
-          className="flex items-center gap-2 border border-[#e2e8f0] text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c] px-4 py-2.5 rounded-lg text-sm font-medium transition-all bg-white"
-        >
-          <ArchiveNavIcon />
-          Archive &amp; Reset Plans
-        </button>
-      </div>
-
-      {/* ── Archive & Reset collapsible panel ──────────────────────────────── */}
-      {showArchivePanel && (
-        <div className="mb-6 bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-5">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-[#fef3c7] flex items-center justify-center flex-shrink-0">
-              <ArchiveNavIcon />
-            </div>
-            <div>
-              <p className="font-semibold text-[#1e293b] mb-0.5">
-                Archive Annual Plans for {now.getFullYear()}
-              </p>
-              <p className="text-sm text-[#64748b]">
-                Saves all current annual plan data to the archive, then resets
-                all plan values to zero so new plans can be entered for the next
-                fiscal year.
-              </p>
-            </div>
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-[#fef3c7] flex items-center justify-center flex-shrink-0">
+            <ArchiveNavIcon />
           </div>
-
-          {!isAfterJul8 && (
-            <div className="mb-4 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 text-sm text-[#92400e]">
-              Note: Today is before July 8. This action is intended for after
-              July 8 when the new fiscal year begins.
-            </div>
-          )}
-
-          {archiveResult && (
-            <div className="mb-4 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
-              <CheckIcon />
-              {archiveResult}
-            </div>
-          )}
-          {archiveError && (
-            <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm whitespace-pre-wrap">
-              {archiveError}
-            </div>
-          )}
-
-          {archiveConfirm ? (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-[#dc2626]">
-                This action is irreversible. Are you sure?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setArchiveConfirm(false)}
-                  className="flex-1 border border-[#e2e8f0] text-[#64748b] py-2.5 rounded-xl text-sm font-medium hover:bg-[#f4f6f9] transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleArchive}
-                  disabled={archiving}
-                  className="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
-                >
-                  {archiving ? "Archiving…" : "Confirm Archive & Reset"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setArchiveConfirm(true)}
-              disabled={archiving}
-              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
-            >
-              <ArchiveNavIcon /> Archive Annual Plans for {now.getFullYear()}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── Year filter ────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Year */}
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Fiscal Year
-            </label>
-            <select
-              value={selectedYear}
-              onChange={(e) => {
-                setSelectedYear(Number(e.target.value));
-                setFWoreda("all");
-                setFSector("all");
-              }}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>
-                  {y} – {y + 1}
-                  {y === thisFiscalYear ? "  (current)" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Woreda sub-filter */}
-          <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Woreda
-            </label>
-            <select
-              value={fWoreda}
-              onChange={(e) => setFWoreda(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
-              <option value="all">All Woredas</option>
-              {WOREDAS.map((w) => (
-                <option key={w.id} value={w.name}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sector sub-filter */}
-          <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Sector
-            </label>
-            <select
-              value={fSector}
-              onChange={(e) => setFSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
-              <option value="all">All Sectors</option>
-              {REPORT_SECTORS_ALL.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Record count badge */}
-          <div className="flex-shrink-0 pb-0.5">
-            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {recordsLoading
-                ? "…"
-                : `${records.length} record${records.length !== 1 ? "s" : ""}`}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Annual Plans for selected year ──────────────────────────────────── */}
-      <div className="mb-6">
-        <div
-          className="flex items-center justify-between px-5 py-3 rounded-t-xl border border-[#e2e8f0]"
-          style={{
-            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
-          }}
-        >
           <div>
-            <p className="text-sm font-semibold text-white">
-              Annual Plans — {selectedYear}–{selectedYear + 1}
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              {plansLoading
-                ? "Loading…"
-                : `${planRows.length} plan table${planRows.length !== 1 ? "s" : ""}${planRows.some((r) => r.is_live) ? " · some live (not yet archived)" : ""}`}
-            </p>
+            <p className="font-semibold text-[#1e293b] mb-1">Annual Plan Archive for {now.getFullYear()}</p>
+            <p className="text-sm text-[#64748b]">This will save all current annual plan data to the archive, then reset all plan values to zero so new plans can be entered. The old data is preserved as "Annual Plan {now.getFullYear()}".</p>
           </div>
-          {!plansLoading && planRows.length > 0 && (
-            <button
-              onClick={() => planRows.forEach((r) => downloadPlanAsCSV(r))}
-              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              title="Download all plan tables for this year as CSV"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              Download All Plans
-            </button>
-          )}
         </div>
 
-        <div className="border border-t-0 border-[#e2e8f0] rounded-b-xl bg-white overflow-hidden">
-          {plansLoading ? (
-            <div className="flex items-center justify-center py-12 gap-3">
-              <div className="w-5 h-5 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
-              <span className="text-sm text-[#64748b]">Loading plans…</span>
-            </div>
-          ) : plansError ? (
-            <div className="px-5 py-5 text-sm text-[#dc2626]">{plansError}</div>
-          ) : planRows.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <p className="text-[#94a3b8] text-sm">
-                No plans found for {selectedYear}–{selectedYear + 1}.
-              </p>
-              <p className="text-[#b0bec5] text-xs mt-1">
-                Save annual plans from the Annual Plan tab to see them here.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {[
-                      "Plan Table",
-                      "Fiscal Year",
-                      "Status",
-                      "Fields",
-                      "Download",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {planRows.map((a, idx) => {
-                    const fieldCount = Object.keys(a.data ?? {}).filter(
-                      (k) =>
-                        !["id", "year", "created_at", "updated_at"].includes(k),
-                    ).length;
-                    return (
-                      <tr
-                        key={a.id ?? `live-${idx}`}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                      >
-                        <td className="px-5 py-3 font-medium text-[#1e293b]">
-                          {archiveTableLabel(a.source_table)}
-                        </td>
-                        <td className="px-5 py-3 text-[#475569]">
-                          {a.plan_year}–{a.plan_year + 1}
-                        </td>
-                        <td className="px-5 py-3">
-                          {a.is_live ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#eff6ff] text-[#1e40af] border border-[#bfdbfe]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
-                              Live
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-                              Archived{" "}
-                              {a.archived_at
-                                ? new Date(a.archived_at).toLocaleDateString(
-                                    undefined,
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    },
-                                  )
-                                : ""}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3 text-[#64748b]">
-                          {fieldCount} fields
-                        </td>
-                        <td className="px-5 py-3">
-                          <button
-                            onClick={() => downloadPlanAsCSV(a)}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                              />
-                            </svg>
-                            CSV
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Woreda Records for selected year ───────────────────────────────── */}
-      <div>
-        <div
-          className="flex items-center justify-between px-5 py-3 rounded-t-xl border border-[#e2e8f0]"
-          style={{
-            background: `linear-gradient(90deg,#065f46 0%,#047857 100%)`,
-          }}
-        >
-          <div>
-            <p className="text-sm font-semibold text-white">
-              Woreda Records — {selectedYear}–{selectedYear + 1}
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              {recordsLoading
-                ? "Loading…"
-                : `${records.length} report${records.length !== 1 ? "s" : ""} submitted during this fiscal year`}
-            </p>
+        {!isAfterJul8 && (
+          <div className="mb-4 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 text-sm text-[#92400e]">
+            Note: Today is before July 8. This action is intended for after July 8 when the new fiscal year begins.
           </div>
-          {!recordsLoading && records.length > 0 && (
-            <button
-              onClick={() => downloadRecordsAsCSV(records, selectedYear)}
-              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              title="Download all records for this year as CSV"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              Download Records
-            </button>
-          )}
-        </div>
+        )}
 
-        <div className="border border-t-0 border-[#e2e8f0] rounded-b-xl bg-white overflow-hidden">
-          {recordsError && (
-            <div className="px-5 py-4 text-sm text-[#dc2626] flex items-center gap-2">
-              <svg
-                className="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
-              {recordsError}
-            </div>
-          )}
+        {result && (
+          <div className="mb-4 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
+            <CheckIcon />{result}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm whitespace-pre-wrap">
+            {error}
+          </div>
+        )}
 
-          {recordsLoading ? (
-            <div className="flex items-center justify-center py-12 gap-3">
-              <div className="w-5 h-5 border-4 border-[#d1fae5] border-t-[#065f46] rounded-full animate-spin" />
-              <span className="text-sm text-[#64748b]">Loading records…</span>
+        {confirm ? (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[#dc2626]">This action is irreversible. Are you sure?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirm(false)} className="flex-1 border border-[#e2e8f0] text-[#64748b] py-2.5 rounded-xl text-sm font-medium hover:bg-[#f4f6f9] transition-all">Cancel</button>
+              <button onClick={handleArchive} disabled={loading} className="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
+                {loading ? "Archiving…" : "Confirm Archive & Reset"}
+              </button>
             </div>
-          ) : records.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center mx-auto mb-3">
-                <ListIcon />
-              </div>
-              <p className="text-[#94a3b8] text-sm">
-                No records found for {selectedYear}–{selectedYear + 1}
-                {fWoreda !== "all" || fSector !== "all"
-                  ? " with the selected filters"
-                  : ""}
-                .
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {[
-                      "Date",
-                      "Submitted By",
-                      "Sector",
-                      "Report Type",
-                      "Actions",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((row, idx) => {
-                    const sec = REPORT_SECTORS_ALL.find(
-                      (s) => s.id === row._sector,
-                    );
-                    return (
-                      <tr
-                        key={row.id ?? idx}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                      >
-                        <td className="px-5 py-3 text-[#475569] text-sm">
-                          {scFormatDateTime(row)}
-                        </td>
-                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
-                          {row.username ?? ""}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{
-                                backgroundColor: sec?.color ?? "#64748b",
-                              }}
-                            />
-                            <span className="text-sm font-medium text-[#1e293b]">
-                              {sec?.label ?? row._sector}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-sm text-[#475569]">
-                          {row.report_type ?? ""}
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setModalRow(row)}
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                            >
-                              <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </svg>
-                              View
-                            </button>
-                            <button
-                              onClick={() =>
-                                scDownloadCSV(
-                                  row,
-                                  sec?.label ?? row._sector ?? "Report",
-                                )
-                              }
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#065f46] hover:text-[#047857] bg-[#f0fdf4] hover:bg-[#dcfce7] px-3 py-1.5 rounded-lg transition-all"
-                            >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                />
-                              </svg>
-                              CSV
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button onClick={() => setConfirm(true)} disabled={loading}
+            className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2">
+            <ArchiveNavIcon /> Archive Annual Plans for {now.getFullYear()}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -5744,6 +4830,152 @@ const SECTOR_PRINT_FIELDS = {
   ],
 };
 
+// ─── Build just the table fragment for one sector (used in all-sectors mode) ─
+function buildSubcityPrintTable({
+  sector, period, showPct, showPlan,
+  woredaData, planData, selectedWoreda, subcityGaliiActuals,
+}) {
+  const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+  const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
+  const ALL_WOREDAS_PRINT = [
+    { id: "w1", name: "Aanaa Gooroo" },
+    { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+    { id: "w3", name: "Aanaa Dhakaa Adii" },
+    { id: "w4", name: "Aanaa Andoodee" },
+  ];
+  const WOREDAS_PRINT = selectedWoreda === "all"
+    ? ALL_WOREDAS_PRINT
+    : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
+  const showSubcityCol = sector === "galii" && selectedWoreda === "all";
+  const showTotal = selectedWoreda === "all";
+  const subCols = [];
+  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
+  subCols.push(            { key: "actual", label: "Raawwii" });
+  if (showPct)  subCols.push({ key: "pct",    label: "%" });
+  const numSubCols = subCols.length;
+
+  let thead = `<thead><tr class="top-header">
+    <th rowspan="2" class="rno">R.No</th>
+    <th rowspan="2" class="gosa">Gosa Hoji</th>`;
+  for (const w of WOREDAS_PRINT) {
+    thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
+  }
+  if (showSubcityCol) thead += `<th colspan="${numSubCols}" class="woreda-header subcity-header">Subcity</th>`;
+  if (showTotal)      thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+  thead += `</tr><tr class="sub-header">`;
+  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  for (let i = 0; i < totalGroupCount; i++) {
+    for (const sc of subCols) thead += `<th class="sub-col">${sc.label}</th>`;
+  }
+  thead += `</tr></thead>`;
+
+  let tbody = "<tbody>";
+  fields.forEach(({ key, label }, idx) => {
+    tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${label}</td>`;
+    let totalActual = 0, totalPlan = 0;
+    for (const w of WOREDAS_PRINT) {
+      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const actual   = Number(wEntry?.actuals?.[key] ?? 0);
+      const target   = Number(planData?.[w.id]?.[key] ?? 0);
+      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
+      totalActual += actual; totalPlan += target;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+      }
+    }
+    if (showSubcityCol) {
+      const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
+      totalActual += scActual;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
+      }
+    }
+    if (showTotal) {
+      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+      }
+    }
+    tbody += `</tr>`;
+  });
+  tbody += "</tbody>";
+
+  return `<div class="sector-block">
+    <h2 class="sector-title">${sectorLabel}</h2>
+    <table>${thead}${tbody}</table>
+  </div>`;
+}
+
+// ─── Wrap multiple sector table fragments into one print document ─────────────
+function buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda) {
+  const ALL_WOREDAS_PRINT = [
+    { id: "w1", name: "Aanaa Gooroo" },
+    { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+    { id: "w3", name: "Aanaa Dhakaa Adii" },
+    { id: "w4", name: "Aanaa Andoodee" },
+  ];
+  const woredaLabel = selectedWoreda === "all"
+    ? "All Woredas"
+    : (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>All Sectors Report</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff; padding:16px; }
+    .report-title { text-align:center; margin-bottom:12px; border-bottom:2px solid #000; padding-bottom:8px; }
+    .report-title h1 { font-size:14pt; font-weight:bold; }
+    .meta { display:flex; justify-content:space-between; font-size:8pt; color:#555; margin-bottom:16px; }
+    .sector-block { margin-bottom:28px; }
+    .sector-title { font-size:12pt; font-weight:bold; margin-bottom:6px; padding:4px 0; border-bottom:1px solid #999; }
+    table { width:100%; border-collapse:collapse; table-layout:auto; margin-bottom:4px; }
+    th, td { border:1px solid #000; padding:4px 6px; vertical-align:middle; }
+    thead tr.top-header th { background:#fff; color:#000; text-align:center; font-size:9pt; font-weight:bold; }
+    thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center; font-size:8pt; font-weight:bold; }
+    th.rno, td.rno { text-align:center; width:32px; font-size:8pt; }
+    th.gosa { text-align:left; min-width:140px; }
+    td.gosa { text-align:left; font-weight:500; }
+    td.num  { text-align:right; font-variant-numeric:tabular-nums; }
+    td.pct  { text-align:right; }
+    td.plan { text-align:right; color:#555; }
+    td.total-val { font-weight:bold; background:#f0f4ff; }
+    td.subcity-val { background:#f0fdf4; }
+    th.total-header { background:#e8eeff !important; }
+    th.subcity-header { background:#e8fff4 !important; }
+    tbody tr:nth-child(even) { background:#f9f9f9; }
+    @media print {
+      body { padding:0; }
+      @page { size:landscape; margin:10mm; }
+      .sector-block { page-break-inside:avoid; }
+      tbody tr:nth-child(even) { background:#f9f9f9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      thead tr.sub-header th { background:#f0f0f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.total-val { background:#f0f4ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.subcity-val { background:#f0fdf4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-title">
+    <h1>All Sectors Report — ${woredaLabel}</h1>
+  </div>
+  <div class="meta">
+    <span>Generated: ${generatedDate}</span>
+    <span>Adama Sub-city Reporting System · Period: ${period}</span>
+  </div>
+  ${tablesHtml}
+  <script>window.onload = function() { window.print(); };<\/script>
+</body>
+</html>`;
+}
+
 // ─── Build print HTML for the subcity structured table ───────────────────────
 // Returns a full HTML string ready to be written into a new window.
 function buildSubcityPrintHTML({
@@ -5754,7 +4986,7 @@ function buildSubcityPrintHTML({
   woredaData, // { woredas: [{woredaId, name, actuals}] }
   planData, // { w1: {targets}, w2: ..., w3: ..., w4: ... }
   generatedDate,
-  selectedWoreda, // "all" | "w1" | "w2" | "w3" | "w4"
+  selectedWoreda,      // "all" | "w1" | "w2" | "w3" | "w4"
   subcityGaliiActuals, // actuals object for subcity galii, or null
 }) {
   const sectorLabel =
@@ -5780,9 +5012,9 @@ function buildSubcityPrintHTML({
   // Sub-columns order: Karora (plan), Raawwi (actual), % — always Karora first
   // Build sub-col definitions: we always show Raawwi; Karora/% are optional
   const subCols = [];
-  if (showPlan) subCols.push({ key: "plan", label: "Karora" });
-  subCols.push({ key: "actual", label: "Raawwi" });
-  if (showPct) subCols.push({ key: "pct", label: "%" });
+  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
+  subCols.push(            { key: "actual", label: "Raawwii" });
+  if (showPct)  subCols.push({ key: "pct",    label: "%" });
   const numSubCols = subCols.length;
 
   // Show total column only when all woredas are selected
@@ -5803,8 +5035,7 @@ function buildSubcityPrintHTML({
     thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
   }
   thead += `</tr><tr class="sub-header">`;
-  const totalGroupCount =
-    WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
   for (let i = 0; i < totalGroupCount; i++) {
     for (const sc of subCols) {
       thead += `<th class="sub-col">${sc.label}</th>`;
@@ -5820,26 +5051,23 @@ function buildSubcityPrintHTML({
     tbody += `<td class="gosa">${label}</td>`;
 
     let totalActual = 0;
-    let totalPlan = 0;
+    let totalPlan   = 0;
 
     for (const w of WOREDAS_PRINT) {
-      const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
       const wActuals = wEntry?.actuals ?? {};
       const wTargets = planData?.[w.id] ?? {};
-      const actual = Number(wActuals[key] ?? 0);
-      const target = Number(wTargets[key] ?? 0);
-      const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+      const actual   = Number(wActuals[key] ?? 0);
+      const target   = Number(wTargets[key] ?? 0);
+      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
 
       totalActual += actual;
-      totalPlan += target;
+      totalPlan   += target;
 
       for (const sc of subCols) {
-        if (sc.key === "plan")
-          tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
-        if (sc.key === "actual")
-          tbody += `<td class="num">${actual.toLocaleString()}</td>`;
-        if (sc.key === "pct")
-          tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
       }
     }
 
@@ -5848,24 +5076,19 @@ function buildSubcityPrintHTML({
       const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
       totalActual += scActual;
       for (const sc of subCols) {
-        if (sc.key === "plan") tbody += `<td class="num plan">—</td>`;
-        if (sc.key === "actual")
-          tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
-        if (sc.key === "pct") tbody += `<td class="num pct">—</td>`;
+        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
       }
     }
 
     // Total column (all-woredas only)
     if (showTotal) {
-      const totalPct =
-        totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
       for (const sc of subCols) {
-        if (sc.key === "plan")
-          tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
-        if (sc.key === "actual")
-          tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
-        if (sc.key === "pct")
-          tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
       }
     }
 
@@ -5916,7 +5139,7 @@ function buildSubcityPrintHTML({
 </head>
 <body>
   <div class="report-title">
-    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
+    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find(w => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
   </div>
   <div class="meta">
     <span>Generated: ${generatedDate}</span>
@@ -5936,7 +5159,7 @@ function buildSubcityPrintHTML({
 // ─── SubcityPrintModal ────────────────────────────────────────────────────────
 // Configuration dialog that collects options then opens a new print window.
 function SubcityPrintModal({ rows, onClose }) {
-  const [sector, setSector] = useState("buusaa");
+  const [sector, setSector] = useState("all");  // default = all sectors
   const [period, setPeriod] = useState("monthly");
   const [selectedWoreda, setSelectedWoreda] = useState("all"); // NEW
   const [showPct, setShowPct] = useState(true);
@@ -5956,61 +5179,90 @@ function SubcityPrintModal({ rows, onClose }) {
     setLoading(true);
     setError("");
     try {
-      // Fetch actuals for all 4 woredas for the selected sector + period
-      const woredaData = await fetchWoRedaReports(sector, period);
-
-      // Fetch plan targets for all 4 woredas in parallel
-      const planData = {};
-      if (showPct || showPlan) {
-        const wIds = ["w1", "w2", "w3", "w4"];
-        const results = await Promise.all(
-          wIds.map((wId) =>
-            fetchWoRedaAnalysis(sector, wId, period).catch(() => null),
-          ),
-        );
-        wIds.forEach((wId, i) => {
-          planData[wId] = results[i]?.targets ?? {};
-        });
-      }
-
-      // For Galii Sassaabu, also fetch subcity actuals
-      let subcityGaliiActuals = null;
-      if (sector === "galii") {
-        try {
-          const galiiRes = await fetchSubcityGalii(period);
-          subcityGaliiActuals = galiiRes?.actuals ?? null;
-        } catch {
-          subcityGaliiActuals = null;
-        }
-      }
-
-      const sectorLabel =
-        REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
       const generatedDate = new Date().toLocaleString();
 
-      const html = buildSubcityPrintHTML({
-        sector,
-        period,
-        showPct,
-        showPlan,
-        woredaData,
-        planData,
-        generatedDate,
-        selectedWoreda,
-        subcityGaliiActuals,
-      });
+      // Determine which sectors to print
+      const sectorsToPrint =
+        sector === "all"
+          ? REPORT_SECTORS_ALL.map((s) => s.id)
+          : [sector];
 
-      const win = window.open("", "_blank", "width=1100,height=800");
-      if (!win) {
-        setError("Pop-up blocked. Please allow pop-ups for this site.");
+      // Fetch all data for each sector in parallel
+      const sectorResults = await Promise.all(
+        sectorsToPrint.map(async (sec) => {
+          const woredaData = await fetchWoRedaReports(sec, period);
+
+          const planData = {};
+          if (showPct || showPlan) {
+            const wIds = ["w1", "w2", "w3", "w4"];
+            const results = await Promise.all(
+              wIds.map((wId) =>
+                fetchWoRedaAnalysis(sec, wId, period).catch(() => null),
+              ),
+            );
+            wIds.forEach((wId, i) => {
+              planData[wId] = results[i]?.targets ?? {};
+            });
+          }
+
+          let subcityGaliiActuals = null;
+          if (sec === "galii") {
+            try {
+              const galiiRes = await fetchSubcityGalii(period);
+              subcityGaliiActuals = galiiRes?.actuals ?? null;
+            } catch {
+              subcityGaliiActuals = null;
+            }
+          }
+
+          return { sec, woredaData, planData, subcityGaliiActuals };
+        }),
+      );
+
+      // If single sector — use existing full-page builder
+      if (sectorsToPrint.length === 1) {
+        const { sec, woredaData, planData, subcityGaliiActuals } = sectorResults[0];
+        const html = buildSubcityPrintHTML({
+          sector: sec,
+          period,
+          showPct,
+          showPlan,
+          woredaData,
+          planData,
+          generatedDate,
+          selectedWoreda,
+          subcityGaliiActuals,
+        });
+        const win = window.open("", "_blank", "width=1100,height=800");
+        if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+        win.document.write(html);
+        win.document.close();
         return;
       }
-      win.document.write(html);
+
+      // All sectors — build one combined HTML with a table per sector
+      const tablesHtml = sectorResults
+        .map(({ sec, woredaData, planData, subcityGaliiActuals }) =>
+          buildSubcityPrintTable({
+            sector: sec,
+            period,
+            showPct,
+            showPlan,
+            woredaData,
+            planData,
+            selectedWoreda,
+            subcityGaliiActuals,
+          }),
+        )
+        .join('<div style="margin:24px 0;border-top:2px solid #ccc;"></div>');
+
+      const combinedHtml = buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda);
+      const win = window.open("", "_blank", "width=1100,height=800");
+      if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+      win.document.write(combinedHtml);
       win.document.close();
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Failed to load data for print.",
-      );
+      setError(err?.response?.data?.message || "Failed to load data for print.");
     } finally {
       setLoading(false);
     }
@@ -6069,6 +5321,7 @@ function SubcityPrintModal({ rows, onClose }) {
               onChange={(e) => setSector(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
+              <option value="all">All Sectors</option>
               {REPORT_SECTORS_ALL.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
@@ -6148,7 +5401,7 @@ function SubcityPrintModal({ rows, onClose }) {
               </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
-              Sub-columns order: Karora, Raawwi, %.{" "}
+              Sub-columns order: Karoora, Raawwii, %.{" "}
               {showPct && showPlan
                 ? "3 sub-columns per woreda."
                 : showPct || showPlan
@@ -6227,26 +5480,11 @@ function ReportsPage() {
   const todayStr = now.toISOString().split("T")[0];
 
   const getPeriodRange = (p) => {
-    if (p === "Daily") return { from: todayStr, to: todayStr };
-    if (p === "Weekly") {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 6);
-      return { from: d.toISOString().split("T")[0], to: todayStr };
-    }
-    if (p === "Monthly")
-      return {
-        from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
-        to: todayStr,
-      };
-    if (p === "Quarterly") {
-      const qs = Math.floor(now.getMonth() / 3) * 3;
-      return {
-        from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
-        to: todayStr,
-      };
-    }
-    if (p === "Annual")
-      return { from: `${now.getFullYear()}-01-01`, to: todayStr };
+    if (p === "Daily")    return { from: todayStr, to: todayStr };
+    if (p === "Weekly")   { const d = new Date(now); d.setDate(d.getDate()-6); return { from: d.toISOString().split("T")[0], to: todayStr }; }
+    if (p === "Monthly")  return { from: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`, to: todayStr };
+    if (p === "Quarterly"){ const qs = Math.floor(now.getMonth()/3)*3; return { from: `${now.getFullYear()}-${String(qs+1).padStart(2,"0")}-01`, to: todayStr }; }
+    if (p === "Annual")   return { from: `${now.getFullYear()}-01-01`, to: todayStr };
     return null;
   };
 
@@ -6256,18 +5494,15 @@ function ReportsPage() {
     setFetchError("");
 
     const filters = {};
-    if (woreda !== "all") filters.username = woreda;
-    if (sector !== "all") filters.sector = sector;
+    if (woreda !== "all")  filters.username = woreda;
+    if (sector !== "all")  filters.sector   = sector;
 
     if (!custom && period !== "all") {
       const r = getPeriodRange(period);
-      if (r) {
-        filters.date_from = r.from;
-        filters.date_to = r.to;
-      }
+      if (r) { filters.date_from = r.from; filters.date_to = r.to; }
     } else if (custom && range) {
       filters.date_from = range.from;
-      filters.date_to = range.to;
+      filters.date_to   = range.to;
     }
 
     fetchAllWoredaReports(filters)
@@ -6275,18 +5510,11 @@ function ReportsPage() {
         const rows = Array.isArray(data) ? data : [];
         setAllRows(rows);
         // Keep a separate unfiltered total only on the initial "all" fetch
-        if (
-          woreda === "all" &&
-          sector === "all" &&
-          period === "all" &&
-          !custom
-        ) {
+        if (woreda === "all" && sector === "all" && period === "all" && !custom) {
           setTotalCount(rows.length);
         }
       })
-      .catch(() =>
-        setFetchError("No connection. Check your internet and try again."),
-      )
+      .catch(() => setFetchError("No connection. Check your internet and try again."))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -6306,53 +5534,32 @@ function ReportsPage() {
 
   // ── handlers ───────────────────────────────────────────────────────────────
   const handleApplyCustom = () => {
-    if (!customFrom || !customTo) {
-      setCustomDateErr("Select both dates.");
-      return;
-    }
-    if (customFrom > customTo) {
-      setCustomDateErr("Start must be before end.");
-      return;
-    }
+    if (!customFrom || !customTo) { setCustomDateErr("Select both dates."); return; }
+    if (customFrom > customTo)    { setCustomDateErr("Start must be before end."); return; }
     setCustomDateErr("");
     setAppliedRange({ from: customFrom, to: customTo });
   };
 
   const handlePeriodChange = (val) => {
     if (val === "custom") {
-      setIsCustom(true);
-      setFPeriod("all");
-      setAppliedRange(null);
-      setCustomFrom("");
-      setCustomTo("");
-      setCustomDateErr("");
+      setIsCustom(true); setFPeriod("all"); setAppliedRange(null);
+      setCustomFrom(""); setCustomTo(""); setCustomDateErr("");
     } else {
-      setIsCustom(false);
-      setAppliedRange(null);
-      setFPeriod(val);
+      setIsCustom(false); setAppliedRange(null); setFPeriod(val);
     }
   };
 
-  const handleRetry = () =>
-    loadReports(fWoreda, fSector, fPeriod, isCustom, appliedRange);
+  const handleRetry = () => loadReports(fWoreda, fSector, fPeriod, isCustom, appliedRange);
 
-  const accentColor =
-    fSector === "all"
-      ? "#1a3a5c"
-      : (REPORT_SECTORS_ALL.find((s) => s.id === fSector)?.color ?? "#1a3a5c");
+  const accentColor = fSector === "all"
+    ? "#1a3a5c"
+    : (REPORT_SECTORS_ALL.find((s) => s.id === fSector)?.color ?? "#1a3a5c");
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div>
-      {modalRow && (
-        <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
-      )}
-      {showPrintModal && (
-        <SubcityPrintModal
-          rows={shown}
-          onClose={() => setShowPrintModal(false)}
-        />
-      )}
+      {modalRow && <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />}
+      {showPrintModal && <SubcityPrintModal rows={shown} onClose={() => setShowPrintModal(false)} />}
 
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
@@ -6362,23 +5569,11 @@ function ReportsPage() {
             Filter by woreda, sector, period, or a custom date range.
           </p>
         </div>
-        <button
-          onClick={() => setShowPrintModal(true)}
-          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
-            />
-            <rect x="6" y="14" width="12" height="8" rx="1" />
+        <button onClick={() => setShowPrintModal(true)}
+          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8" rx="1"/>
           </svg>
           Download Report
         </button>
@@ -6387,83 +5582,45 @@ function ReportsPage() {
       {/* Error */}
       {fetchError && (
         <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg
-            className="w-5 h-5 text-[#dc2626] flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 8v4M12 16h.01" />
+          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
           </svg>
           <p className="text-[#991b1b] text-sm">{fetchError}</p>
-          <button
-            onClick={handleRetry}
-            className="ml-auto text-xs font-semibold text-[#dc2626] underline"
-          >
-            Retry
-          </button>
+          <button onClick={handleRetry} className="ml-auto text-xs font-semibold text-[#dc2626] underline">Retry</button>
         </div>
       )}
 
       {/* Filter bar */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
         <div className="flex flex-wrap gap-4 items-end">
+
           {/* Woreda */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Woreda
-            </label>
-            <select
-              value={fWoreda}
-              onChange={(e) => setFWoreda(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Woreda</label>
+            <select value={fWoreda} onChange={(e) => setFWoreda(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
               <option value="all">All Woredas</option>
-              {WOREDAS.map((w) => (
-                <option key={w.id} value={w.name}>
-                  {w.name}
-                </option>
-              ))}
+              {WOREDAS.map((w) => <option key={w.id} value={w.name}>{w.name}</option>)}
             </select>
           </div>
 
           {/* Sector */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Sector
-            </label>
-            <select
-              value={fSector}
-              onChange={(e) => setFSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
+            <select value={fSector} onChange={(e) => setFSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
               <option value="all">All Sectors</option>
-              {REPORT_SECTORS_ALL.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
+              {REPORT_SECTORS_ALL.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </div>
 
           {/* Period */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-              Period
-            </label>
-            <select
-              value={isCustom ? "custom" : fPeriod}
-              onChange={(e) => handlePeriodChange(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-            >
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
+            <select value={isCustom ? "custom" : fPeriod} onChange={(e) => handlePeriodChange(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
               <option value="all">All Periods</option>
-              {REPORT_PERIOD_TYPES_SC.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              {REPORT_PERIOD_TYPES_SC.map((t) => <option key={t} value={t}>{t}</option>)}
               <option value="custom">Custom Date Range</option>
             </select>
           </div>
@@ -6471,9 +5628,7 @@ function ReportsPage() {
           {/* Count */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {loading
-                ? "..."
-                : `${shown.length} result${shown.length !== 1 ? "s" : ""}`}
+              {loading ? "..." : `${shown.length} result${shown.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -6481,51 +5636,29 @@ function ReportsPage() {
         {/* Custom date range */}
         {isCustom && (
           <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
-            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
-              Custom Date Range
-            </p>
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">Custom Date Range</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => {
-                    setCustomFrom(e.target.value);
-                    setAppliedRange(null);
-                  }}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                />
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
+                <input type="date" value={customFrom}
+                  onChange={(e) => { setCustomFrom(e.target.value); setAppliedRange(null); }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"/>
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => {
-                    setCustomTo(e.target.value);
-                    setAppliedRange(null);
-                  }}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
-                />
+                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
+                <input type="date" value={customTo}
+                  onChange={(e) => { setCustomTo(e.target.value); setAppliedRange(null); }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"/>
               </div>
             </div>
-            {customDateErr && (
-              <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
-            )}
+            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
             {appliedRange && (
               <p className="text-[#16a34a] text-xs mb-2 font-medium">
                 Showing: {appliedRange.from} → {appliedRange.to}
               </p>
             )}
-            <button
-              onClick={handleApplyCustom}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
-            >
+            <button onClick={handleApplyCustom}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
               <AnalysisIcon />
               Apply Date Range
             </button>
@@ -6535,12 +5668,8 @@ function ReportsPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-        <div
-          className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
-          style={{
-            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
-          }}
-        >
+        <div className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
+          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
           <div>
             <p className="text-sm font-semibold text-white">
               {isCustom && appliedRange
@@ -6552,9 +5681,7 @@ function ReportsPage() {
                     : "All Woreda Reports"}
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {loading
-                ? "Loading..."
-                : `${shown.length} report${shown.length !== 1 ? "s" : ""} found`}
+              {loading ? "Loading..." : `${shown.length} report${shown.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
           {!loading && !fetchError && (
@@ -6564,7 +5691,7 @@ function ReportsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3">
-            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin"/>
             <span className="text-sm text-[#64748b]">Loading reports...</span>
           </div>
         ) : (
@@ -6572,19 +5699,8 @@ function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                  {[
-                    "Date",
-                    "Submitted By",
-                    "Sector",
-                    "Report Type",
-                    "Actions",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                    >
-                      {h}
-                    </th>
+                  {["Date","Submitted By","Sector","Report Type","Actions"].map((h) => (
+                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -6593,74 +5709,35 @@ function ReportsPage() {
                   <tr>
                     <td colSpan={5} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
-                          <ListIcon />
-                        </div>
-                        <p className="text-[#94a3b8] text-sm">
-                          No reports match the selected filters.
-                        </p>
+                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]"><ListIcon/></div>
+                        <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
                         {totalCount === 0 && !fetchError && (
-                          <p className="text-[#94a3b8] text-xs">
-                            Reports submitted by woreda users will appear here.
-                          </p>
+                          <p className="text-[#94a3b8] text-xs">Reports submitted by woreda users will appear here.</p>
                         )}
                       </div>
                     </td>
                   </tr>
                 ) : (
                   shown.map((row, idx) => {
-                    const sec = REPORT_SECTORS_ALL.find(
-                      (s) => s.id === row._sector,
-                    );
+                    const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
                     return (
-                      <tr
-                        key={row.id ?? `${row._sector}-${idx}`}
-                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
-                      >
-                        <td className="px-5 py-3 text-[#475569] text-sm">
-                          {scFormatDateTime(row)}
-                        </td>
-                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
-                          {row.username ?? ""}
-                        </td>
+                      <tr key={row.id ?? `${row._sector}-${idx}`}
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                        <td className="px-5 py-3 text-[#475569] text-sm">{scFormatDateTime(row)}</td>
+                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">{row.username ?? ""}</td>
                         <td className="px-5 py-3">
                           <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{
-                                backgroundColor: sec?.color ?? "#64748b",
-                              }}
-                            />
-                            <span className="text-sm font-medium text-[#1e293b]">
-                              {sec?.label ?? row._sector}
-                            </span>
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }}/>
+                            <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row._sector}</span>
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-sm text-[#475569]">
-                          {row.report_type ?? ""}
-                        </td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
                         <td className="px-5 py-3">
-                          <button
-                            onClick={() => setModalRow(row)}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
-                          >
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
+                          <button onClick={() => setModalRow(row)}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
                             View
                           </button>
@@ -6674,6 +5751,391 @@ function ReportsPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Camera Icon (shared with gallery) ───────────────────────────────────────
+function SubcityCameraIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+// ─── Woreda definitions (must match backend + woreda dashboard) ───────────────
+const PHOTO_WOREDAS = [
+  { id: "w1", name: "Aanaa Gooroo" },
+  { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+  { id: "w3", name: "Aanaa Dhakaa Adii" },
+  { id: "w4", name: "Aanaa Andoodee" },
+];
+
+// ─── Subcity Photo Gallery Page ───────────────────────────────────────────────
+// Shows the latest photo per woreda in a gallery. Clicking a woreda switches to
+// its history list. Full-screen view modal included. Filters by date + woreda.
+function SubcityPhotoGalleryPage() {
+  // "gallery" view: 4 woreda cards with latest photo each
+  // "history" view: filterable list for a selected woreda (or all)
+  const [view, setView]               = useState("gallery"); // "gallery" | "history"
+  const [selectedWoreda, setSelected] = useState("all");
+
+  // Gallery data
+  const [latest, setLatest]           = useState({});
+  const [latestLoading, setLatestLoading] = useState(true);
+  const [latestError, setLatestError] = useState("");
+
+  // History data
+  const [photos, setPhotos]           = useState([]);
+  const [histLoading, setHistLoading] = useState(false);
+  const [histError, setHistError]     = useState("");
+  const [dateFrom, setDateFrom]       = useState("");
+  const [dateTo, setDateTo]           = useState("");
+
+  // Modal
+  const [viewPhoto, setViewPhoto]     = useState(null);
+
+  // Load latest photos for the gallery on mount
+  useEffect(() => {
+    setLatestLoading(true);
+    fetchLatestPhotosPerWoreda()
+      .then((d) => setLatest(d.latest || {}))
+      .catch((err) => setLatestError(friendlyError(err)))
+      .finally(() => setLatestLoading(false));
+  }, []);
+
+  // Load history whenever view switches to "history" or filters change
+  const loadHistory = (woredaId, from, to) => {
+    setHistLoading(true);
+    setHistError("");
+    fetchAllPhotos({
+      woreda_id: woredaId !== "all" ? woredaId : undefined,
+      date_from: from || undefined,
+      date_to:   to   || undefined,
+    })
+      .then((d) => setPhotos(d.photos || []))
+      .catch((err) => setHistError(friendlyError(err)))
+      .finally(() => setHistLoading(false));
+  };
+
+  const handleShowHistory = (woredaId = "all") => {
+    setSelected(woredaId);
+    setView("history");
+    setDateFrom("");
+    setDateTo("");
+    loadHistory(woredaId, "", "");
+  };
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    loadHistory(selectedWoreda, dateFrom, dateTo);
+  };
+  const handleFilterClear = () => {
+    setDateFrom("");
+    setDateTo("");
+    loadHistory(selectedWoreda, "", "");
+  };
+
+  const selectedWoredaName =
+    selectedWoreda === "all"
+      ? "All Woredas"
+      : PHOTO_WOREDAS.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda;
+
+  return (
+    <div>
+      {/* ── Page header ── */}
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Photos</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Photos submitted by the 4 woredas.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setView("gallery")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              view === "gallery"
+                ? "text-white shadow-sm"
+                : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+            }`}
+            style={view === "gallery" ? { background: "#0f172a" } : {}}
+          >
+            Gallery
+          </button>
+          <button
+            onClick={() => handleShowHistory("all")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              view === "history"
+                ? "text-white shadow-sm"
+                : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+            }`}
+            style={view === "history" ? { background: "#0f172a" } : {}}
+          >
+            History
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ GALLERY VIEW ═══ */}
+      {view === "gallery" && (
+        <>
+          {latestLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+            </div>
+          ) : latestError ? (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{latestError}</div>
+          ) : (
+            <>
+              {/* 4-woreda selector cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {PHOTO_WOREDAS.map((w) => {
+                  const photo = latest[w.id];
+                  return (
+                    <div
+                      key={w.id}
+                      className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden flex flex-col"
+                    >
+                      {/* Card header */}
+                      <div
+                        className="px-4 py-3 flex items-center justify-between"
+                        style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
+                      >
+                        <p className="text-white font-semibold text-sm">{w.name}</p>
+                        <button
+                          onClick={() => handleShowHistory(w.id)}
+                          className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
+                        >
+                          View history
+                        </button>
+                      </div>
+
+                      {/* Photo area */}
+                      {photo ? (
+                        <div
+                          className="relative cursor-pointer group"
+                          onClick={() => setViewPhoto(photo)}
+                        >
+                          <img
+                            src={photo.photo_data}
+                            alt={photo.description}
+                            className="w-full h-52 object-cover group-hover:opacity-90 transition-opacity"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
+                            <p className="text-white text-xs font-medium line-clamp-2">{photo.description}</p>
+                          </div>
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">Click to view</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-52 bg-[#f8fafc]">
+                          <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mb-2" />
+                          <p className="text-[#94a3b8] text-sm">No photo submitted yet</p>
+                        </div>
+                      )}
+
+                      {/* Card footer */}
+                      {photo && (
+                        <div className="px-4 py-3 border-t border-[#f1f5f9] bg-[#f8fafc]">
+                          <p className="text-xs text-[#64748b]">
+                            By <span className="font-medium text-[#1e293b]">{photo.submitted_by}</span>
+                            {" · "}
+                            {new Date(photo.submitted_at).toLocaleString(undefined, {
+                              month: "short", day: "numeric", year: "numeric",
+                              hour: "2-digit", minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ═══ HISTORY VIEW ═══ */}
+      {view === "history" && (
+        <>
+          {/* Woreda filter tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ id: "all", name: "All Woredas" }, ...PHOTO_WOREDAS].map((w) => (
+              <button
+                key={w.id}
+                onClick={() => {
+                  setSelected(w.id);
+                  setDateFrom("");
+                  setDateTo("");
+                  loadHistory(w.id, "", "");
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  selectedWoreda === w.id
+                    ? "text-white"
+                    : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+                }`}
+                style={selectedWoreda === w.id ? { background: "#0f172a" } : {}}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Date filter bar */}
+          <form
+            onSubmit={handleFilterSubmit}
+            className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-wrap items-end gap-3"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">From Date</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">To Date</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white"
+              style={{ background: "#0f172a" }}
+            >
+              Apply
+            </button>
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={handleFilterClear}
+                className="px-4 py-1.5 rounded-lg text-sm font-semibold text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+              >
+                Clear
+              </button>
+            )}
+            <p className="text-xs text-[#94a3b8] self-end ml-auto">
+              Showing: <span className="font-medium text-[#1e293b]">{selectedWoredaName}</span>
+            </p>
+          </form>
+
+          {histLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+            </div>
+          ) : histError ? (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{histError}</div>
+          ) : photos.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-12 text-center">
+              <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
+              <p className="text-[#94a3b8] text-sm">No photos found for the selected filters.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {photos.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden flex items-center gap-4 px-4 py-3"
+                >
+                  {/* Thumbnail */}
+                  <img
+                    src={p.photo_data}
+                    alt="thumb"
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-[#e2e8f0] cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setViewPhoto(p)}
+                  />
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span
+                        className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                        style={{ background: "#0f172a" }}
+                      >
+                        {p.woreda_name}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1e293b] truncate mt-1">{p.description}</p>
+                    <p className="text-xs text-[#64748b] mt-0.5">
+                      Submitted by <span className="font-medium">{p.submitted_by}</span>
+                    </p>
+                    <p className="text-xs text-[#94a3b8] mt-0.5">
+                      {new Date(p.submitted_at).toLocaleString(undefined, {
+                        month: "short", day: "numeric", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  {/* View button */}
+                  <button
+                    onClick={() => setViewPhoto(p)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0 transition-all"
+                    style={{ background: "#0f172a" }}
+                  >
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Full-screen photo modal ── */}
+      {viewPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.80)" }}
+          onClick={() => setViewPhoto(null)}
+        >
+          <div
+            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3 border-b border-[#f1f5f9] flex items-center justify-between">
+              <div>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full text-white mr-2"
+                  style={{ background: "#0f172a" }}
+                >
+                  {viewPhoto.woreda_name}
+                </span>
+                <span className="text-xs text-[#64748b]">
+                  {viewPhoto.submitted_by} · {new Date(viewPhoto.submitted_at).toLocaleString(undefined, {
+                    month: "short", day: "numeric", year: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <button
+                onClick={() => setViewPhoto(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] text-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <img
+              src={viewPhoto.photo_data}
+              alt="full"
+              className="w-full max-h-[60vh] object-contain bg-[#f8fafc]"
+            />
+            <div className="px-5 py-4 bg-[#f8fafc]">
+              <p className="text-sm text-[#1e293b] font-medium mb-1">Description</p>
+              <p className="text-sm text-[#475569] whitespace-pre-wrap">{viewPhoto.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -6697,31 +6159,6 @@ export default function SubCityDashboard({ user: propUser }) {
   const [activeNav, setActiveNav] = useState("overview");
   const [activePlanSector, setActivePlanSector] = useState(null);
   const [activeAnalysisSector, setActiveAnalysisSector] = useState(null);
-
-  // profile photo state — kept in sync with localStorage
-  const [scProfilePhoto, setScProfilePhoto] = useState(
-    (() => {
-      try {
-        return (
-          JSON.parse(localStorage.getItem("user") || "{}").profile_photo || null
-        );
-      } catch {
-        return null;
-      }
-    })(),
-  );
-
-  const SC_NAV_LABELS = {
-    overview: "Dashboard",
-    plan: "Annual Plan",
-    analysis: "Work Analysis",
-    reports: "Woreda Reports",
-    galii_submit: "Submit Revenue",
-    announcements: "Announcements",
-    archive: "History",
-    profile: "Profile",
-  };
-  const activeNavLabel = SC_NAV_LABELS[activeNav] ?? "Sub-city";
 
   // dropdown open states
   const [planOpen, setPlanOpen] = useState(false);
@@ -6801,15 +6238,11 @@ export default function SubCityDashboard({ user: propUser }) {
       );
     }
     if (activeNav === "reports") return <ReportsPage />;
+    if (activeNav === "photos") return <SubcityPhotoGalleryPage />;
     if (activeNav === "galii_submit") return <SubcityGaliiSubmitForm u={u} />;
     if (activeNav === "announcements") return <AnnouncementsPage />;
-    if (activeNav === "archive") return <HistorySection />;
-    if (activeNav === "profile")
-      return (
-        <SubcityProfilePage
-          user={JSON.parse(localStorage.getItem("user") || "null")}
-        />
-      );
+    if (activeNav === "archive") return <ArchivePlansSection />;
+    if (activeNav === "profile") return <SubcityProfilePage user={JSON.parse(localStorage.getItem("user") || "null")} />;
     if (activeNav === "plan") {
       if (!activePlanSector)
         return (
@@ -7068,6 +6501,23 @@ export default function SubCityDashboard({ user: propUser }) {
             {!collapsed && <span className="truncate">Woreda Reports</span>}
           </button>
 
+          {/* Woreda Photos */}
+          <button
+            onClick={() => {
+              setActiveNav("photos");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "photos"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <SubcityCameraIcon className="w-4 h-4 flex-shrink-0" />
+            {!collapsed && <span className="truncate">Woreda Photos</span>}
+          </button>
+
           {/* Announcements */}
           <button
             onClick={() => {
@@ -7116,7 +6566,7 @@ export default function SubCityDashboard({ user: propUser }) {
             }`}
           >
             <ArchiveNavIcon />
-            {!collapsed && <span className="truncate">History</span>}
+            {!collapsed && <span className="truncate">Archive Plans</span>}
           </button>
         </nav>
 
@@ -7142,38 +6592,9 @@ export default function SubCityDashboard({ user: propUser }) {
       </aside>
 
       {/* ── Main content ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b border-[#e2e8f0] px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-[#1e293b] font-semibold text-base">
-            {activeNavLabel}
-          </h2>
-          <button
-            onClick={() => {
-              setActiveNav("profile");
-              setActivePlanSector(null);
-              setActiveAnalysisSector(null);
-            }}
-            title="Profile"
-            className="flex-shrink-0 focus:outline-none"
-          >
-            {scProfilePhoto ? (
-              <img
-                src={scProfilePhoto}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border-2 border-[#dce8f4] hover:border-[#1a3a5c] transition-all"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold hover:bg-[#1e4976] transition-all">
-                {(u.username || "SC")[0].toUpperCase()}
-              </div>
-            )}
-          </button>
-        </header>
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-6 py-8">{renderContent()}</div>
-        </main>
-      </div>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-6 py-8">{renderContent()}</div>
+      </main>
     </div>
   );
 }

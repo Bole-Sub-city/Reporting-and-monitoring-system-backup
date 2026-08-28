@@ -254,34 +254,67 @@ export const markAnnouncementsRead = async (lastId) => {
   return res.data; // { ok: true }
 };
 
-// ─── Archived Plans API ───────────────────────────────────────────────────────
+// ─── Woreda Photos API ────────────────────────────────────────────────────────
 
 /**
- * GET /api/auth/archived-plans?year=
- * Fetch rows from the annual_plan_archive table.
- * Returns { archives: [...], availableYears: [...] }
- *
- * @param {number|string} [year]  - optional 4-digit year to filter by
+ * POST /api/photos
+ * Woreda: submit a new photo with a description.
+ * @param {{ photo: string, description: string }} payload
+ *   photo — base64 data:image/... URL
  */
-export const fetchArchivedPlans = async (year) => {
-  const params = year ? `?year=${year}` : "";
-  const res = await api.get(`/auth/archived-plans${params}`, authHeader());
-  return res.data; // { archives, availableYears }
+export const submitWoredaPhoto = async (payload) => {
+  const res = await api.post("/photos", payload, authHeader());
+  return res.data; // { message: "Photo submitted successfully." }
 };
 
 /**
- * GET /api/plans/subcity-live-plans?year=
- * Fetches live (non-archived) subcity plan data for the given calendar year
- * from all 6 subcity plan tables.
- * Returns { plans: [{ source_table, plan_year, data, is_live: true }] }
- *
- * @param {number} year  - calendar year (e.g. 2026)
+ * GET /api/photos/my
+ * Woreda: fetch own photo submission history.
+ * @param {{ date_from?: string, date_to?: string }} filters  — optional ISO date strings
+ * @returns {{ photos: Array }}
  */
-export const fetchSubcityLivePlans = async (year) => {
-  const y = year ?? new Date().getFullYear();
-  const res = await api.get(
-    `/plans/subcity-live-plans?year=${y}`,
-    authHeader(),
-  );
-  return res.data; // { plans: [...] }
+export const fetchMyPhotos = async (filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to)   params.set("date_to",   filters.date_to);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await api.get(`/photos/my${qs}`, authHeader());
+  return res.data; // { photos: [...] }
+};
+
+/**
+ * GET /api/photos
+ * Subcity/Admin: fetch all woreda photos with optional filters.
+ * @param {{ woreda_id?: string, date_from?: string, date_to?: string }} filters
+ * @returns {{ photos: Array }}
+ */
+export const fetchAllPhotos = async (filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.woreda_id && filters.woreda_id !== "all")
+    params.set("woreda_id", filters.woreda_id);
+  if (filters.date_from) params.set("date_from", filters.date_from);
+  if (filters.date_to)   params.set("date_to",   filters.date_to);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await api.get(`/photos${qs}`, authHeader());
+  return res.data; // { photos: [...] }
+};
+
+/**
+ * GET /api/photos/latest
+ * Subcity: get the most recent photo per woreda (for the gallery display).
+ * @returns {{ latest: { w1?: Photo, w2?: Photo, w3?: Photo, w4?: Photo } }}
+ */
+export const fetchLatestPhotosPerWoreda = async () => {
+  const res = await api.get("/photos/latest", authHeader());
+  return res.data; // { latest: { w1: {...}, w2: {...}, ... } }
+};
+
+/**
+ * DELETE /api/photos/:id
+ * Woreda (own) or admin: delete a photo by id.
+ * @param {number} id
+ */
+export const deleteWoredaPhoto = async (id) => {
+  const res = await api.delete(`/photos/${id}`, authHeader());
+  return res.data; // { message: "Photo deleted." }
 };

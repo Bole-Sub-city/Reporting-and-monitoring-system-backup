@@ -92,7 +92,7 @@ export default function Login() {
     <AuthLayout>
       <div className="w-full max-w-md">
         {/* Gradient border wrapper — amber → navy on all sides */}
-        <div className="rounded-2xl bg-gradient-to-r from-[#3b82f6] to-[#0f172a] p-[4px] shadow-lg">
+        <div className="rounded-2xl bg-gradient-to-r from-[#f59e0b] to-[#1a3a5c] p-[4px] shadow-lg">
           <div className="rounded-2xl bg-white p-8 sm:p-10">
 
           {/* Small logo inside card */}
@@ -104,7 +104,7 @@ export default function Login() {
             />
           </div>
 
-          <h2 className="text-center text-2xl font-semibold text-[#0f172a]">
+          <h2 className="text-center text-2xl font-semibold text-[#1a3a5c]">
             Sign in to your account
           </h2>
           <p className="mt-1 text-center text-xs font-semibold tracking-widest text-[#475569]">
@@ -136,7 +136,7 @@ export default function Login() {
                 className={[
                   "w-full rounded-lg border bg-[#f8fafc] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#cbd5e1]",
                   "transition-colors duration-200",
-                  "focus:border-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/15",
+                  "focus:border-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/15",
                   errors.username ? "border-red-400" : "border-[#e2e8f0]",
                 ].join(" ")}
               />
@@ -165,7 +165,7 @@ export default function Login() {
                 className={[
                   "w-full rounded-lg border bg-[#f8fafc] px-4 py-3 text-sm text-[#1e293b] placeholder:text-[#cbd5e1]",
                   "transition-colors duration-200",
-                  "focus:border-[#0f172a] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/15",
+                  "focus:border-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/15",
                   errors.password ? "border-red-400" : "border-[#e2e8f0]",
                 ].join(" ")}
               />
@@ -179,9 +179,9 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-lg bg-[#3b82f6] hover:bg-[#2563eb] px-8 py-3 text-base font-bold text-white
+              className="w-full rounded-lg bg-[#f59e0b] hover:bg-[#d97706] px-8 py-3 text-base font-bold text-white
                          transition-all duration-200 hover:-translate-y-0.5 shadow-md
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/40
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f59e0b]/40
                          disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
