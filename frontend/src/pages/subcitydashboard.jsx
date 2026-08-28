@@ -18,10 +18,14 @@ import {
   deleteAnnouncement,
   fetchAllPhotos,
   fetchLatestPhotosPerWoreda,
+  fetchArchivedPlans,
+  fetchSubcityLivePlans,
 } from "../api/planApi";
 import {
   fetchAllWoredaReports,
   submitSubcityRevenueReport,
+  fetchAllWoredaReportsByFiscalYear,
+  currentFiscalYear,
 } from "../api/reportApi";
 
 // ─── Network-aware error message helper ─────────────────────────────────────
@@ -405,42 +409,82 @@ const RevenueNavIcon = () => (
   </svg>
 );
 const ProfileNavIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    viewBox="0 0 24 24"
+  >
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
   </svg>
 );
 const ArchiveNavIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-    <polyline points="21 8 21 21 3 21 3 8" /><rect x="1" y="3" width="22" height="5" />
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    viewBox="0 0 24 24"
+  >
+    <polyline points="21 8 21 21 3 21 3 8" />
+    <rect x="1" y="3" width="22" height="5" />
     <line x1="10" y1="12" x2="14" y2="12" />
   </svg>
 );
-const EyeIconSC = ({ show }) => show ? (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-) : (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-  </svg>
-);
+const EyeIconSC = ({ show }) =>
+  show ? (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ) : (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
 const CameraIconSC = () => (
-  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+  <svg
+    className="w-3.5 h-3.5 text-white"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    viewBox="0 0 24 24"
+  >
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
     <circle cx="12" cy="13" r="4" />
   </svg>
 );
 const UnlockNavIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    viewBox="0 0 24 24"
+  >
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 9.9-1" />
   </svg>
 );
 
 // ─── Subcity Profile Page ─────────────────────────────────────────────────────
-function SubcityProfilePage({ user }) {
+function SubcityProfilePage({ user, onPhotoUpdate }) {
   const u = user || JSON.parse(localStorage.getItem("user") || "{}");
   const [photo, setPhoto] = useState(u.profile_photo || null);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -456,14 +500,23 @@ function SubcityProfilePage({ user }) {
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
 
-  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+  const authHdr = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setPhotoError("Please select an image file."); return; }
-    if (file.size > 2_000_000) { setPhotoError("Image must be under 2 MB."); return; }
-    setPhotoError(""); setPhotoLoading(true);
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please select an image file.");
+      return;
+    }
+    if (file.size > 2_000_000) {
+      setPhotoError("Image must be under 2 MB.");
+      return;
+    }
+    setPhotoError("");
+    setPhotoLoading(true);
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const base64 = ev.target.result;
@@ -475,29 +528,47 @@ function SubcityProfilePage({ user }) {
         stored.profile_photo = base64;
         localStorage.setItem("user", JSON.stringify(stored));
         setPhotoSuccess("Profile photo updated.");
+        onPhotoUpdate && onPhotoUpdate(base64);
         setTimeout(() => setPhotoSuccess(""), 3000);
       } catch (err) {
         setPhotoError(err.response?.data?.message || "Failed to upload photo.");
-      } finally { setPhotoLoading(false); }
+      } finally {
+        setPhotoLoading(false);
+      }
     };
     reader.readAsDataURL(file);
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    setPwError(""); setPwSuccess("");
-    if (!oldPw) { setPwError("Enter your current password."); return; }
-    if (newPw.length < 6) { setPwError("New password must be at least 6 characters."); return; }
+    setPwError("");
+    setPwSuccess("");
+    if (!oldPw) {
+      setPwError("Enter your current password.");
+      return;
+    }
+    if (newPw.length < 6) {
+      setPwError("New password must be at least 6 characters.");
+      return;
+    }
     setPwLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      await apiInst.post("/auth/change-password", { old_password: oldPw, new_password: newPw }, authHdr());
+      await apiInst.post(
+        "/auth/change-password",
+        { old_password: oldPw, new_password: newPw },
+        authHdr(),
+      );
       setPwSuccess("Password changed successfully.");
-      setOldPw(""); setNewPw(""); setShowPwSection(false);
+      setOldPw("");
+      setNewPw("");
+      setShowPwSection(false);
       setTimeout(() => setPwSuccess(""), 4000);
     } catch (err) {
       setPwError(err.response?.data?.message || "Failed to change password.");
-    } finally { setPwLoading(false); }
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   const ROLE_COLORS_SC = {
@@ -509,37 +580,71 @@ function SubcityProfilePage({ user }) {
   return (
     <div className="max-w-lg">
       <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Profile</h1>
-      <p className="text-[#64748b] text-sm mb-6">Manage your account information and security.</p>
+      <p className="text-[#64748b] text-sm mb-6">
+        Manage your account information and security.
+      </p>
 
       {/* Photo + info card */}
       <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6 mb-4">
         <div className="flex items-center gap-5 mb-6">
           <div className="relative flex-shrink-0">
             {photo ? (
-              <img src={photo} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-[#dce8f4]" />
+              <img
+                src={photo}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover border-2 border-[#dce8f4]"
+              />
             ) : (
               <div className="w-20 h-20 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-2xl font-bold border-2 border-[#dce8f4]">
                 {(u.username || "SC")[0].toUpperCase()}
               </div>
             )}
-            <label className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#1a3a5c] border-2 border-white flex items-center justify-center cursor-pointer hover:bg-[#1e4976] transition-colors" title="Change photo">
+            <label
+              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#1a3a5c] border-2 border-white flex items-center justify-center cursor-pointer hover:bg-[#1e4976] transition-colors"
+              title="Change photo"
+            >
               <CameraIconSC />
-              <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={photoLoading} />
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handlePhotoChange}
+                disabled={photoLoading}
+              />
             </label>
           </div>
           <div>
-            <p className="font-bold text-[#1e293b] text-lg">{u.username || "Sub-city"}</p>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ROLE_COLORS_SC[u.role] ?? "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]"}`}>{u.role || "sub-city"}</span>
+            <p className="font-bold text-[#1e293b] text-lg">
+              {u.username || "Sub-city"}
+            </p>
+            <span
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ROLE_COLORS_SC[u.role] ?? "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]"}`}
+            >
+              {u.role || "sub-city"}
+            </span>
           </div>
         </div>
-        {photoLoading && <p className="text-xs text-[#64748b] mb-2">Uploading…</p>}
-        {photoError && <p className="text-xs text-red-600 mb-2">{photoError}</p>}
-        {photoSuccess && <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>}
+        {photoLoading && (
+          <p className="text-xs text-[#64748b] mb-2">Uploading…</p>
+        )}
+        {photoError && (
+          <p className="text-xs text-red-600 mb-2">{photoError}</p>
+        )}
+        {photoSuccess && (
+          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
+        )}
         <div className="space-y-3">
-          {[{ label: "Username", value: u.username || "—" }, { label: "Role", value: u.role || "sub-city" }].map(({ label, value }) => (
+          {[
+            { label: "Username", value: u.username || "—" },
+            { label: "Role", value: u.role || "sub-city" },
+          ].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">{label}</p>
-              <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">{value}</p>
+              <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
+                {label}
+              </p>
+              <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
+                {value}
+              </p>
             </div>
           ))}
         </div>
@@ -552,35 +657,77 @@ function SubcityProfilePage({ user }) {
             <p className="font-semibold text-[#1e293b]">Password</p>
             <p className="text-xs text-[#94a3b8]">Change your login password</p>
           </div>
-          <button onClick={() => { setShowPwSection(p => !p); setPwError(""); setPwSuccess(""); setOldPw(""); setNewPw(""); }}
-            className="text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all">
+          <button
+            onClick={() => {
+              setShowPwSection((p) => !p);
+              setPwError("");
+              setPwSuccess("");
+              setOldPw("");
+              setNewPw("");
+            }}
+            className="text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+          >
             {showPwSection ? "Cancel" : "Change Password"}
           </button>
         </div>
         {pwSuccess && (
           <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-            <CheckIcon /><p className="text-[#166534] text-sm">{pwSuccess}</p>
+            <CheckIcon />
+            <p className="text-[#166534] text-sm">{pwSuccess}</p>
           </div>
         )}
         {showPwSection && (
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="relative">
-              <label className="block text-sm font-medium text-[#334155] mb-1.5">Current Password</label>
-              <input type={showOld ? "text" : "password"} value={oldPw} onChange={e => { setOldPw(e.target.value); setPwError(""); }}
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">
+                Current Password
+              </label>
+              <input
+                type={showOld ? "text" : "password"}
+                value={oldPw}
+                onChange={(e) => {
+                  setOldPw(e.target.value);
+                  setPwError("");
+                }}
                 placeholder="Your current password"
-                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
-              <button type="button" onClick={() => setShowOld(v => !v)} className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"><EyeIconSC show={showOld} /></button>
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOld((v) => !v)}
+                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
+              >
+                <EyeIconSC show={showOld} />
+              </button>
             </div>
             <div className="relative">
-              <label className="block text-sm font-medium text-[#334155] mb-1.5">New Password</label>
-              <input type={showNew ? "text" : "password"} value={newPw} onChange={e => { setNewPw(e.target.value); setPwError(""); }}
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">
+                New Password
+              </label>
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPw}
+                onChange={(e) => {
+                  setNewPw(e.target.value);
+                  setPwError("");
+                }}
                 placeholder="Min. 6 characters"
-                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20" />
-              <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"><EyeIconSC show={showNew} /></button>
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew((v) => !v)}
+                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
+              >
+                <EyeIconSC show={showNew} />
+              </button>
             </div>
             {pwError && <p className="text-xs text-red-600">{pwError}</p>}
-            <button type="submit" disabled={pwLoading}
-              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
+            <button
+              type="submit"
+              disabled={pwLoading}
+              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
+            >
               {pwLoading ? "Saving…" : "Update Password"}
             </button>
           </form>
@@ -591,68 +738,77 @@ function SubcityProfilePage({ user }) {
 }
 
 // ─── Plan Unlock Request Banner ───────────────────────────────────────────────
+// Uses the same edit_requests table as woreda LockBanner.
+// report_date = "<fiscalYear>-07-08"  (unique key per plan year)
+// report_type = "annual_plan"
 function PlanUnlockBanner({ sector }) {
-  // status: null | "pending" | "approved" | "denied" | "expired"
-  const [status, setStatus] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
+  const [status, setStatus] = useState(null); // null | "pending" | "approved" | "denied" | "used"
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [reason, setReason] = useState("");
+  const [requested, setRequested] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
-  const year = new Date().getFullYear();
-  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+  // fiscal-year start date used as the unique report_date key
+  const now = new Date();
+  const fiscalYear =
+    now.getMonth() + 1 > 7 || (now.getMonth() + 1 === 7 && now.getDate() >= 8)
+      ? now.getFullYear()
+      : now.getFullYear() - 1;
+  const reportDate = `${fiscalYear}-07-08`;
+  const reportType = "annual_plan";
+
+  const authHdr = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
 
   const fetchStatus = useCallback(async () => {
     setLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.get("/auth/plan-unlock-requests/mine", authHdr());
-      const requests = res.data.requests || [];
-      const mine = requests.find(r => r.sector === sector && r.plan_year === year);
-      if (mine) {
-        // Client-side expiry check as well
-        const isClientExpired =
-          mine.status === "pending" &&
-          mine.expires_at &&
-          new Date(mine.expires_at) < new Date();
-        setStatus(isClientExpired ? "expired" : mine.status);
-        setExpiresAt(mine.expires_at || null);
-      } else {
-        setStatus(null);
-        setExpiresAt(null);
-      }
-    } catch { /* silent */ }
-    finally { setLoading(false); }
-  }, [sector, year]);
+      const res = await apiInst.get("/auth/edit-requests/mine", authHdr());
+      const reqs = res.data.requests || [];
+      const mine = reqs.find(
+        (r) =>
+          r.sector === sector &&
+          r.report_date === reportDate &&
+          r.report_type === reportType,
+      );
+      setStatus(mine ? mine.status : null);
+      if (mine?.status === "approved") setRequested(false);
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+    }
+  }, [sector, reportDate]);
 
-  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
 
-  // Compute days remaining for a pending request
-  const daysRemaining = () => {
-    if (!expiresAt) return null;
-    const ms = new Date(expiresAt) - new Date();
-    if (ms <= 0) return 0;
-    return Math.ceil(ms / (1000 * 60 * 60 * 24));
-  };
-
-  const handleRequest = async (e) => {
-    e.preventDefault();
-    setRequesting(true); setError("");
+  const handleRequest = async () => {
+    setRequesting(true);
+    setError("");
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.post("/auth/plan-unlock-requests", { sector, plan_year: year, reason }, authHdr());
+      await apiInst.post(
+        "/auth/edit-requests",
+        { sector, report_date: reportDate, report_type: reportType },
+        authHdr(),
+      );
       setStatus("pending");
-      setExpiresAt(res.data?.expires_at || null);
-      setShowForm(false);
-      setReason("");
-      setSuccess("Unlock request submitted. Waiting for admin approval.");
-      setTimeout(() => setSuccess(""), 5000);
+      setRequested(true);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to submit request.");
-    } finally { setRequesting(false); }
+      const msg = err.response?.data?.message || "Failed to submit request.";
+      // If backend says already approved, refresh to show approved state
+      if (msg.toLowerCase().includes("approved")) {
+        fetchStatus();
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setRequesting(false);
+    }
   };
 
   if (loading) return null;
@@ -662,165 +818,822 @@ function PlanUnlockBanner({ sector }) {
     return (
       <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
         <CheckIcon />
-        <p className="text-[#166534] text-sm font-medium">Plan unlock approved. You can now re-save the plan.</p>
+        <p className="text-[#166534] text-sm font-medium">
+          Plan unlock approved. You can now re-save the plan.
+        </p>
       </div>
     );
   }
 
   // ── Pending ──
   if (status === "pending") {
-    const days = daysRemaining();
     return (
-      <div className="mb-5 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[#92400e] text-sm font-medium">Unlock request pending admin approval.</p>
-            <p className="text-[#78350f] text-xs mt-0.5">You will be able to re-save the plan once the admin approves.</p>
-          </div>
-          {days !== null && (
-            <span className={`flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${days <= 1 ? "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]" : "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"}`}>
-              {days === 0 ? "Expiring soon" : `${days}d left`}
-            </span>
-          )}
+      <div className="mb-5 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
+        <svg
+          className="w-4 h-4 text-[#b45309] flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4M12 16h.01" />
+        </svg>
+        <div>
+          <p className="text-[#92400e] text-sm font-medium">
+            Unlock request pending admin approval.
+          </p>
+          <p className="text-[#78350f] text-xs mt-0.5">
+            You can re-save the plan once the admin approves.
+          </p>
         </div>
       </div>
     );
   }
 
-  // ── Expired or denied — allow re-requesting ──
-  const canReRequest = status === "expired" || status === "denied";
-
+  // ── Denied or null — show request button ──
   return (
     <div className="mb-5">
-      {success && (
-        <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-          <CheckIcon /><p className="text-[#166534] text-sm">{success}</p>
+      {status === "denied" && (
+        <div className="mb-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
+          <p className="text-[#991b1b] text-sm font-medium">
+            Previous request was denied.
+          </p>
+          <p className="text-[#94a3b8] text-xs mt-0.5">
+            You can request again below.
+          </p>
         </div>
       )}
 
-      {/* Expired notice */}
-      {status === "expired" && (
-        <div className="mb-3 bg-[#f4f6f9] border border-[#cbd5e1] rounded-xl px-4 py-3">
-          <p className="text-[#475569] text-sm font-medium">Previous unlock request expired.</p>
-          <p className="text-[#94a3b8] text-xs mt-0.5">You can submit a new request below.</p>
-        </div>
-      )}
-
-      <div className="bg-[#f4f6f9] border border-[#e2e8f0] rounded-xl px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-[#b45309] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
           <div>
-            <p className="text-sm font-medium text-[#334155]">
-              {canReRequest ? "Request a new plan unlock" : "Want to update this annual plan?"}
+            <p className="text-sm font-semibold text-[#b45309]">
+              {status === "denied"
+                ? "Request a new plan unlock"
+                : "Want to update this annual plan?"}
             </p>
-            <p className="text-xs text-[#94a3b8] mt-0.5">
-              {canReRequest
-                ? "Your previous request expired or was denied. Submit a new one."
-                : "After a plan is saved, you need admin approval to re-save it. Requests expire after 5 days."}
+            <p className="text-xs text-[#92400e] mt-0.5">
+              Admin approval is required to re-save an annual plan.
             </p>
           </div>
-          {!showForm && (
-            <button onClick={() => setShowForm(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ml-3">
-              <UnlockNavIcon /> Request Unlock
-            </button>
-          )}
         </div>
-        {showForm && (
-          <form onSubmit={handleRequest} className="mt-3 space-y-2">
-            <textarea value={reason} onChange={e => { setReason(e.target.value); setError(""); }}
-              placeholder="Reason for requesting plan unlock (optional)"
-              rows={2}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-white text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 resize-none" />
-            {error && <p className="text-xs text-red-600">{error}</p>}
-            <div className="flex gap-2">
-              <button type="button" onClick={() => { setShowForm(false); setReason(""); setError(""); }}
-                className="px-3 py-1.5 text-xs font-medium text-[#64748b] border border-[#e2e8f0] rounded-lg hover:bg-white transition-all">Cancel</button>
-              <button type="submit" disabled={requesting}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-[#1a3a5c] hover:bg-[#1e4976] rounded-lg transition-all disabled:opacity-60">
-                {requesting ? "Submitting…" : "Submit Request"}
-              </button>
-            </div>
-          </form>
+        {error && <p className="text-xs text-[#dc2626]">{error}</p>}
+        {requested ? (
+          <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-3 py-2">
+            <CheckIcon />
+            <p className="text-xs font-medium text-[#166534]">
+              Request sent. The admin will review and grant access.
+            </p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleRequest}
+            disabled={requesting}
+            className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+          >
+            <UnlockNavIcon />
+            {requesting ? "Sending..." : "Request Edit Access"}
+          </button>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Archive Annual Plans Section ─────────────────────────────────────────────
-function ArchivePlansSection() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [confirm, setConfirm] = useState(false);
+// ─── History helpers ──────────────────────────────────────────────────────────
 
-  const authHdr = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+/** fiscal year that starts on July 8 of `y` */
+function histFiscalYear() {
+  const n = new Date();
+  return n.getMonth() + 1 > 7 || (n.getMonth() + 1 === 7 && n.getDate() >= 8)
+    ? n.getFullYear()
+    : n.getFullYear() - 1;
+}
 
+/** "YYYY-MM-DD" range for fiscal year starting July 8 of `y` */
+function histFiscalRange(y) {
+  return { from: `${y}-07-08`, to: `${y + 1}-07-07` };
+}
+
+/** Download all records for a fiscal year as one CSV */
+function downloadRecordsCSV(rows, fiscalYear) {
+  if (!rows.length) return;
+  const hidden = new Set([
+    "id",
+    "user_id",
+    "created_at",
+    "updated_at",
+    "_sector",
+  ]);
+  const keys = [];
+  const seen = new Set();
+  rows.forEach((r) =>
+    Object.keys(r).forEach((k) => {
+      if (!hidden.has(k) && !seen.has(k)) {
+        seen.add(k);
+        keys.push(k);
+      }
+    }),
+  );
+  const esc = (c) => `"${String(c ?? "").replace(/"/g, '""')}"`;
+  const header = [
+    "Sector",
+    "Woreda",
+    ...keys.map((k) =>
+      k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    ),
+  ];
+  const body = rows.map((r) => {
+    const sec = REPORT_SECTORS_ALL.find((s) => s.id === r._sector);
+    return [
+      esc(sec?.label ?? r._sector ?? ""),
+      esc(r.username ?? ""),
+      ...keys.map((k) => esc(r[k])),
+    ].join(",");
+  });
+  const csv = [header.map(esc).join(","), ...body].join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(
+    new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }),
+  );
+  a.download = `records_${fiscalYear}-${fiscalYear + 1}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/** Human-readable label for a subcity plan source_table name */
+function planTableLabel(t) {
+  const map = {
+    subcity_buusaa_gonofaa_plan: "Subcity – Buusaa Gonofaa",
+    subcity_qonna_plan: "Subcity – Qonna",
+    subcity_carraa_plan: "Subcity – Carraa Hojii",
+    subcity_daldala_plan: "Subcity – Daldala",
+    subcity_atk_plan: "Subcity – ATK",
+    subcity_galii_plan: "Subcity – Galii",
+    annual_plan_wereda_1: "Aanaa Gooroo – Buusaa",
+    annual_plan_wereda_2: "Aanaa Dhadacha Araaraa – Buusaa",
+    annual_plan_wereda_3: "Aanaa Dhakaa Adii – Buusaa",
+    annual_plan_wereda_4: "Aanaa Andoodee – Buusaa",
+    annual_qonna_plan_wereda_1: "Aanaa Gooroo – Qonna",
+    annual_qonna_plan_wereda_2: "Aanaa Dhadacha Araaraa – Qonna",
+    annual_qonna_plan_wereda_3: "Aanaa Dhakaa Adii – Qonna",
+    annual_qonna_plan_wereda_4: "Aanaa Andoodee – Qonna",
+    annual_carraa_plan_wereda_1: "Aanaa Gooroo – Carraa",
+    annual_carraa_plan_wereda_2: "Aanaa Dhadacha Araaraa – Carraa",
+    annual_carraa_plan_wereda_3: "Aanaa Dhakaa Adii – Carraa",
+    annual_carraa_plan_wereda_4: "Aanaa Andoodee – Carraa",
+    annual_daldala_plan_wereda_1: "Aanaa Gooroo – Daldala",
+    annual_daldala_plan_wereda_2: "Aanaa Dhadacha Araaraa – Daldala",
+    annual_daldala_plan_wereda_3: "Aanaa Dhakaa Adii – Daldala",
+    annual_daldala_plan_wereda_4: "Aanaa Andoodee – Daldala",
+    annual_atk_plan_wereda_1: "Aanaa Gooroo – ATK",
+    annual_atk_plan_wereda_2: "Aanaa Dhadacha Araaraa – ATK",
+    annual_atk_plan_wereda_3: "Aanaa Dhakaa Adii – ATK",
+    annual_atk_plan_wereda_4: "Aanaa Andoodee – ATK",
+    annual_galii_plan_wereda_1: "Aanaa Gooroo – Galii",
+    annual_galii_plan_wereda_2: "Aanaa Dhadacha Araaraa – Galii",
+    annual_galii_plan_wereda_3: "Aanaa Dhakaa Adii – Galii",
+    annual_galii_plan_wereda_4: "Aanaa Andoodee – Galii",
+  };
+  return (
+    map[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
+/** Download a single plan row as CSV */
+function downloadPlanCSV(archiveRow) {
+  const data = archiveRow.data ?? {};
+  const label = planTableLabel(archiveRow.source_table);
+  const hidden = new Set(["id", "year", "created_at", "updated_at"]);
+  const esc = (c) => `"${String(c ?? "").replace(/"/g, '""')}"`;
+  const rows = [
+    ["Plan", label],
+    ["Fiscal Year", `${archiveRow.plan_year}–${archiveRow.plan_year + 1}`],
+    [],
+    ["Field", "Value"],
+    ...Object.entries(data)
+      .filter(([k]) => !hidden.has(k))
+      .map(([k, v]) => [
+        k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        v ?? "",
+      ]),
+  ];
+  const csv = rows
+    .map((r) => (r.length ? r.map(esc).join(",") : ""))
+    .join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(
+    new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }),
+  );
+  a.download = `plan_${archiveRow.source_table}_${archiveRow.plan_year}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ─── History Section ──────────────────────────────────────────────────────────
+function HistorySection() {
+  const thisFY = histFiscalYear();
+
+  // ── year filter ────────────────────────────────────────────────────────────
+  const [selectedYear, setSelectedYear] = useState(thisFY);
+  const [yearOptions, setYearOptions] = useState([thisFY]);
+
+  // ── plans (archived + live) ────────────────────────────────────────────────
+  const [planRows, setPlanRows] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [plansError, setPlansError] = useState("");
+
+  // ── woreda records ─────────────────────────────────────────────────────────
+  const [records, setRecords] = useState([]);
+  const [recLoading, setRecLoading] = useState(true);
+  const [recError, setRecError] = useState("");
+  const [modalRow, setModalRow] = useState(null);
+  const [fWoreda, setFWoreda] = useState("all");
+  const [fSector, setFSector] = useState("all");
+
+  // ── archive & reset ────────────────────────────────────────────────────────
+  const [showArchive, setShowArchive] = useState(false);
+  const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [archiveMsg, setArchiveMsg] = useState("");
+  const [archiveErr, setArchiveErr] = useState("");
+
+  const authHdr = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
+
+  // ── load year options from archive ────────────────────────────────────────
+  useEffect(() => {
+    fetchArchivedPlans()
+      .then((d) => {
+        const ays = d.availableYears ?? [];
+        const all = [...new Set([thisFY, ...ays])].sort((a, b) => b - a);
+        setYearOptions(all);
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── load plans when year changes ──────────────────────────────────────────
+  useEffect(() => {
+    setPlansLoading(true);
+    setPlansError("");
+    Promise.all([
+      fetchArchivedPlans(selectedYear).catch(() => ({ archives: [] })),
+      fetchSubcityLivePlans(selectedYear).catch(() => ({ plans: [] })),
+    ])
+      .then(([archData, liveData]) => {
+        const archived = archData.archives ?? [];
+        const live = liveData.plans ?? [];
+        const archivedTables = new Set(archived.map((a) => a.source_table));
+        const liveFill = live.filter(
+          (l) => !archivedTables.has(l.source_table),
+        );
+        setPlanRows([...archived, ...liveFill]);
+      })
+      .catch((err) =>
+        setPlansError(friendlyError(err, "Failed to load plans.")),
+      )
+      .finally(() => setPlansLoading(false));
+  }, [selectedYear]);
+
+  // ── load records when year/filters change ─────────────────────────────────
+  useEffect(() => {
+    setRecLoading(true);
+    setRecError("");
+    const { from, to } = histFiscalRange(selectedYear);
+    const filters = { date_from: from, date_to: to };
+    if (fWoreda !== "all") filters.username = fWoreda;
+    if (fSector !== "all") filters.sector = fSector;
+    fetchAllWoredaReports(filters)
+      .then((data) => setRecords(Array.isArray(data) ? data : []))
+      .catch((err) =>
+        setRecError(friendlyError(err, "Failed to load records.")),
+      )
+      .finally(() => setRecLoading(false));
+  }, [selectedYear, fWoreda, fSector]);
+
+  // ── archive action ────────────────────────────────────────────────────────
   const handleArchive = async () => {
-    setConfirm(false); setLoading(true); setResult(null); setError("");
+    setArchiveConfirm(false);
+    setArchiving(true);
+    setArchiveMsg("");
+    setArchiveErr("");
     try {
-      const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.post("/auth/archive-annual-plans", {}, authHdr());
-      setResult(res.data.message);
+      const api = (await import("../api/api")).default;
+      const res = await api.post("/auth/archive-annual-plans", {}, authHdr());
+      setArchiveMsg(res.data.message);
+      // Refresh year options
+      fetchArchivedPlans()
+        .then((d) => {
+          const ays = d.availableYears ?? [];
+          setYearOptions([...new Set([thisFY, ...ays])].sort((a, b) => b - a));
+        })
+        .catch(() => {});
     } catch (err) {
       const msg = err.response?.data?.message || "Archive failed.";
       const errs = err.response?.data?.errors;
-      setError(errs ? `${msg}\n${errs.join("\n")}` : msg);
-    } finally { setLoading(false); }
+      setArchiveErr(errs ? `${msg}\n${errs.join("\n")}` : msg);
+    } finally {
+      setArchiving(false);
+    }
   };
 
   const now = new Date();
-  const isAfterJul8 = now.getMonth() > 5 || (now.getMonth() === 6 && now.getDate() >= 8);
+  const isAfterJul8 =
+    now.getMonth() > 5 || (now.getMonth() === 6 && now.getDate() >= 8);
+  const SC_ACCENT = "#1a3a5c";
 
   return (
-    <div className="max-w-xl">
-      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Archive Annual Plans</h1>
-      <p className="text-[#64748b] text-sm mb-6">After July 8, archive the current year's annual plans and reset all targets to zero for the new year.</p>
+    <div>
+      {modalRow && (
+        <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
+      )}
 
-      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6">
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-[#fef3c7] flex items-center justify-center flex-shrink-0">
-            <ArchiveNavIcon />
-          </div>
-          <div>
-            <p className="font-semibold text-[#1e293b] mb-1">Annual Plan Archive for {now.getFullYear()}</p>
-            <p className="text-sm text-[#64748b]">This will save all current annual plan data to the archive, then reset all plan values to zero so new plans can be entered. The old data is preserved as "Annual Plan {now.getFullYear()}".</p>
-          </div>
+      {/* ── Header ── */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">History</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Past fiscal years — annual plans and woreda records. Year resets
+            July 8.
+          </p>
         </div>
+        <button
+          onClick={() => setShowArchive((p) => !p)}
+          className="flex items-center gap-2 border border-[#e2e8f0] bg-white text-[#64748b] hover:border-[#1a3a5c] hover:text-[#1a3a5c] px-4 py-2 rounded-lg text-sm font-medium transition-all"
+        >
+          <ArchiveNavIcon />
+          {showArchive ? "Hide" : "Archive & Reset Plans"}
+        </button>
+      </div>
 
-        {!isAfterJul8 && (
-          <div className="mb-4 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 text-sm text-[#92400e]">
-            Note: Today is before July 8. This action is intended for after July 8 when the new fiscal year begins.
-          </div>
-        )}
-
-        {result && (
-          <div className="mb-4 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
-            <CheckIcon />{result}
-          </div>
-        )}
-        {error && (
-          <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm whitespace-pre-wrap">
-            {error}
-          </div>
-        )}
-
-        {confirm ? (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-[#dc2626]">This action is irreversible. Are you sure?</p>
+      {/* ── Archive & Reset panel ── */}
+      {showArchive && (
+        <div className="mb-6 bg-white rounded-xl border border-[#e2e8f0] shadow-sm p-5">
+          <p className="font-semibold text-[#1e293b] mb-1">
+            Archive Annual Plans for {now.getFullYear()}
+          </p>
+          <p className="text-sm text-[#64748b] mb-4">
+            Saves all current plan data to the archive, then resets values to
+            zero for the new fiscal year.
+          </p>
+          {!isAfterJul8 && (
+            <div className="mb-3 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 text-sm text-[#92400e]">
+              Today is before July 8. This action is intended for after the
+              fiscal year starts.
+            </div>
+          )}
+          {archiveMsg && (
+            <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
+              <CheckIcon />
+              {archiveMsg}
+            </div>
+          )}
+          {archiveErr && (
+            <div className="mb-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm whitespace-pre-wrap">
+              {archiveErr}
+            </div>
+          )}
+          {archiveConfirm ? (
             <div className="flex gap-3">
-              <button onClick={() => setConfirm(false)} className="flex-1 border border-[#e2e8f0] text-[#64748b] py-2.5 rounded-xl text-sm font-medium hover:bg-[#f4f6f9] transition-all">Cancel</button>
-              <button onClick={handleArchive} disabled={loading} className="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
-                {loading ? "Archiving…" : "Confirm Archive & Reset"}
+              <button
+                onClick={() => setArchiveConfirm(false)}
+                className="flex-1 border border-[#e2e8f0] text-[#64748b] py-2 rounded-xl text-sm font-medium hover:bg-[#f4f6f9] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchive}
+                disabled={archiving}
+                className="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white py-2 rounded-xl text-sm font-semibold transition-all"
+              >
+                {archiving ? "Archiving…" : "Confirm Archive & Reset"}
               </button>
             </div>
+          ) : (
+            <button
+              onClick={() => setArchiveConfirm(true)}
+              disabled={archiving}
+              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+            >
+              <ArchiveNavIcon /> Archive Annual Plans for {now.getFullYear()}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Filters ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
+        <div className="flex flex-wrap gap-4 items-end">
+          {/* Fiscal year */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Fiscal Year
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(Number(e.target.value));
+                setFWoreda("all");
+                setFSector("all");
+              }}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y} – {y + 1}
+                  {y === thisFY ? "  (current)" : ""}
+                </option>
+              ))}
+            </select>
           </div>
-        ) : (
-          <button onClick={() => setConfirm(true)} disabled={loading}
-            className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2">
-            <ArchiveNavIcon /> Archive Annual Plans for {now.getFullYear()}
-          </button>
-        )}
+          {/* Woreda */}
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Woreda
+            </label>
+            <select
+              value={fWoreda}
+              onChange={(e) => setFWoreda(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Woredas</option>
+              {WOREDAS.map((w) => (
+                <option key={w.id} value={w.name}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Sector */}
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
+            <select
+              value={fSector}
+              onChange={(e) => setFSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
+              <option value="all">All Sectors</option>
+              {REPORT_SECTORS_ALL.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Count badge */}
+          <div className="flex-shrink-0 pb-0.5">
+            <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
+              {recLoading
+                ? "…"
+                : `${records.length} record${records.length !== 1 ? "s" : ""}`}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ ANNUAL PLANS ══ */}
+      <div className="mb-6">
+        <div
+          className="flex items-center justify-between px-5 py-3 rounded-t-xl border border-[#e2e8f0]"
+          style={{
+            background: `linear-gradient(90deg,${SC_ACCENT} 0%,${SC_ACCENT}cc 100%)`,
+          }}
+        >
+          <div>
+            <p className="text-sm font-semibold text-white">
+              Annual Plans — {selectedYear}–{selectedYear + 1}
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              {plansLoading
+                ? "Loading…"
+                : `${planRows.length} plan table${planRows.length !== 1 ? "s" : ""}${planRows.some((r) => r.is_live) ? " · some live" : ""}`}
+            </p>
+          </div>
+          {!plansLoading && planRows.length > 0 && (
+            <button
+              onClick={() => planRows.forEach(downloadPlanCSV)}
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Download All Plans
+            </button>
+          )}
+        </div>
+        <div className="border border-t-0 border-[#e2e8f0] rounded-b-xl bg-white overflow-hidden">
+          {plansLoading ? (
+            <div className="flex items-center justify-center py-10 gap-3">
+              <div className="w-5 h-5 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
+              <span className="text-sm text-[#64748b]">Loading plans…</span>
+            </div>
+          ) : plansError ? (
+            <p className="px-5 py-5 text-sm text-[#dc2626]">{plansError}</p>
+          ) : planRows.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-[#94a3b8] text-sm">
+                No plans found for {selectedYear}–{selectedYear + 1}.
+              </p>
+              <p className="text-[#b0bec5] text-xs mt-1">
+                Plans appear once saved from the Annual Plan tab.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                    {["Plan Table", "Fiscal Year", "Status", "Download"].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {planRows.map((a, idx) => (
+                    <tr
+                      key={a.id ?? `live-${idx}`}
+                      className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                    >
+                      <td className="px-5 py-3 font-medium text-[#1e293b]">
+                        {planTableLabel(a.source_table)}
+                      </td>
+                      <td className="px-5 py-3 text-[#475569]">
+                        {a.plan_year}–{a.plan_year + 1}
+                      </td>
+                      <td className="px-5 py-3">
+                        {a.is_live ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#eff6ff] text-[#1e40af] border border-[#bfdbfe]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] animate-pulse" />
+                            Live
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                            Archived{" "}
+                            {a.archived_at
+                              ? new Date(a.archived_at).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  },
+                                )
+                              : ""}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={() => downloadPlanCSV(a)}
+                          className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
+                          CSV
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ WOREDA RECORDS ══ */}
+      <div>
+        <div
+          className="flex items-center justify-between px-5 py-3 rounded-t-xl border border-[#e2e8f0]"
+          style={{
+            background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+          }}
+        >
+          <div>
+            <p className="text-sm font-semibold text-white">
+              Woreda Records — {selectedYear}–{selectedYear + 1}
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              {recLoading
+                ? "Loading…"
+                : `${records.length} report${records.length !== 1 ? "s" : ""} from this fiscal year`}
+            </p>
+          </div>
+          {!recLoading && records.length > 0 && (
+            <button
+              onClick={() => downloadRecordsCSV(records, selectedYear)}
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Download Records
+            </button>
+          )}
+        </div>
+        <div className="border border-t-0 border-[#e2e8f0] rounded-b-xl bg-white overflow-hidden">
+          {recError && (
+            <div className="px-5 py-4 flex items-center gap-2 text-sm text-[#dc2626]">
+              <svg
+                className="w-4 h-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+              {recError}
+            </div>
+          )}
+          {recLoading ? (
+            <div className="flex items-center justify-center py-10 gap-3">
+              <div className="w-5 h-5 border-4 border-[#d1fae5] border-t-[#065f46] rounded-full animate-spin" />
+              <span className="text-sm text-[#64748b]">Loading records…</span>
+            </div>
+          ) : records.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center mx-auto mb-3">
+                <ListIcon />
+              </div>
+              <p className="text-[#94a3b8] text-sm">
+                No records for {selectedYear}–{selectedYear + 1}
+                {fWoreda !== "all" || fSector !== "all"
+                  ? " with selected filters"
+                  : ""}
+                .
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                    {[
+                      "Date",
+                      "Submitted By",
+                      "Sector",
+                      "Report Type",
+                      "Actions",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.map((row, idx) => {
+                    const sec = REPORT_SECTORS_ALL.find(
+                      (s) => s.id === row._sector,
+                    );
+                    return (
+                      <tr
+                        key={row.id ?? idx}
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                      >
+                        <td className="px-5 py-3 text-[#475569] text-sm">
+                          {scFormatDateTime(row)}
+                        </td>
+                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
+                          {row.username ?? ""}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: sec?.color ?? "#64748b",
+                              }}
+                            />
+                            <span className="text-sm font-medium text-[#1e293b]">
+                              {sec?.label ?? row._sector}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">
+                          {row.report_type ?? ""}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setModalRow(row)}
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                              View
+                            </button>
+                            <button
+                              onClick={() =>
+                                scDownloadCSV(
+                                  row,
+                                  sec?.label ?? row._sector ?? "Report",
+                                )
+                              }
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#065f46] bg-[#f0fdf4] hover:bg-[#dcfce7] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                />
+                              </svg>
+                              CSV
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4832,10 +5645,17 @@ const SECTOR_PRINT_FIELDS = {
 
 // ─── Build just the table fragment for one sector (used in all-sectors mode) ─
 function buildSubcityPrintTable({
-  sector, period, showPct, showPlan,
-  woredaData, planData, selectedWoreda, subcityGaliiActuals,
+  sector,
+  period,
+  showPct,
+  showPlan,
+  woredaData,
+  planData,
+  selectedWoreda,
+  subcityGaliiActuals,
 }) {
-  const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+  const sectorLabel =
+    REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
   const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
   const ALL_WOREDAS_PRINT = [
     { id: "w1", name: "Aanaa Gooroo" },
@@ -4843,15 +5663,16 @@ function buildSubcityPrintTable({
     { id: "w3", name: "Aanaa Dhakaa Adii" },
     { id: "w4", name: "Aanaa Andoodee" },
   ];
-  const WOREDAS_PRINT = selectedWoreda === "all"
-    ? ALL_WOREDAS_PRINT
-    : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
+  const WOREDAS_PRINT =
+    selectedWoreda === "all"
+      ? ALL_WOREDAS_PRINT
+      : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
   const showSubcityCol = sector === "galii" && selectedWoreda === "all";
   const showTotal = selectedWoreda === "all";
   const subCols = [];
-  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
-  subCols.push(            { key: "actual", label: "Raawwii" });
-  if (showPct)  subCols.push({ key: "pct",    label: "%" });
+  if (showPlan) subCols.push({ key: "plan", label: "Karoora" });
+  subCols.push({ key: "actual", label: "Raawwii" });
+  if (showPct) subCols.push({ key: "pct", label: "%" });
   const numSubCols = subCols.length;
 
   let thead = `<thead><tr class="top-header">
@@ -4860,10 +5681,13 @@ function buildSubcityPrintTable({
   for (const w of WOREDAS_PRINT) {
     thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
   }
-  if (showSubcityCol) thead += `<th colspan="${numSubCols}" class="woreda-header subcity-header">Subcity</th>`;
-  if (showTotal)      thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+  if (showSubcityCol)
+    thead += `<th colspan="${numSubCols}" class="woreda-header subcity-header">Subcity</th>`;
+  if (showTotal)
+    thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
   thead += `</tr><tr class="sub-header">`;
-  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  const totalGroupCount =
+    WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
   for (let i = 0; i < totalGroupCount; i++) {
     for (const sc of subCols) thead += `<th class="sub-col">${sc.label}</th>`;
   }
@@ -4872,34 +5696,44 @@ function buildSubcityPrintTable({
   let tbody = "<tbody>";
   fields.forEach(({ key, label }, idx) => {
     tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${label}</td>`;
-    let totalActual = 0, totalPlan = 0;
+    let totalActual = 0,
+      totalPlan = 0;
     for (const w of WOREDAS_PRINT) {
-      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
-      const actual   = Number(wEntry?.actuals?.[key] ?? 0);
-      const target   = Number(planData?.[w.id]?.[key] ?? 0);
-      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
-      totalActual += actual; totalPlan += target;
+      const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const actual = Number(wEntry?.actuals?.[key] ?? 0);
+      const target = Number(planData?.[w.id]?.[key] ?? 0);
+      const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+      totalActual += actual;
+      totalPlan += target;
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
-        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+        if (sc.key === "plan")
+          tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")
+          tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
       }
     }
     if (showSubcityCol) {
       const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
       totalActual += scActual;
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
-        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
+        if (sc.key === "plan") tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct") tbody += `<td class="num pct">—</td>`;
       }
     }
     if (showTotal) {
-      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      const totalPct =
+        totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
-        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+        if (sc.key === "plan")
+          tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")
+          tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
       }
     }
     tbody += `</tr>`;
@@ -4913,16 +5747,23 @@ function buildSubcityPrintTable({
 }
 
 // ─── Wrap multiple sector table fragments into one print document ─────────────
-function buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda) {
+function buildCombinedPrintHTML(
+  tablesHtml,
+  generatedDate,
+  period,
+  selectedWoreda,
+) {
   const ALL_WOREDAS_PRINT = [
     { id: "w1", name: "Aanaa Gooroo" },
     { id: "w2", name: "Aanaa Dhadacha Araaraa" },
     { id: "w3", name: "Aanaa Dhakaa Adii" },
     { id: "w4", name: "Aanaa Andoodee" },
   ];
-  const woredaLabel = selectedWoreda === "all"
-    ? "All Woredas"
-    : (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda);
+  const woredaLabel =
+    selectedWoreda === "all"
+      ? "All Woredas"
+      : (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ??
+        selectedWoreda);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4986,7 +5827,7 @@ function buildSubcityPrintHTML({
   woredaData, // { woredas: [{woredaId, name, actuals}] }
   planData, // { w1: {targets}, w2: ..., w3: ..., w4: ... }
   generatedDate,
-  selectedWoreda,      // "all" | "w1" | "w2" | "w3" | "w4"
+  selectedWoreda, // "all" | "w1" | "w2" | "w3" | "w4"
   subcityGaliiActuals, // actuals object for subcity galii, or null
 }) {
   const sectorLabel =
@@ -5012,9 +5853,9 @@ function buildSubcityPrintHTML({
   // Sub-columns order: Karora (plan), Raawwi (actual), % — always Karora first
   // Build sub-col definitions: we always show Raawwi; Karora/% are optional
   const subCols = [];
-  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
-  subCols.push(            { key: "actual", label: "Raawwii" });
-  if (showPct)  subCols.push({ key: "pct",    label: "%" });
+  if (showPlan) subCols.push({ key: "plan", label: "Karoora" });
+  subCols.push({ key: "actual", label: "Raawwii" });
+  if (showPct) subCols.push({ key: "pct", label: "%" });
   const numSubCols = subCols.length;
 
   // Show total column only when all woredas are selected
@@ -5035,7 +5876,8 @@ function buildSubcityPrintHTML({
     thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
   }
   thead += `</tr><tr class="sub-header">`;
-  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  const totalGroupCount =
+    WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
   for (let i = 0; i < totalGroupCount; i++) {
     for (const sc of subCols) {
       thead += `<th class="sub-col">${sc.label}</th>`;
@@ -5051,23 +5893,26 @@ function buildSubcityPrintHTML({
     tbody += `<td class="gosa">${label}</td>`;
 
     let totalActual = 0;
-    let totalPlan   = 0;
+    let totalPlan = 0;
 
     for (const w of WOREDAS_PRINT) {
-      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
       const wActuals = wEntry?.actuals ?? {};
       const wTargets = planData?.[w.id] ?? {};
-      const actual   = Number(wActuals[key] ?? 0);
-      const target   = Number(wTargets[key] ?? 0);
-      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
+      const actual = Number(wActuals[key] ?? 0);
+      const target = Number(wTargets[key] ?? 0);
+      const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
 
       totalActual += actual;
-      totalPlan   += target;
+      totalPlan += target;
 
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
-        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+        if (sc.key === "plan")
+          tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")
+          tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
       }
     }
 
@@ -5076,19 +5921,24 @@ function buildSubcityPrintHTML({
       const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
       totalActual += scActual;
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
-        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
+        if (sc.key === "plan") tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct") tbody += `<td class="num pct">—</td>`;
       }
     }
 
     // Total column (all-woredas only)
     if (showTotal) {
-      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      const totalPct =
+        totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
       for (const sc of subCols) {
-        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
-        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
-        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+        if (sc.key === "plan")
+          tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual")
+          tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")
+          tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
       }
     }
 
@@ -5139,7 +5989,7 @@ function buildSubcityPrintHTML({
 </head>
 <body>
   <div class="report-title">
-    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find(w => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
+    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
   </div>
   <div class="meta">
     <span>Generated: ${generatedDate}</span>
@@ -5159,7 +6009,7 @@ function buildSubcityPrintHTML({
 // ─── SubcityPrintModal ────────────────────────────────────────────────────────
 // Configuration dialog that collects options then opens a new print window.
 function SubcityPrintModal({ rows, onClose }) {
-  const [sector, setSector] = useState("all");  // default = all sectors
+  const [sector, setSector] = useState("all"); // default = all sectors
   const [period, setPeriod] = useState("monthly");
   const [selectedWoreda, setSelectedWoreda] = useState("all"); // NEW
   const [showPct, setShowPct] = useState(true);
@@ -5183,9 +6033,7 @@ function SubcityPrintModal({ rows, onClose }) {
 
       // Determine which sectors to print
       const sectorsToPrint =
-        sector === "all"
-          ? REPORT_SECTORS_ALL.map((s) => s.id)
-          : [sector];
+        sector === "all" ? REPORT_SECTORS_ALL.map((s) => s.id) : [sector];
 
       // Fetch all data for each sector in parallel
       const sectorResults = await Promise.all(
@@ -5221,7 +6069,8 @@ function SubcityPrintModal({ rows, onClose }) {
 
       // If single sector — use existing full-page builder
       if (sectorsToPrint.length === 1) {
-        const { sec, woredaData, planData, subcityGaliiActuals } = sectorResults[0];
+        const { sec, woredaData, planData, subcityGaliiActuals } =
+          sectorResults[0];
         const html = buildSubcityPrintHTML({
           sector: sec,
           period,
@@ -5234,7 +6083,10 @@ function SubcityPrintModal({ rows, onClose }) {
           subcityGaliiActuals,
         });
         const win = window.open("", "_blank", "width=1100,height=800");
-        if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+        if (!win) {
+          setError("Pop-up blocked. Please allow pop-ups for this site.");
+          return;
+        }
         win.document.write(html);
         win.document.close();
         return;
@@ -5256,13 +6108,23 @@ function SubcityPrintModal({ rows, onClose }) {
         )
         .join('<div style="margin:24px 0;border-top:2px solid #ccc;"></div>');
 
-      const combinedHtml = buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda);
+      const combinedHtml = buildCombinedPrintHTML(
+        tablesHtml,
+        generatedDate,
+        period,
+        selectedWoreda,
+      );
       const win = window.open("", "_blank", "width=1100,height=800");
-      if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+      if (!win) {
+        setError("Pop-up blocked. Please allow pop-ups for this site.");
+        return;
+      }
       win.document.write(combinedHtml);
       win.document.close();
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to load data for print.");
+      setError(
+        err?.response?.data?.message || "Failed to load data for print.",
+      );
     } finally {
       setLoading(false);
     }
@@ -5480,11 +6342,26 @@ function ReportsPage() {
   const todayStr = now.toISOString().split("T")[0];
 
   const getPeriodRange = (p) => {
-    if (p === "Daily")    return { from: todayStr, to: todayStr };
-    if (p === "Weekly")   { const d = new Date(now); d.setDate(d.getDate()-6); return { from: d.toISOString().split("T")[0], to: todayStr }; }
-    if (p === "Monthly")  return { from: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`, to: todayStr };
-    if (p === "Quarterly"){ const qs = Math.floor(now.getMonth()/3)*3; return { from: `${now.getFullYear()}-${String(qs+1).padStart(2,"0")}-01`, to: todayStr }; }
-    if (p === "Annual")   return { from: `${now.getFullYear()}-01-01`, to: todayStr };
+    if (p === "Daily") return { from: todayStr, to: todayStr };
+    if (p === "Weekly") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 6);
+      return { from: d.toISOString().split("T")[0], to: todayStr };
+    }
+    if (p === "Monthly")
+      return {
+        from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
+        to: todayStr,
+      };
+    if (p === "Quarterly") {
+      const qs = Math.floor(now.getMonth() / 3) * 3;
+      return {
+        from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
+        to: todayStr,
+      };
+    }
+    if (p === "Annual")
+      return { from: `${now.getFullYear()}-01-01`, to: todayStr };
     return null;
   };
 
@@ -5494,15 +6371,18 @@ function ReportsPage() {
     setFetchError("");
 
     const filters = {};
-    if (woreda !== "all")  filters.username = woreda;
-    if (sector !== "all")  filters.sector   = sector;
+    if (woreda !== "all") filters.username = woreda;
+    if (sector !== "all") filters.sector = sector;
 
     if (!custom && period !== "all") {
       const r = getPeriodRange(period);
-      if (r) { filters.date_from = r.from; filters.date_to = r.to; }
+      if (r) {
+        filters.date_from = r.from;
+        filters.date_to = r.to;
+      }
     } else if (custom && range) {
       filters.date_from = range.from;
-      filters.date_to   = range.to;
+      filters.date_to = range.to;
     }
 
     fetchAllWoredaReports(filters)
@@ -5510,11 +6390,18 @@ function ReportsPage() {
         const rows = Array.isArray(data) ? data : [];
         setAllRows(rows);
         // Keep a separate unfiltered total only on the initial "all" fetch
-        if (woreda === "all" && sector === "all" && period === "all" && !custom) {
+        if (
+          woreda === "all" &&
+          sector === "all" &&
+          period === "all" &&
+          !custom
+        ) {
           setTotalCount(rows.length);
         }
       })
-      .catch(() => setFetchError("No connection. Check your internet and try again."))
+      .catch(() =>
+        setFetchError("No connection. Check your internet and try again."),
+      )
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -5534,32 +6421,53 @@ function ReportsPage() {
 
   // ── handlers ───────────────────────────────────────────────────────────────
   const handleApplyCustom = () => {
-    if (!customFrom || !customTo) { setCustomDateErr("Select both dates."); return; }
-    if (customFrom > customTo)    { setCustomDateErr("Start must be before end."); return; }
+    if (!customFrom || !customTo) {
+      setCustomDateErr("Select both dates.");
+      return;
+    }
+    if (customFrom > customTo) {
+      setCustomDateErr("Start must be before end.");
+      return;
+    }
     setCustomDateErr("");
     setAppliedRange({ from: customFrom, to: customTo });
   };
 
   const handlePeriodChange = (val) => {
     if (val === "custom") {
-      setIsCustom(true); setFPeriod("all"); setAppliedRange(null);
-      setCustomFrom(""); setCustomTo(""); setCustomDateErr("");
+      setIsCustom(true);
+      setFPeriod("all");
+      setAppliedRange(null);
+      setCustomFrom("");
+      setCustomTo("");
+      setCustomDateErr("");
     } else {
-      setIsCustom(false); setAppliedRange(null); setFPeriod(val);
+      setIsCustom(false);
+      setAppliedRange(null);
+      setFPeriod(val);
     }
   };
 
-  const handleRetry = () => loadReports(fWoreda, fSector, fPeriod, isCustom, appliedRange);
+  const handleRetry = () =>
+    loadReports(fWoreda, fSector, fPeriod, isCustom, appliedRange);
 
-  const accentColor = fSector === "all"
-    ? "#1a3a5c"
-    : (REPORT_SECTORS_ALL.find((s) => s.id === fSector)?.color ?? "#1a3a5c");
+  const accentColor =
+    fSector === "all"
+      ? "#1a3a5c"
+      : (REPORT_SECTORS_ALL.find((s) => s.id === fSector)?.color ?? "#1a3a5c");
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div>
-      {modalRow && <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />}
-      {showPrintModal && <SubcityPrintModal rows={shown} onClose={() => setShowPrintModal(false)} />}
+      {modalRow && (
+        <SCReportDetailModal row={modalRow} onClose={() => setModalRow(null)} />
+      )}
+      {showPrintModal && (
+        <SubcityPrintModal
+          rows={shown}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
 
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
@@ -5569,11 +6477,23 @@ function ReportsPage() {
             Filter by woreda, sector, period, or a custom date range.
           </p>
         </div>
-        <button onClick={() => setShowPrintModal(true)}
-          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8" rx="1"/>
+        <button
+          onClick={() => setShowPrintModal(true)}
+          className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+            />
+            <rect x="6" y="14" width="12" height="8" rx="1" />
           </svg>
           Download Report
         </button>
@@ -5582,45 +6502,83 @@ function ReportsPage() {
       {/* Error */}
       {fetchError && (
         <div className="mb-5 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#dc2626] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>
+          <svg
+            className="w-5 h-5 text-[#dc2626] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" />
           </svg>
           <p className="text-[#991b1b] text-sm">{fetchError}</p>
-          <button onClick={handleRetry} className="ml-auto text-xs font-semibold text-[#dc2626] underline">Retry</button>
+          <button
+            onClick={handleRetry}
+            className="ml-auto text-xs font-semibold text-[#dc2626] underline"
+          >
+            Retry
+          </button>
         </div>
       )}
 
       {/* Filter bar */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5">
         <div className="flex flex-wrap gap-4 items-end">
-
           {/* Woreda */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Woreda</label>
-            <select value={fWoreda} onChange={(e) => setFWoreda(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Woreda
+            </label>
+            <select
+              value={fWoreda}
+              onChange={(e) => setFWoreda(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
               <option value="all">All Woredas</option>
-              {WOREDAS.map((w) => <option key={w.id} value={w.name}>{w.name}</option>)}
+              {WOREDAS.map((w) => (
+                <option key={w.id} value={w.name}>
+                  {w.name}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Sector */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Sector</label>
-            <select value={fSector} onChange={(e) => setFSector(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Sector
+            </label>
+            <select
+              value={fSector}
+              onChange={(e) => setFSector(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
               <option value="all">All Sectors</option>
-              {REPORT_SECTORS_ALL.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              {REPORT_SECTORS_ALL.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Period */}
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">Period</label>
-            <select value={isCustom ? "custom" : fPeriod} onChange={(e) => handlePeriodChange(e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Period
+            </label>
+            <select
+              value={isCustom ? "custom" : fPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+            >
               <option value="all">All Periods</option>
-              {REPORT_PERIOD_TYPES_SC.map((t) => <option key={t} value={t}>{t}</option>)}
+              {REPORT_PERIOD_TYPES_SC.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
               <option value="custom">Custom Date Range</option>
             </select>
           </div>
@@ -5628,7 +6586,9 @@ function ReportsPage() {
           {/* Count */}
           <div className="flex-shrink-0 pb-0.5">
             <span className="inline-block bg-[#eef4fb] text-[#1a3a5c] text-xs font-semibold px-3 py-2.5 rounded-lg border border-[#dce8f4]">
-              {loading ? "..." : `${shown.length} result${shown.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "..."
+                : `${shown.length} result${shown.length !== 1 ? "s" : ""}`}
             </span>
           </div>
         </div>
@@ -5636,29 +6596,51 @@ function ReportsPage() {
         {/* Custom date range */}
         {isCustom && (
           <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
-            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">Custom Date Range</p>
+            <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
+              Custom Date Range
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Start Date</label>
-                <input type="date" value={customFrom}
-                  onChange={(e) => { setCustomFrom(e.target.value); setAppliedRange(null); }}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"/>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => {
+                    setCustomFrom(e.target.value);
+                    setAppliedRange(null);
+                  }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">End Date</label>
-                <input type="date" value={customTo}
-                  onChange={(e) => { setCustomTo(e.target.value); setAppliedRange(null); }}
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"/>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => {
+                    setCustomTo(e.target.value);
+                    setAppliedRange(null);
+                  }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
               </div>
             </div>
-            {customDateErr && <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>}
+            {customDateErr && (
+              <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
+            )}
             {appliedRange && (
               <p className="text-[#16a34a] text-xs mb-2 font-medium">
                 Showing: {appliedRange.from} → {appliedRange.to}
               </p>
             )}
-            <button onClick={handleApplyCustom}
-              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+            <button
+              onClick={handleApplyCustom}
+              className="flex items-center gap-2 bg-[#1a3a5c] hover:bg-[#122840] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+            >
               <AnalysisIcon />
               Apply Date Range
             </button>
@@ -5668,8 +6650,12 @@ function ReportsPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-        <div className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
-          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0] flex items-center justify-between"
+          style={{
+            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+          }}
+        >
           <div>
             <p className="text-sm font-semibold text-white">
               {isCustom && appliedRange
@@ -5681,7 +6667,9 @@ function ReportsPage() {
                     : "All Woreda Reports"}
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              {loading ? "Loading..." : `${shown.length} report${shown.length !== 1 ? "s" : ""} found`}
+              {loading
+                ? "Loading..."
+                : `${shown.length} report${shown.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
           {!loading && !fetchError && (
@@ -5691,7 +6679,7 @@ function ReportsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3">
-            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin"/>
+            <div className="w-6 h-6 border-4 border-[#dce8f4] border-t-[#1a3a5c] rounded-full animate-spin" />
             <span className="text-sm text-[#64748b]">Loading reports...</span>
           </div>
         ) : (
@@ -5699,8 +6687,19 @@ function ReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                  {["Date","Submitted By","Sector","Report Type","Actions"].map((h) => (
-                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{h}</th>
+                  {[
+                    "Date",
+                    "Submitted By",
+                    "Sector",
+                    "Report Type",
+                    "Actions",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -5709,35 +6708,74 @@ function ReportsPage() {
                   <tr>
                     <td colSpan={5} className="px-5 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]"><ListIcon/></div>
-                        <p className="text-[#94a3b8] text-sm">No reports match the selected filters.</p>
+                        <div className="w-10 h-10 rounded-full bg-[#f4f6f9] flex items-center justify-center text-[#94a3b8]">
+                          <ListIcon />
+                        </div>
+                        <p className="text-[#94a3b8] text-sm">
+                          No reports match the selected filters.
+                        </p>
                         {totalCount === 0 && !fetchError && (
-                          <p className="text-[#94a3b8] text-xs">Reports submitted by woreda users will appear here.</p>
+                          <p className="text-[#94a3b8] text-xs">
+                            Reports submitted by woreda users will appear here.
+                          </p>
                         )}
                       </div>
                     </td>
                   </tr>
                 ) : (
                   shown.map((row, idx) => {
-                    const sec = REPORT_SECTORS_ALL.find((s) => s.id === row._sector);
+                    const sec = REPORT_SECTORS_ALL.find(
+                      (s) => s.id === row._sector,
+                    );
                     return (
-                      <tr key={row.id ?? `${row._sector}-${idx}`}
-                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
-                        <td className="px-5 py-3 text-[#475569] text-sm">{scFormatDateTime(row)}</td>
-                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">{row.username ?? ""}</td>
+                      <tr
+                        key={row.id ?? `${row._sector}-${idx}`}
+                        className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                      >
+                        <td className="px-5 py-3 text-[#475569] text-sm">
+                          {scFormatDateTime(row)}
+                        </td>
+                        <td className="px-5 py-3 text-sm font-medium text-[#1e293b]">
+                          {row.username ?? ""}
+                        </td>
                         <td className="px-5 py-3">
                           <span className="inline-flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: sec?.color ?? "#64748b" }}/>
-                            <span className="text-sm font-medium text-[#1e293b]">{sec?.label ?? row._sector}</span>
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor: sec?.color ?? "#64748b",
+                              }}
+                            />
+                            <span className="text-sm font-medium text-[#1e293b]">
+                              {sec?.label ?? row._sector}
+                            </span>
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-sm text-[#475569]">{row.report_type ?? ""}</td>
+                        <td className="px-5 py-3 text-sm text-[#475569]">
+                          {row.report_type ?? ""}
+                        </td>
                         <td className="px-5 py-3">
-                          <button onClick={() => setModalRow(row)}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                          <button
+                            onClick={() => setModalRow(row)}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1a3a5c] hover:text-[#1e4976] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
                             </svg>
                             View
                           </button>
@@ -5758,7 +6796,13 @@ function ReportsPage() {
 // ─── Camera Icon (shared with gallery) ───────────────────────────────────────
 function SubcityCameraIcon({ className = "w-4 h-4" }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+    >
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>
@@ -5779,23 +6823,23 @@ const PHOTO_WOREDAS = [
 function SubcityPhotoGalleryPage() {
   // "gallery" view: 4 woreda cards with latest photo each
   // "history" view: filterable list for a selected woreda (or all)
-  const [view, setView]               = useState("gallery"); // "gallery" | "history"
+  const [view, setView] = useState("gallery"); // "gallery" | "history"
   const [selectedWoreda, setSelected] = useState("all");
 
   // Gallery data
-  const [latest, setLatest]           = useState({});
+  const [latest, setLatest] = useState({});
   const [latestLoading, setLatestLoading] = useState(true);
   const [latestError, setLatestError] = useState("");
 
   // History data
-  const [photos, setPhotos]           = useState([]);
+  const [photos, setPhotos] = useState([]);
   const [histLoading, setHistLoading] = useState(false);
-  const [histError, setHistError]     = useState("");
-  const [dateFrom, setDateFrom]       = useState("");
-  const [dateTo, setDateTo]           = useState("");
+  const [histError, setHistError] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // Modal
-  const [viewPhoto, setViewPhoto]     = useState(null);
+  const [viewPhoto, setViewPhoto] = useState(null);
 
   // Load latest photos for the gallery on mount
   useEffect(() => {
@@ -5813,7 +6857,7 @@ function SubcityPhotoGalleryPage() {
     fetchAllPhotos({
       woreda_id: woredaId !== "all" ? woredaId : undefined,
       date_from: from || undefined,
-      date_to:   to   || undefined,
+      date_to: to || undefined,
     })
       .then((d) => setPhotos(d.photos || []))
       .catch((err) => setHistError(friendlyError(err)))
@@ -5841,7 +6885,8 @@ function SubcityPhotoGalleryPage() {
   const selectedWoredaName =
     selectedWoreda === "all"
       ? "All Woredas"
-      : PHOTO_WOREDAS.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda;
+      : (PHOTO_WOREDAS.find((w) => w.id === selectedWoreda)?.name ??
+        selectedWoreda);
 
   return (
     <div>
@@ -5887,7 +6932,9 @@ function SubcityPhotoGalleryPage() {
               <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
             </div>
           ) : latestError ? (
-            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{latestError}</div>
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+              {latestError}
+            </div>
           ) : (
             <>
               {/* 4-woreda selector cards */}
@@ -5902,9 +6949,14 @@ function SubcityPhotoGalleryPage() {
                       {/* Card header */}
                       <div
                         className="px-4 py-3 flex items-center justify-between"
-                        style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
+                        style={{
+                          background:
+                            "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
+                        }}
                       >
-                        <p className="text-white font-semibold text-sm">{w.name}</p>
+                        <p className="text-white font-semibold text-sm">
+                          {w.name}
+                        </p>
                         <button
                           onClick={() => handleShowHistory(w.id)}
                           className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
@@ -5925,16 +6977,22 @@ function SubcityPhotoGalleryPage() {
                             className="w-full h-52 object-cover group-hover:opacity-90 transition-opacity"
                           />
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
-                            <p className="text-white text-xs font-medium line-clamp-2">{photo.description}</p>
+                            <p className="text-white text-xs font-medium line-clamp-2">
+                              {photo.description}
+                            </p>
                           </div>
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">Click to view</span>
+                            <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
+                              Click to view
+                            </span>
                           </div>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-52 bg-[#f8fafc]">
                           <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mb-2" />
-                          <p className="text-[#94a3b8] text-sm">No photo submitted yet</p>
+                          <p className="text-[#94a3b8] text-sm">
+                            No photo submitted yet
+                          </p>
                         </div>
                       )}
 
@@ -5942,12 +7000,21 @@ function SubcityPhotoGalleryPage() {
                       {photo && (
                         <div className="px-4 py-3 border-t border-[#f1f5f9] bg-[#f8fafc]">
                           <p className="text-xs text-[#64748b]">
-                            By <span className="font-medium text-[#1e293b]">{photo.submitted_by}</span>
+                            By{" "}
+                            <span className="font-medium text-[#1e293b]">
+                              {photo.submitted_by}
+                            </span>
                             {" · "}
-                            {new Date(photo.submitted_at).toLocaleString(undefined, {
-                              month: "short", day: "numeric", year: "numeric",
-                              hour: "2-digit", minute: "2-digit",
-                            })}
+                            {new Date(photo.submitted_at).toLocaleString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
                           </p>
                         </div>
                       )}
@@ -5992,7 +7059,9 @@ function SubcityPhotoGalleryPage() {
             className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-wrap items-end gap-3"
           >
             <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-1">From Date</label>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">
+                From Date
+              </label>
               <input
                 type="date"
                 value={dateFrom}
@@ -6001,7 +7070,9 @@ function SubcityPhotoGalleryPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-1">To Date</label>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">
+                To Date
+              </label>
               <input
                 type="date"
                 value={dateTo}
@@ -6026,7 +7097,10 @@ function SubcityPhotoGalleryPage() {
               </button>
             )}
             <p className="text-xs text-[#94a3b8] self-end ml-auto">
-              Showing: <span className="font-medium text-[#1e293b]">{selectedWoredaName}</span>
+              Showing:{" "}
+              <span className="font-medium text-[#1e293b]">
+                {selectedWoredaName}
+              </span>
             </p>
           </form>
 
@@ -6035,11 +7109,15 @@ function SubcityPhotoGalleryPage() {
               <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
             </div>
           ) : histError ? (
-            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{histError}</div>
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+              {histError}
+            </div>
           ) : photos.length === 0 ? (
             <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-12 text-center">
               <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
-              <p className="text-[#94a3b8] text-sm">No photos found for the selected filters.</p>
+              <p className="text-[#94a3b8] text-sm">
+                No photos found for the selected filters.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -6065,14 +7143,20 @@ function SubcityPhotoGalleryPage() {
                         {p.woreda_name}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[#1e293b] truncate mt-1">{p.description}</p>
+                    <p className="text-sm font-semibold text-[#1e293b] truncate mt-1">
+                      {p.description}
+                    </p>
                     <p className="text-xs text-[#64748b] mt-0.5">
-                      Submitted by <span className="font-medium">{p.submitted_by}</span>
+                      Submitted by{" "}
+                      <span className="font-medium">{p.submitted_by}</span>
                     </p>
                     <p className="text-xs text-[#94a3b8] mt-0.5">
                       {new Date(p.submitted_at).toLocaleString(undefined, {
-                        month: "short", day: "numeric", year: "numeric",
-                        hour: "2-digit", minute: "2-digit",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -6111,9 +7195,13 @@ function SubcityPhotoGalleryPage() {
                   {viewPhoto.woreda_name}
                 </span>
                 <span className="text-xs text-[#64748b]">
-                  {viewPhoto.submitted_by} · {new Date(viewPhoto.submitted_at).toLocaleString(undefined, {
-                    month: "short", day: "numeric", year: "numeric",
-                    hour: "2-digit", minute: "2-digit",
+                  {viewPhoto.submitted_by} ·{" "}
+                  {new Date(viewPhoto.submitted_at).toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </span>
               </div>
@@ -6130,8 +7218,12 @@ function SubcityPhotoGalleryPage() {
               className="w-full max-h-[60vh] object-contain bg-[#f8fafc]"
             />
             <div className="px-5 py-4 bg-[#f8fafc]">
-              <p className="text-sm text-[#1e293b] font-medium mb-1">Description</p>
-              <p className="text-sm text-[#475569] whitespace-pre-wrap">{viewPhoto.description}</p>
+              <p className="text-sm text-[#1e293b] font-medium mb-1">
+                Description
+              </p>
+              <p className="text-sm text-[#475569] whitespace-pre-wrap">
+                {viewPhoto.description}
+              </p>
             </div>
           </div>
         </div>
@@ -6165,6 +7257,11 @@ export default function SubCityDashboard({ user: propUser }) {
   const [analysisOpen, setAnalysisOpen] = useState(false);
 
   const [collapsed, setCollapsed] = useState(false);
+
+  // ── profile photo (shown in top-right button and updated from ProfilePage) ──
+  const [profilePhoto, setProfilePhoto] = useState(
+    JSON.parse(localStorage.getItem("user") || "null")?.profile_photo || null,
+  );
 
   // ── data ──
   const [dbPlan, setDbPlan] = useState(null);
@@ -6241,8 +7338,14 @@ export default function SubCityDashboard({ user: propUser }) {
     if (activeNav === "photos") return <SubcityPhotoGalleryPage />;
     if (activeNav === "galii_submit") return <SubcityGaliiSubmitForm u={u} />;
     if (activeNav === "announcements") return <AnnouncementsPage />;
-    if (activeNav === "archive") return <ArchivePlansSection />;
-    if (activeNav === "profile") return <SubcityProfilePage user={JSON.parse(localStorage.getItem("user") || "null")} />;
+    if (activeNav === "archive") return <HistorySection />;
+    if (activeNav === "profile")
+      return (
+        <SubcityProfilePage
+          user={JSON.parse(localStorage.getItem("user") || "null")}
+          onPhotoUpdate={setProfilePhoto}
+        />
+      );
     if (activeNav === "plan") {
       if (!activePlanSector)
         return (
@@ -6566,7 +7669,7 @@ export default function SubCityDashboard({ user: propUser }) {
             }`}
           >
             <ArchiveNavIcon />
-            {!collapsed && <span className="truncate">Archive Plans</span>}
+            {!collapsed && <span className="truncate">History</span>}
           </button>
         </nav>
 
@@ -6592,9 +7695,48 @@ export default function SubCityDashboard({ user: propUser }) {
       </aside>
 
       {/* ── Main content ── */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">{renderContent()}</div>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header bar */}
+        <header className="bg-white border-b border-[#e2e8f0] px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-[#1e293b] font-semibold text-base">
+            {{
+              overview: "Dashboard",
+              plan: "Annual Plan",
+              analysis: "Work Analysis",
+              reports: "Woreda Reports",
+              galii_submit: "Submit Revenue",
+              announcements: "Announcements",
+              archive: "History",
+              photos: "Photo Gallery",
+              profile: "Profile",
+            }[activeNav] ?? "Sub-city"}
+          </h2>
+          <button
+            onClick={() => {
+              setActiveNav("profile");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            title="Profile"
+            className="flex-shrink-0 focus:outline-none"
+          >
+            {profilePhoto ? (
+              <img
+                src={profilePhoto}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border-2 border-[#dce8f4] hover:border-[#1a3a5c] transition-all"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold hover:bg-[#1e4976] transition-all">
+                {(u.name || "SC")[0].toUpperCase()}
+              </div>
+            )}
+          </button>
+        </header>
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto px-6 py-8">{renderContent()}</div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -276,7 +276,7 @@ export const submitWoredaPhoto = async (payload) => {
 export const fetchMyPhotos = async (filters = {}) => {
   const params = new URLSearchParams();
   if (filters.date_from) params.set("date_from", filters.date_from);
-  if (filters.date_to)   params.set("date_to",   filters.date_to);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   const qs = params.toString() ? `?${params.toString()}` : "";
   const res = await api.get(`/photos/my${qs}`, authHeader());
   return res.data; // { photos: [...] }
@@ -293,7 +293,7 @@ export const fetchAllPhotos = async (filters = {}) => {
   if (filters.woreda_id && filters.woreda_id !== "all")
     params.set("woreda_id", filters.woreda_id);
   if (filters.date_from) params.set("date_from", filters.date_from);
-  if (filters.date_to)   params.set("date_to",   filters.date_to);
+  if (filters.date_to) params.set("date_to", filters.date_to);
   const qs = params.toString() ? `?${params.toString()}` : "";
   const res = await api.get(`/photos${qs}`, authHeader());
   return res.data; // { photos: [...] }
@@ -317,4 +317,31 @@ export const fetchLatestPhotosPerWoreda = async () => {
 export const deleteWoredaPhoto = async (id) => {
   const res = await api.delete(`/photos/${id}`, authHeader());
   return res.data; // { message: "Photo deleted." }
+};
+
+// ─── Archived Plans (History tab) ────────────────────────────────────────────
+
+/**
+ * GET /api/auth/archived-plans?year=
+ * Returns { archives: [...], availableYears: [...] }
+ * @param {number} [year]
+ */
+export const fetchArchivedPlans = async (year) => {
+  const params = year ? `?year=${year}` : "";
+  const res = await api.get(`/auth/archived-plans${params}`, authHeader());
+  return res.data;
+};
+
+/**
+ * GET /api/plans/subcity-live-plans?year=
+ * Returns { plans: [{ source_table, plan_year, data, is_live: true }] }
+ * @param {number} [year]
+ */
+export const fetchSubcityLivePlans = async (year) => {
+  const y = year ?? new Date().getFullYear();
+  const res = await api.get(
+    `/plans/subcity-live-plans?year=${y}`,
+    authHeader(),
+  );
+  return res.data;
 };
