@@ -26,6 +26,9 @@ import {
   fetchUnreadCount,
   markAnnouncementsRead,
   fetchWoRedaAnalysis,
+  submitWoredaPhoto,
+  fetchMyPhotos,
+  deleteWoredaPhoto,
 } from "../api/planApi";
 import adamaLogo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
@@ -5553,6 +5556,302 @@ function AnnouncementsViewPage({ onRead }) {
   );
 }
 
+// ─── Camera / Photo Icon ─────────────────────────────────────────────────────
+function CameraIcon({ className = "w-5 h-5 flex-shrink-0" }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+// ─── Woreda Photo Submit Page ─────────────────────────────────────────────────
+function WoredaPhotoSubmitPage({ u }) {
+  const [preview, setPreview]         = useState(null);   // base64 data URL
+  const [description, setDescription] = useState("");
+  const [saving, setSaving]           = useState(false);
+  const [saveError, setSaveError]     = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSaveError("Please select an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError("Image must be smaller than 5 MB.");
+      return;
+    }
+    setSaveError("");
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!preview) { setSaveError("Please select a photo."); return; }
+    if (!description.trim()) { setSaveError("Please enter a description."); return; }
+    setSaving(true);
+    setSaveError("");
+    setSaveSuccess(false);
+    try {
+      await submitWoredaPhoto({ photo: preview, description: description.trim() });
+      setSaveSuccess(true);
+      setPreview(null);
+      setDescription("");
+      // Reset the file input
+      const fi = document.getElementById("woreda-photo-file-input");
+      if (fi) fi.value = "";
+    } catch (err) {
+      setSaveError(friendlyError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Photo</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Upload a photo from <span className="font-semibold">{u.woreda}</span> with a description. It will be visible to the sub-city.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden max-w-2xl">
+        <div className="px-6 py-4 border-b border-[#f1f5f9]" style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}>
+          <p className="text-white font-semibold text-sm flex items-center gap-2">
+            <CameraIcon className="w-4 h-4" /> Photo Submission
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+          {/* File picker */}
+          <div>
+            <label className="block text-xs font-semibold text-[#374151] mb-2 uppercase tracking-wide">
+              Select Photo
+            </label>
+            <input
+              id="woreda-photo-file-input"
+              type="file"
+              accept="image/*"
+              onChange={handleFile}
+              className="block w-full text-sm text-[#374151] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#eff6ff] file:text-[#1d4ed8] hover:file:bg-[#dbeafe] cursor-pointer"
+            />
+          </div>
+
+          {/* Preview */}
+          {preview && (
+            <div className="relative">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full max-h-72 object-cover rounded-xl border border-[#e2e8f0]"
+              />
+              <button
+                type="button"
+                onClick={() => { setPreview(null); const fi = document.getElementById("woreda-photo-file-input"); if (fi) fi.value = ""; }}
+                className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white text-xs transition-all"
+                title="Remove photo"
+              >✕</button>
+            </div>
+          )}
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-semibold text-[#374151] mb-2 uppercase tracking-wide">
+              Description <span className="text-[#dc2626]">*</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              maxLength={500}
+              placeholder="Describe what this photo shows…"
+              className="w-full border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm text-[#1e293b] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none"
+            />
+            <p className="text-xs text-[#94a3b8] mt-1 text-right">{description.length}/500</p>
+          </div>
+
+          {/* Error / Success */}
+          {saveError && (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{saveError}</div>
+          )}
+          {saveSuccess && (
+            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#065f46] text-sm font-medium">
+              ✓ Photo submitted successfully. The sub-city can now view it.
+            </div>
+          )}
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={saving || !preview}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50"
+            style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
+          >
+            {saving ? "Submitting…" : "Submit Photo"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Woreda Photo History Page ────────────────────────────────────────────────
+function WoredaPhotoHistoryPage({ u }) {
+  const [photos, setPhotos]         = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState("");
+  const [dateFrom, setDateFrom]     = useState("");
+  const [dateTo, setDateTo]         = useState("");
+  const [viewPhoto, setViewPhoto]   = useState(null); // photo object being viewed
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteErr, setDeleteErr]   = useState("");
+
+  const load = (from, to) => {
+    setLoading(true);
+    setError("");
+    fetchMyPhotos({ date_from: from || undefined, date_to: to || undefined })
+      .then((d) => setPhotos(d.photos || []))
+      .catch((err) => setError(friendlyError(err)))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load("", ""); }, []);
+
+  const handleFilter = (e) => { e.preventDefault(); load(dateFrom, dateTo); };
+  const handleClear  = ()    => { setDateFrom(""); setDateTo(""); load("", ""); };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this photo? This cannot be undone.")) return;
+    setDeletingId(id);
+    setDeleteErr("");
+    try {
+      await deleteWoredaPhoto(id);
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      if (viewPhoto?.id === id) setViewPhoto(null);
+    } catch (err) {
+      setDeleteErr(friendlyError(err));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Photo History</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">All photos you have submitted from <span className="font-semibold">{u.woreda}</span>.</p>
+      </div>
+
+      {/* ── Filters ── */}
+      <form onSubmit={handleFilter} className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-[#374151] mb-1">From Date</label>
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+            className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-[#374151] mb-1">To Date</label>
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+            className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20" />
+        </div>
+        <button type="submit" className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white" style={{ background: "#0f172a" }}>Apply</button>
+        {(dateFrom || dateTo) && (
+          <button type="button" onClick={handleClear} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]">Clear</button>
+        )}
+      </form>
+
+      {deleteErr && (
+        <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{deleteErr}</div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+      ) : photos.length === 0 ? (
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-12 text-center">
+          <CameraIcon className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
+          <p className="text-[#94a3b8] text-sm">No photos submitted yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {photos.map((p) => (
+            <div key={p.id} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden flex items-center gap-4 px-4 py-3">
+              {/* Thumbnail */}
+              <img
+                src={p.photo_data}
+                alt="thumb"
+                className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-[#e2e8f0] cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setViewPhoto(p)}
+              />
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#1e293b] truncate">{p.description}</p>
+                <p className="text-xs text-[#64748b] mt-0.5">
+                  Submitted by <span className="font-medium">{p.submitted_by}</span> · {p.woreda_name}
+                </p>
+                <p className="text-xs text-[#94a3b8] mt-0.5">
+                  {new Date(p.submitted_at).toLocaleString()}
+                </p>
+              </div>
+              {/* Actions */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setViewPhoto(p)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#0f172a] hover:bg-[#1e293b] transition-all"
+                >View</button>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  disabled={deletingId === p.id}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#dc2626] border border-[#fecaca] hover:bg-[#fef2f2] transition-all disabled:opacity-50"
+                >{deletingId === p.id ? "…" : "Delete"}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Full-screen view modal ── */}
+      {viewPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => setViewPhoto(null)}
+        >
+          <div
+            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3 border-b border-[#f1f5f9] flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[#1e293b] text-sm">{viewPhoto.woreda_name}</p>
+                <p className="text-xs text-[#64748b]">
+                  {viewPhoto.submitted_by} · {new Date(viewPhoto.submitted_at).toLocaleString()}
+                </p>
+              </div>
+              <button onClick={() => setViewPhoto(null)} className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] text-lg">✕</button>
+            </div>
+            <img src={viewPhoto.photo_data} alt="full" className="w-full max-h-[60vh] object-contain bg-[#f8fafc]" />
+            <div className="px-5 py-4 bg-[#f8fafc]">
+              <p className="text-sm text-[#1e293b] font-medium mb-1">Description</p>
+              <p className="text-sm text-[#475569] whitespace-pre-wrap">{viewPhoto.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
@@ -5702,6 +6001,8 @@ export default function WoRedaDashboard() {
       {
         dashboard: "Dashboard",
         history: "Report History",
+        photos: "Submit Photo",
+        photo_history: "Photo History",
         announcements: "Announcements",
         profile: "Profile & Settings",
       }[activeNav] ?? ""
@@ -5860,6 +6161,8 @@ export default function WoRedaDashboard() {
             )}
           </div>
           {navBtn("history", "Report History", HistoryIcon)}
+          {navBtn("photos", "Submit Photo", CameraIcon)}
+          {navBtn("photo_history", "Photo History", HistoryIcon)}
           {navBtn("announcements", "Announcements", AnnouncementsIcon)}
           {navBtn("profile", "Profile", ProfileIcon)}
         </nav>
@@ -6177,6 +6480,14 @@ export default function WoRedaDashboard() {
             <div id="announcements-section">
               <AnnouncementsViewPage onRead={() => setUnreadCount(0)} />
             </div>
+          )}
+
+          {activeNav === "photos" && (
+            <WoredaPhotoSubmitPage u={u} />
+          )}
+
+          {activeNav === "photo_history" && (
+            <WoredaPhotoHistoryPage u={u} />
           )}
 
           {activeNav === "profile" && (

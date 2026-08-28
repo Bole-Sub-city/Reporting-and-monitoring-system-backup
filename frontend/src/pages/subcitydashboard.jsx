@@ -16,6 +16,8 @@ import {
   createAnnouncement,
   fetchAnnouncements,
   deleteAnnouncement,
+  fetchAllPhotos,
+  fetchLatestPhotosPerWoreda,
 } from "../api/planApi";
 import {
   fetchAllWoredaReports,
@@ -5577,6 +5579,391 @@ function ReportsPage() {
   );
 }
 
+// ─── Camera Icon (shared with gallery) ───────────────────────────────────────
+function SubcityCameraIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+// ─── Woreda definitions (must match backend + woreda dashboard) ───────────────
+const PHOTO_WOREDAS = [
+  { id: "w1", name: "Aanaa Gooroo" },
+  { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+  { id: "w3", name: "Aanaa Dhakaa Adii" },
+  { id: "w4", name: "Aanaa Andoodee" },
+];
+
+// ─── Subcity Photo Gallery Page ───────────────────────────────────────────────
+// Shows the latest photo per woreda in a gallery. Clicking a woreda switches to
+// its history list. Full-screen view modal included. Filters by date + woreda.
+function SubcityPhotoGalleryPage() {
+  // "gallery" view: 4 woreda cards with latest photo each
+  // "history" view: filterable list for a selected woreda (or all)
+  const [view, setView]               = useState("gallery"); // "gallery" | "history"
+  const [selectedWoreda, setSelected] = useState("all");
+
+  // Gallery data
+  const [latest, setLatest]           = useState({});
+  const [latestLoading, setLatestLoading] = useState(true);
+  const [latestError, setLatestError] = useState("");
+
+  // History data
+  const [photos, setPhotos]           = useState([]);
+  const [histLoading, setHistLoading] = useState(false);
+  const [histError, setHistError]     = useState("");
+  const [dateFrom, setDateFrom]       = useState("");
+  const [dateTo, setDateTo]           = useState("");
+
+  // Modal
+  const [viewPhoto, setViewPhoto]     = useState(null);
+
+  // Load latest photos for the gallery on mount
+  useEffect(() => {
+    setLatestLoading(true);
+    fetchLatestPhotosPerWoreda()
+      .then((d) => setLatest(d.latest || {}))
+      .catch((err) => setLatestError(friendlyError(err)))
+      .finally(() => setLatestLoading(false));
+  }, []);
+
+  // Load history whenever view switches to "history" or filters change
+  const loadHistory = (woredaId, from, to) => {
+    setHistLoading(true);
+    setHistError("");
+    fetchAllPhotos({
+      woreda_id: woredaId !== "all" ? woredaId : undefined,
+      date_from: from || undefined,
+      date_to:   to   || undefined,
+    })
+      .then((d) => setPhotos(d.photos || []))
+      .catch((err) => setHistError(friendlyError(err)))
+      .finally(() => setHistLoading(false));
+  };
+
+  const handleShowHistory = (woredaId = "all") => {
+    setSelected(woredaId);
+    setView("history");
+    setDateFrom("");
+    setDateTo("");
+    loadHistory(woredaId, "", "");
+  };
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    loadHistory(selectedWoreda, dateFrom, dateTo);
+  };
+  const handleFilterClear = () => {
+    setDateFrom("");
+    setDateTo("");
+    loadHistory(selectedWoreda, "", "");
+  };
+
+  const selectedWoredaName =
+    selectedWoreda === "all"
+      ? "All Woredas"
+      : PHOTO_WOREDAS.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda;
+
+  return (
+    <div>
+      {/* ── Page header ── */}
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Woreda Photos</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Photos submitted by the 4 woredas.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setView("gallery")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              view === "gallery"
+                ? "text-white shadow-sm"
+                : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+            }`}
+            style={view === "gallery" ? { background: "#0f172a" } : {}}
+          >
+            Gallery
+          </button>
+          <button
+            onClick={() => handleShowHistory("all")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              view === "history"
+                ? "text-white shadow-sm"
+                : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+            }`}
+            style={view === "history" ? { background: "#0f172a" } : {}}
+          >
+            History
+          </button>
+        </div>
+      </div>
+
+      {/* ═══ GALLERY VIEW ═══ */}
+      {view === "gallery" && (
+        <>
+          {latestLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+            </div>
+          ) : latestError ? (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{latestError}</div>
+          ) : (
+            <>
+              {/* 4-woreda selector cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {PHOTO_WOREDAS.map((w) => {
+                  const photo = latest[w.id];
+                  return (
+                    <div
+                      key={w.id}
+                      className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden flex flex-col"
+                    >
+                      {/* Card header */}
+                      <div
+                        className="px-4 py-3 flex items-center justify-between"
+                        style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
+                      >
+                        <p className="text-white font-semibold text-sm">{w.name}</p>
+                        <button
+                          onClick={() => handleShowHistory(w.id)}
+                          className="text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
+                        >
+                          View history
+                        </button>
+                      </div>
+
+                      {/* Photo area */}
+                      {photo ? (
+                        <div
+                          className="relative cursor-pointer group"
+                          onClick={() => setViewPhoto(photo)}
+                        >
+                          <img
+                            src={photo.photo_data}
+                            alt={photo.description}
+                            className="w-full h-52 object-cover group-hover:opacity-90 transition-opacity"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
+                            <p className="text-white text-xs font-medium line-clamp-2">{photo.description}</p>
+                          </div>
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">Click to view</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-52 bg-[#f8fafc]">
+                          <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mb-2" />
+                          <p className="text-[#94a3b8] text-sm">No photo submitted yet</p>
+                        </div>
+                      )}
+
+                      {/* Card footer */}
+                      {photo && (
+                        <div className="px-4 py-3 border-t border-[#f1f5f9] bg-[#f8fafc]">
+                          <p className="text-xs text-[#64748b]">
+                            By <span className="font-medium text-[#1e293b]">{photo.submitted_by}</span>
+                            {" · "}
+                            {new Date(photo.submitted_at).toLocaleString(undefined, {
+                              month: "short", day: "numeric", year: "numeric",
+                              hour: "2-digit", minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ═══ HISTORY VIEW ═══ */}
+      {view === "history" && (
+        <>
+          {/* Woreda filter tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[{ id: "all", name: "All Woredas" }, ...PHOTO_WOREDAS].map((w) => (
+              <button
+                key={w.id}
+                onClick={() => {
+                  setSelected(w.id);
+                  setDateFrom("");
+                  setDateTo("");
+                  loadHistory(w.id, "", "");
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  selectedWoreda === w.id
+                    ? "text-white"
+                    : "text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+                }`}
+                style={selectedWoreda === w.id ? { background: "#0f172a" } : {}}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Date filter bar */}
+          <form
+            onSubmit={handleFilterSubmit}
+            className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-wrap items-end gap-3"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">From Date</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-1">To Date</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="border border-[#e2e8f0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white"
+              style={{ background: "#0f172a" }}
+            >
+              Apply
+            </button>
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={handleFilterClear}
+                className="px-4 py-1.5 rounded-lg text-sm font-semibold text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc]"
+              >
+                Clear
+              </button>
+            )}
+            <p className="text-xs text-[#94a3b8] self-end ml-auto">
+              Showing: <span className="font-medium text-[#1e293b]">{selectedWoredaName}</span>
+            </p>
+          </form>
+
+          {histLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+            </div>
+          ) : histError ? (
+            <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{histError}</div>
+          ) : photos.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-12 text-center">
+              <SubcityCameraIcon className="w-10 h-10 text-[#cbd5e1] mx-auto mb-3" />
+              <p className="text-[#94a3b8] text-sm">No photos found for the selected filters.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {photos.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden flex items-center gap-4 px-4 py-3"
+                >
+                  {/* Thumbnail */}
+                  <img
+                    src={p.photo_data}
+                    alt="thumb"
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-[#e2e8f0] cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setViewPhoto(p)}
+                  />
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span
+                        className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                        style={{ background: "#0f172a" }}
+                      >
+                        {p.woreda_name}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1e293b] truncate mt-1">{p.description}</p>
+                    <p className="text-xs text-[#64748b] mt-0.5">
+                      Submitted by <span className="font-medium">{p.submitted_by}</span>
+                    </p>
+                    <p className="text-xs text-[#94a3b8] mt-0.5">
+                      {new Date(p.submitted_at).toLocaleString(undefined, {
+                        month: "short", day: "numeric", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  {/* View button */}
+                  <button
+                    onClick={() => setViewPhoto(p)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white flex-shrink-0 transition-all"
+                    style={{ background: "#0f172a" }}
+                  >
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Full-screen photo modal ── */}
+      {viewPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.80)" }}
+          onClick={() => setViewPhoto(null)}
+        >
+          <div
+            className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3 border-b border-[#f1f5f9] flex items-center justify-between">
+              <div>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full text-white mr-2"
+                  style={{ background: "#0f172a" }}
+                >
+                  {viewPhoto.woreda_name}
+                </span>
+                <span className="text-xs text-[#64748b]">
+                  {viewPhoto.submitted_by} · {new Date(viewPhoto.submitted_at).toLocaleString(undefined, {
+                    month: "short", day: "numeric", year: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <button
+                onClick={() => setViewPhoto(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] text-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <img
+              src={viewPhoto.photo_data}
+              alt="full"
+              className="w-full max-h-[60vh] object-contain bg-[#f8fafc]"
+            />
+            <div className="px-5 py-4 bg-[#f8fafc]">
+              <p className="text-sm text-[#1e293b] font-medium mb-1">Description</p>
+              <p className="text-sm text-[#475569] whitespace-pre-wrap">{viewPhoto.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function SubCityDashboard({ user: propUser }) {
   const navigate = useNavigate();
@@ -5675,6 +6062,7 @@ export default function SubCityDashboard({ user: propUser }) {
       );
     }
     if (activeNav === "reports") return <ReportsPage />;
+    if (activeNav === "photos") return <SubcityPhotoGalleryPage />;
     if (activeNav === "galii_submit") return <SubcityGaliiSubmitForm u={u} />;
     if (activeNav === "announcements") return <AnnouncementsPage />;
     if (activeNav === "archive") return <ArchivePlansSection />;
@@ -5935,6 +6323,23 @@ export default function SubCityDashboard({ user: propUser }) {
           >
             <ListIcon />
             {!collapsed && <span className="truncate">Woreda Reports</span>}
+          </button>
+
+          {/* Woreda Photos */}
+          <button
+            onClick={() => {
+              setActiveNav("photos");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "photos"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <SubcityCameraIcon className="w-4 h-4 flex-shrink-0" />
+            {!collapsed && <span className="truncate">Woreda Photos</span>}
           </button>
 
           {/* Announcements */}
