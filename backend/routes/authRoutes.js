@@ -24,6 +24,7 @@ const {
   resolvePlanUnlockRequest,
   archiveAnnualPlans,
   updateUserDetails,
+  getArchivedPlans,
 } = require("../controllers/authController");
 
 // Public routes
@@ -51,10 +52,19 @@ router.patch("/edit-requests/:id", authMiddleware, resolveEditRequest);
 // ─── Annual plan unlock requests (subcity → admin) ────────────────────────────
 router.post("/plan-unlock-requests", authMiddleware, requestPlanUnlock);
 router.get("/plan-unlock-requests", authMiddleware, getPlanUnlockRequests);
-router.get("/plan-unlock-requests/mine", authMiddleware, getMyPlanUnlockRequests);
-router.patch("/plan-unlock-requests/:id", authMiddleware, resolvePlanUnlockRequest);
+router.get(
+  "/plan-unlock-requests/mine",
+  authMiddleware,
+  getMyPlanUnlockRequests,
+);
+router.patch(
+  "/plan-unlock-requests/:id",
+  authMiddleware,
+  resolvePlanUnlockRequest,
+);
 
 // ─── Annual plan archive (admin only) ─────────────────────────────────────────
 router.post("/archive-annual-plans", authMiddleware, archiveAnnualPlans);
+router.get("/archived-plans", authMiddleware, getArchivedPlans);
 
 module.exports = router;

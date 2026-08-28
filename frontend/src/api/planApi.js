@@ -253,3 +253,35 @@ export const markAnnouncementsRead = async (lastId) => {
   );
   return res.data; // { ok: true }
 };
+
+// ─── Archived Plans API ───────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/archived-plans?year=
+ * Fetch rows from the annual_plan_archive table.
+ * Returns { archives: [...], availableYears: [...] }
+ *
+ * @param {number|string} [year]  - optional 4-digit year to filter by
+ */
+export const fetchArchivedPlans = async (year) => {
+  const params = year ? `?year=${year}` : "";
+  const res = await api.get(`/auth/archived-plans${params}`, authHeader());
+  return res.data; // { archives, availableYears }
+};
+
+/**
+ * GET /api/plans/subcity-live-plans?year=
+ * Fetches live (non-archived) subcity plan data for the given calendar year
+ * from all 6 subcity plan tables.
+ * Returns { plans: [{ source_table, plan_year, data, is_live: true }] }
+ *
+ * @param {number} year  - calendar year (e.g. 2026)
+ */
+export const fetchSubcityLivePlans = async (year) => {
+  const y = year ?? new Date().getFullYear();
+  const res = await api.get(
+    `/plans/subcity-live-plans?year=${y}`,
+    authHeader(),
+  );
+  return res.data; // { plans: [...] }
+};

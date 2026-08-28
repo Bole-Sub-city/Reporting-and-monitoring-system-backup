@@ -191,3 +191,53 @@ export const fetchMyEditRequests = async () => {
   });
   return response.data;
 };
+
+// ─── Fiscal-year helpers ───────────────────────────────────────────────────────
+
+/**
+ * Return the Gregorian date range for an Oromo/Ethiopian fiscal year.
+ * The fiscal year starts on July 8 and ends on July 7 of the following year.
+ *
+ * fiscalYear = the year in which the period STARTS (e.g. 2024 → Jul 8 2024 – Jul 7 2025)
+ *
+ * @param {number} fiscalYear
+ * @returns {{ from: string, to: string }}  ISO "YYYY-MM-DD" strings
+ */
+export function fiscalYearRange(fiscalYear) {
+  const y = Number(fiscalYear);
+  return {
+    from: `${y}-07-08`,
+    to: `${y + 1}-07-07`,
+  };
+}
+
+/**
+ * Derive the current fiscal year number.
+ * If today is on or after July 8, the fiscal year started this calendar year.
+ * Otherwise it started last calendar year.
+ *
+ * @returns {number}
+ */
+export function currentFiscalYear() {
+  const now = new Date();
+  const m = now.getMonth() + 1; // 1-based
+  const d = now.getDate();
+  // On or after July 8 → fiscal year started this year
+  if (m > 7 || (m === 7 && d >= 8)) return now.getFullYear();
+  return now.getFullYear() - 1;
+}
+
+/**
+ * Fetch all woreda reports for a specific fiscal year.
+ * Delegates to fetchAllWoredaReports with the correct Gregorian date range.
+ *
+ * @param {number}  fiscalYear  - e.g. 2024
+ * @param {Object}  [filters]   - additional filters (username, sector, etc.)
+ */
+export const fetchAllWoredaReportsByFiscalYear = async (
+  fiscalYear,
+  filters = {},
+) => {
+  const { from, to } = fiscalYearRange(fiscalYear);
+  return fetchAllWoredaReports({ ...filters, date_from: from, date_to: to });
+};

@@ -15,6 +15,7 @@ const {
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
   getWeredaGenericPlan,
+  getSubcityLivePlans,
 } = require("../controllers/planController");
 
 // All plan routes require authentication
@@ -61,5 +62,8 @@ router.get("/wereda-carraa-plan", authMiddleware, (req, res) => {
   req._sector = "carraa";
   getWeredaGenericPlan(req, res);
 });
+
+// Subcity live plan data for any year (used by History tab)
+router.get("/subcity-live-plans", authMiddleware, getSubcityLivePlans);
 
 module.exports = router;

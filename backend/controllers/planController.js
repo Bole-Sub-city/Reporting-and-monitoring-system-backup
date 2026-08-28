@@ -771,6 +771,55 @@ const getWeredaGenericPlan = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/plans/subcity-live-plans?year=
+ * Returns live plan data for all 6 subcity plan tables for the given year.
+ * Returns rows in the same shape as annual_plan_archive so the frontend
+ * can render them alongside or instead of archive rows.
+ * { plans: [{ source_table, plan_year, data, is_live: true }] }
+ */
+const getSubcityLivePlans = async (req, res) => {
+  try {
+    const year = req.query.year
+      ? Number(req.query.year)
+      : new Date().getFullYear();
+
+    const SUBCITY_TABLES = [
+      "subcity_buusaa_gonofaa_plan",
+      "subcity_qonna_plan",
+      "subcity_carraa_plan",
+      "subcity_daldala_plan",
+      "subcity_atk_plan",
+      "subcity_galii_plan",
+    ];
+
+    const plans = [];
+
+    for (const tableName of SUBCITY_TABLES) {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select("*")
+        .eq("year", year)
+        .maybeSingle();
+
+      if (error) continue; // skip tables that fail silently
+
+      if (data) {
+        plans.push({
+          source_table: tableName,
+          plan_year: year,
+          data,
+          is_live: true,
+        });
+      }
+    }
+
+    res.json({ plans });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createPlan,
   getMyPlan,
@@ -785,4 +834,5 @@ module.exports = {
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
   getWeredaGenericPlan,
+  getSubcityLivePlans,
 };

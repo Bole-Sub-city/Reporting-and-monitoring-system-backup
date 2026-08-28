@@ -302,20 +302,39 @@ function LockIcon() {
 }
 function EyeIconWD({ show }) {
   return show ? (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
       <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
   ) : (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
 function CameraIconWD() {
   return (
-    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <svg
+      className="w-3.5 h-3.5 text-white"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      viewBox="0 0 24 24"
+    >
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>
@@ -323,7 +342,13 @@ function CameraIconWD() {
 }
 function CheckIconWD() {
   return (
-    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+    <svg
+      className="w-4 h-4 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      viewBox="0 0 24 24"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );
@@ -848,18 +873,25 @@ function adjustedTarget(annual, period, daysElapsed, acYtd) {
   const n = Number(annual || 0);
   if (n === 0) return 0;
 
-  const TOTAL = { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 };
+  const TOTAL = {
+    daily: 365,
+    weekly: 52,
+    monthly: 12,
+    quarterly: 4,
+    annual: 1,
+  };
   const total = TOTAL[period] || 1;
   const staticTarget = Math.round(n / total);
 
   // How many periods have elapsed so far?
-  const elapsed = {
-    daily:     daysElapsed,
-    weekly:    Math.ceil(daysElapsed / 7),
-    monthly:   Math.ceil(daysElapsed / 30.4),
-    quarterly: Math.ceil(daysElapsed / 91.25),
-    annual:    1,
-  }[period] ?? 1;
+  const elapsed =
+    {
+      daily: daysElapsed,
+      weekly: Math.ceil(daysElapsed / 7),
+      monthly: Math.ceil(daysElapsed / 30.4),
+      quarterly: Math.ceil(daysElapsed / 91.25),
+      annual: 1,
+    }[period] ?? 1;
 
   const periodsRemaining = Math.max(total - elapsed, 1);
 
@@ -1128,7 +1160,12 @@ function AnalysisSection() {
                     const at = plan ? (plan[planKey] ?? 0) : 0;
                     const staticPt = partitionTarget(at, period);
                     const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
-                    const adjPt = adjustedTarget(at, period, daysElapsed, acYtd);
+                    const adjPt = adjustedTarget(
+                      at,
+                      period,
+                      daysElapsed,
+                      acYtd,
+                    );
                     const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
                     // % is against the adjusted target so carry-over is reflected
                     const pct = adjPt > 0 ? Math.round((ac / adjPt) * 100) : 0;
@@ -4749,11 +4786,26 @@ function ReportHistorySection({ woreda }) {
   const getPeriodDateRange = (period) => {
     const now = new Date();
     const today = now.toISOString().split("T")[0];
-    if (period === "Daily")    return { from: today, to: today };
-    if (period === "Weekly")   { const d = new Date(now); d.setDate(d.getDate() - 6); return { from: d.toISOString().split("T")[0], to: today }; }
-    if (period === "Monthly")  return { from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`, to: today };
-    if (period === "Quarterly") { const qs = Math.floor(now.getMonth() / 3) * 3; return { from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`, to: today }; }
-    if (period === "Annual")   return { from: `${now.getFullYear()}-01-01`, to: today };
+    if (period === "Daily") return { from: today, to: today };
+    if (period === "Weekly") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 6);
+      return { from: d.toISOString().split("T")[0], to: today };
+    }
+    if (period === "Monthly")
+      return {
+        from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
+        to: today,
+      };
+    if (period === "Quarterly") {
+      const qs = Math.floor(now.getMonth() / 3) * 3;
+      return {
+        from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
+        to: today,
+      };
+    }
+    if (period === "Annual")
+      return { from: `${now.getFullYear()}-01-01`, to: today };
     return null;
   };
 
@@ -4767,15 +4819,22 @@ function ReportHistorySection({ woreda }) {
 
     if (!custom && period !== "all") {
       const r = getPeriodDateRange(period);
-      if (r) { filters.date_from = r.from; filters.date_to = r.to; }
+      if (r) {
+        filters.date_from = r.from;
+        filters.date_to = r.to;
+      }
     } else if (custom && range) {
       filters.date_from = range.from;
-      filters.date_to   = range.to;
+      filters.date_to = range.to;
     }
 
     fetchMyReports(filters)
       .then((data) => setRows(Array.isArray(data) ? data : []))
-      .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
+      .catch(() =>
+        setFetchError(
+          "Could not load report history. Check your connection and try again.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -4822,7 +4881,8 @@ function ReportHistorySection({ woreda }) {
     }
   };
 
-  const handleRetry = () => loadReports(filterPeriod, filterSector, isCustom, appliedRange);
+  const handleRetry = () =>
+    loadReports(filterPeriod, filterSector, isCustom, appliedRange);
 
   const statusColor = (s) =>
     s === "Approved"
@@ -5177,8 +5237,8 @@ const USERNAME_TO_WOREDA_NAME = {
 };
 
 // ─── WoReda Profile Page ──────────────────────────────────────────────────────
-function WoRedaProfilePage({ u }) {
-  const user = u || JSON.parse(localStorage.getItem("user") || "{}");
+function WoRedaProfilePage({ u, onPhotoUpdate }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [photo, setPhoto] = useState(user.profile_photo || null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
@@ -5204,33 +5264,24 @@ function WoRedaProfilePage({ u }) {
       setPhotoError("Please select an image file.");
       return;
     }
-    if (file.size > 2_000_000) {
-      setPhotoError("Image must be under 2 MB.");
-      return;
-    }
     setPhotoError("");
     setPhotoLoading(true);
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64 = ev.target.result;
-      try {
-        const apiInst = (await import("../api/api")).default;
-        await apiInst.post("/auth/profile/photo", { photo: base64 }, authHdr());
-        setPhoto(base64);
-        const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        stored.profile_photo = base64;
-        localStorage.setItem("user", JSON.stringify(stored));
-        setPhotoSuccess("Profile photo updated.");
-        setTimeout(() => setPhotoSuccess(""), 3000);
-      } catch (err) {
-        setPhotoError(
-          err.response?.data?.message || "Failed to upload photo.",
-        );
-      } finally {
-        setPhotoLoading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const resized = await resizeImageToBase64(file, 800, 0.75);
+      const apiInst = (await import("../api/api")).default;
+      await apiInst.post("/auth/profile/photo", { photo: resized }, authHdr());
+      setPhoto(resized);
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      stored.profile_photo = resized;
+      localStorage.setItem("user", JSON.stringify(stored));
+      if (onPhotoUpdate) onPhotoUpdate(resized);
+      setPhotoSuccess("Profile photo updated.");
+      setTimeout(() => setPhotoSuccess(""), 3000);
+    } catch (err) {
+      setPhotoError(err.response?.data?.message || "Failed to upload photo.");
+    } finally {
+      setPhotoLoading(false);
+    }
   };
 
   const handleChangePassword = async (e) => {
@@ -5259,9 +5310,7 @@ function WoRedaProfilePage({ u }) {
       setShowPwSection(false);
       setTimeout(() => setPwSuccess(""), 4000);
     } catch (err) {
-      setPwError(
-        err.response?.data?.message || "Failed to change password.",
-      );
+      setPwError(err.response?.data?.message || "Failed to change password.");
     } finally {
       setPwLoading(false);
     }
@@ -5448,9 +5497,7 @@ function WoRedaProfilePage({ u }) {
                 <EyeIconWD show={showNew} />
               </button>
             </div>
-            {pwError && (
-              <p className="text-xs text-red-600">{pwError}</p>
-            )}
+            {pwError && <p className="text-xs text-red-600">{pwError}</p>}
             <button
               type="submit"
               disabled={pwLoading}
@@ -5582,6 +5629,19 @@ export default function WoRedaDashboard() {
   const [expandedWork, setExpandedWork] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
   const sideW = collapsed ? "w-16" : "w-64";
+
+  // profile photo — kept in sync with localStorage
+  const [wrProfilePhoto, setWrProfilePhoto] = useState(
+    (() => {
+      try {
+        return (
+          JSON.parse(localStorage.getItem("user") || "{}").profile_photo || null
+        );
+      } catch {
+        return null;
+      }
+    })(),
+  );
 
   // ── Lock status ──
   const todayDate = new Date().toISOString().split("T")[0];
@@ -5899,6 +5959,23 @@ export default function WoRedaDashboard() {
                 </span>
               )}
             </button>
+            <button
+              onClick={() => setActiveNav("profile")}
+              title="Profile"
+              className="flex-shrink-0 focus:outline-none"
+            >
+              {wrProfilePhoto ? (
+                <img
+                  src={wrProfilePhoto}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover border-2 border-[#dce8f4] hover:border-[#1a3a5c] transition-all"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold hover:bg-[#1e4976] transition-all">
+                  {(u.initials || "W")[0]}
+                </div>
+              )}
+            </button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto px-6 py-6">
@@ -6179,9 +6256,7 @@ export default function WoRedaDashboard() {
             </div>
           )}
 
-          {activeNav === "profile" && (
-            <WoRedaProfilePage u={u} />
-          )}
+          {activeNav === "profile" && <WoRedaProfilePage u={u} />}
         </main>
       </div>
     </div>

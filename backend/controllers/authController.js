@@ -384,9 +384,7 @@ const changeOwnPassword = async (req, res) => {
 
     const match = await bcrypt.compare(old_password, user.password_hash);
     if (!match) {
-      return res
-        .status(401)
-        .json({ message: "Old password is incorrect." });
+      return res.status(401).json({ message: "Old password is incorrect." });
     }
 
     const hashedNew = await bcrypt.hash(new_password, 10);
@@ -417,9 +415,7 @@ const toggleUserStatus = async (req, res) => {
     }
 
     if (typeof is_active !== "boolean") {
-      return res
-        .status(400)
-        .json({ message: "is_active must be a boolean." });
+      return res.status(400).json({ message: "is_active must be a boolean." });
     }
 
     const { error } = await supabase
@@ -451,7 +447,9 @@ const requestPlanUnlock = async (req, res) => {
 
     const now = new Date();
     // Request expires 5 days from submission
-    const expiresAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(
+      now.getTime() + 5 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     // Check for existing request for this user+sector+year
     const { data: existing } = await supabase
@@ -470,7 +468,8 @@ const requestPlanUnlock = async (req, res) => {
       }
       if (existing.status === "pending") {
         // Check if it has expired
-        const isExpired = existing.expires_at && new Date(existing.expires_at) < now;
+        const isExpired =
+          existing.expires_at && new Date(existing.expires_at) < now;
         if (isExpired) {
           // Mark expired and allow re-submission below
           await supabase
@@ -507,7 +506,8 @@ const requestPlanUnlock = async (req, res) => {
     if (error) return res.status(400).json({ message: error.message });
 
     res.status(201).json({
-      message: "Plan unlock request submitted. It will expire in 5 days if not acted upon.",
+      message:
+        "Plan unlock request submitted. It will expire in 5 days if not acted upon.",
       expires_at: expiresAt,
     });
   } catch (err) {
@@ -519,7 +519,8 @@ const requestPlanUnlock = async (req, res) => {
 async function autoExpirePlanRequests(rows) {
   const now = new Date();
   const toExpire = (rows || []).filter(
-    (r) => r.status === "pending" && r.expires_at && new Date(r.expires_at) < now,
+    (r) =>
+      r.status === "pending" && r.expires_at && new Date(r.expires_at) < now,
   );
   if (toExpire.length > 0) {
     const ids = toExpire.map((r) => r.id);
@@ -630,18 +631,30 @@ const archiveAnnualPlans = async (req, res) => {
 
     // List of all wereda plan tables to archive (4 per sector)
     const WEREDA_PLAN_TABLES = [
-      "annual_plan_wereda_1", "annual_plan_wereda_2",
-      "annual_plan_wereda_3", "annual_plan_wereda_4",
-      "annual_qonna_plan_wereda_1", "annual_qonna_plan_wereda_2",
-      "annual_qonna_plan_wereda_3", "annual_qonna_plan_wereda_4",
-      "annual_carraa_plan_wereda_1", "annual_carraa_plan_wereda_2",
-      "annual_carraa_plan_wereda_3", "annual_carraa_plan_wereda_4",
-      "annual_daldala_plan_wereda_1", "annual_daldala_plan_wereda_2",
-      "annual_daldala_plan_wereda_3", "annual_daldala_plan_wereda_4",
-      "annual_atk_plan_wereda_1", "annual_atk_plan_wereda_2",
-      "annual_atk_plan_wereda_3", "annual_atk_plan_wereda_4",
-      "annual_galii_plan_wereda_1", "annual_galii_plan_wereda_2",
-      "annual_galii_plan_wereda_3", "annual_galii_plan_wereda_4",
+      "annual_plan_wereda_1",
+      "annual_plan_wereda_2",
+      "annual_plan_wereda_3",
+      "annual_plan_wereda_4",
+      "annual_qonna_plan_wereda_1",
+      "annual_qonna_plan_wereda_2",
+      "annual_qonna_plan_wereda_3",
+      "annual_qonna_plan_wereda_4",
+      "annual_carraa_plan_wereda_1",
+      "annual_carraa_plan_wereda_2",
+      "annual_carraa_plan_wereda_3",
+      "annual_carraa_plan_wereda_4",
+      "annual_daldala_plan_wereda_1",
+      "annual_daldala_plan_wereda_2",
+      "annual_daldala_plan_wereda_3",
+      "annual_daldala_plan_wereda_4",
+      "annual_atk_plan_wereda_1",
+      "annual_atk_plan_wereda_2",
+      "annual_atk_plan_wereda_3",
+      "annual_atk_plan_wereda_4",
+      "annual_galii_plan_wereda_1",
+      "annual_galii_plan_wereda_2",
+      "annual_galii_plan_wereda_3",
+      "annual_galii_plan_wereda_4",
     ];
 
     const allTables = [...SUBCITY_PLAN_TABLES, ...WEREDA_PLAN_TABLES];
@@ -705,6 +718,44 @@ const archiveAnnualPlans = async (req, res) => {
     }
 
     res.json({ message: `Annual plans for ${year} archived successfully.` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── Fetch Archived Annual Plans ──────────────────────────────────────────────
+/**
+ * GET /api/auth/archived-plans?year=
+ * Returns all rows from annual_plan_archive, optionally filtered by plan_year.
+ * Available to both sub-city and admin roles.
+ */
+const getArchivedPlans = async (req, res) => {
+  try {
+    const { year } = req.query;
+    let query = supabase
+      .from("annual_plan_archive")
+      .select("id, source_table, plan_year, data, archived_at")
+      .order("plan_year", { ascending: false })
+      .order("source_table", { ascending: true });
+
+    if (year) {
+      query = query.eq("plan_year", Number(year));
+    }
+
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ message: error.message });
+
+    // Return available years for the year-filter dropdown
+    const { data: yearRows, error: yearErr } = await supabase
+      .from("annual_plan_archive")
+      .select("plan_year")
+      .order("plan_year", { ascending: false });
+
+    const availableYears = yearErr
+      ? []
+      : [...new Set((yearRows || []).map((r) => r.plan_year))];
+
+    res.json({ archives: data || [], availableYears });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -839,4 +890,5 @@ module.exports = {
   resolvePlanUnlockRequest,
   archiveAnnualPlans,
   updateUserDetails,
+  getArchivedPlans,
 };
