@@ -300,6 +300,34 @@ function LockIcon() {
     </svg>
   );
 }
+function EyeIconWD({ show }) {
+  return show ? (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ) : (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+function CameraIconWD() {
+  return (
+    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+function CheckIconWD() {
+  return (
+    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
 
 const BUUSAA_FIELDS = [
   {
@@ -4701,6 +4729,7 @@ function ReportHistorySection({ woreda }) {
   const currentYear = new Date().getFullYear();
 
   const [rows, setRows] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
 
@@ -4708,56 +4737,74 @@ function ReportHistorySection({ woreda }) {
   const [filterSector, setFilterSector] = useState("all");
 
   const [isCustom, setIsCustom] = useState(false);
-  const [startMonth, setStartMonth] = useState("Adoolessa");
-  const [startDay, setStartDay] = useState(1);
-  const [endMonth, setEndMonth] = useState("Adoolessa");
-  const [endDay, setEndDay] = useState(30);
-  const [customFiscal, setCustomFiscal] = useState(currentYear - 1);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [customDateErr, setCustomDateErr] = useState("");
   const [appliedRange, setAppliedRange] = useState(null);
 
   const [modalRow, setModalRow] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-  useEffect(() => {
+  // ── period helper ──────────────────────────────────────────────────────────
+  const getPeriodDateRange = (period) => {
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    if (period === "Daily")    return { from: today, to: today };
+    if (period === "Weekly")   { const d = new Date(now); d.setDate(d.getDate() - 6); return { from: d.toISOString().split("T")[0], to: today }; }
+    if (period === "Monthly")  return { from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`, to: today };
+    if (period === "Quarterly") { const qs = Math.floor(now.getMonth() / 3) * 3; return { from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`, to: today }; }
+    if (period === "Annual")   return { from: `${now.getFullYear()}-01-01`, to: today };
+    return null;
+  };
+
+  // ── load — server-side date filtering ─────────────────────────────────────
+  const loadReports = useCallback((period, sector, custom, range) => {
     setLoading(true);
     setFetchError("");
-    fetchMyReports()
+
+    const filters = {};
+    if (sector && sector !== "all") filters.sector = sector;
+
+    if (!custom && period !== "all") {
+      const r = getPeriodDateRange(period);
+      if (r) { filters.date_from = r.from; filters.date_to = r.to; }
+    } else if (custom && range) {
+      filters.date_from = range.from;
+      filters.date_to   = range.to;
+    }
+
+    fetchMyReports(filters)
       .then((data) => setRows(Array.isArray(data) ? data : []))
-      .catch(() =>
-        setFetchError(
-          "Could not load report history. Check your connection and try again.",
-        ),
-      )
+      .catch(() => setFetchError("Could not load report history. Check your connection and try again."))
       .finally(() => setLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch unfiltered total once on mount
+  useEffect(() => {
+    fetchMyReports({})
+      .then((data) => setTotalCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
   }, []);
 
-  const filteredRows = rows.filter((r) => {
-    const date = r.report_date ?? "";
-    const type = r.report_type ?? "";
-    const sector = r._sector ?? "";
-    const periodMatch = filterPeriod === "all" || type.startsWith(filterPeriod);
-    const sectorMatch = filterSector === "all" || sector === filterSector;
-    let dateMatch = true;
-    if (isCustom && appliedRange) {
-      dateMatch = date >= appliedRange.from && date <= appliedRange.to;
-    }
-    return periodMatch && sectorMatch && dateMatch;
-  });
+  // Re-fetch whenever any filter changes
+  useEffect(() => {
+    loadReports(filterPeriod, filterSector, isCustom, appliedRange);
+  }, [filterPeriod, filterSector, isCustom, appliedRange]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // All filtering is now server-side — rows is already the filtered result
+  const filteredRows = rows;
 
   const handleApplyCustom = () => {
-    const from = oromoToGregorian(startMonth, startDay, customFiscal);
-    const to = oromoToGregorian(endMonth, endDay, customFiscal);
-    if (!from || !to) {
-      setCustomDateErr("Invalid date selection.");
+    if (!customFrom || !customTo) {
+      setCustomDateErr("Please select both a start and end date.");
       return;
     }
-    if (from > to) {
+    if (customFrom > customTo) {
       setCustomDateErr("Start date must be before end date.");
       return;
     }
     setCustomDateErr("");
-    setAppliedRange({ from, to });
+    setAppliedRange({ from: customFrom, to: customTo });
   };
 
   const handlePeriodChange = (val) => {
@@ -4765,12 +4812,17 @@ function ReportHistorySection({ woreda }) {
       setIsCustom(true);
       setFilterPeriod("all");
       setAppliedRange(null);
+      setCustomFrom("");
+      setCustomTo("");
+      setCustomDateErr("");
     } else {
       setIsCustom(false);
       setAppliedRange(null);
       setFilterPeriod(val);
     }
   };
+
+  const handleRetry = () => loadReports(filterPeriod, filterSector, isCustom, appliedRange);
 
   const statusColor = (s) =>
     s === "Approved"
@@ -4837,18 +4889,7 @@ function ReportHistorySection({ woreda }) {
           </svg>
           <p className="text-[#991b1b] text-sm">{fetchError}</p>
           <button
-            onClick={() => {
-              setFetchError("");
-              setLoading(true);
-              fetchMyReports()
-                .then((d) => setRows(Array.isArray(d) ? d : []))
-                .catch(() =>
-                  setFetchError(
-                    "Could not load report history. Check your connection and try again.",
-                  ),
-                )
-                .finally(() => setLoading(false));
-            }}
+            onClick={handleRetry}
             className="ml-auto text-xs font-semibold text-[#dc2626] underline"
           >
             Retry
@@ -4907,79 +4948,36 @@ function ReportHistorySection({ woreda }) {
         {isCustom && (
           <div className="mt-4 pt-4 border-t border-[#f1f5f9]">
             <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-3">
-              Custom Date Range (Afaan Oromo Calendar)
+              Custom Date Range
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">
-                  Fiscal Year
-                </label>
-                <input
-                  type="number"
-                  value={customFiscal}
-                  onChange={(e) => setCustomFiscal(Number(e.target.value))}
-                  min="2000"
-                  max="2100"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
               <div>
                 <label className="block text-xs font-medium text-[#64748b] mb-1">
                   Start Date
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    value={startMonth}
-                    onChange={(e) => setStartMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={startDay}
-                    onChange={(e) => setStartDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => {
+                    setCustomFrom(e.target.value);
+                    setAppliedRange(null);
+                  }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-[#64748b] mb-1">
                   End Date
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    value={endMonth}
-                    onChange={(e) => setEndMonth(e.target.value)}
-                    className="flex-1 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_MONTHS.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={endDay}
-                    onChange={(e) => setEndDay(Number(e.target.value))}
-                    className="w-16 border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm bg-[#f8fafc] focus:outline-none"
-                  >
-                    {OROMO_DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => {
+                    setCustomTo(e.target.value);
+                    setAppliedRange(null);
+                  }}
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f4f6f9] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+                />
               </div>
             </div>
             {customDateErr && (
@@ -5013,7 +5011,7 @@ function ReportHistorySection({ woreda }) {
                   : "All Submitted Reports"}
           </p>
           {!loading && !fetchError && (
-            <span className="text-xs text-[#94a3b8]">{rows.length} total</span>
+            <span className="text-xs text-[#94a3b8]">{totalCount} total</span>
           )}
         </div>
 
@@ -5177,6 +5175,295 @@ const USERNAME_TO_WOREDA_NAME = {
   "Aanaa Dhakaa Adii": "Aanaa Dhakaa Adii",
   "Aanaa Andoodee": "Aanaa Andoodee",
 };
+
+// ─── WoReda Profile Page ──────────────────────────────────────────────────────
+function WoRedaProfilePage({ u }) {
+  const user = u || JSON.parse(localStorage.getItem("user") || "{}");
+  const [photo, setPhoto] = useState(user.profile_photo || null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [photoSuccess, setPhotoSuccess] = useState("");
+
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showPwSection, setShowPwSection] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState("");
+
+  const authHdr = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please select an image file.");
+      return;
+    }
+    if (file.size > 2_000_000) {
+      setPhotoError("Image must be under 2 MB.");
+      return;
+    }
+    setPhotoError("");
+    setPhotoLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64 = ev.target.result;
+      try {
+        const apiInst = (await import("../api/api")).default;
+        await apiInst.post("/auth/profile/photo", { photo: base64 }, authHdr());
+        setPhoto(base64);
+        const stored = JSON.parse(localStorage.getItem("user") || "{}");
+        stored.profile_photo = base64;
+        localStorage.setItem("user", JSON.stringify(stored));
+        setPhotoSuccess("Profile photo updated.");
+        setTimeout(() => setPhotoSuccess(""), 3000);
+      } catch (err) {
+        setPhotoError(
+          err.response?.data?.message || "Failed to upload photo.",
+        );
+      } finally {
+        setPhotoLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPwError("");
+    setPwSuccess("");
+    if (!oldPw) {
+      setPwError("Enter your current password.");
+      return;
+    }
+    if (newPw.length < 6) {
+      setPwError("New password must be at least 6 characters.");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const apiInst = (await import("../api/api")).default;
+      await apiInst.post(
+        "/auth/change-password",
+        { old_password: oldPw, new_password: newPw },
+        authHdr(),
+      );
+      setPwSuccess("Password changed successfully.");
+      setOldPw("");
+      setNewPw("");
+      setShowPwSection(false);
+      setTimeout(() => setPwSuccess(""), 4000);
+    } catch (err) {
+      setPwError(
+        err.response?.data?.message || "Failed to change password.",
+      );
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const ROLE_COLORS_WD = {
+    wereda: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+    "sub-city": "bg-[#eff6ff] text-[#1e40af] border-[#bfdbfe]",
+    admin: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
+  };
+
+  const EyeIconWD = ({ show }) =>
+    show ? (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+        <line x1="1" y1="1" x2="23" y2="23" />
+      </svg>
+    ) : (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+
+  return (
+    <div className="max-w-lg">
+      <h1 className="text-2xl font-bold text-[#1e293b] mb-1">Profile</h1>
+      <p className="text-[#64748b] text-sm mb-6">
+        Manage your account information and security.
+      </p>
+
+      {/* Photo + info card */}
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6 mb-4">
+        <div className="flex items-center gap-5 mb-6">
+          <div className="relative flex-shrink-0">
+            {photo ? (
+              <img
+                src={photo}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover border-2 border-[#dce8f4]"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-2xl font-bold border-2 border-[#dce8f4]">
+                {(user.username || "W")[0].toUpperCase()}
+              </div>
+            )}
+            <label
+              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#1a3a5c] border-2 border-white flex items-center justify-center cursor-pointer hover:bg-[#1e4976] transition-colors"
+              title="Change photo"
+            >
+              <CameraIconWD />
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handlePhotoChange}
+                disabled={photoLoading}
+              />
+            </label>
+          </div>
+          <div>
+            <p className="font-bold text-[#1e293b] text-lg">
+              {user.username || "Woreda"}
+            </p>
+            <span
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                ROLE_COLORS_WD[user.role] ??
+                "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]"
+              }`}
+            >
+              {user.role || "wereda"}
+            </span>
+          </div>
+        </div>
+        {photoLoading && (
+          <p className="text-xs text-[#64748b] mb-2">Uploading…</p>
+        )}
+        {photoError && (
+          <p className="text-xs text-red-600 mb-2">{photoError}</p>
+        )}
+        {photoSuccess && (
+          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
+        )}
+        <div className="space-y-3">
+          {[
+            { label: "Username", value: user.username || "—" },
+            { label: "Role", value: user.role || "wereda" },
+            ...(u?.woreda ? [{ label: "Aanaa", value: u.woreda }] : []),
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
+                {label}
+              </p>
+              <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Password section */}
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-semibold text-[#1e293b]">Password</p>
+            <p className="text-xs text-[#94a3b8]">Change your login password</p>
+          </div>
+          <button
+            onClick={() => {
+              setShowPwSection((p) => !p);
+              setPwError("");
+              setPwSuccess("");
+              setOldPw("");
+              setNewPw("");
+            }}
+            className="text-xs font-semibold text-[#1a3a5c] bg-[#eef4fb] border border-[#dce8f4] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+          >
+            {showPwSection ? "Cancel" : "Change Password"}
+          </button>
+        </div>
+        {pwSuccess && (
+          <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+            <CheckIconWD />
+            <p className="text-[#166534] text-sm">{pwSuccess}</p>
+          </div>
+        )}
+        {showPwSection && (
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="relative">
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">
+                Current Password
+              </label>
+              <input
+                type={showOld ? "text" : "password"}
+                value={oldPw}
+                onChange={(e) => {
+                  setOldPw(e.target.value);
+                  setPwError("");
+                }}
+                placeholder="Your current password"
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOld((v) => !v)}
+                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
+              >
+                <EyeIconWD show={showOld} />
+              </button>
+            </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-[#334155] mb-1.5">
+                New Password
+              </label>
+              <input
+                type={showNew ? "text" : "password"}
+                value={newPw}
+                onChange={(e) => {
+                  setNewPw(e.target.value);
+                  setPwError("");
+                }}
+                placeholder="Min. 6 characters"
+                className="w-full rounded-lg border border-[#e2e8f0] bg-[#f4f6f9] px-4 py-3 pr-11 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew((v) => !v)}
+                className="absolute right-3 bottom-3 text-[#94a3b8] hover:text-[#64748b]"
+              >
+                <EyeIconWD show={showNew} />
+              </button>
+            </div>
+            {pwError && (
+              <p className="text-xs text-red-600">{pwError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={pwLoading}
+              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
+            >
+              {pwLoading ? "Saving…" : "Update Password"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function AnnouncementsViewPage({ onRead }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -5574,6 +5861,7 @@ export default function WoRedaDashboard() {
           </div>
           {navBtn("history", "Report History", HistoryIcon)}
           {navBtn("announcements", "Announcements", AnnouncementsIcon)}
+          {navBtn("profile", "Profile", ProfileIcon)}
         </nav>
         <div className="border-t border-white/10 py-2 flex-shrink-0">
           <button
@@ -5892,41 +6180,7 @@ export default function WoRedaDashboard() {
           )}
 
           {activeNav === "profile" && (
-            <div>
-              <h1 className="text-2xl font-bold text-[#1e293b] mb-5">
-                Profile & Settings
-              </h1>
-              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 max-w-lg">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-full bg-[#0f172a] flex items-center justify-center text-white text-lg font-bold">
-                    {u.initials}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#1e293b] text-lg">{u.name}</p>
-                    <p className="text-[#64748b] text-sm">
-                      {u.subcity} &middot; {u.woreda}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: "Full Name", value: u.name },
-                    { label: "Role", value: u.role },
-                    { label: "Woreda", value: u.woreda },
-                    { label: "Sub-city", value: u.subcity },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <p className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1">
-                        {label}
-                      </p>
-                      <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f8fafc]">
-                        {value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <WoRedaProfilePage u={u} />
           )}
         </main>
       </div>

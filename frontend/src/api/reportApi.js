@@ -118,6 +118,7 @@ export const getQonnaReports = async (userId) => {
  * Each row includes a _sector field added by the backend.
  *
  * @param {Object} filters
+ * @param {string} [filters.sector]      e.g. "buusaa" | "carraaHojii" | "qonna" | "daldala" | "atk"
  * @param {string} [filters.report_type]
  * @param {string} [filters.date_from]  ISO date "YYYY-MM-DD"
  * @param {string} [filters.date_to]    ISO date "YYYY-MM-DD"

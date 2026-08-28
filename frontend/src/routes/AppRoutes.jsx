@@ -5,15 +5,38 @@ import AdminDashboard from "../pages/admindashboard";
 import WoRedaDashboard from "../pages/woredadashboard";
 import SubCityDashboard from "../pages/subcitydashboard";
 
-// ─── Auth guard ───────────────────────────────────────────────────────────────
-// Redirects to /login if there is no token in localStorage.
-// Uses replace so the login page replaces the current history entry —
-// pressing Back after login won't return to the protected route.
-function PrivateRoute({ children }) {
+// ─── Role → home route map ────────────────────────────────────────────────────
+function dashboardPathForRole(role) {
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "sub-city" || role === "subcity") return "/sub-city/dashboard";
+  if (role === "wereda") return "/wereda/dashboard";
+  return "/login";
+}
+
+// ─── Auth + role guard ────────────────────────────────────────────────────────
+// Redirects to /login when unauthenticated.
+// Redirects to the user's own dashboard when the role doesn't match `allowedRole`.
+function PrivateRoute({ children, allowedRole }) {
   const token = localStorage.getItem("token");
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRole) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const role = user.role || "";
+    // Normalise "subcity" / "sub-city" so both map to the same check
+    const normalised = role === "subcity" ? "sub-city" : role;
+    const allowed =
+      allowedRole === "sub-city"
+        ? normalised === "sub-city"
+        : normalised === allowedRole;
+
+    if (!allowed) {
+      return <Navigate to={dashboardPathForRole(role)} replace />;
+    }
+  }
+
   return children;
 }
 
@@ -28,7 +51,7 @@ export default function AppRoutes() {
       <Route
         path="/admin/dashboard"
         element={
-          <PrivateRoute>
+          <PrivateRoute allowedRole="admin">
             <AdminDashboard />
           </PrivateRoute>
         }
@@ -36,7 +59,7 @@ export default function AppRoutes() {
       <Route
         path="/sub-city/dashboard"
         element={
-          <PrivateRoute>
+          <PrivateRoute allowedRole="sub-city">
             <SubCityDashboard />
           </PrivateRoute>
         }
@@ -44,7 +67,7 @@ export default function AppRoutes() {
       <Route
         path="/wereda/dashboard"
         element={
-          <PrivateRoute>
+          <PrivateRoute allowedRole="wereda">
             <WoRedaDashboard />
           </PrivateRoute>
         }
