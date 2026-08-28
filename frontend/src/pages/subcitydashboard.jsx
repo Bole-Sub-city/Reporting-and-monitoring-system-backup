@@ -4828,6 +4828,152 @@ const SECTOR_PRINT_FIELDS = {
   ],
 };
 
+// ─── Build just the table fragment for one sector (used in all-sectors mode) ─
+function buildSubcityPrintTable({
+  sector, period, showPct, showPlan,
+  woredaData, planData, selectedWoreda, subcityGaliiActuals,
+}) {
+  const sectorLabel = REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
+  const fields = SECTOR_PRINT_FIELDS[sector] ?? [];
+  const ALL_WOREDAS_PRINT = [
+    { id: "w1", name: "Aanaa Gooroo" },
+    { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+    { id: "w3", name: "Aanaa Dhakaa Adii" },
+    { id: "w4", name: "Aanaa Andoodee" },
+  ];
+  const WOREDAS_PRINT = selectedWoreda === "all"
+    ? ALL_WOREDAS_PRINT
+    : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
+  const showSubcityCol = sector === "galii" && selectedWoreda === "all";
+  const showTotal = selectedWoreda === "all";
+  const subCols = [];
+  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
+  subCols.push(            { key: "actual", label: "Raawwii" });
+  if (showPct)  subCols.push({ key: "pct",    label: "%" });
+  const numSubCols = subCols.length;
+
+  let thead = `<thead><tr class="top-header">
+    <th rowspan="2" class="rno">R.No</th>
+    <th rowspan="2" class="gosa">Gosa Hoji</th>`;
+  for (const w of WOREDAS_PRINT) {
+    thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
+  }
+  if (showSubcityCol) thead += `<th colspan="${numSubCols}" class="woreda-header subcity-header">Subcity</th>`;
+  if (showTotal)      thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+  thead += `</tr><tr class="sub-header">`;
+  const totalGroupCount = WOREDAS_PRINT.length + (showSubcityCol ? 1 : 0) + (showTotal ? 1 : 0);
+  for (let i = 0; i < totalGroupCount; i++) {
+    for (const sc of subCols) thead += `<th class="sub-col">${sc.label}</th>`;
+  }
+  thead += `</tr></thead>`;
+
+  let tbody = "<tbody>";
+  fields.forEach(({ key, label }, idx) => {
+    tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${label}</td>`;
+    let totalActual = 0, totalPlan = 0;
+    for (const w of WOREDAS_PRINT) {
+      const wEntry   = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+      const actual   = Number(wEntry?.actuals?.[key] ?? 0);
+      const target   = Number(planData?.[w.id]?.[key] ?? 0);
+      const pct      = target > 0 ? Math.round((actual / target) * 100) : 0;
+      totalActual += actual; totalPlan += target;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">${target.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num">${actual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`;
+      }
+    }
+    if (showSubcityCol) {
+      const scActual = Number(subcityGaliiActuals?.[key] ?? 0);
+      totalActual += scActual;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan">—</td>`;
+        if (sc.key === "actual") tbody += `<td class="num subcity-val">${scActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct">—</td>`;
+      }
+    }
+    if (showTotal) {
+      const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+      for (const sc of subCols) {
+        if (sc.key === "plan")   tbody += `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`;
+        if (sc.key === "actual") tbody += `<td class="num total-val">${totalActual.toLocaleString()}</td>`;
+        if (sc.key === "pct")    tbody += `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+      }
+    }
+    tbody += `</tr>`;
+  });
+  tbody += "</tbody>";
+
+  return `<div class="sector-block">
+    <h2 class="sector-title">${sectorLabel}</h2>
+    <table>${thead}${tbody}</table>
+  </div>`;
+}
+
+// ─── Wrap multiple sector table fragments into one print document ─────────────
+function buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda) {
+  const ALL_WOREDAS_PRINT = [
+    { id: "w1", name: "Aanaa Gooroo" },
+    { id: "w2", name: "Aanaa Dhadacha Araaraa" },
+    { id: "w3", name: "Aanaa Dhakaa Adii" },
+    { id: "w4", name: "Aanaa Andoodee" },
+  ];
+  const woredaLabel = selectedWoreda === "all"
+    ? "All Woredas"
+    : (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>All Sectors Report</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff; padding:16px; }
+    .report-title { text-align:center; margin-bottom:12px; border-bottom:2px solid #000; padding-bottom:8px; }
+    .report-title h1 { font-size:14pt; font-weight:bold; }
+    .meta { display:flex; justify-content:space-between; font-size:8pt; color:#555; margin-bottom:16px; }
+    .sector-block { margin-bottom:28px; }
+    .sector-title { font-size:12pt; font-weight:bold; margin-bottom:6px; padding:4px 0; border-bottom:1px solid #999; }
+    table { width:100%; border-collapse:collapse; table-layout:auto; margin-bottom:4px; }
+    th, td { border:1px solid #000; padding:4px 6px; vertical-align:middle; }
+    thead tr.top-header th { background:#fff; color:#000; text-align:center; font-size:9pt; font-weight:bold; }
+    thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center; font-size:8pt; font-weight:bold; }
+    th.rno, td.rno { text-align:center; width:32px; font-size:8pt; }
+    th.gosa { text-align:left; min-width:140px; }
+    td.gosa { text-align:left; font-weight:500; }
+    td.num  { text-align:right; font-variant-numeric:tabular-nums; }
+    td.pct  { text-align:right; }
+    td.plan { text-align:right; color:#555; }
+    td.total-val { font-weight:bold; background:#f0f4ff; }
+    td.subcity-val { background:#f0fdf4; }
+    th.total-header { background:#e8eeff !important; }
+    th.subcity-header { background:#e8fff4 !important; }
+    tbody tr:nth-child(even) { background:#f9f9f9; }
+    @media print {
+      body { padding:0; }
+      @page { size:landscape; margin:10mm; }
+      .sector-block { page-break-inside:avoid; }
+      tbody tr:nth-child(even) { background:#f9f9f9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      thead tr.sub-header th { background:#f0f0f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.total-val { background:#f0f4ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.subcity-val { background:#f0fdf4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-title">
+    <h1>All Sectors Report — ${woredaLabel}</h1>
+  </div>
+  <div class="meta">
+    <span>Generated: ${generatedDate}</span>
+    <span>Adama Sub-city Reporting System · Period: ${period}</span>
+  </div>
+  ${tablesHtml}
+  <script>window.onload = function() { window.print(); };<\/script>
+</body>
+</html>`;
+}
+
 // ─── Build print HTML for the subcity structured table ───────────────────────
 // Returns a full HTML string ready to be written into a new window.
 function buildSubcityPrintHTML({
@@ -4864,8 +5010,8 @@ function buildSubcityPrintHTML({
   // Sub-columns order: Karora (plan), Raawwi (actual), % — always Karora first
   // Build sub-col definitions: we always show Raawwi; Karora/% are optional
   const subCols = [];
-  if (showPlan) subCols.push({ key: "plan",   label: "Karora" });
-  subCols.push(            { key: "actual", label: "Raawwi" });
+  if (showPlan) subCols.push({ key: "plan",   label: "Karoora" });
+  subCols.push(            { key: "actual", label: "Raawwii" });
   if (showPct)  subCols.push({ key: "pct",    label: "%" });
   const numSubCols = subCols.length;
 
@@ -5011,7 +5157,7 @@ function buildSubcityPrintHTML({
 // ─── SubcityPrintModal ────────────────────────────────────────────────────────
 // Configuration dialog that collects options then opens a new print window.
 function SubcityPrintModal({ rows, onClose }) {
-  const [sector, setSector] = useState("buusaa");
+  const [sector, setSector] = useState("all");  // default = all sectors
   const [period, setPeriod] = useState("monthly");
   const [selectedWoreda, setSelectedWoreda] = useState("all"); // NEW
   const [showPct, setShowPct] = useState(true);
@@ -5031,61 +5177,90 @@ function SubcityPrintModal({ rows, onClose }) {
     setLoading(true);
     setError("");
     try {
-      // Fetch actuals for all 4 woredas for the selected sector + period
-      const woredaData = await fetchWoRedaReports(sector, period);
-
-      // Fetch plan targets for all 4 woredas in parallel
-      const planData = {};
-      if (showPct || showPlan) {
-        const wIds = ["w1", "w2", "w3", "w4"];
-        const results = await Promise.all(
-          wIds.map((wId) =>
-            fetchWoRedaAnalysis(sector, wId, period).catch(() => null),
-          ),
-        );
-        wIds.forEach((wId, i) => {
-          planData[wId] = results[i]?.targets ?? {};
-        });
-      }
-
-      // For Galii Sassaabu, also fetch subcity actuals
-      let subcityGaliiActuals = null;
-      if (sector === "galii") {
-        try {
-          const galiiRes = await fetchSubcityGalii(period);
-          subcityGaliiActuals = galiiRes?.actuals ?? null;
-        } catch {
-          subcityGaliiActuals = null;
-        }
-      }
-
-      const sectorLabel =
-        REPORT_SECTORS_ALL.find((s) => s.id === sector)?.label ?? sector;
       const generatedDate = new Date().toLocaleString();
 
-      const html = buildSubcityPrintHTML({
-        sector,
-        period,
-        showPct,
-        showPlan,
-        woredaData,
-        planData,
-        generatedDate,
-        selectedWoreda,
-        subcityGaliiActuals,
-      });
+      // Determine which sectors to print
+      const sectorsToPrint =
+        sector === "all"
+          ? REPORT_SECTORS_ALL.map((s) => s.id)
+          : [sector];
 
-      const win = window.open("", "_blank", "width=1100,height=800");
-      if (!win) {
-        setError("Pop-up blocked. Please allow pop-ups for this site.");
+      // Fetch all data for each sector in parallel
+      const sectorResults = await Promise.all(
+        sectorsToPrint.map(async (sec) => {
+          const woredaData = await fetchWoRedaReports(sec, period);
+
+          const planData = {};
+          if (showPct || showPlan) {
+            const wIds = ["w1", "w2", "w3", "w4"];
+            const results = await Promise.all(
+              wIds.map((wId) =>
+                fetchWoRedaAnalysis(sec, wId, period).catch(() => null),
+              ),
+            );
+            wIds.forEach((wId, i) => {
+              planData[wId] = results[i]?.targets ?? {};
+            });
+          }
+
+          let subcityGaliiActuals = null;
+          if (sec === "galii") {
+            try {
+              const galiiRes = await fetchSubcityGalii(period);
+              subcityGaliiActuals = galiiRes?.actuals ?? null;
+            } catch {
+              subcityGaliiActuals = null;
+            }
+          }
+
+          return { sec, woredaData, planData, subcityGaliiActuals };
+        }),
+      );
+
+      // If single sector — use existing full-page builder
+      if (sectorsToPrint.length === 1) {
+        const { sec, woredaData, planData, subcityGaliiActuals } = sectorResults[0];
+        const html = buildSubcityPrintHTML({
+          sector: sec,
+          period,
+          showPct,
+          showPlan,
+          woredaData,
+          planData,
+          generatedDate,
+          selectedWoreda,
+          subcityGaliiActuals,
+        });
+        const win = window.open("", "_blank", "width=1100,height=800");
+        if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+        win.document.write(html);
+        win.document.close();
         return;
       }
-      win.document.write(html);
+
+      // All sectors — build one combined HTML with a table per sector
+      const tablesHtml = sectorResults
+        .map(({ sec, woredaData, planData, subcityGaliiActuals }) =>
+          buildSubcityPrintTable({
+            sector: sec,
+            period,
+            showPct,
+            showPlan,
+            woredaData,
+            planData,
+            selectedWoreda,
+            subcityGaliiActuals,
+          }),
+        )
+        .join('<div style="margin:24px 0;border-top:2px solid #ccc;"></div>');
+
+      const combinedHtml = buildCombinedPrintHTML(tablesHtml, generatedDate, period, selectedWoreda);
+      const win = window.open("", "_blank", "width=1100,height=800");
+      if (!win) { setError("Pop-up blocked. Please allow pop-ups for this site."); return; }
+      win.document.write(combinedHtml);
       win.document.close();
     } catch (err) {
-      setError(
-        err?.response?.data?.message || "Failed to load data for print.",
-      );
+      setError(err?.response?.data?.message || "Failed to load data for print.");
     } finally {
       setLoading(false);
     }
@@ -5144,6 +5319,7 @@ function SubcityPrintModal({ rows, onClose }) {
               onChange={(e) => setSector(e.target.value)}
               className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
             >
+              <option value="all">All Sectors</option>
               {REPORT_SECTORS_ALL.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
@@ -5223,7 +5399,7 @@ function SubcityPrintModal({ rows, onClose }) {
               </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
-              Sub-columns order: Karora, Raawwi, %.{" "}
+              Sub-columns order: Karoora, Raawwii, %.{" "}
               {showPct && showPlan
                 ? "3 sub-columns per woreda."
                 : showPct || showPlan

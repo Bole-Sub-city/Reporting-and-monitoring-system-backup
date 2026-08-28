@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import {
@@ -1310,6 +1310,33 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
       .catch(() => setPlan(null))
       .finally(() => setPlanLoading(false));
   }, []);
+
+  // Pre-fill form with today's existing report when lock is cleared (unlocked by admin)
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      const today = todayStr();
+      fetchMyReports({ sector: "qonna", date_from: today, date_to: today })
+        .then((data) => {
+          const rows = Array.isArray(data) ? data : [];
+          const row = rows.find((r) => r.report_date === today && r._sector === "qonna");
+          if (!row) return;
+          setReportType(row.report_type || REPORT_TYPES[0]);
+          setYaada(row.yaada_gudinaa || "");
+          // Qonna field names (lakkKey, manaKey, bakka_qophaawe) match DB column names directly
+          const prefilled = {};
+          QONNA_CATS.forEach(({ key, manaKey, lakkKey }) => {
+            if (row[lakkKey]                    !== undefined) prefilled[lakkKey]                    = String(row[lakkKey]);
+            if (row[manaKey]                    !== undefined) prefilled[manaKey]                    = String(row[manaKey]);
+            if (row[`${key}_bakka_qophaawe`]    !== undefined) prefilled[`${key}_bakka_qophaawe`]   = String(row[`${key}_bakka_qophaawe`]);
+          });
+          setForm(prefilled);
+        })
+        .catch(() => {});
+    }
+  }, [locked]);
 
   const handleField = (name, val) => setForm((p) => ({ ...p, [name]: val }));
 
@@ -3232,6 +3259,40 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
   const [form, setForm] = useState({});
   const [yaada, setYaada] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // Pre-fill form with today's existing report when lock is cleared (unlocked by admin)
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      // Just got unlocked — fetch today's report and pre-fill
+      const today = todayStr();
+      fetchMyReports({ sector: "buusaa", date_from: today, date_to: today })
+        .then((data) => {
+          const rows = Array.isArray(data) ? data : [];
+          const row = rows.find((r) => r.report_date === today && r._sector === "buusaa");
+          if (!row) return;
+          setReportType(row.report_type || REPORT_TYPES[0]);
+          setYaada(row.yaada_gudinaa || "");
+          setForm({
+            hubannooUummuu:             String(row.hubannoo_uummuu            ?? ""),
+            hojiiwwanMootummaa:         String(row.horannaa_misensaa          ?? ""),
+            buuusiJirataa:              String(row.buusi_jirataa              ?? ""),
+            buuusiDaldalaa:             String(row.buusi_daldalaa             ?? ""),
+            buuusiDaldalaaFiGumaataa:   String(row.buusi_daldalaa_fi_gumaataa ?? ""),
+            gumaataJiraataa:            String(row.gumaata_jiraataa           ?? ""),
+            inisheetiviiBuusaaGonofaa:  String(row.inisheetivii_buusaa_gonofaa ?? ""),
+            gumaataMootummaa:           String(row.gumaata_mootummaa          ?? ""),
+            nyaataBarataa:              String(row.nyaata_barataa             ?? ""),
+            zayitii:                    String(row.zayitii                   ?? ""),
+            sukkaara:                   String(row.sukkaara                  ?? ""),
+          });
+        })
+        .catch(() => {}); // silently ignore — form stays empty if fetch fails
+    }
+  }, [locked]);
+
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   const handleClear = () => {
@@ -3398,6 +3459,33 @@ function GenericSubmitForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // Pre-fill form with today's existing report when lock is cleared (unlocked by admin)
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked && sectorKey) {
+      const today = todayStr();
+      fetchMyReports({ sector: sectorKey, date_from: today, date_to: today })
+        .then((data) => {
+          const rows = Array.isArray(data) ? data : [];
+          const row = rows.find((r) => r.report_date === today && r._sector === sectorKey);
+          if (!row) return;
+          setReportType(row.report_type || REPORT_TYPES[0]);
+          setYaada(row.yaada_gudinaa || "");
+          // field names in GenericSubmitForm match DB column names directly
+          const prefilled = {};
+          fields.forEach(({ name }) => {
+            if (row[name] !== undefined && row[name] !== null) {
+              prefilled[name] = String(row[name]);
+            }
+          });
+          setForm(prefilled);
+        })
+        .catch(() => {});
+    }
+  }, [locked, sectorKey]);
 
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
