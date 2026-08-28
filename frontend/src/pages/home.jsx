@@ -30,12 +30,18 @@ const TABS = [
     label: "Qonna",
     heading: "Qonna",
     body: (
-      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+      <p className="text-[#475569] text-sm leading-relaxed">Qonnaa jechuun hojii oomisha 
+       midhaanii fi beeyladaa gaggeessuun jireenya hawaasaa fi guddina dinagdee keessatti gahee
+       olaanaa qabuudha. Qonni madda nyaataa, galii fi carraa hojii uumuu keessatti murteessaa
+       taʼee, misooma baadiyyaa fi guddina dinagdee biyya keenyaa keessatti buʼaa guddaa qaba.
+       Sirna qonnaa ammayyaa, teeknooloojii fi mala qonnaa fooyyaʼaa fayyadamuun oomishtummaa 
+       fi qulqullina oomishaa guddisuun, jireenya qonnaan bulaa fooyyeessuu fi
+       misooma waaraa mirkaneessuuf murteessaa dha.</p>
     ),
   },
   {
     label: "Galii Sassaabu",
-    heading: "Gelii sassaabu",
+    heading: "Galii sassaabu",
     body: (
       <p className="text-[#475569] text-sm leading-relaxed">
         Galii sassaabuun madda maallaqaa mootummaan ykn dhaabbanni tokko
@@ -52,21 +58,36 @@ const TABS = [
     label: "Carraa Hojii Uumuu",
     heading: "Carraa Hojii Uumuu",
     body: (
-      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+      <p className="text-[#475569] text-sm leading-relaxed">Carraa Hojii Uumuu jechuun 
+      namootaaf hojii fi madda galii ittiin argatan uumuun, dandeettii fi beekumsa isaanii 
+      fayyadamuuf carraa bal’aa kennuudha. Carraan hojii uumamuun hoji-dhabdummaa hir’isuu, 
+      galii maatii fi jireenya hawaasaa fooyyeessuu, akkasumas guddina dinagdee fi misooma 
+      waaraa keessatti gahee olaanaa qaba. Hawaasaaf carraa hojii haqa qabeessaa fi itti 
+      fufiinsa qabu uumuu jechuun humna namaa gara oomishaatti jijjiiruu fi 
+      guddina biyyaaf gumaacha taasisuudha.</p>
     ),
   },
   {
     label: "Daldalaa",
     heading: "Daldalaa",
     body: (
-      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+      <p className="text-[#475569] text-sm leading-relaxed">Daldalaan jechuun sochii 
+      bitinsaa fi gurgurtaa oomishootaa fi tajaajilootaati. Innis oomishaalee fi 
+      tajaajiloota gabaa keessatti dhiyeessuun, bituun, gurguruun fi misooma
+      diinagdee keessatti gahee guddaa qaba.
+</p>
     ),
   },
   {
     label: "ATK",
     heading: "ATK",
     body: (
-      <p className="text-[#475569] text-sm leading-relaxed">placeholder</p>
+      <p className="text-[#475569] text-sm leading-relaxed">ATK jechuun dhaabbata ykn damee 
+      hojii mootummaa keessatti tajaajila uummataaf kennamu, karoorfamee raawwatamu fi 
+      hordoffii taasifamu keessaa tokko jechuun ibsamuu danda’a. Hojiiwwan isaa bu’a
+      qabeessummaa, qulqullina tajaajilaa fi itti gaafatamummaa cimsuun misooma
+      hawaasummaa fi dinagdee keessatti gahee guddaa qaba.
+</p>
     ),
   },
 ];
@@ -93,8 +114,8 @@ function Home() {
             className="w-9 h-9 rounded-full object-cover ring-2 ring-white/20"
           />
           <span className="text-white text-sm font-semibold leading-tight hidden sm:block">
-            Bulchiinsa Kuutaa<br />
-            <span className="text-[#93c5fd] font-normal text-xs">Magaalaa Adaamaa Boolee</span>
+            Bulchiinsa Magaalaa Adaama<br />
+            <span className="text-[#93c5fd] font-normal text-xs">Kutaa Magaalaa Boolee</span>
           </span>
         </div>
 
@@ -102,7 +123,7 @@ function Home() {
         <nav className="flex items-center gap-6">
           <Link
             to="/login"
-            className="bg-[#3b82f6] hover:bg-[#2563eb] text-[#0a1628] font-bold
+            className="bg-[#f59e0b] hover:bg-[#d97706] text-[#0a1628] font-bold
                        px-7 py-3 rounded-full text-sm tracking-wide transition-all duration-200
                        hover:-translate-y-0.5 shadow-lg">
            Login
@@ -127,14 +148,13 @@ function Home() {
 
         {/* Title */}
         <h1 className="relative z-10 font-['Fraunces',Georgia,serif] text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white mb-4 animate-rise">
-          Bulchiinsa Kuutaa<br />
-          Magaalaa{" "}
-          <span className="text-[#3b82f6]">Adaamaa<br />Boolee</span>
+          Bulchiinsa Magaalaa Adaamatti<br />
+          <span className="text-[#f59e0b]">Kutaa Magaalaa Boolee</span>
         </h1>
 
         {/* Subtitle — exact original text */}
         <p className="relative z-10 text-white/60 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10 animate-rise">
-          Reporting and monitoring for Sub-city, Wereda, and Section teams —
+          Reporting and monitoring for Sub-city, Wereda, and Section teams 
           daily, weekly, and monthly submissions in one place.
         </p>
 
@@ -142,7 +162,7 @@ function Home() {
         <div className="relative z-10 flex flex-wrap gap-3 justify-center mb-16 animate-rise">
           <a
             href="#about"
-            className="bg-[#3b82f6] hover:bg-[#2563eb] text-[#0a1628] font-bold
+            className="bg-[#f59e0b] hover:bg-[#d97706] text-[#0a1628] font-bold
                        px-7 py-3 rounded-full text-sm tracking-wide transition-all duration-200
                        hover:-translate-y-0.5 shadow-lg"
           >
@@ -165,7 +185,7 @@ function Home() {
               { value: "4",    label: "Woredas",              numColor: "text-[#1d6fce]", bg: "bg-[#eff6ff]" },
               { value: "6",    label: "Sectors",              numColor: "text-[#7c3aed]", bg: "bg-[#f5f3ff]" },
               { value: "100%", label: "Annual plan Division", numColor: "text-[#059669]", bg: "bg-[#ecfdf5]" },
-              { value: "24/7", label: "working",              numColor: "text-[#3b82f6]", bg: "bg-[#fffbeb]" },
+              { value: "24/7", label: "working",              numColor: "text-[#f59e0b]", bg: "bg-[#fffbeb]" },
             ].map((stat, i) => (
               <div key={i} className={`flex flex-col items-center justify-center py-6 px-4 ${i < 3 ? "border-r border-[#e2e8f0]" : ""}`}>
                 <div className={`w-14 h-14 rounded-full ${stat.bg} flex items-center justify-center mb-2`}>
@@ -190,7 +210,7 @@ function Home() {
 
           {/* Heading — exact original text */}
           <h2 className="font-['Fraunces',Georgia,serif] text-3xl md:text-4xl font-bold text-[#0a1628] text-center mb-10">
-            Bulchiinsa Kutaa magaalaa Adaamaa Booleetiif kan qophaa&apos;e
+            Bulchiinsa Magaalaa Adaamaa Kutaa Magaalaa Booleetiif kan Qophaa&apos;e
           </h2>
 
           {/* Tabs */}
@@ -237,13 +257,16 @@ function Home() {
             {[
               {
                 num: "01",
-                title: "Annual Plan Distribution & Woreda Allocation",
-                body: "The system enables sub-city administrators to create and distribute annual work plans across all woredas. Each woreda receives a clearly defined share of targets based on capacity and population. Plans can be broken down by sector, time period, and responsible unit. This ensures every woreda operates from a unified, traceable plan aligned with the sub-city's overall goals.",
+                title: "Karoora Waggaa Qooduu fi Aanaa Aanaatti Ramaduu",
+                body: `Sirni kun bulchiinsoota kutaa magaalaa 
+               karoora hojii waggaa qopheessuun aanaalee hundaaf akka qoodan dandessisa.Aanaa tokkoon tokkoon, dandeettii fi baay’ina uummata isaa irratti hundaa’uun qooda kaayyoo isaa ifatti murtaa’e ni argata. Karoora hojii kun damee hojii, yeroo raawwii fi qaama itti gaafatamummaa irratti hundaa’uun adda addatti qoodamuu danda’a. Kunis aanaan hundi kaayyoo waliigalaa kutaa magaalaa waliin wal simachuun, 
+                karoora tokko irraa ka’ee hojii isaa hordofamuu fi to’atamuu danda’u akka raawwatu taasisa.`,
               },
               {
                 num: "02",
-                title: "Report Submission & Progress Tracking",
-                body: "Woredas and sector offices submit their daily, weekly, and monthly reports directly through the system. Each submission is tied to the original plan, making it easy to measure actual progress against set targets. Supervisors can review, approve, or flag reports in real time. This creates a transparent, accountable chain of reporting from the field level up to sub-city management.",
+                title: "Gabaasa Dhiyeessuu fi Adeemsa Hordofuu",
+                body: `Aanaalee hojii gabaasa isaanii guyyaan, torban torbaniin fi ji’a ji’aan karaa sirnichaa kallattiin ni dhiyeessu. Gabaasni dhiyaatu tokkoon tokkoon isaa karoora jalqaba qophaa’e waliin walqabata; kunis raawwii qabatamaa kaayyoo kaa’ame waliin salphaatti madaaluuf ni gargaara. Hoggantoonni ykn to’attoonni gabaasota dhiyaatan yeroo dhugaa keessatti ilaaluun, mirkaneessuu ykn hanqina isaanii irratti mallattoo kennuu danda’u. Kunis sadarkaa bu’uuraa irraa jalqabee hanga hoggansa kutaa magaalaatti sirna gabaasaa iftoomina, itti gaafatamummaa fi hordoffii walitti fufiinsa qabu ni uuma. 
+                `,
               },
             ].map((card, i) => (
               <div
