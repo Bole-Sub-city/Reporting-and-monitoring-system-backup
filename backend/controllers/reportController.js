@@ -520,6 +520,7 @@ const getMyReports = async (req, res) => {
       qonna:       "qonna",
       daldala:     "Daldala",
       atk:         "ATK",
+      galii:       "revenue_entries",
     };
 
     const sectorsToFetch =
@@ -527,20 +528,27 @@ const getMyReports = async (req, res) => {
         ? [sector]
         : Object.keys(TABLE_MAP);
 
-    const buildQuery = (table) => {
+    const buildQuery = (table, sectorId) => {
       let q = supabase
         .from(table)
         .select("*")
-        .eq("user_id", userId)
-        .order("report_date", { ascending: false });
-      if (report_type) q = q.eq("report_type", report_type);
-      if (date_from)   q = q.gte("report_date", date_from);
-      if (date_to)     q = q.lte("report_date", date_to);
+        .order(table === "revenue_entries" ? "guyyaa" : "report_date", { ascending: false });
+      // revenue_entries uses user_id indirectly via username — filter by username
+      if (table === "revenue_entries") {
+        q = q.eq("username", req.user.username);
+        if (date_from) q = q.gte("guyyaa", date_from);
+        if (date_to)   q = q.lte("guyyaa", date_to);
+      } else {
+        q = q.eq("user_id", userId);
+        if (report_type) q = q.eq("report_type", report_type);
+        if (date_from)   q = q.gte("report_date", date_from);
+        if (date_to)     q = q.lte("report_date", date_to);
+      }
       return q;
     };
 
     const results = await Promise.all(
-      sectorsToFetch.map((s) => buildQuery(TABLE_MAP[s])),
+      sectorsToFetch.map((s) => buildQuery(TABLE_MAP[s], s)),
     );
 
     const errors = results.map((r) => r.error).filter(Boolean);
@@ -548,8 +556,19 @@ const getMyReports = async (req, res) => {
       return res.status(400).json({ message: errors[0].message });
     }
 
+    // Normalize revenue_entries rows to match the standard report shape
+    const normalizeGalii = (row) => ({
+      ...row,
+      report_date: row.guyyaa ?? null,
+      report_type: "Daily Report (Gabaasa Guyyaa)",
+    });
+
     const merged = sectorsToFetch
-      .flatMap((s, i) => tagRows(results[i].data || [], s))
+      .flatMap((s, i) => {
+        const rows = results[i].data || [];
+        const normalized = s === "galii" ? rows.map(normalizeGalii) : rows;
+        return tagRows(normalized, s);
+      })
       .sort((a, b) => {
         const da = a.report_date || a.created_at || "";
         const db = b.report_date || b.created_at || "";
@@ -569,30 +588,37 @@ const getAllWoredaReports = async (req, res) => {
   try {
     const { username, sector, report_type, date_from, date_to } = req.query;
 
-    const buildQuery = (table) => {
+    const buildQuery = (table, sectorId) => {
       let q = supabase.from(table).select("*");
-      if (username) q = q.eq("username", username);
-      if (report_type) q = q.eq("report_type", report_type);
-      if (date_from) q = q.gte("report_date", date_from);
-      if (date_to) q = q.lte("report_date", date_to);
+      if (table === "revenue_entries") {
+        if (username) q = q.eq("username", username);
+        if (date_from) q = q.gte("guyyaa", date_from);
+        if (date_to)   q = q.lte("guyyaa", date_to);
+      } else {
+        if (username)    q = q.eq("username", username);
+        if (report_type) q = q.eq("report_type", report_type);
+        if (date_from)   q = q.gte("report_date", date_from);
+        if (date_to)     q = q.lte("report_date", date_to);
+      }
       return q;
     };
 
     const sectorsToFetch =
       !sector || sector === "all"
-        ? ["buusaa", "carraaHojii", "qonna", "daldala", "atk"]
+        ? ["buusaa", "carraaHojii", "qonna", "galii", "daldala", "atk"]
         : [sector];
 
     const tableMap = {
-      buusaa: "buusaa_reports",
+      buusaa:      "buusaa_reports",
       carraaHojii: "carraa_hojii_uumuu",
-      qonna: "qonna",
-      daldala: "Daldala",
-      atk: "ATK",
+      qonna:       "qonna",
+      galii:       "revenue_entries",
+      daldala:     "Daldala",
+      atk:         "ATK",
     };
 
     const results = await Promise.all(
-      sectorsToFetch.map((s) => buildQuery(tableMap[s])),
+      sectorsToFetch.map((s) => buildQuery(tableMap[s], s)),
     );
 
     const errors = results.map((r) => r.error).filter(Boolean);
@@ -600,8 +626,18 @@ const getAllWoredaReports = async (req, res) => {
       return res.status(400).json({ message: errors[0].message });
     }
 
+    const normalizeGalii = (row) => ({
+      ...row,
+      report_date: row.guyyaa ?? null,
+      report_type: "Daily Report (Gabaasa Guyyaa)",
+    });
+
     const merged = sectorsToFetch
-      .flatMap((s, i) => tagRows(results[i].data || [], s))
+      .flatMap((s, i) => {
+        const rows = results[i].data || [];
+        const normalized = s === "galii" ? rows.map(normalizeGalii) : rows;
+        return tagRows(normalized, s);
+      })
       .sort((a, b) => {
         const da = a.report_date || a.created_at || "";
         const db = b.report_date || b.created_at || "";

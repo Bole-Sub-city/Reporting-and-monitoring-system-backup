@@ -5363,11 +5363,12 @@ function WorkAnalysisPage({ sector }) {
 }
 // ─── All Sectors (6) for Report History ──────────────────────────────────────
 const REPORT_SECTORS_ALL = [
-  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
+  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna", label: "Qonna", color: "#065f46" },
-  { id: "daldala", label: "Daldala", color: "#854d0e" },
-  { id: "atk", label: "ATK", color: "#7e22ce" },
+  { id: "qonna",       label: "Qonna",              color: "#065f46" },
+  { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
+  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
+  { id: "atk",         label: "ATK",                color: "#7e22ce" },
 ];
 
 const REPORT_PERIOD_TYPES_SC = [
@@ -5578,7 +5579,7 @@ const SECTOR_PRINT_FIELDS = {
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },
   ],
-  carraa: [
+  carraaHojii: [
     { key: "leenjii", label: "Leenjii" },
     { key: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
     { key: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
@@ -5771,47 +5772,66 @@ function buildCombinedPrintHTML(
   <title>All Sectors Report</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff; padding:16px; }
-    .report-title { text-align:center; margin-bottom:12px; border-bottom:2px solid #000; padding-bottom:8px; }
-    .report-title h1 { font-size:14pt; font-weight:bold; }
-    .meta { display:flex; justify-content:space-between; font-size:8pt; color:#555; margin-bottom:16px; }
-    .sector-block { margin-bottom:28px; }
-    .sector-title { font-size:12pt; font-weight:bold; margin-bottom:6px; padding:4px 0; border-bottom:1px solid #999; }
+    html, body { height:100%; }
+    body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff;
+           display:flex; flex-direction:column; min-height:100vh; padding:14px 16px 0; }
+    .page-body { flex:1; }
+    .report-header { display:flex; justify-content:space-between; align-items:flex-start;
+                     margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:8px; }
+    .report-header h1 { font-size:13pt; font-weight:bold; }
+    .report-header .meta-right { text-align:right; font-size:8pt; color:#555; line-height:1.6; }
+    .sector-block { margin-bottom:24px; }
+    .sector-title { font-size:11pt; font-weight:bold; margin-bottom:5px; padding:3px 0;
+                    border-bottom:1px solid #666; }
     table { width:100%; border-collapse:collapse; table-layout:auto; margin-bottom:4px; }
-    th, td { border:1px solid #000; padding:4px 6px; vertical-align:middle; }
-    thead tr.top-header th { background:#fff; color:#000; text-align:center; font-size:9pt; font-weight:bold; }
-    thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center; font-size:8pt; font-weight:bold; }
-    th.rno, td.rno { text-align:center; width:32px; font-size:8pt; }
-    th.gosa { text-align:left; min-width:140px; }
+    th, td { border:1px solid #bbb; padding:4px 6px; vertical-align:middle; }
+    thead tr.top-header th { background:#dce8f4; color:#000; text-align:center;
+                             font-size:9pt; font-weight:bold; }
+    thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center;
+                             font-size:8pt; font-weight:bold; }
+    th.rno, td.rno { text-align:center; width:32px; font-size:8pt; border-color:#bbb; }
+    th.gosa { text-align:left; min-width:130px; }
     td.gosa { text-align:left; font-weight:500; }
     td.num  { text-align:right; font-variant-numeric:tabular-nums; }
     td.pct  { text-align:right; }
-    td.plan { text-align:right; color:#555; }
-    td.total-val { font-weight:bold; background:#f0f4ff; }
+    td.plan { text-align:right; color:#444; }
+    td.total-val { font-weight:bold; background:#eef2ff; }
     td.subcity-val { background:#f0fdf4; }
-    th.total-header { background:#e8eeff !important; }
-    th.subcity-header { background:#e8fff4 !important; }
-    tbody tr:nth-child(even) { background:#f9f9f9; }
+    th.total-header { background:#dce8f4 !important; }
+    th.subcity-header { background:#dcfce7 !important; }
+    tbody tr:nth-child(even) { background:#f7f9fb; }
+    .page-footer { border-top:1px solid #bbb; padding:6px 0 10px;
+                   font-size:8pt; color:#555; display:flex;
+                   justify-content:space-between; margin-top:16px; }
     @media print {
       body { padding:0; }
       @page { size:landscape; margin:10mm; }
       .sector-block { page-break-inside:avoid; }
-      tbody tr:nth-child(even) { background:#f9f9f9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      tbody tr:nth-child(even) { background:#f7f9fb !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      thead tr.top-header th { background:#dce8f4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       thead tr.sub-header th { background:#f0f0f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      td.total-val { background:#f0f4ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.total-val { background:#eef2ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       td.subcity-val { background:#f0fdf4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      th.total-header { background:#dce8f4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      th.subcity-header { background:#dcfce7 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     }
   </style>
 </head>
 <body>
-  <div class="report-title">
-    <h1>All Sectors Report — ${woredaLabel}</h1>
+  <div class="page-body">
+    <div class="report-header">
+      <h1>All Sectors Report</h1>
+      <div class="meta-right">
+        <div>Adama Bole Sub-City</div>
+        <div>Period: ${period}</div>
+      </div>
+    </div>
+    ${tablesHtml}
   </div>
-  <div class="meta">
+  <div class="page-footer">
     <span>Generated: ${generatedDate}</span>
-    <span>Adama Sub-city Reporting System · Period: ${period}</span>
+    <span>Adama Bole Sub-City Reporting System</span>
   </div>
-  ${tablesHtml}
   <script>window.onload = function() { window.print(); };<\/script>
 </body>
 </html>`;
@@ -5953,52 +5973,65 @@ function buildSubcityPrintHTML({
   <title>${sectorLabel} Report</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; background: #fff; padding: 16px; }
-
-    .report-title { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; }
-    .report-title h1 { font-size: 14pt; font-weight: bold; }
-    .meta { display: flex; justify-content: space-between; font-size: 8pt; color: #555; margin-bottom: 12px; }
-
+    html, body { height: 100%; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; background: #fff;
+           display: flex; flex-direction: column; min-height: 100vh; padding: 14px 16px 0; }
+    .page-body { flex: 1; }
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start;
+                     margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .report-header h1 { font-size: 13pt; font-weight: bold; }
+    .report-header .meta-right { text-align: right; font-size: 8pt; color: #555; line-height: 1.6; }
     table { width: 100%; border-collapse: collapse; table-layout: auto; }
-    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
-    thead tr.top-header th { background: #fff; color: #000; text-align: center; font-size: 9pt; font-weight: bold; border: 1px solid #000; }
-    thead tr.sub-header th { background: #f0f0f0; color: #000; text-align: center; font-size: 8pt; font-weight: bold; border: 1px solid #000; }
+    th, td { border: 1px solid #bbb; padding: 4px 6px; vertical-align: middle; }
+    thead tr.top-header th { background: #dce8f4; color: #000; text-align: center;
+                             font-size: 9pt; font-weight: bold; }
+    thead tr.sub-header th { background: #f0f0f0; color: #000; text-align: center;
+                             font-size: 8pt; font-weight: bold; }
     th.rno, td.rno { text-align: center; width: 32px; font-size: 8pt; }
-    th.gosa { text-align: left; min-width: 140px; }
+    th.gosa { text-align: left; min-width: 130px; }
     td.gosa { text-align: left; font-weight: 500; }
     td.num  { text-align: right; font-variant-numeric: tabular-nums; }
     td.pct  { text-align: right; }
-    td.plan { text-align: right; color: #555; }
-    td.total-val { font-weight: bold; background: #f0f4ff; }
+    td.plan { text-align: right; color: #444; }
+    td.total-val { font-weight: bold; background: #eef2ff; }
     td.subcity-val { background: #f0fdf4; }
-    th.total-header { background: #e8eeff !important; }
-    th.subcity-header { background: #e8fff4 !important; }
-    tbody tr:nth-child(even) { background: #f9f9f9; }
-
+    th.total-header { background: #dce8f4 !important; }
+    th.subcity-header { background: #dcfce7 !important; }
+    tbody tr:nth-child(even) { background: #f7f9fb; }
+    .page-footer { border-top: 1px solid #bbb; padding: 6px 0 10px;
+                   font-size: 8pt; color: #555; display: flex;
+                   justify-content: space-between; margin-top: 16px; }
     @media print {
       body { padding: 0; }
-      @page { size: landscape; margin: 12mm; }
-      tbody tr:nth-child(even) { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page { size: landscape; margin: 10mm; }
+      tbody tr:nth-child(even) { background: #f7f9fb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr.top-header th { background: #dce8f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       thead tr.sub-header th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      td.total-val { background: #f0f4ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      td.total-val { background: #eef2ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       td.subcity-val { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      th.total-header { background: #e8eeff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      th.subcity-header { background: #e8fff4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th.total-header { background: #dce8f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th.subcity-header { background: #dcfce7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
-  <div class="report-title">
-    <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " — " + (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
+  <div class="page-body">
+    <div class="report-header">
+      <h1>${sectorLabel} Report${selectedWoreda !== "all" ? " | " + (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? "") : ""}</h1>
+      <div class="meta-right">
+        <div>Adama Bole Sub-City</div>
+        <div>Period: ${period}</div>
+      </div>
+    </div>
+    <table>
+      ${thead}
+      ${tbody}
+    </table>
   </div>
-  <div class="meta">
+  <div class="page-footer">
     <span>Generated: ${generatedDate}</span>
-    <span>Adama Sub-city Reporting System</span>
+    <span>Adama Bole Sub-City Reporting System</span>
   </div>
-  <table>
-    ${thead}
-    ${tbody}
-  </table>
   <script>
     window.onload = function() { window.print(); };
   <\/script>
@@ -6035,17 +6068,21 @@ function SubcityPrintModal({ rows, onClose }) {
       const sectorsToPrint =
         sector === "all" ? REPORT_SECTORS_ALL.map((s) => s.id) : [sector];
 
+      // Map frontend sector ids to API sector ids (backend uses "carraa" not "carraaHojii")
+      const toApiId = (id) => id === "carraaHojii" ? "carraa" : id;
+
       // Fetch all data for each sector in parallel
       const sectorResults = await Promise.all(
         sectorsToPrint.map(async (sec) => {
-          const woredaData = await fetchWoRedaReports(sec, period);
+          const apiSec = toApiId(sec);
+          const woredaData = await fetchWoRedaReports(apiSec, period);
 
           const planData = {};
           if (showPct || showPlan) {
             const wIds = ["w1", "w2", "w3", "w4"];
             const results = await Promise.all(
               wIds.map((wId) =>
-                fetchWoRedaAnalysis(sec, wId, period).catch(() => null),
+                fetchWoRedaAnalysis(apiSec, wId, period).catch(() => null),
               ),
             );
             wIds.forEach((wId, i) => {
@@ -6054,7 +6091,7 @@ function SubcityPrintModal({ rows, onClose }) {
           }
 
           let subcityGaliiActuals = null;
-          if (sec === "galii") {
+          if (apiSec === "galii") {
             try {
               const galiiRes = await fetchSubcityGalii(period);
               subcityGaliiActuals = galiiRes?.actuals ?? null;
@@ -6399,8 +6436,8 @@ function ReportsPage() {
           setTotalCount(rows.length);
         }
       })
-      .catch(() =>
-        setFetchError("No connection. Check your internet and try again."),
+      .catch((err) =>
+        setFetchError(friendlyError(err, "No connection. Check your internet and try again.")),
       )
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

@@ -4314,11 +4314,12 @@ const REPORT_PERIOD_TYPES = [
 ];
 
 const REPORT_SECTORS = [
-  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
+  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna", label: "Qonna", color: "#065f46" },
-  { id: "daldala", label: "Daldala", color: "#854d0e" },
-  { id: "atk", label: "ATK", color: "#7e22ce" },
+  { id: "qonna",       label: "Qonna",              color: "#065f46" },
+  { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
+  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
+  { id: "atk",         label: "ATK",                color: "#7e22ce" },
 ];
 
 const HIDDEN_FIELDS = new Set([
@@ -4362,17 +4363,14 @@ function formatDateTime(row) {
 
 const SECTOR_PRINT_FIELDS = {
   buusaa: [
-    { key: "hubannoo_uummuu", label: "Hubannoo Uumuu" },
-    { key: "horannaa_misensaa", label: "Horannaa Misensaa" },
-    { key: "buusi_jirataa", label: "Buusi Jiraataa" },
-    { key: "gumaata_jiraataa", label: "Gumaata Jiraataa" },
-    { key: "buusi_daldalaa", label: "Buusi fi Gumaata Daldalaa" },
-    { key: "buusi_daldalaa_fi_gumaataa", label: "Buusi Daldalaa fi Gumaataa" },
-    {
-      key: "inisheetevii_buusaa_gonofaa",
-      label: "Inisheetivii Buusaa Gonofaa",
-    },
-    { key: "gumaata_midhaani", label: "Gumaata Midhaani (Kuntal)" },
+    { key: "hubannoo_uummuu",           planKey: "hubannoo_uummuu_target",            label: "Hubannoo Uumuu" },
+    { key: "horannaa_misensaa",         planKey: "horannaa_misensaa_target",          label: "Horannaa Misensaa" },
+    { key: "buusi_jirataa",             planKey: "buusi_jiraataa_target",             label: "Buusi Jiraataa" },
+    { key: "gumaata_jiraataa",          planKey: "gumaata_jiraataa_target",           label: "Gumaata Jiraataa" },
+    { key: "buusi_daldalaa",            planKey: "buusi_daldalaa_target",             label: "Buusi fi Gumaata Daldalaa" },
+    { key: "buusi_daldalaa_fi_gumaataa",planKey: "buusi_daldalaa_target",             label: "Buusi Daldalaa fi Gumaataa" },
+    { key: "inisheetevii_buusaa_gonofaa",planKey: "inisheetivii_buusaa_gonofaa_target",label: "Inisheetivii Buusaa Gonofaa" },
+    { key: "gumaata_midhaani",          planKey: "gumaata_mootummaa_target",          label: "Gumaata Midhaani (Kuntal)" },
     { key: "nyaata_barataa", label: "Nyaata Barataa" },
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },
@@ -4436,141 +4434,338 @@ const SECTOR_PRINT_FIELDS = {
     { key: "toannoo_fi_hordoffii_gamoo", label: "To'annoo fi Hordoffii Gamoo" },
     { key: "galii_atk_galchuu", label: "Galii ATK Galchuu" },
   ],
+  // Galii Sassaabu — revenue_entries table columns
+  galii: [
+    { key: "gosa_galii",  label: "Gosa Galii"  },
+    { key: "madda_galii", label: "Madda Galii" },
+    { key: "baasii",      label: "Baasii (ETB)" },
+  ],
 };
 
-function WoRedaPrintModal({ rows, woredaName, onClose }) {
-  const [sector, setSector] = useState("all");
-  const [combined, setCombined] = useState(true);
+// Maps a print-modal period value (lowercase) to the report_type prefix stored in the DB.
+// DB stores e.g. "Daily Report (Gabaasa Guyyaa)", "Weekly Report (Gabaasa Torban)", etc.
+const PRINT_PERIOD_PREFIX = {
+  daily:     "Daily",
+  weekly:    "Weekly",
+  monthly:   "Monthly",
+  quarterly: "Quarterly",
+  annual:    "Annual",
+};
 
-  function buildSectorTable(sectorId, sectorRows) {
+// Human-readable Afaan Oromo title for each period key used in the print header.
+const PRINT_PERIOD_LABELS = {
+  daily:     "Gabaasa Guyyaa",
+  weekly:    "Gabaasa Torban",
+  monthly:   "Gabaasa Ji'aa",
+  quarterly: "Gabaasa Kurmaana",
+  annual:    "Gabaasa Waggaa",
+};
+
+// Local partitionTarget used inside the print modal (avoids closure over outer scope).
+function printPartitionTarget(annual, per) {
+  const n = Number(annual || 0);
+  if (n === 0) return 0;
+  const d = { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 };
+  return Math.round(n / (d[per] || 1));
+}
+
+function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
+  const [sector, setSector] = useState("all");
+  const [period, setPeriod] = useState("all");
+  const [combined, setCombined] = useState(true);
+  const [showPlan, setShowPlan] = useState(true);
+  const [showPct, setShowPct] = useState(true);
+  const [loading, setLoading] = useState(false);
+  // Preview count is loaded fresh so it always matches what handlePrint will generate.
+  const [previewCount, setPreviewCount] = useState(null);
+
+  // Recompute preview count whenever period or sector changes.
+  useEffect(() => {
+    let cancelled = false;
+    setPreviewCount(null);
+    fetchMyReports({})
+      .then((data) => {
+        if (cancelled) return;
+        let all = Array.isArray(data) ? data : [];
+
+        // Filter by date range for every named period.
+        if (period !== "all") {
+          const periodKey =
+            period === "daily"     ? "Daily"
+            : period === "weekly"  ? "Weekly"
+            : period === "monthly" ? "Monthly"
+            : period === "quarterly" ? "Quarterly"
+            : "Annual";
+          const range = getHistoryPeriodDateRange(periodKey);
+          if (range) {
+            all = all.filter((r) => {
+              const d = r.report_date ?? "";
+              return d >= range.from && d <= range.to;
+            });
+          }
+        }
+
+        // Filter by sector
+        const count =
+          sector === "all"
+            ? all.length
+            : all.filter((r) => r._sector === sector).length;
+        setPreviewCount(count);
+      })
+      .catch(() => setPreviewCount(0));
+    return () => { cancelled = true; };
+  }, [period, sector]);
+
+  function buildSectorTable(sectorId, sectorRows, plan) {
     const sec = REPORT_SECTORS.find((s) => s.id === sectorId);
     const sectorLabel = sec?.label ?? sectorId;
-    const accentColor = sec?.color ?? "#0f172a";
     const fields = SECTOR_PRINT_FIELDS[sectorId] ?? [];
 
     if (!sectorRows.length) {
       return `<div class="sector-block">
-        <h2 style="color:${accentColor}">${sectorLabel}</h2>
+        <h2 class="sector-title">${sectorLabel}</h2>
         <p class="no-data">No reports submitted for this sector.</p>
       </div>`;
     }
 
-    const fieldHeaders = fields.map((f) => `<th>${f.label}</th>`).join("");
-    const thead = `<thead><tr>
-      <th class="rno">R.No</th>
-      <th>Date Submitted</th>
-      <th>Report Type</th>
-      ${fieldHeaders}
-    </tr></thead>`;
+    // Galii Sassaabu — plain columns, no Karoora/Raawwii/% split
+    if (sectorId === "galii") {
+      const fieldHeaders = fields.map((f) => `<th>${f.label}</th>`).join("");
+      const thead = `<thead><tr>
+        <th class="rno">R.No</th>
+        <th class="date-col">Guyyaa</th>
+        ${fieldHeaders}
+      </tr></thead>`;
+      const bodyRows = sectorRows
+        .map((row, idx) => {
+          const dateFmt = row.report_date ?? row.guyyaa ?? "";
+          const cells = fields
+            .map(({ key }) => {
+              const val = row[key];
+              if (val === null || val === undefined || val === "") return `<td></td>`;
+              return `<td class="${typeof val === "number" ? "num" : ""}">${
+                typeof val === "number" ? val.toLocaleString() : val
+              }</td>`;
+            })
+            .join("");
+          return `<tr><td class="rno">${idx + 1}</td><td class="date-col">${dateFmt}</td>${cells}</tr>`;
+        })
+        .join("");
+      return `<div class="sector-block">
+        <div class="sector-title">${sectorLabel}</div>
+        <table>${thead}<tbody>${bodyRows}</tbody></table>
+      </div>`;
+    }
+
+    // Build sub-column definitions based on toggles
+    // Raawwii (actual) is always shown
+    const subCols = [];
+    if (showPlan) subCols.push("plan");
+    subCols.push("actual");
+    if (showPct) subCols.push("pct");
+    const colspan = subCols.length;
+
+    const fieldHeaders = fields
+      .map((f) => `<th colspan="${colspan}" class="field-group">${f.label}</th>`)
+      .join("");
+    const subHeaders = fields
+      .map(() =>
+        subCols.map((c) =>
+          c === "plan"   ? `<th class="sub-col">Karoora</th>`
+          : c === "actual" ? `<th class="sub-col">Raawwii</th>`
+          :                  `<th class="sub-col">%</th>`
+        ).join("")
+      )
+      .join("");
+
+    const thead = `<thead>
+      <tr>
+        <th rowspan="2" class="rno">R.No</th>
+        <th rowspan="2" class="date-col">Guyyaa</th>
+        ${fieldHeaders}
+      </tr>
+      <tr>${subHeaders}</tr>
+    </thead>`;
 
     const bodyRows = sectorRows
       .map((row, idx) => {
         const dateFmt = row.report_date ?? "";
-        const typeFmt = row.report_type ?? "";
         const cells = fields
-          .map(({ key }) => {
-            const val = row[key];
-            if (val === null || val === undefined || val === "")
-              return `<td class="num">—</td>`;
-            return `<td class="num">${typeof val === "number" ? val.toLocaleString() : val}</td>`;
+          .map(({ key, planKey }) => {
+            const planCol = planKey ?? (key + "_target");
+            const annualTarget = plan ? Number(plan[planCol] ?? 0) : 0;
+            const target = printPartitionTarget(annualTarget, period);
+            const actual = Number(row[key] ?? 0);
+            const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+            return subCols.map((c) =>
+              c === "plan"   ? `<td class="num plan">${target.toLocaleString()}</td>`
+              : c === "actual" ? `<td class="num">${actual.toLocaleString()}</td>`
+              :                  `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
+            ).join("");
           })
           .join("");
-        return `<tr><td class="rno">${idx + 1}</td><td class="date">${dateFmt}</td><td>${typeFmt}</td>${cells}</tr>`;
+        return `<tr><td class="rno">${idx + 1}</td><td class="date-col">${dateFmt}</td>${cells}</tr>`;
       })
       .join("");
 
     return `<div class="sector-block">
-      <div class="sector-title">
-        <span>${sectorLabel} (${sectorRows.length} report${sectorRows.length !== 1 ? "s" : ""})</span>
-      </div>
+      <div class="sector-title">${sectorLabel}</div>
       <table>${thead}<tbody>${bodyRows}</tbody></table>
     </div>`;
   }
 
-  const handlePrint = () => {
-    const generatedDate = new Date().toLocaleString();
-    const sectorsToInclude =
-      sector === "all"
-        ? REPORT_SECTORS
-        : [REPORT_SECTORS.find((s) => s.id === sector)].filter(Boolean);
+  const handlePrint = async () => {
+    setLoading(true);
+    try {
+      // Fetch ALL reports fresh + every sector plan in parallel.
+      // fetchWeredaRevenuePlan is included for the galii sector.
+      const [
+        freshReportsData,
+        buusaaPlanRes,
+        qonnaPlanRes,
+        carraaRes,
+        daldalRes,
+        atkRes,
+        galiiRes,
+      ] = await Promise.all([
+        fetchMyReports({}).catch(() => []),
+        fetchWeredaPlan().catch(() => null),
+        fetchWeredaQonnaPlan().catch(() => null),
+        fetchWeredaCarraaHojiiPlan().catch(() => null),
+        fetchWeredaDaldalaPlan().catch(() => null),
+        fetchWeredaAtkPlan().catch(() => null),
+        fetchWeredaRevenuePlan().catch(() => null),
+      ]);
 
-    const sectionsHTML = sectorsToInclude
-      .map((sec) => {
-        const sectorRows = rows.filter((r) => r._sector === sec.id);
-        const sectionHTML = buildSectorTable(sec.id, sectorRows);
-        return combined
-          ? sectionHTML
-          : `<div class="page-section">${sectionHTML}</div>`;
-      })
-      .join(combined ? "" : "");
+      let allRows = Array.isArray(freshReportsData) ? freshReportsData : [];
 
-    const pageTitle =
-      sector === "all"
-        ? "All Sectors Report"
-        : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector) +
-          " Report";
+      // Filter by date range for every named period (same logic as the history table).
+      if (period !== "all") {
+        const periodKey =
+          period === "daily"       ? "Daily"
+          : period === "weekly"    ? "Weekly"
+          : period === "monthly"   ? "Monthly"
+          : period === "quarterly" ? "Quarterly"
+          : "Annual";
+        const range = getHistoryPeriodDateRange(periodKey);
+        if (range) {
+          allRows = allRows.filter((r) => {
+            const d = r.report_date ?? "";
+            return d >= range.from && d <= range.to;
+          });
+        }
+      }
 
-    const html = `<!DOCTYPE html>
+      const planBySector = {
+        buusaa:      buusaaPlanRes?.plan ?? null,
+        carraaHojii: carraaRes?.plan     ?? null,
+        qonna:       qonnaPlanRes?.plan  ?? null,
+        daldala:     daldalRes?.plan     ?? null,
+        atk:         atkRes?.plan        ?? null,
+        galii:       galiiRes?.plan      ?? null,
+      };
+
+      const generatedDate = new Date().toLocaleString();
+      const periodTitle = PRINT_PERIOD_LABELS[period] ?? "";
+
+      const sectorsToInclude =
+        sector === "all"
+          ? REPORT_SECTORS
+          : [REPORT_SECTORS.find((s) => s.id === sector)].filter(Boolean);
+
+      const sectionsHTML = sectorsToInclude
+        .map((sec) => {
+          const sectorRows = allRows.filter((r) => r._sector === sec.id);
+          const sectionHTML = buildSectorTable(sec.id, sectorRows, planBySector[sec.id] ?? null);
+          return combined
+            ? sectionHTML
+            : `<div class="page-section">${sectionHTML}</div>`;
+        })
+        .join(combined ? "" : "");
+
+      // Page title: period label + sector label + woreda name
+      const periodPart = period === "all" ? "" : periodTitle;
+      const sectorPart =
+        sector === "all"
+          ? ""
+          : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector);
+      const pageTitle = [periodPart, sectorPart, woredaName].filter(Boolean).join(" | ");
+
+      const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>${pageTitle}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff; padding: 14px; }
-
-    .report-header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    html, body { height: 100%; }
+    body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff;
+           display: flex; flex-direction: column; min-height: 100vh; padding: 14px 16px 0; }
+    .page-body { flex: 1; }
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start;
+                     margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
     .report-header h1 { font-size: 13pt; font-weight: bold; }
-    .meta { display: flex; justify-content: space-between; font-size: 8pt; color: #555; margin-bottom: 14px; }
-
-    .sector-block { margin-bottom: 24px; }
-    .sector-title { font-weight: bold; font-size: 10pt; padding: 4px 0; margin-bottom: 2px; border-bottom: 2px solid #000; }
-    .no-data { padding: 8px; font-style: italic; color: #555; border: 1px solid #000; }
-
+    .report-header .meta-right { text-align: right; font-size: 8pt; color: #555; line-height: 1.6; }
+    .sector-block { margin-bottom: 22px; }
+    .sector-title { font-weight: bold; font-size: 10pt; padding: 3px 0;
+                    margin-bottom: 4px; border-bottom: 2px solid #000; }
+    .no-data { padding: 8px; font-style: italic; color: #555; border: 1px solid #bbb; }
     table { width: 100%; border-collapse: collapse; table-layout: auto; }
-    th, td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
-    thead tr { background: #f0f0f0; font-size: 8pt; font-weight: bold; }
-    th.rno, td.rno { text-align: center; width: 28px; }
-    td.date { white-space: nowrap; font-size: 8pt; }
-    td.num  { text-align: right; font-variant-numeric: tabular-nums; }
-    tbody tr:nth-child(even) { background: #f9f9f9; }
-
+    th, td { border: 1px solid #bbb; padding: 3px 5px; vertical-align: middle; }
+    thead tr:first-child th { background: #dce8f4; font-size: 8pt; font-weight: bold; text-align: center; }
+    thead tr:last-child th { background: #f0f0f0; font-size: 7pt; font-weight: bold; text-align: center; }
+    th.rno, td.rno { text-align: center; width: 24px; }
+    th.date-col, td.date-col { white-space: nowrap; font-size: 8pt; width: 68px; }
+    th.field-group { text-align: center; }
+    th.sub-col { text-align: center; min-width: 44px; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.pct { text-align: right; }
+    tbody tr:nth-child(even) { background: #f7f9fb; }
     .page-section { page-break-after: always; }
     .page-section:last-child { page-break-after: avoid; }
-
+    .page-footer { border-top: 1px solid #bbb; padding: 6px 0 10px;
+                   font-size: 8pt; color: #555; display: flex;
+                   justify-content: space-between; margin-top: 16px; }
     @media print {
       body { padding: 0; }
       @page { size: landscape; margin: 10mm; }
-      thead tr { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      tbody tr:nth-child(even) { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr:first-child th { background: #dce8f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr:last-child th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tbody tr:nth-child(even) { background: #f7f9fb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
-  <div class="report-header">
-    <h1>${pageTitle} ${woredaName}</h1>
+  <div class="page-body">
+    <div class="report-header">
+      <h1>${pageTitle}</h1>
+      <div class="meta-right">
+        <div>Adama Bole Sub-City</div>
+      </div>
+    </div>
+    ${sectionsHTML}
   </div>
-  <div class="meta">
+  <div class="page-footer">
     <span>Generated: ${generatedDate}</span>
-    <span>Adama Sub-city Reporting System</span>
+    <span>Adama Bole Sub-City Reporting System</span>
   </div>
-  ${sectionsHTML}
   <script>
     window.onload = function() { window.print(); };
   <\/script>
 </body>
 </html>`;
 
-    const win = window.open("", "_blank", "width=1100,height=800");
-    if (!win) {
-      alert(
-        "Pop-up blocked. Please allow pop-ups for this site and try again.",
-      );
-      return;
+      const win = window.open("", "_blank", "width=1100,height=800");
+      if (!win) {
+        alert("Pop-up blocked. Please allow pop-ups for this site and try again.");
+        return;
+      }
+      win.document.write(html);
+      win.document.close();
+      onClose();
+    } finally {
+      setLoading(false);
     }
-    win.document.write(html);
-    win.document.close();
-    onClose();
   };
 
   const selectedSectorLabel =
@@ -4578,10 +4773,8 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
       ? "All Sectors"
       : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector);
 
-  const rowCountForSector =
-    sector === "all"
-      ? rows.length
-      : rows.filter((r) => r._sector === sector).length;
+  // Disable print button only when we know there are truly 0 matching reports.
+  const printDisabled = loading || previewCount === 0;
 
   return (
     <div
@@ -4593,37 +4786,40 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{
-            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
-          }}
+          style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
         >
           <div>
             <p className="text-white font-bold text-base">Download Report</p>
-            <p className="text-white/60 text-xs mt-0.5">
-              Configure and print as PDF
-            </p>
+            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/70 hover:text-white transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
+          {/* Period */}
+          <div>
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+              Period
+            </label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+            >
+              <option value="all">All Periods</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annual">Annual</option>
+            </select>
+          </div>
+
+          {/* Sector */}
           <div>
             <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
               Sector
@@ -4635,9 +4831,7 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
+                <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
           </div>
@@ -4651,64 +4845,67 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
                 <button
                   type="button"
                   onClick={() => setCombined(true)}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
-                    combined
-                      ? "bg-[#0f172a] text-white border-[#0f172a]"
-                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"
-                  }`}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${combined ? "bg-[#0f172a] text-white border-[#0f172a]" : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"}`}
                 >
                   All Together
                 </button>
                 <button
                   type="button"
                   onClick={() => setCombined(false)}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${
-                    !combined
-                      ? "bg-[#0f172a] text-white border-[#0f172a]"
-                      : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"
-                  }`}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-all ${!combined ? "bg-[#0f172a] text-white border-[#0f172a]" : "bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#0f172a]"}`}
                 >
                   Each Sector Separate
                 </button>
               </div>
-              <p className="text-xs text-[#94a3b8] mt-1.5">
-                {combined
-                  ? "All sectors printed on consecutive pages."
-                  : "Each sector starts on a new page."}
-              </p>
             </div>
           )}
 
-          <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3 flex items-center gap-3">
-            <svg
-              className="w-5 h-5 text-[#0f172a] flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12h6m-3-3v6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
-              />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-[#0f172a]">
-                {selectedSectorLabel}
-              </p>
-              <p className="text-xs text-[#64748b]">
-                {rowCountForSector} report{rowCountForSector !== 1 ? "s" : ""}{" "}
-                will be included
-              </p>
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1">
+              Sub-columns per Report
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPct((v) => !v)}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`} />
+              </button>
+              <span className="text-sm text-[#1e293b]">Show <strong>% of Annual Plan</strong> column</span>
             </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPlan((v) => !v)}
+                className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`} />
+              </button>
+              <span className="text-sm text-[#1e293b]">Show <strong>Annual Plan</strong> column</span>
+            </div>
+            <p className="text-xs text-[#94a3b8]">
+              Sub-columns order: Karoora, Raawwii, %.{" "}
+              {showPct && showPlan
+                ? "3 sub-columns per field."
+                : showPct || showPlan
+                  ? "2 sub-columns per field."
+                  : "1 sub-column per field (Raawwii only)."}
+            </p>
+          </div>
+
+          <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3">
+            <p className="text-sm font-semibold text-[#0f172a]">{selectedSectorLabel}</p>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              {previewCount === null
+                ? "Counting…"
+                : `${previewCount} report${previewCount !== 1 ? "s" : ""} will be included`}
+            </p>
           </div>
         </div>
 
         <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
-          <p className="text-[#94a3b8] text-xs">
-            Opens in a new window. Use Ctrl+P to save as PDF.
-          </p>
+          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P to save as PDF.</p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -4718,24 +4915,14 @@ function WoRedaPrintModal({ rows, woredaName, onClose }) {
             </button>
             <button
               onClick={handlePrint}
-              disabled={rowCountForSector === 0}
-              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+              disabled={printDisabled}
+              className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
-                />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
                 <rect x="6" y="14" width="12" height="8" rx="1" />
               </svg>
-              Print / Save PDF
+              {loading ? "Loading..." : "Print / Save PDF"}
             </button>
           </div>
         </div>
@@ -4868,6 +5055,41 @@ function ReportDetailModal({ row, onClose }) {
   );
 }
 
+// ── period helper (module-level so loadReports useCallback can safely call it) ──
+// Uses local timezone helpers consistent with todayStr() to avoid UTC date-shift.
+function localDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getHistoryPeriodDateRange(period) {
+  const now = new Date();
+  const today = localDateStr(now);
+  if (period === "Daily") return { from: today, to: today };
+  if (period === "Weekly") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 6);
+    return { from: localDateStr(d), to: today };
+  }
+  if (period === "Monthly")
+    return {
+      from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
+      to: today,
+    };
+  if (period === "Quarterly") {
+    const qs = Math.floor(now.getMonth() / 3) * 3;
+    return {
+      from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
+      to: today,
+    };
+  }
+  if (period === "Annual")
+    return { from: `${now.getFullYear()}-01-01`, to: today };
+  return null;
+}
+
 function ReportHistorySection({ woreda }) {
   const currentYear = new Date().getFullYear();
 
@@ -4888,34 +5110,14 @@ function ReportHistorySection({ woreda }) {
   const [modalRow, setModalRow] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-  // ── period helper ──────────────────────────────────────────────────────────
-  const getPeriodDateRange = (period) => {
-    const now = new Date();
-    const today = now.toISOString().split("T")[0];
-    if (period === "Daily") return { from: today, to: today };
-    if (period === "Weekly") {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 6);
-      return { from: d.toISOString().split("T")[0], to: today };
-    }
-    if (period === "Monthly")
-      return {
-        from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
-        to: today,
-      };
-    if (period === "Quarterly") {
-      const qs = Math.floor(now.getMonth() / 3) * 3;
-      return {
-        from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
-        to: today,
-      };
-    }
-    if (period === "Annual")
-      return { from: `${now.getFullYear()}-01-01`, to: today };
-    return null;
-  };
-
-  // ── load — server-side date filtering ─────────────────────────────────────
+  // ── load ──────────────────────────────────────────────────────────────────
+  // All periods use a pure date-range filter against report_date.
+  // Daily   = today only
+  // Weekly  = last 7 days
+  // Monthly = 1st of current month → today
+  // Quarterly / Annual = their respective calendar ranges
+  // This means every report that falls in the window appears regardless of
+  // what report_type label was stored on submission.
   const loadReports = useCallback((period, sector, custom, range) => {
     setLoading(true);
     setFetchError("");
@@ -4924,25 +5126,27 @@ function ReportHistorySection({ woreda }) {
     if (sector && sector !== "all") filters.sector = sector;
 
     if (!custom && period !== "all") {
-      const r = getPeriodDateRange(period);
+      const r = getHistoryPeriodDateRange(period);
       if (r) {
         filters.date_from = r.from;
-        filters.date_to = r.to;
+        filters.date_to   = r.to;
       }
     } else if (custom && range) {
       filters.date_from = range.from;
-      filters.date_to = range.to;
+      filters.date_to   = range.to;
     }
 
     fetchMyReports(filters)
-      .then((data) => setRows(Array.isArray(data) ? data : []))
+      .then((data) => {
+        setRows(Array.isArray(data) ? data : []);
+      })
       .catch(() =>
         setFetchError(
           "Could not load report history. Check your connection and try again.",
         ),
       )
       .finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch unfiltered total once on mount
   useEffect(() => {
@@ -5004,8 +5208,8 @@ function ReportHistorySection({ woreda }) {
       )}
       {showPrintModal && (
         <WoRedaPrintModal
-          rows={filteredRows.length > 0 ? filteredRows : rows}
-          woredaName={woreda?.username ?? "Woreda"}
+          totalCount={totalCount}
+          woredaName={woreda ?? "Woreda"}
           onClose={() => setShowPrintModal(false)}
         />
       )}
@@ -5020,8 +5224,8 @@ function ReportHistorySection({ woreda }) {
         </div>
         <button
           onClick={() => setShowPrintModal(true)}
-          disabled={rows.length === 0}
-          className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#0f172a] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
+          disabled={totalCount === 0}
+          className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-50 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0"
         >
           <svg
             className="w-4 h-4"
