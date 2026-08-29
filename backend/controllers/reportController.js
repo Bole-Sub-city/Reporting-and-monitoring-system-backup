@@ -75,7 +75,6 @@ const createReport = async (req, res) => {
       buusi_daldalaa: req.body.buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa: req.body.buusi_daldalaa_fi_gumaataa,
       inisheetevii_buusaa_gonofaa: req.body.inisheetivii_buusaa_gonofaa,
-      gumaata_midhaani: req.body.gumaata_midhaani,
       gumaata_midhaani_tarsiimoo: req.body.gumaata_midhaani_tarsiimoo ?? 0,
       gumaata_midhaani_sardamaa: req.body.gumaata_midhaani_sardamaa ?? 0,
       nyaata_barataa: req.body.nyaata_barataa,
@@ -114,7 +113,6 @@ const submitBuusaaReport = async (req, res) => {
       buusi_daldalaa,
       buusi_daldalaa_fi_gumaataa,
       inisheetivii_buusaa_gonofaa, // ← frontend sends this
-      gumaata_midhaani,
       gumaata_midhaani_tarsiimoo,
       gumaata_midhaani_sardamaa,
       nyaata_barataa,
@@ -142,7 +140,6 @@ const submitBuusaaReport = async (req, res) => {
         buusi_daldalaa,
         buusi_daldalaa_fi_gumaataa,
         inisheetevii_buusaa_gonofaa: inisheetivii_buusaa_gonofaa,
-        gumaata_midhaani,
         gumaata_midhaani_tarsiimoo: gumaata_midhaani_tarsiimoo ?? 0,
         gumaata_midhaani_sardamaa: gumaata_midhaani_sardamaa ?? 0,
         nyaata_barataa,

@@ -171,19 +171,9 @@ const PLAN_FIELDS = [
   { key: "buusi_jiraataa", label: "Buusi Jiraataa", color: "#475569" },
   { key: "gumaata_jiraataa", label: "Gumaata Jiraataa", color: "#64748b" },
   {
-    key: "buusi_daldalaa",
-    label: "Buusi Fi Gumaataa Daldalaa",
-    color: "#7c3aed",
-  },
-  {
     key: "inisheetivii_buusaa_gonofaa",
     label: "Inisheetivii Buusaa Gonofaa",
     color: "#b45309",
-  },
-  {
-    key: "gumaata_mootummaa",
-    label: "Gumaata Midhaani (Kuntal)",
-    color: "#78350f",
   },
   {
     key: "gumaata_midhaani_tarsiimoo",
@@ -220,9 +210,7 @@ const EMPTY_PLAN = {
   horannaa_misensaa: "",
   buusi_jiraataa: "",
   gumaata_jiraataa: "",
-  buusi_daldalaa: "",
   inisheetivii_buusaa_gonofaa: "",
-  gumaata_mootummaa: "",
   gumaata_midhaani_tarsiimoo: "",
   gumaata_midhaani_sardamaa: "",
   // subcity-only
@@ -2016,7 +2004,11 @@ function OverviewPage({
   u,
 }) {
   const hasPlan =
-    dbPlan && PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0);
+    dbPlan &&
+    (PLAN_FIELDS.some((f) => Number(dbPlan[f.key] || 0) > 0) ||
+      FIXED_WEREDA_FIELDS.some((f) =>
+        WOREDAS.some((w) => Number(dbPlan[`${f.key}_${w.id}`] || 0) > 0),
+      ));
   const totalWeight = dbPlan
     ? WOREDAS.reduce((s, w) => s + Number(dbPlan[`weight_${w.id}`] || 0), 0)
     : 0;
@@ -2193,6 +2185,63 @@ function OverviewPage({
               </tbody>
             </table>
           </div>
+
+          {/* ── Fixed per-woreda targets ── */}
+          {FIXED_WEREDA_FIELDS.some((f) =>
+            WOREDAS.some((w) => Number(dbPlan[`${f.key}_${w.id}`] || 0) > 0),
+          ) && (
+            <>
+              <div className="px-5 py-2.5 border-t border-[#e2e8f0] bg-[#f8fafc]">
+                <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Fixed Per-Woreda Targets
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                        Category
+                      </th>
+                      {WOREDAS.map((w) => (
+                        <th
+                          key={w.id}
+                          className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                        >
+                          {w.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {FIXED_WEREDA_FIELDS.map(({ key, label, color }) => (
+                      <tr
+                        key={key}
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                      >
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                            {label}
+                          </span>
+                        </td>
+                        {WOREDAS.map((w) => (
+                          <td key={w.id} className="px-5 py-3 text-[#64748b]">
+                            {Number(
+                              dbPlan[`${key}_${w.id}`] || 0,
+                            ).toLocaleString()}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-8 flex flex-col items-center text-center shadow-sm mb-6">
@@ -5777,12 +5826,10 @@ const SECTOR_PRINT_FIELDS = {
     { key: "horannaa_misensaa", label: "Horannaa Misensaa" },
     { key: "buusi_jiraataa", label: "Buusi Jiraataa" },
     { key: "gumaata_jiraataa", label: "Gumaata Jiraataa" },
-    { key: "buusi_daldalaa", label: "Buusi fi Gumaata Daldalaa" },
     {
       key: "inisheetivii_buusaa_gonofaa",
       label: "Inisheetivii Buusaa Gonofaa",
     },
-    { key: "gumaata_mootummaa", label: "Gumaata Midhaani (Kuntal)" },
     { key: "nyaata_barataa", label: "Nyaata Barataa" },
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },

@@ -145,9 +145,7 @@ const getSummary = async (req, res) => {
       horannaa_misensaa: 0,
       buusi_jiraataa: 0,
       gumaata_jiraataa: 0,
-      buusi_daldalaa: 0,
       inisheetivii_buusaa_gonofaa: 0,
-      gumaata_mootummaa: 0,
       gumaata_midhaani_tarsiimoo: 0,
       gumaata_midhaani_sardamaa: 0,
       nyaata_barataa: 0,
@@ -163,13 +161,9 @@ const getSummary = async (req, res) => {
         target.horannaa_misensaa += Number(row.horannaa_misensaa || 0);
         target.buusi_jiraataa += Number(row.buusi_jirataa || 0);
         target.gumaata_jiraataa += Number(row.gumaata_jiraataa || 0);
-        target.buusi_daldalaa +=
-          Number(row.buusi_daldalaa || 0) +
-          Number(row.buusi_daldalaa_fi_gumaataa || 0);
         target.inisheetivii_buusaa_gonofaa += Number(
           row.inisheetevii_buusaa_gonofaa || 0,
         );
-        target.gumaata_mootummaa += Number(row.gumaata_midhaani || 0);
         target.gumaata_midhaani_tarsiimoo += Number(
           row.gumaata_midhaani_tarsiimoo || 0,
         );
