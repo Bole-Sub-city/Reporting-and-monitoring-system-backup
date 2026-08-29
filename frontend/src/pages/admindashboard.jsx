@@ -465,7 +465,7 @@ function PlanUnlockApproveModal({ request, onClose, onApproved }) {
             background: "linear-gradient(90deg,#1a3a5c 0%,#1e4976 100%)",
           }}
         >
-          <p className="text-white font-bold text-base">Approve Plan Unlock</p>
+          <p className="text-white font-bold text-base">Approve Plan Alter Request</p>
           <p className="text-white/60 text-xs mt-0.5">
             {request.username} ·{" "}
             {SECTOR_LABELS[request.sector] ?? request.sector} ·{" "}
@@ -533,7 +533,7 @@ function PlanUnlockApproveModal({ request, onClose, onApproved }) {
                     "Approving..."
                   ) : (
                     <>
-                      <CheckIcon /> Approve Unlock
+                      <CheckIcon /> Approve Request
                     </>
                   )}
                 </button>
@@ -1108,9 +1108,17 @@ function PermissionsTab() {
     }
   };
 
+  // Exclude annual_plan edit requests — those belong in the Annual Plan Requests tab
+  const dailyRequests = requests.filter(
+    (r) => r.report_type !== "annual_plan",
+  );
   const filtered =
-    filter === "all" ? requests : requests.filter((r) => r.status === filter);
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
+    filter === "all"
+      ? dailyRequests
+      : dailyRequests.filter((r) => r.status === filter);
+  const pendingCount = dailyRequests.filter(
+    (r) => r.status === "pending",
+  ).length;
 
   return (
     <div>
@@ -1305,8 +1313,22 @@ function PlanUnlockTab() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.get("/auth/plan-unlock-requests", authHeader());
-      setRequests(res.data.requests || []);
+      const [planRes, editRes] = await Promise.all([
+        api.get("/auth/plan-unlock-requests", authHeader()),
+        api.get("/auth/edit-requests", authHeader()),
+      ]);
+      const planReqs = planRes.data.requests || [];
+      // Also surface any annual_plan-typed edit_requests (submitted via the
+      // old/wrong path) so they appear here instead of being invisible.
+      const legacyPlanReqs = (editRes.data.requests || [])
+        .filter((r) => r.report_type === "annual_plan")
+        .map((r) => ({
+          ...r,
+          _legacy: true, // flag so we know it came from edit_requests
+          plan_year: r.report_date ? new Date(r.report_date).getFullYear() : "—",
+        }));
+      // Merge, deduplicating by id+source (plan table ids are separate from edit table ids)
+      setRequests([...planReqs, ...legacyPlanReqs]);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load requests.");
     } finally {
@@ -1325,7 +1347,7 @@ function PlanUnlockTab() {
         { action: "denied" },
         authHeader(),
       );
-      showToast(`Plan unlock request from "${username}" denied.`);
+      showToast(`Annual plan alter request from "${username}" denied.`);
       fetchRequests();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to deny request.");
@@ -1335,7 +1357,7 @@ function PlanUnlockTab() {
   const handleApproved = (req) => {
     setApproveModal(null);
     showToast(
-      `Plan unlock for "${req.username}" (${SECTOR_LABELS[req.sector] ?? req.sector}) approved.`,
+      `Annual plan alter approved for "${req.username}" (${SECTOR_LABELS[req.sector] ?? req.sector}).`,
     );
     fetchRequests();
   };
@@ -1398,10 +1420,10 @@ function PlanUnlockTab() {
             <UnlockIcon />
           </div>
           <p className="text-[#334155] font-semibold mb-1">
-            No {filter === "all" ? "" : filter} plan unlock requests
+            No {filter === "all" ? "" : filter} annual plan alter requests
           </p>
           <p className="text-[#94a3b8] text-sm">
-            Annual plan unlock requests from subcity will appear here.
+            Requests from the sub-city to alter a locked annual plan will appear here.
           </p>
         </div>
       ) : (
@@ -1413,10 +1435,10 @@ function PlanUnlockTab() {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Annual Plan Unlock Requests ({filtered.length})
+              Annual Plan Alter Requests ({filtered.length})
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              Subcity requesting to modify a locked annual plan
+              Sub-city requests to alter a locked annual plan
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -1444,7 +1466,7 @@ function PlanUnlockTab() {
               <tbody>
                 {filtered.map((r) => (
                   <tr
-                    key={r.id}
+                    key={`${r._legacy ? "legacy" : "plan"}-${r.id}`}
                     className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
                   >
                     <td className="px-4 py-3 font-medium text-[#1e293b]">
@@ -1493,7 +1515,7 @@ function PlanUnlockTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      {r.status === "pending" &&
+                      {!r._legacy && r.status === "pending" &&
                       expiryLabel(r) !== "Expired" ? (
                         <div className="flex items-center gap-2">
                           <button
@@ -1778,8 +1800,9 @@ export default function AdminDashboard() {
           api.get("/auth/plan-unlock-requests", authHeader()),
         ]);
         setPendingEditCount(
-          (editRes.data.requests || []).filter((r) => r.status === "pending")
-            .length,
+          (editRes.data.requests || []).filter(
+            (r) => r.status === "pending" && r.report_type !== "annual_plan",
+          ).length,
         );
         setPendingPlanCount(
           (planRes.data.requests || []).filter((r) => r.status === "pending")
@@ -1813,7 +1836,7 @@ export default function AdminDashboard() {
     },
     {
       id: "plan_unlock",
-      label: "Plan Unlock Requests",
+      label: "Annual Plan Requests",
       Icon: UnlockIcon,
       badge: pendingPlanCount,
     },
@@ -1842,7 +1865,7 @@ export default function AdminDashboard() {
       create: "Create User",
       users: "Manage Users",
       permissions: "Report Edit Permissions",
-      plan_unlock: "Plan Unlock Requests",
+      plan_unlock: "Annual Plan Alter Requests",
       profile: "Profile",
     }[activeNav] ?? "Admin";
 

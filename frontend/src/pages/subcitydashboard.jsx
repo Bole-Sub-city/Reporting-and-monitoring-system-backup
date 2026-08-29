@@ -738,24 +738,24 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
 }
 
 // ─── Plan Unlock Request Banner ───────────────────────────────────────────────
-// Uses the same edit_requests table as woreda LockBanner.
-// report_date = "<fiscalYear>-07-08"  (unique key per plan year)
-// report_type = "annual_plan"
+// Posts to /auth/plan-unlock-requests (the dedicated plan_unlock_requests table).
+// Keyed on sector + plan_year so it never touches the edit_requests table.
 function PlanUnlockBanner({ sector }) {
-  const [status, setStatus] = useState(null); // null | "pending" | "approved" | "denied" | "used"
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus]       = useState(null); // null | "pending" | "approved" | "denied" | "expired"
+  const [expiresAt, setExpiresAt] = useState(null);
+  const [loading, setLoading]     = useState(true);
   const [requesting, setRequesting] = useState(false);
-  const [requested, setRequested] = useState(false);
-  const [error, setError] = useState("");
+  const [showForm, setShowForm]   = useState(false);
+  const [reason, setReason]       = useState("");
+  const [error, setError]         = useState("");
+  const [success, setSuccess]     = useState("");
 
-  // fiscal-year start date used as the unique report_date key
-  const now = new Date();
-  const fiscalYear =
-    now.getMonth() + 1 > 7 || (now.getMonth() + 1 === 7 && now.getDate() >= 8)
+  const planYear = (() => {
+    const now = new Date();
+    return (now.getMonth() + 1 > 7 || (now.getMonth() + 1 === 7 && now.getDate() >= 8))
       ? now.getFullYear()
       : now.getFullYear() - 1;
-  const reportDate = `${fiscalYear}-07-08`;
-  const reportType = "annual_plan";
+  })();
 
   const authHdr = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -765,42 +765,58 @@ function PlanUnlockBanner({ sector }) {
     setLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.get("/auth/edit-requests/mine", authHdr());
+      const res = await apiInst.get("/auth/plan-unlock-requests/mine", authHdr());
       const reqs = res.data.requests || [];
+
+      // Check for expired requests first (auto-expire by comparing dates)
+      const now = new Date();
       const mine = reqs.find(
-        (r) =>
-          r.sector === sector &&
-          r.report_date === reportDate &&
-          r.report_type === reportType,
+        (r) => r.sector === sector && r.plan_year === planYear,
       );
-      setStatus(mine ? mine.status : null);
-      if (mine?.status === "approved") setRequested(false);
+
+      if (mine) {
+        // Treat as expired if past expiry
+        if (mine.expires_at && new Date(mine.expires_at) < now && mine.status === "pending") {
+          setStatus("expired");
+        } else {
+          setStatus(mine.status);
+        }
+        setExpiresAt(mine.expires_at || null);
+      } else {
+        setStatus(null);
+        setExpiresAt(null);
+      }
     } catch {
       /* silent */
     } finally {
       setLoading(false);
     }
-  }, [sector, reportDate]);
+  }, [sector, planYear]);
 
   useEffect(() => {
     fetchStatus();
   }, [fetchStatus]);
 
   const handleRequest = async () => {
+    if (!reason.trim()) {
+      setError("Please enter a reason for the request.");
+      return;
+    }
     setRequesting(true);
     setError("");
     try {
       const apiInst = (await import("../api/api")).default;
       await apiInst.post(
-        "/auth/edit-requests",
-        { sector, report_date: reportDate, report_type: reportType },
+        "/auth/plan-unlock-requests",
+        { sector, plan_year: planYear, reason: reason.trim() },
         authHdr(),
       );
       setStatus("pending");
-      setRequested(true);
+      setShowForm(false);
+      setReason("");
+      setSuccess("Request sent. The admin will review and grant access.");
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to submit request.";
-      // If backend says already approved, refresh to show approved state
       if (msg.toLowerCase().includes("approved")) {
         fetchStatus();
       } else {
@@ -819,7 +835,7 @@ function PlanUnlockBanner({ sector }) {
       <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
         <CheckIcon />
         <p className="text-[#166534] text-sm font-medium">
-          Plan unlock approved. You can now re-save the plan.
+          Plan alter approved. You can now re-save this plan.
         </p>
       </div>
     );
@@ -829,84 +845,99 @@ function PlanUnlockBanner({ sector }) {
   if (status === "pending") {
     return (
       <div className="mb-5 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
-        <svg
-          className="w-4 h-4 text-[#b45309] flex-shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-4 h-4 text-[#b45309] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 8v4M12 16h.01" />
         </svg>
         <div>
           <p className="text-[#92400e] text-sm font-medium">
-            Unlock request pending admin approval.
+            Plan alter request pending admin approval.
           </p>
           <p className="text-[#78350f] text-xs mt-0.5">
             You can re-save the plan once the admin approves.
+            {expiresAt && ` Expires ${new Date(expiresAt).toLocaleDateString()}.`}
           </p>
         </div>
       </div>
     );
   }
 
-  // ── Denied or null — show request button ──
+  // ── Denied or expired — show request form ──
   return (
     <div className="mb-5">
-      {status === "denied" && (
+      {(status === "denied" || status === "expired") && (
         <div className="mb-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
           <p className="text-[#991b1b] text-sm font-medium">
-            Previous request was denied.
+            {status === "denied" ? "Previous request was denied." : "Previous request expired."}
           </p>
-          <p className="text-[#94a3b8] text-xs mt-0.5">
-            You can request again below.
-          </p>
+          <p className="text-[#94a3b8] text-xs mt-0.5">You can submit a new request below.</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <CheckIcon />
+          <p className="text-xs font-medium text-[#166534]">{success}</p>
         </div>
       )}
 
       <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <svg
-            className="w-5 h-5 text-[#b45309] flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-5 h-5 text-[#b45309] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <div>
             <p className="text-sm font-semibold text-[#b45309]">
-              {status === "denied"
-                ? "Request a new plan unlock"
-                : "Want to update this annual plan?"}
+              {(status === "denied" || status === "expired") ? "Request a new plan alter" : "Want to update this annual plan?"}
             </p>
             <p className="text-xs text-[#92400e] mt-0.5">
-              Admin approval is required to re-save an annual plan.
+              Admin approval is required to re-save a locked annual plan.
             </p>
           </div>
         </div>
+
         {error && <p className="text-xs text-[#dc2626]">{error}</p>}
-        {requested ? (
-          <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-3 py-2">
-            <CheckIcon />
-            <p className="text-xs font-medium text-[#166534]">
-              Request sent. The admin will review and grant access.
-            </p>
-          </div>
-        ) : (
+
+        {!showForm && !success ? (
           <button
             type="button"
-            onClick={handleRequest}
-            disabled={requesting}
-            className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+            onClick={() => setShowForm(true)}
+            className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
           >
             <UnlockNavIcon />
-            {requesting ? "Sending..." : "Request Edit Access"}
+            Request Edit Access
           </button>
-        )}
+        ) : showForm ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Reason for requesting plan alter access…"
+              rows={2}
+              maxLength={300}
+              className="w-full border border-[#fde68a] rounded-lg px-3 py-2 text-xs text-[#1e293b] placeholder-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#b45309]/30 resize-none bg-white"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRequest}
+                disabled={requesting}
+                className="flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+              >
+                <UnlockNavIcon />
+                {requesting ? "Sending…" : "Send Request"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setError(""); setReason(""); }}
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc] transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
