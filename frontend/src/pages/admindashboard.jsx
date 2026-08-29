@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import api from "../api/api";
@@ -225,7 +225,7 @@ const ROLE_OPTIONS = [
 ];
 
 const ROLE_COLORS = {
-  wereda: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+  wereda: "bg-[#fffbeb] text-[#92400e] border-[#fde68a]",
   "sub-city": "bg-[#eff6ff] text-[#1e40af] border-[#bfdbfe]",
   admin: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
 };
@@ -241,7 +241,7 @@ const SECTOR_LABELS = {
 
 const STATUS_STYLES = {
   pending: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
-  approved: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+  approved: "bg-[#fffbeb] text-[#92400e] border-[#fde68a]",
   denied: "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]",
   used: "bg-[#f4f6f9] text-[#64748b] border-[#e2e8f0]",
   expired: "bg-[#f4f6f9] text-[#64748b] border-[#cbd5e1]",
@@ -527,7 +527,7 @@ function PlanUnlockApproveModal({ request, onClose, onApproved }) {
                 <button
                   onClick={handleApprove}
                   disabled={saving}
-                  className="flex-1 bg-[#166534] hover:bg-[#14532d] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
                 >
                   {saving ? (
                     "Approving..."
@@ -705,7 +705,7 @@ function ProfilePage({ user, onPhotoUpdate }) {
           <p className="text-xs text-red-600 mb-2">{photoError}</p>
         )}
         {photoSuccess && (
-          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
+          <p className="text-xs text-[#92400e] mb-2">{photoSuccess}</p>
         )}
         <div className="space-y-3">
           {[
@@ -745,9 +745,9 @@ function ProfilePage({ user, onPhotoUpdate }) {
           </button>
         </div>
         {pwSuccess && (
-          <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
             <CheckIcon />
-            <p className="text-[#166534] text-sm">{pwSuccess}</p>
+            <p className="text-[#92400e] text-sm">{pwSuccess}</p>
           </div>
         )}
         {showPwSection && (
@@ -893,11 +893,11 @@ function UsersTab({ currentUserId }) {
         />
       )}
       {toast && (
-        <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-          <span className="text-[#166534]">
+        <div className="mb-5 flex items-center gap-3 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
+          <span className="text-[#92400e]">
             <CheckIcon />
           </span>
-          <p className="text-[#166534] text-sm font-medium">{toast}</p>
+          <p className="text-[#92400e] text-sm font-medium">{toast}</p>
         </div>
       )}
       {error && (
@@ -992,7 +992,7 @@ function UsersTab({ currentUserId }) {
                     </td>
                     <td className="px-5 py-3">
                       <span
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${u.is_active === false ? "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]" : "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]"}`}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${u.is_active === false ? "bg-[#fef2f2] text-[#991b1b] border-[#fecaca]" : "bg-[#fffbeb] text-[#92400e] border-[#fde68a]"}`}
                       >
                         {u.is_active === false ? "Inactive" : "Active"}
                       </span>
@@ -1021,7 +1021,7 @@ function UsersTab({ currentUserId }) {
                               disabled={togglingId === u.id}
                               className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-all border disabled:opacity-50 ${
                                 u.is_active === false
-                                  ? "text-[#166534] bg-[#f0fdf4] border-[#bbf7d0] hover:bg-[#bbf7d0]"
+                                  ? "text-[#92400e] bg-[#fffbeb] border-[#fde68a] hover:bg-[#fde68a]"
                                   : "text-[#92400e] bg-[#fef3c7] border-[#fde68a] hover:bg-[#fde68a]"
                               }`}
                             >
@@ -1123,9 +1123,9 @@ function PermissionsTab() {
   return (
     <div>
       {toast && (
-        <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+        <div className="mb-5 flex items-center gap-3 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
           <CheckIcon />
-          <p className="text-[#166534] text-sm font-medium">{toast}</p>
+          <p className="text-[#92400e] text-sm font-medium">{toast}</p>
         </div>
       )}
       {error && (
@@ -1262,7 +1262,7 @@ function PermissionsTab() {
                                 r.sector,
                               )
                             }
-                            className="text-xs font-semibold text-[#166534] bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#bbf7d0] px-2.5 py-1.5 rounded-lg transition-all"
+                            className="text-xs font-semibold text-[#92400e] bg-[#fffbeb] border border-[#fde68a] hover:bg-[#fde68a] px-2.5 py-1.5 rounded-lg transition-all"
                           >
                             Approve
                           </button>
@@ -1376,9 +1376,9 @@ function PlanUnlockTab() {
         />
       )}
       {toast && (
-        <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+        <div className="mb-5 flex items-center gap-3 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
           <CheckIcon />
-          <p className="text-[#166534] text-sm font-medium">{toast}</p>
+          <p className="text-[#92400e] text-sm font-medium">{toast}</p>
         </div>
       )}
       {error && (
@@ -1520,7 +1520,7 @@ function PlanUnlockTab() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setApproveModal(r)}
-                            className="text-xs font-semibold text-[#166534] bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#bbf7d0] px-2.5 py-1.5 rounded-lg transition-all"
+                            className="text-xs font-semibold text-[#92400e] bg-[#fffbeb] border border-[#fde68a] hover:bg-[#fde68a] px-2.5 py-1.5 rounded-lg transition-all"
                           >
                             Review & Approve
                           </button>
@@ -1638,11 +1638,11 @@ function CreateUserTab() {
           noValidate
         >
           {success && (
-            <div className="flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
-              <span className="text-[#166534]">
+            <div className="flex items-center gap-3 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
+              <span className="text-[#92400e]">
                 <CheckIcon />
               </span>
-              <p className="text-[#166534] text-sm font-medium">{success}</p>
+              <p className="text-[#92400e] text-sm font-medium">{success}</p>
             </div>
           )}
           {serverError && (
@@ -1878,7 +1878,7 @@ export default function AdminDashboard() {
       <aside
         className={`${sideW} flex-shrink-0 flex flex-col transition-all duration-300 overflow-hidden`}
         style={{
-          background: "linear-gradient(180deg,#1a3a5c 0%,#0d1f35 100%)",
+          background: "linear-gradient(180deg,#0f172a 0%,#020617 100%)",
         }}
       >
         {/* Logo row */}
@@ -1921,32 +1921,8 @@ export default function AdminDashboard() {
           ))}
         </nav>
 
-        {/* Bottom: user info + logout + collapse */}
+        {/* Bottom: logout + collapse */}
         <div className="px-2 py-4 border-t border-white/10 flex-shrink-0">
-          {/* User avatar row */}
-          {!collapsed && (
-            <div className="flex items-center gap-2.5 px-3 py-2 mb-1">
-              {profilePhoto ? (
-                <img
-                  src={profilePhoto}
-                  alt=""
-                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {(user.username || "A")[0].toUpperCase()}
-                </div>
-              )}
-              <div className="overflow-hidden">
-                <p className="text-white text-xs font-semibold truncate">
-                  {user.username || "Admin"}
-                </p>
-                <p className="text-white/40 text-[10px] truncate">
-                  Administrator
-                </p>
-              </div>
-            </div>
-          )}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all"

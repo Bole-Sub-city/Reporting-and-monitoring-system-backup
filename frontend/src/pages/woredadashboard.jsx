@@ -510,10 +510,10 @@ const PLAN_FIELDS = [
     planKey: "gumaata_mootummaa_target",
     label: "Gumaata Midhaani (Kuntal)",
     description: "Food charity targets",
-    color: "#065f46",
-    bgColor: "bg-[#f0fdf4]",
-    borderColor: "border-[#bbf7d0]",
-    textColor: "text-[#065f46]",
+    color: "#78350f",
+    bgColor: "bg-[#fffbeb]",
+    borderColor: "border-[#fde68a]",
+    textColor: "text-[#78350f]",
   },
   {
     key: "nyaata_barataa",
@@ -709,7 +709,7 @@ const QONNA_CATS = [
     lakkKey: "furdisa_lakk_horii",
     planKey: "furdisa_target",
     label: "Furdisa",
-    color: "#065f46",
+    color: "#78350f",
   },
   {
     key: "annan",
@@ -1227,7 +1227,7 @@ function AnalysisSection() {
                               {remaining.toLocaleString()}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
                               <svg
                                 className="w-3 h-3 flex-shrink-0"
                                 fill="none"
@@ -1449,7 +1449,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#78350f]/20"
           >
             {REPORT_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -1469,7 +1469,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
           <div
             className="px-5 py-4"
             style={{
-              background: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
+              background: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
             }}
           ></div>
           <div className="px-5 py-5 space-y-5">
@@ -1530,7 +1530,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                             handleField(`${key}_bakka_qophaawe`, e.target.value)
                           }
                           placeholder="0"
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#78350f]/20"
                         />
                       </div>
                       <div>
@@ -1545,7 +1545,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                           onChange={(e) => handleField(manaKey, e.target.value)}
                           placeholder={cfg.housePH}
                           required
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#78350f]/20"
                         />
                       </div>
                       <div>
@@ -1560,7 +1560,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                           onChange={(e) => handleField(lakkKey, e.target.value)}
                           placeholder={cfg.animalPH}
                           required
-                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#78350f]/20"
                         />
                       </div>
                     </div>
@@ -1577,7 +1577,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
                 onChange={(e) => setYaada(e.target.value)}
                 placeholder="Yaada Gudinaa galchi…"
                 rows={3}
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20 resize-none"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#78350f]/20 resize-none"
               />
             </div>
           </div>
@@ -1604,7 +1604,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
             <button
               type="submit"
               disabled={saving || locked}
-              className="flex items-center gap-2 bg-[#065f46] hover:bg-[#064e3b] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#78350f] hover:bg-[#064e3b] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <SubmitIcon />
               {saving ? "Submitting..." : "Submit Report"}
@@ -1632,7 +1632,7 @@ function QonnaAnnualPlanSection({ u }) {
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#065f46] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#78350f] rounded-full animate-spin" />
       </div>
     );
 
@@ -1640,7 +1640,7 @@ function QonnaAnnualPlanSection({ u }) {
     {
       key: "furdisa",
       label: "Furdisa",
-      color: "#065f46",
+      color: "#78350f",
       fields: [
         { planKey: "furdisa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
         { planKey: "furdisa_lakk_sheedii_target", label: "Lakk Sheedii" },
@@ -1723,7 +1723,7 @@ function QonnaAnnualPlanSection({ u }) {
         <div
           className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
           style={{
-            background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+            background: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
           }}
         >
           <PlanIcon />
@@ -1774,9 +1774,9 @@ function QonnaAnnualPlanSection({ u }) {
           ))}
         </div>
 
-        <div className="mx-6 mb-5 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+        <div className="mx-6 mb-5 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
           <svg
-            className="w-5 h-5 text-[#065f46] flex-shrink-0"
+            className="w-5 h-5 text-[#78350f] flex-shrink-0"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
@@ -1785,7 +1785,7 @@ function QonnaAnnualPlanSection({ u }) {
             <circle cx="12" cy="12" r="9" />
             <path d="M12 8v4M12 16h.01" />
           </svg>
-          <p className="text-[#065f46] text-sm">
+          <p className="text-[#78350f] text-sm">
             Targets assigned by sub-city. Contact them if numbers need
             correction.
           </p>
@@ -1800,7 +1800,7 @@ const QONNA_ANALYSIS_CATS = [
   {
     key: "furdisa",
     label: "Furdisa",
-    color: "#065f46",
+    color: "#78350f",
     fields: [
       { key: "furdisa_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
       { key: "furdisa_lakk_sheedii", label: "Sheedii Ijaaraman", unit: "" },
@@ -1915,9 +1915,9 @@ function QonnaAnalysisSection() {
   }, [period]);
 
   const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? "";
-  const accentColor = "#065f46";
-  const accentLight = "#f0fdf4";
-  const accentBorder = "#bbf7d0";
+  const accentColor = "#78350f";
+  const accentLight = "#fffbeb";
+  const accentBorder = "#fde68a";
 
   return (
     <div>
@@ -2234,7 +2234,7 @@ function QonnaAnalysisSection() {
                                 {remaining.toLocaleString()}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
                                 <svg
                                   className="w-3 h-3"
                                   fill="none"
@@ -2319,10 +2319,10 @@ const CARRAA_PLAN_FIELDS = [
   {
     planKey: "deebii_liqii_bilchaate_target",
     label: "Deebii Liqii Bilchaate",
-    color: "#065f46",
-    bg: "bg-[#f0fdf4]",
-    border: "border-[#bbf7d0]",
-    text: "text-[#065f46]",
+    color: "#78350f",
+    bg: "bg-[#fffbeb]",
+    border: "border-[#fde68a]",
+    text: "text-[#78350f]",
   },
   {
     planKey: "deebii_liqii_bulee_target",
@@ -2383,7 +2383,7 @@ const CARRAA_SUMMARY_KEYS = [
     summaryKey: "deebii_liqii_bilchaate",
     key: "deebii_liqii_bilchaate_target",
     label: "Deebii Liqii Bilchaate",
-    color: "#065f46",
+    color: "#78350f",
   },
   {
     summaryKey: "deebii_liqii_bulee",
@@ -2591,12 +2591,12 @@ const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
     "#1e40af",
     "#7c3aed",
     "#b45309",
-    "#065f46",
+    "#78350f",
     "#0369a1",
     "#dc2626",
     "#475569",
     "#854d0e",
-    "#166534",
+    "#92400e",
     "#0f172a",
   ][i % 11],
 }));
@@ -2633,7 +2633,7 @@ const ATK_CATS = ATK_FIELDS.map((f, i) => ({
   key: f.name,
   planKey: `${f.name}_target`,
   label: f.label,
-  color: ["#7e22ce", "#0369a1", "#065f46", "#b45309"][i % 4],
+  color: ["#7e22ce", "#0369a1", "#78350f", "#b45309"][i % 4],
 }));
 
 const REVENUE_CATS = [
@@ -2692,7 +2692,7 @@ const CARRAA_WOREDA_CATS = [
     key: "deebii_liqii_bilchaate",
     label: "Deebii Liqii Bilchaate",
     planKey: "deebii_liqii_bilchaate_target",
-    color: "#065f46",
+    color: "#78350f",
   },
   {
     key: "deebii_liqii_bulee",
@@ -3120,7 +3120,7 @@ function GenericAnalysisSection({
                               {remaining.toLocaleString()}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a]">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
                               <svg
                                 className="w-3 h-3"
                                 fill="none"
@@ -3181,9 +3181,9 @@ function SuccessModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl px-10 py-10 flex flex-col items-center gap-4 min-w-[320px] animate-fade-in">
-        <div className="w-20 h-20 rounded-full bg-[#f0faf4] flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-[#fffbeb] flex items-center justify-center">
           <svg
-            className="w-10 h-10 text-[#166534]"
+            className="w-10 h-10 text-[#92400e]"
             fill="none"
             stroke="currentColor"
             strokeWidth={2.5}
@@ -3202,7 +3202,7 @@ function SuccessModal({ onClose }) {
         </p>
         <button
           onClick={onClose}
-          className="mt-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          className="mt-2 bg-[#f59e0b] hover:bg-[#d97706] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
         >
           OK
         </button>
@@ -3261,9 +3261,9 @@ function LockBanner({ sector, reportType, onUnlocked }) {
       </div>
       {reqError && <p className="text-xs text-[#dc2626]">{reqError}</p>}
       {requested ? (
-        <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-lg px-3 py-2">
           <svg
-            className="w-4 h-4 text-[#166534] flex-shrink-0"
+            className="w-4 h-4 text-[#92400e] flex-shrink-0"
             fill="none"
             stroke="currentColor"
             strokeWidth={2.5}
@@ -3275,7 +3275,7 @@ function LockBanner({ sector, reportType, onUnlocked }) {
               d="M5 13l4 4L19 7"
             />
           </svg>
-          <p className="text-xs font-medium text-[#166534]">
+          <p className="text-xs font-medium text-[#92400e]">
             Request sent. The admin will review and grant access.
           </p>
         </div>
@@ -3485,7 +3485,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
             <button
               type="submit"
               disabled={locked}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -3675,7 +3675,7 @@ function GenericSubmitForm({
             <button
               type="submit"
               disabled={saving || locked}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon />
               {saving ? "Submitting..." : "Submit Report"}
@@ -4059,7 +4059,7 @@ function RevenueSubmitForm({ u }) {
             <button
               onClick={handleSubmitReport}
               disabled={submitting}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
             >
               <SubmitIcon />
               {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
@@ -4316,7 +4316,7 @@ const REPORT_PERIOD_TYPES = [
 const REPORT_SECTORS = [
   { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna",       label: "Qonna",              color: "#065f46" },
+  { id: "qonna",       label: "Qonna",              color: "#78350f" },
   { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
   { id: "daldala",     label: "Daldala",            color: "#854d0e" },
   { id: "atk",         label: "ATK",                color: "#7e22ce" },
@@ -5196,7 +5196,7 @@ function ReportHistorySection({ woreda }) {
 
   const statusColor = (s) =>
     s === "Approved"
-      ? "bg-green-100 text-green-700"
+      ? "bg-amber-100 text-amber-700"
       : s === "Rejected"
         ? "bg-red-100 text-red-700"
         : "bg-amber-100 text-amber-700";
@@ -5354,7 +5354,7 @@ function ReportHistorySection({ woreda }) {
               <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
             )}
             {appliedRange && (
-              <p className="text-[#16a34a] text-xs mb-2 font-medium">
+              <p className="text-[#d97706] text-xs mb-2 font-medium">
                 Showing reports from {appliedRange.from} to {appliedRange.to}
               </p>
             )}
@@ -5530,7 +5530,7 @@ function WorksOverview({ u, onSelect }) {
             </p>
             <button
               onClick={() => onSelect(id)}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon /> Submit Report
             </button>
@@ -5564,6 +5564,13 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
+
+  // Username update state
+  const [showUnameSection, setShowUnameSection] = useState(false);
+  const [newUname, setNewUname] = useState(user.username || "");
+  const [unameLoading, setUnameLoading] = useState(false);
+  const [unameError, setUnameError] = useState("");
+  const [unameSuccess, setUnameSuccess] = useState("");
 
   const authHdr = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -5636,8 +5643,42 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
     }
   };
 
+  const handleChangeUsername = async (e) => {
+    e.preventDefault();
+    setUnameError("");
+    setUnameSuccess("");
+    if (!newUname.trim()) {
+      setUnameError("Username cannot be empty.");
+      return;
+    }
+    if (newUname.trim().length < 3) {
+      setUnameError("Username must be at least 3 characters.");
+      return;
+    }
+    setUnameLoading(true);
+    try {
+      const apiInst = (await import("../api/api")).default;
+      const res = await apiInst.patch(
+        "/auth/profile/username",
+        { username: newUname.trim() },
+        authHdr(),
+      );
+      // Update localStorage so the sidebar and header reflect the new name
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      stored.username = res.data.username;
+      localStorage.setItem("user", JSON.stringify(stored));
+      setUnameSuccess("Username updated. Refresh the page to see changes everywhere.");
+      setShowUnameSection(false);
+      setTimeout(() => setUnameSuccess(""), 5000);
+    } catch (err) {
+      setUnameError(err.response?.data?.message || "Failed to update username.");
+    } finally {
+      setUnameLoading(false);
+    }
+  };
+
   const ROLE_COLORS_WD = {
-    wereda: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+    wereda: "bg-[#fffbeb] text-[#92400e] border-[#fde68a]",
     "sub-city": "bg-[#eff6ff] text-[#1e40af] border-[#bfdbfe]",
     admin: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
   };
@@ -5725,7 +5766,7 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
           <p className="text-xs text-red-600 mb-2">{photoError}</p>
         )}
         {photoSuccess && (
-          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
+          <p className="text-xs text-[#92400e] mb-2">{photoSuccess}</p>
         )}
         <div className="space-y-3">
           {[
@@ -5743,6 +5784,66 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Username section */}
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-semibold text-[#1e293b]">Username</p>
+            <p className="text-xs text-[#94a3b8]">Update your display name</p>
+          </div>
+          <button
+            onClick={() => {
+              setShowUnameSection((p) => !p);
+              setUnameError("");
+              setUnameSuccess("");
+              setNewUname(user.username || "");
+            }}
+            className="text-xs font-semibold text-[#1a3a5c] border border-[#dce8f4] bg-[#eef4fb] hover:bg-[#dce8f4] px-3 py-1.5 rounded-lg transition-all"
+          >
+            {showUnameSection ? "Cancel" : "Edit"}
+          </button>
+        </div>
+        {unameSuccess && (
+          <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
+            <CheckIconWD />
+            <p className="text-[#92400e] text-sm">{unameSuccess}</p>
+          </div>
+        )}
+        {showUnameSection ? (
+          <form onSubmit={handleChangeUsername} className="space-y-3">
+            {unameError && (
+              <p className="text-xs text-[#dc2626]">{unameError}</p>
+            )}
+            <div>
+              <label className="text-xs text-[#64748b] font-semibold uppercase tracking-wide mb-1 block">
+                New Username
+              </label>
+              <input
+                type="text"
+                value={newUname}
+                onChange={(e) => setNewUname(e.target.value)}
+                placeholder="Enter new username"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/20 focus:border-[#1a3a5c]"
+                autoFocus
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={unameLoading}
+              className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
+            >
+              {unameLoading ? "Saving..." : "Save Username"}
+            </button>
+          </form>
+        ) : (
+          <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
+            {user.username || (
+              <span className="text-[#dc2626] font-medium">Not set — click Edit to add your username</span>
+            )}
+          </p>
+        )}
       </div>
 
       {/* Password section */}
@@ -5766,9 +5867,9 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
           </button>
         </div>
         {pwSuccess && (
-          <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
             <CheckIconWD />
-            <p className="text-[#166534] text-sm">{pwSuccess}</p>
+            <p className="text-[#92400e] text-sm">{pwSuccess}</p>
           </div>
         )}
         {showPwSection && (
@@ -6077,7 +6178,7 @@ function WoredaPhotoSubmitPage({ u }) {
             </div>
           )}
           {saveSuccess && (
-            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#065f46] text-sm font-medium">
+            <div className="bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 text-[#78350f] text-sm font-medium">
               ✓ Photo submitted successfully. The sub-city can now view it.
             </div>
           )}
@@ -6738,12 +6839,12 @@ export default function WoRedaDashboard() {
                   </p>
                 </button>
 
-                <div className="rounded-xl border bg-[#f0fdf4] border-[#bbf7d0] text-[#065f46] p-5">
+                <div className="rounded-xl border bg-[#fffbeb] border-[#fde68a] text-[#78350f] p-5">
                   <p className="text-base font-bold leading-tight break-words">
                     {dashStats?.lastDate ?? (dashStats ? "None yet" : "…")}
                   </p>
                   <p className="text-sm mt-1 font-semibold">Last Submitted</p>
-                  <p className="text-xs mt-0.5 text-[#065f46]/60">
+                  <p className="text-xs mt-0.5 text-[#78350f]/60">
                     most recent report
                   </p>
                 </div>

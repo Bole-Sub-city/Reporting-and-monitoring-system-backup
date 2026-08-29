@@ -24,6 +24,7 @@ const {
   resolvePlanUnlockRequest,
   archiveAnnualPlans,
   updateUserDetails,
+  updateMyUsername,
   getArchivedPlans,
 } = require("../controllers/authController");
 
@@ -34,6 +35,7 @@ router.post("/register", register);
 // ─── Profile (any authenticated user) ────────────────────────────────────────
 router.get("/profile", authMiddleware, getMyProfile);
 router.post("/profile/photo", authMiddleware, updateProfilePhoto);
+router.patch("/profile/username", authMiddleware, updateMyUsername);
 router.post("/change-password", authMiddleware, changeOwnPassword);
 
 // ─── Admin-only user management ───────────────────────────────────────────────

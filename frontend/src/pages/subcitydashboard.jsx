@@ -223,9 +223,9 @@ const QONNA_CATEGORIES = [
     key: "furdisa",
     label: "Furdisa",
     unit: "animals",
-    color: "#065f46",
-    bgColor: "#f0fdf4",
-    borderColor: "#bbf7d0",
+    color: "#78350f",
+    bgColor: "#fffbeb",
+    borderColor: "#fde68a",
   },
   {
     key: "annan",
@@ -572,7 +572,7 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
   };
 
   const ROLE_COLORS_SC = {
-    wereda: "bg-[#f0fdf4] text-[#166534] border-[#bbf7d0]",
+    wereda: "bg-[#fffbeb] text-[#92400e] border-[#fde68a]",
     "sub-city": "bg-[#eff6ff] text-[#1e40af] border-[#bfdbfe]",
     admin: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]",
   };
@@ -631,7 +631,7 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
           <p className="text-xs text-red-600 mb-2">{photoError}</p>
         )}
         {photoSuccess && (
-          <p className="text-xs text-[#166534] mb-2">{photoSuccess}</p>
+          <p className="text-xs text-[#92400e] mb-2">{photoSuccess}</p>
         )}
         <div className="space-y-3">
           {[
@@ -671,9 +671,9 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
           </button>
         </div>
         {pwSuccess && (
-          <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+          <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
             <CheckIcon />
-            <p className="text-[#166534] text-sm">{pwSuccess}</p>
+            <p className="text-[#92400e] text-sm">{pwSuccess}</p>
           </div>
         )}
         {showPwSection && (
@@ -832,9 +832,9 @@ function PlanUnlockBanner({ sector }) {
   // ── Approved ──
   if (status === "approved") {
     return (
-      <div className="mb-5 flex items-center gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+      <div className="mb-5 flex items-center gap-3 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
         <CheckIcon />
-        <p className="text-[#166534] text-sm font-medium">
+        <p className="text-[#92400e] text-sm font-medium">
           Plan alter approved. You can now re-save this plan.
         </p>
       </div>
@@ -875,9 +875,9 @@ function PlanUnlockBanner({ sector }) {
       )}
 
       {success && (
-        <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3">
+        <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3">
           <CheckIcon />
-          <p className="text-xs font-medium text-[#166534]">{success}</p>
+          <p className="text-xs font-medium text-[#92400e]">{success}</p>
         </div>
       )}
 
@@ -1229,7 +1229,7 @@ function HistorySection() {
             </div>
           )}
           {archiveMsg && (
-            <div className="mb-3 flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
+            <div className="mb-3 flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-xl px-4 py-3 text-[#92400e] text-sm">
               <CheckIcon />
               {archiveMsg}
             </div>
@@ -1432,8 +1432,8 @@ function HistorySection() {
                             Live
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fffbeb] text-[#92400e] border border-[#fde68a]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]" />
                             Archived{" "}
                             {a.archived_at
                               ? new Date(a.archived_at).toLocaleDateString(
@@ -1483,7 +1483,7 @@ function HistorySection() {
         <div
           className="flex items-center justify-between px-5 py-3 rounded-t-xl border border-[#e2e8f0]"
           style={{
-            background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+            background: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
           }}
         >
           <div>
@@ -1536,7 +1536,7 @@ function HistorySection() {
           )}
           {recLoading ? (
             <div className="flex items-center justify-center py-10 gap-3">
-              <div className="w-5 h-5 border-4 border-[#d1fae5] border-t-[#065f46] rounded-full animate-spin" />
+              <div className="w-5 h-5 border-4 border-[#d1fae5] border-t-[#78350f] rounded-full animate-spin" />
               <span className="text-sm text-[#64748b]">Loading records…</span>
             </div>
           ) : records.length === 0 ? (
@@ -1638,7 +1638,7 @@ function HistorySection() {
                                   sec?.label ?? row._sector ?? "Report",
                                 )
                               }
-                              className="flex items-center gap-1.5 text-xs font-semibold text-[#065f46] bg-[#f0fdf4] hover:bg-[#dcfce7] px-3 py-1.5 rounded-lg transition-all"
+                              className="flex items-center gap-1.5 text-xs font-semibold text-[#78350f] bg-[#fffbeb] hover:bg-[#fef3c7] px-3 py-1.5 rounded-lg transition-all"
                             >
                               <svg
                                 className="w-3 h-3"
@@ -1850,7 +1850,7 @@ function AnnouncementsPage() {
             </div>
           )}
           {saveSuccess && (
-            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-4 py-2.5 text-[#166534] text-sm">
+            <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg px-4 py-2.5 text-[#92400e] text-sm">
               Announcement posted successfully.
             </div>
           )}
@@ -1966,7 +1966,7 @@ function OverviewPage({
     {
       key: "furdisa",
       label: "Furdisa",
-      color: "#065f46",
+      color: "#78350f",
       fields: [
         { col: "furdisa_qophi_lafa", label: "Qophi Lafa" },
         { col: "furdisa_lakk_sheedii", label: "Lakk Sheedii" },
@@ -2148,7 +2148,7 @@ function OverviewPage({
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+              background: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
             }}
           >
             <p className="text-sm font-semibold text-white">
@@ -2225,7 +2225,7 @@ function OverviewPage({
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-8 flex flex-col items-center text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-[#f0fdf4] flex items-center justify-center mb-3 text-[#065f46]">
+          <div className="w-14 h-14 rounded-full bg-[#fffbeb] flex items-center justify-center mb-3 text-[#78350f]">
             <TargetIcon />
           </div>
           <p className="text-[#1e293b] font-semibold mb-1">No Qonna Plan Yet</p>
@@ -2359,7 +2359,7 @@ function OverviewPage({
 function WoRedaPctInputs({ pcts, onChange }) {
   const parsed = parsePcts(pcts);
   const { ok, total, error } = validatePcts(parsed);
-  const colors = ["#065f46", "#1e40af", "#475569", "#64748b"];
+  const colors = ["#78350f", "#1e40af", "#475569", "#64748b"];
   return (
     <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
       <div
@@ -2407,9 +2407,9 @@ function WoRedaPctInputs({ pcts, onChange }) {
         {/* Live total indicator */}
         {total !== null ? (
           ok ? (
-            <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg px-4 py-2.5">
+            <div className="flex items-center gap-2 bg-[#fffbeb] border border-[#fde68a] rounded-lg px-4 py-2.5">
               <svg
-                className="w-4 h-4 text-[#166534] flex-shrink-0"
+                className="w-4 h-4 text-[#92400e] flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2.5}
@@ -2421,7 +2421,7 @@ function WoRedaPctInputs({ pcts, onChange }) {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              <span className="text-[#166534] text-sm font-semibold">
+              <span className="text-[#92400e] text-sm font-semibold">
                 Total Allocation: {total}% ✓
               </span>
             </div>
@@ -2626,7 +2626,7 @@ function BuusaaPlanPage({ onSave }) {
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
             {saved && (
-              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
+              <p className="flex items-center gap-2 text-[#92400e] text-sm font-semibold">
                 <CheckIcon /> Saved successfully.
               </p>
             )}
@@ -3028,7 +3028,7 @@ function QonnaPlanPage() {
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{
-              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+              background: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
             }}
           >
             <p className="text-sm font-semibold text-white">Furdisa</p>
@@ -3275,7 +3275,7 @@ function QonnaPlanPage() {
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
             {saved && (
-              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
+              <p className="flex items-center gap-2 text-[#92400e] text-sm font-semibold">
                 <CheckIcon /> Qonna plan saved to all 4 woredas.
               </p>
             )}
@@ -3290,7 +3290,7 @@ function QonnaPlanPage() {
             type="submit"
             disabled={saving || !canSubmit}
             className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "#065f46" }}
+            style={{ backgroundColor: "#78350f" }}
           >
             {saving ? (
               <>
@@ -3337,7 +3337,7 @@ const CARRAA_FIELDS = [
   {
     key: "deebii_liqii_bilchaate",
     label: "Deebii Liqii Bilchaate",
-    color: "#065f46",
+    color: "#78350f",
   },
   { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee", color: "#dc2626" },
   { key: "industrii_godoo", label: "Industrii Godoo", color: "#0369a1" },
@@ -3352,7 +3352,7 @@ const DALDALA_FIELDS_SC = [
     label: "Galii Daldalarra Galuu",
     color: "#b45309",
   },
-  { key: "toannoo_walii_gala", label: "To'annoo Walii Gala", color: "#065f46" },
+  { key: "toannoo_walii_gala", label: "To'annoo Walii Gala", color: "#78350f" },
   { key: "tmd", label: "Leenjii TMD", color: "#0369a1" },
   { key: "intarshippii", label: "Intarshippii", color: "#dc2626" },
   { key: "ggg", label: "Giddu Gala Gabaa", color: "#475569" },
@@ -3360,7 +3360,7 @@ const DALDALA_FIELDS_SC = [
   {
     key: "whg_kudraa",
     label: "Walitti Hidhinsa Gabaa - Kudraa",
-    color: "#166534",
+    color: "#92400e",
   },
   {
     key: "whg_mudraa",
@@ -3383,7 +3383,7 @@ const ATK_FIELDS_SC = [
   {
     key: "toannoo_fi_hordoffii_gamoo",
     label: "To'annoo Fi Hordoffii Gamoo",
-    color: "#065f46",
+    color: "#78350f",
   },
   { key: "galii_atk_galchuu", label: "Galii ATK Galchuu", color: "#b45309" },
 ];
@@ -3403,17 +3403,17 @@ const SECTOR_CFG = {
       {
         key: "furdisa_qophi_lafa",
         label: "Furdisa - Lafa Qophaawe",
-        color: "#065f46",
+        color: "#78350f",
       },
       {
         key: "furdisa_lakk_sheedii",
         label: "Furdisa - Sheedii",
-        color: "#065f46",
+        color: "#78350f",
       },
       {
         key: "furdisa_lakk_horii_waliigalaa",
         label: "Furdisa - Lakk Horii",
-        color: "#065f46",
+        color: "#78350f",
       },
       // Annan
       {
@@ -3493,8 +3493,8 @@ const SECTOR_CFG = {
       },
     ],
     label: "Qonna",
-    color: "#065f46",
-    gradient: "linear-gradient(90deg,#065f46 0%,#059669 100%)",
+    color: "#78350f",
+    gradient: "linear-gradient(90deg,#78350f 0%,#b45309 100%)",
     fetchFn: fetchSubcityQonnaPlan,
   },
   galii: {
@@ -3689,7 +3689,7 @@ function GenericSubcityPlanPage({ sector }) {
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
             {saved && (
-              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
+              <p className="flex items-center gap-2 text-[#92400e] text-sm font-semibold">
                 <CheckIcon /> Saved successfully.
               </p>
             )}
@@ -3920,7 +3920,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                               width: `${Math.min(pct, 100)}%`,
                               backgroundColor:
                                 pct >= 100
-                                  ? "#16a34a"
+                                  ? "#d97706"
                                   : pct >= 60
                                     ? "#ca8a04"
                                     : cfg.color,
@@ -3930,7 +3930,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                         <span
                           className={`text-xs font-bold ${
                             pct >= 100
-                              ? "text-[#16a34a]"
+                              ? "text-[#d97706]"
                               : pct >= 60
                                 ? "text-[#ca8a04]"
                                 : "text-[#dc2626]"
@@ -4071,9 +4071,9 @@ function SubcitySuccessModal({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl px-10 py-10 flex flex-col items-center gap-4 min-w-[320px]">
-        <div className="w-20 h-20 rounded-full bg-[#f0faf4] flex items-center justify-center">
+        <div className="w-20 h-20 rounded-full bg-[#fffbeb] flex items-center justify-center">
           <svg
-            className="w-10 h-10 text-[#166534]"
+            className="w-10 h-10 text-[#92400e]"
             fill="none"
             stroke="currentColor"
             strokeWidth={2.5}
@@ -4092,7 +4092,7 @@ function SubcitySuccessModal({ onClose }) {
         </p>
         <button
           onClick={onClose}
-          className="mt-2 bg-[#22c55e] hover:bg-[#16a34a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          className="mt-2 bg-[#f59e0b] hover:bg-[#d97706] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all"
         >
           OK
         </button>
@@ -4491,7 +4491,7 @@ function SubcityGaliiSubmitForm({ u }) {
               type="button"
               onClick={handleSubmitReport}
               disabled={submitting || entries.length === 0}
-              className="flex items-center gap-2 bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <svg
                 className="w-4 h-4"
@@ -5130,7 +5130,7 @@ function RankView({ sector, cfg }) {
                                   </td>
                                   <td className="px-4 py-3">
                                     <span
-                                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-green-100 text-green-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
+                                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-amber-100 text-amber-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
                                     >
                                       {pct}%
                                     </span>
@@ -5396,7 +5396,7 @@ function WorkAnalysisPage({ sector }) {
 const REPORT_SECTORS_ALL = [
   { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna",       label: "Qonna",              color: "#065f46" },
+  { id: "qonna",       label: "Qonna",              color: "#78350f" },
   { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
   { id: "daldala",     label: "Daldala",            color: "#854d0e" },
   { id: "atk",         label: "ATK",                color: "#7e22ce" },
@@ -5827,9 +5827,9 @@ function buildCombinedPrintHTML(
     td.pct  { text-align:right; }
     td.plan { text-align:right; color:#444; }
     td.total-val { font-weight:bold; background:#eef2ff; }
-    td.subcity-val { background:#f0fdf4; }
+    td.subcity-val { background:#fffbeb; }
     th.total-header { background:#dce8f4 !important; }
-    th.subcity-header { background:#dcfce7 !important; }
+    th.subcity-header { background:#fef3c7 !important; }
     tbody tr:nth-child(even) { background:#f7f9fb; }
     .page-footer { border-top:1px solid #bbb; padding:6px 0 10px;
                    font-size:8pt; color:#555; display:flex;
@@ -5842,9 +5842,9 @@ function buildCombinedPrintHTML(
       thead tr.top-header th { background:#dce8f4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       thead tr.sub-header th { background:#f0f0f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       td.total-val { background:#eef2ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      td.subcity-val { background:#f0fdf4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      td.subcity-val { background:#fffbeb !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
       th.total-header { background:#dce8f4 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      th.subcity-header { background:#dcfce7 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      th.subcity-header { background:#fef3c7 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     }
   </style>
 </head>
@@ -6025,9 +6025,9 @@ function buildSubcityPrintHTML({
     td.pct  { text-align: right; }
     td.plan { text-align: right; color: #444; }
     td.total-val { font-weight: bold; background: #eef2ff; }
-    td.subcity-val { background: #f0fdf4; }
+    td.subcity-val { background: #fffbeb; }
     th.total-header { background: #dce8f4 !important; }
-    th.subcity-header { background: #dcfce7 !important; }
+    th.subcity-header { background: #fef3c7 !important; }
     tbody tr:nth-child(even) { background: #f7f9fb; }
     .page-footer { border-top: 1px solid #bbb; padding: 6px 0 10px;
                    font-size: 8pt; color: #555; display: flex;
@@ -6039,9 +6039,9 @@ function buildSubcityPrintHTML({
       thead tr.top-header th { background: #dce8f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       thead tr.sub-header th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       td.total-val { background: #eef2ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      td.subcity-val { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      td.subcity-val { background: #fffbeb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       th.total-header { background: #dce8f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      th.subcity-header { background: #dcfce7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th.subcity-header { background: #fef3c7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
@@ -6701,7 +6701,7 @@ function ReportsPage() {
               <p className="text-[#dc2626] text-xs mb-2">{customDateErr}</p>
             )}
             {appliedRange && (
-              <p className="text-[#16a34a] text-xs mb-2 font-medium">
+              <p className="text-[#d97706] text-xs mb-2 font-medium">
                 Showing: {appliedRange.from} → {appliedRange.to}
               </p>
             )}
@@ -7709,23 +7709,6 @@ export default function SubCityDashboard({ user: propUser }) {
           {/* Profile */}
           <button
             onClick={() => {
-              setActiveNav("profile");
-              setActivePlanSector(null);
-              setActiveAnalysisSector(null);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-              activeNav === "profile"
-                ? "bg-white/15 text-white"
-                : "text-white/60 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <ProfileNavIcon />
-            {!collapsed && <span className="truncate">Profile</span>}
-          </button>
-
-          {/* Archive Annual Plans */}
-          <button
-            onClick={() => {
               setActiveNav("archive");
               setActivePlanSector(null);
               setActiveAnalysisSector(null);
@@ -7738,6 +7721,23 @@ export default function SubCityDashboard({ user: propUser }) {
           >
             <ArchiveNavIcon />
             {!collapsed && <span className="truncate">History</span>}
+          </button>
+
+          {/* Archive Annual Plans */}
+          <button
+            onClick={() => {
+              setActiveNav("profile");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "profile"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <ProfileNavIcon />
+            {!collapsed && <span className="truncate">Profile</span>}
           </button>
         </nav>
 

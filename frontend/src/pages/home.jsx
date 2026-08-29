@@ -289,6 +289,42 @@ function Home() {
       </section>
 
       {/* ══════════════════════════════════════════
+          CONTACT INFORMATION
+      ══════════════════════════════════════════ */}
+      <section className="bg-[#060e1c] border-t border-white/10 py-10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h3 className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-6">
+            Contact Us
+          </h3>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {[
+              "sumeyaabdiyu@gmail.com",
+              "foziyajemal123456@gmail.com",
+              "yourname@gmail.com",
+            ].map((email) => (
+              <a
+                key={email}
+                href={`mailto:${email}`}
+                className="flex items-center gap-2 text-white/50 hover:text-[#1d6fce] text-sm transition-colors duration-200 group"
+              >
+                <svg
+                  className="w-4 h-4 flex-shrink-0 text-white/30 group-hover:text-[#1d6fce] transition-colors"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  viewBox="0 0 24 24"
+                >
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M2 7l10 7 10-7" />
+                </svg>
+                {email}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
           FOOTER
       ══════════════════════════════════════════ */}
       <footer className="bg-[#060e1c] border-t border-white/10 py-6 text-center text-white/40 text-sm">

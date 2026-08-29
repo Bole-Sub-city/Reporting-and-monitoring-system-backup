@@ -302,6 +302,42 @@ const resolveEditRequest = async (req, res) => {
   }
 };
 
+// UPDATE OWN USERNAME (any authenticated user — self-service)
+const updateMyUsername = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: "Username is required." });
+    }
+    const trimmed = username.trim();
+    if (trimmed.length < 3) {
+      return res.status(400).json({ message: "Username must be at least 3 characters." });
+    }
+
+    // Make sure the username isn't already taken by someone else
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("username", trimmed)
+      .neq("id", req.user.id)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(400).json({ message: "Username already taken." });
+    }
+
+    const { error } = await supabase
+      .from("users")
+      .update({ username: trimmed })
+      .eq("id", req.user.id);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ message: "Username updated successfully.", username: trimmed });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // GET MY PROFILE (any authenticated user)
 const getMyProfile = async (req, res) => {
   try {
@@ -890,5 +926,6 @@ module.exports = {
   resolvePlanUnlockRequest,
   archiveAnnualPlans,
   updateUserDetails,
+  updateMyUsername,
   getArchivedPlans,
 };
