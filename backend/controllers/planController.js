@@ -118,7 +118,7 @@ const getSummary = async (req, res) => {
     }
 
     const selectFields =
-      "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, gumaata_jiraataa, buusi_daldalaa, buusi_daldalaa_fi_gumaataa, inisheetevii_buusaa_gonofaa, gumaata_midhaani, nyaata_barataa, zayitii, sukkaara, report_date";
+      "hubannoo_uummuu, horannaa_misensaa, buusi_jirataa, gumaata_jiraataa, buusi_daldalaa, buusi_daldalaa_fi_gumaataa, inisheetevii_buusaa_gonofaa, gumaata_midhaani, gumaata_midhaani_tarsiimoo, gumaata_midhaani_sardamaa, nyaata_barataa, zayitii, sukkaara, daldala_b_group_a, daldala_b_group_b, report_date";
 
     // Fetch period actuals (for ring charts)
     const { data: periodData, error: periodErr } = await supabase
@@ -148,9 +148,13 @@ const getSummary = async (req, res) => {
       buusi_daldalaa: 0,
       inisheetivii_buusaa_gonofaa: 0,
       gumaata_mootummaa: 0,
+      gumaata_midhaani_tarsiimoo: 0,
+      gumaata_midhaani_sardamaa: 0,
       nyaata_barataa: 0,
       sukkaara: 0,
       zayitii: 0,
+      daldala_b_group_a: 0,
+      daldala_b_group_b: 0,
     });
 
     const accumulateRows = (rows, target) => {
@@ -166,9 +170,17 @@ const getSummary = async (req, res) => {
           row.inisheetevii_buusaa_gonofaa || 0,
         );
         target.gumaata_mootummaa += Number(row.gumaata_midhaani || 0);
+        target.gumaata_midhaani_tarsiimoo += Number(
+          row.gumaata_midhaani_tarsiimoo || 0,
+        );
+        target.gumaata_midhaani_sardamaa += Number(
+          row.gumaata_midhaani_sardamaa || 0,
+        );
         target.nyaata_barataa += Number(row.nyaata_barataa || 0);
         target.sukkaara += Number(row.sukkaara || 0);
         target.zayitii += Number(row.zayitii || 0);
+        target.daldala_b_group_a += Number(row.daldala_b_group_a || 0);
+        target.daldala_b_group_b += Number(row.daldala_b_group_b || 0);
       });
     };
 
@@ -283,8 +295,8 @@ const saveSubcityPlan = async (req, res) => {
 
     const errors = [];
 
-    // Build all fields to distribute
-    const fields = [
+    // ── Fields distributed by percentage ──────────────────────────────────────
+    const distributedFields = [
       { col: "hubannoo_uummuu_target", src: plan.hubannoo_uummuu },
       { col: "horannaa_misensaa_target", src: plan.horannaa_misensaa },
       { col: "buusi_jiraataa_target", src: plan.buusi_jiraataa },
@@ -295,22 +307,51 @@ const saveSubcityPlan = async (req, res) => {
         src: plan.inisheetivii_buusaa_gonofaa ?? plan.inisheetiviiBuusaaGonofaa,
       },
       { col: "gumaata_mootummaa_target", src: plan.gumaata_mootummaa },
-      { col: "nyaata_barataa_target", src: plan.nyaata_barataa },
-      { col: "sukkaara_target", src: plan.sukkaara },
-      { col: "zayitii_target", src: plan.zayitii },
+      {
+        col: "gumaata_midhaani_tarsiimoo_target",
+        src: plan.gumaata_midhaani_tarsiimoo,
+      },
+      {
+        col: "gumaata_midhaani_sardamaa_target",
+        src: plan.gumaata_midhaani_sardamaa,
+      },
     ];
 
-    // Pre-compute largest-remainder distribution for each field
-    const distributions = fields.map(({ col, src }) => ({
+    // Pre-compute percentage-based distribution for each distributed field
+    const distributions = distributedFields.map(({ col, src }) => ({
       col,
       dist: distributeTotal(src, weights),
     }));
 
+    // ── Fixed per-woreda fields (each woreda has its own value in plan) ────────
+    // Frontend passes them as plan.nyaata_barataa_w1, plan.nyaata_barataa_w2, etc.
+    const fixedFields = [
+      "nyaata_barataa",
+      "sukkaara",
+      "zayitii",
+      "daldala_b_group_a",
+      "daldala_b_group_b",
+    ];
+
     for (const wId of ["w1", "w2", "w3", "w4"]) {
       const tableName = WEREDA_TABLE_MAP[wId];
       const row = { year };
+
+      // Distributed fields
       distributions.forEach(({ col, dist }) => {
         row[col] = dist[wId];
+      });
+
+      // Fixed fields — read from plan.{field}_{wId}
+      fixedFields.forEach((field) => {
+        const rawVal = Number(plan[`${field}_${wId}`] || 0);
+        // Daldala B values: the frontend already shows the count;
+        // the stored target should be the already-multiplied value
+        // (frontend multiplied when entering report; for targets store raw count × multiplier)
+        let storedVal = rawVal;
+        if (field === "daldala_b_group_a") storedVal = rawVal * 4200;
+        if (field === "daldala_b_group_b") storedVal = rawVal * 8700;
+        row[`${field}_target`] = storedVal;
       });
 
       const { error } = await supabase
@@ -396,9 +437,36 @@ const saveSubcityOwnPlan = async (req, res) => {
               0,
           ),
           gumaata_mootummaa: Number(plan.gumaata_mootummaa || 0),
-          nyaata_barataa: Number(plan.nyaata_barataa || 0),
-          sukkaara: Number(plan.sukkaara || 0),
-          zayitii: Number(plan.zayitii || 0),
+          gumaata_midhaani_tarsiimoo: Number(
+            plan.gumaata_midhaani_tarsiimoo || 0,
+          ),
+          gumaata_midhaani_sardamaa: Number(
+            plan.gumaata_midhaani_sardamaa || 0,
+          ),
+          // Fixed per-woreda fields stored flat on the subcity table
+          nyaata_barataa_w1: Number(plan.nyaata_barataa_w1 || 0),
+          nyaata_barataa_w2: Number(plan.nyaata_barataa_w2 || 0),
+          nyaata_barataa_w3: Number(plan.nyaata_barataa_w3 || 0),
+          nyaata_barataa_w4: Number(plan.nyaata_barataa_w4 || 0),
+          sukkaara_w1: Number(plan.sukkaara_w1 || 0),
+          sukkaara_w2: Number(plan.sukkaara_w2 || 0),
+          sukkaara_w3: Number(plan.sukkaara_w3 || 0),
+          sukkaara_w4: Number(plan.sukkaara_w4 || 0),
+          zayitii_w1: Number(plan.zayitii_w1 || 0),
+          zayitii_w2: Number(plan.zayitii_w2 || 0),
+          zayitii_w3: Number(plan.zayitii_w3 || 0),
+          zayitii_w4: Number(plan.zayitii_w4 || 0),
+          // Daldala B — stored multiplied (frontend sends raw count, we multiply here)
+          daldala_b_group_a_w1: Number(plan.daldala_b_group_a_w1 || 0) * 4200,
+          daldala_b_group_a_w2: Number(plan.daldala_b_group_a_w2 || 0) * 4200,
+          daldala_b_group_a_w3: Number(plan.daldala_b_group_a_w3 || 0) * 4200,
+          daldala_b_group_a_w4: Number(plan.daldala_b_group_a_w4 || 0) * 4200,
+          daldala_b_group_b_w1: Number(plan.daldala_b_group_b_w1 || 0) * 8700,
+          daldala_b_group_b_w2: Number(plan.daldala_b_group_b_w2 || 0) * 8700,
+          daldala_b_group_b_w3: Number(plan.daldala_b_group_b_w3 || 0) * 8700,
+          daldala_b_group_b_w4: Number(plan.daldala_b_group_b_w4 || 0) * 8700,
+          // Daldala A — subcity only, stored as count × 17400
+          daldala_a: Number(plan.daldala_a || 0) * 17400,
           weight_w1: Number(weights.w1 || 0),
           weight_w2: Number(weights.w2 || 0),
           weight_w3: Number(weights.w3 || 0),

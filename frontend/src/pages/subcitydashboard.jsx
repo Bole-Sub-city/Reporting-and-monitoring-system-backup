@@ -164,6 +164,7 @@ function oromoToGregorianSC(monthName, day, year) {
   return base.toISOString().split("T")[0];
 }
 
+// ─── Buusaa plan fields distributed by percentage across woredas ─────────────
 const PLAN_FIELDS = [
   { key: "hubannoo_uummuu", label: "Hubannoo Uumuu", color: "#0f766e" },
   { key: "horannaa_misensaa", label: "Horannaa Misensaa", color: "#1e40af" },
@@ -171,25 +172,50 @@ const PLAN_FIELDS = [
   { key: "gumaata_jiraataa", label: "Gumaata Jiraataa", color: "#64748b" },
   {
     key: "buusi_daldalaa",
-    label: "Buusi Fi Gumaataa  Daldalaa ",
-    color: "#64748b",
+    label: "Buusi Fi Gumaataa Daldalaa",
+    color: "#7c3aed",
   },
   {
     key: "inisheetivii_buusaa_gonofaa",
-    label: "inisheetivii Buusaa Gonofaa",
-    color: "#64748b",
+    label: "Inisheetivii Buusaa Gonofaa",
+    color: "#b45309",
   },
   {
     key: "gumaata_mootummaa",
     label: "Gumaata Midhaani (Kuntal)",
-    color: "#64748b",
+    color: "#78350f",
   },
-  { key: "nyaata_barataa", label: "Nyaata Barataa", color: "#64748b" },
+  {
+    key: "gumaata_midhaani_tarsiimoo",
+    label: "Gumaata Midhaani Tarsiimoo",
+    color: "#0f766e",
+  },
+  {
+    key: "gumaata_midhaani_sardamaa",
+    label: "Gumaata Midhaani Sardamaa",
+    color: "#7c3aed",
+  },
+];
+
+// Fixed per-woreda fields — each woreda gets its own number (no percentage split)
+const FIXED_WEREDA_FIELDS = [
+  { key: "nyaata_barataa", label: "Nyaata Barataa", color: "#0369a1" },
   { key: "sukkaara", label: "Sukkaara (KG)", color: "#ea580c" },
   { key: "zayitii", label: "Zayitii (Litre)", color: "#65a30d" },
+  {
+    key: "daldala_b_group_a",
+    label: "Daldala B – Group A (×4,200)",
+    color: "#0369a1",
+  },
+  {
+    key: "daldala_b_group_b",
+    label: "Daldala B – Group B (×8,700)",
+    color: "#b45309",
+  },
 ];
 
 const EMPTY_PLAN = {
+  // distributed
   hubannoo_uummuu: "",
   horannaa_misensaa: "",
   buusi_jiraataa: "",
@@ -197,10 +223,19 @@ const EMPTY_PLAN = {
   buusi_daldalaa: "",
   inisheetivii_buusaa_gonofaa: "",
   gumaata_mootummaa: "",
-  nyaata_barataa: "",
-  sukkaara: "",
-  zayitii: "",
+  gumaata_midhaani_tarsiimoo: "",
+  gumaata_midhaani_sardamaa: "",
+  // subcity-only
+  daldala_a: "",
 };
+
+// Empty fixed-per-woreda form: { fieldKey: { w1:"", w2:"", w3:"", w4:"" } }
+const EMPTY_FIXED = Object.fromEntries(
+  FIXED_WEREDA_FIELDS.map(({ key }) => [
+    key,
+    { w1: "", w2: "", w3: "", w4: "" },
+  ]),
+);
 
 // Sectors used in Annual Plan and Work Analysis dropdowns
 const SECTORS = [
@@ -741,18 +776,19 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
 // Posts to /auth/plan-unlock-requests (the dedicated plan_unlock_requests table).
 // Keyed on sector + plan_year so it never touches the edit_requests table.
 function PlanUnlockBanner({ sector }) {
-  const [status, setStatus]       = useState(null); // null | "pending" | "approved" | "denied" | "expired"
+  const [status, setStatus] = useState(null); // null | "pending" | "approved" | "denied" | "expired"
   const [expiresAt, setExpiresAt] = useState(null);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
-  const [showForm, setShowForm]   = useState(false);
-  const [reason, setReason]       = useState("");
-  const [error, setError]         = useState("");
-  const [success, setSuccess]     = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const planYear = (() => {
     const now = new Date();
-    return (now.getMonth() + 1 > 7 || (now.getMonth() + 1 === 7 && now.getDate() >= 8))
+    return now.getMonth() + 1 > 7 ||
+      (now.getMonth() + 1 === 7 && now.getDate() >= 8)
       ? now.getFullYear()
       : now.getFullYear() - 1;
   })();
@@ -765,7 +801,10 @@ function PlanUnlockBanner({ sector }) {
     setLoading(true);
     try {
       const apiInst = (await import("../api/api")).default;
-      const res = await apiInst.get("/auth/plan-unlock-requests/mine", authHdr());
+      const res = await apiInst.get(
+        "/auth/plan-unlock-requests/mine",
+        authHdr(),
+      );
       const reqs = res.data.requests || [];
 
       // Check for expired requests first (auto-expire by comparing dates)
@@ -776,7 +815,11 @@ function PlanUnlockBanner({ sector }) {
 
       if (mine) {
         // Treat as expired if past expiry
-        if (mine.expires_at && new Date(mine.expires_at) < now && mine.status === "pending") {
+        if (
+          mine.expires_at &&
+          new Date(mine.expires_at) < now &&
+          mine.status === "pending"
+        ) {
           setStatus("expired");
         } else {
           setStatus(mine.status);
@@ -845,7 +888,13 @@ function PlanUnlockBanner({ sector }) {
   if (status === "pending") {
     return (
       <div className="mb-5 bg-[#fef3c7] border border-[#fde68a] rounded-xl px-4 py-3 flex items-center gap-3">
-        <svg className="w-4 h-4 text-[#b45309] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-[#b45309] flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 8v4M12 16h.01" />
         </svg>
@@ -855,7 +904,8 @@ function PlanUnlockBanner({ sector }) {
           </p>
           <p className="text-[#78350f] text-xs mt-0.5">
             You can re-save the plan once the admin approves.
-            {expiresAt && ` Expires ${new Date(expiresAt).toLocaleDateString()}.`}
+            {expiresAt &&
+              ` Expires ${new Date(expiresAt).toLocaleDateString()}.`}
           </p>
         </div>
       </div>
@@ -868,9 +918,13 @@ function PlanUnlockBanner({ sector }) {
       {(status === "denied" || status === "expired") && (
         <div className="mb-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3">
           <p className="text-[#991b1b] text-sm font-medium">
-            {status === "denied" ? "Previous request was denied." : "Previous request expired."}
+            {status === "denied"
+              ? "Previous request was denied."
+              : "Previous request expired."}
           </p>
-          <p className="text-[#94a3b8] text-xs mt-0.5">You can submit a new request below.</p>
+          <p className="text-[#94a3b8] text-xs mt-0.5">
+            You can submit a new request below.
+          </p>
         </div>
       )}
 
@@ -883,13 +937,21 @@ function PlanUnlockBanner({ sector }) {
 
       <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#b45309] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-[#b45309] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
           <div>
             <p className="text-sm font-semibold text-[#b45309]">
-              {(status === "denied" || status === "expired") ? "Request a new plan alter" : "Want to update this annual plan?"}
+              {status === "denied" || status === "expired"
+                ? "Request a new plan alter"
+                : "Want to update this annual plan?"}
             </p>
             <p className="text-xs text-[#92400e] mt-0.5">
               Admin approval is required to re-save a locked annual plan.
@@ -930,7 +992,11 @@ function PlanUnlockBanner({ sector }) {
               </button>
               <button
                 type="button"
-                onClick={() => { setShowForm(false); setError(""); setReason(""); }}
+                onClick={() => {
+                  setShowForm(false);
+                  setError("");
+                  setReason("");
+                }}
                 className="px-4 py-2 rounded-lg text-xs font-semibold text-[#64748b] border border-[#e2e8f0] hover:bg-[#f8fafc] transition-all"
               >
                 Cancel
@@ -2455,7 +2521,12 @@ function WoRedaPctInputs({ pcts, onChange }) {
 
 // ─── Buusaa Gonofaa Plan Page ─────────────────────────────────────────────────
 function BuusaaPlanPage({ onSave }) {
+  // Distributed fields (percentage split across woredas)
   const [form, setForm] = useState({ ...EMPTY_PLAN });
+  // Fixed per-woreda fields: { fieldKey: { w1, w2, w3, w4 } }
+  const [fixed, setFixed] = useState(() =>
+    JSON.parse(JSON.stringify(EMPTY_FIXED)),
+  );
   const [pcts, setPcts] = useState({ ...DEFAULT_WOREDA_PCTS });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -2464,11 +2535,19 @@ function BuusaaPlanPage({ onSave }) {
   const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
   const handleField = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleFixed = (fieldKey, wId, val) =>
+    setFixed((p) => ({
+      ...p,
+      [fieldKey]: { ...p[fieldKey], [wId]: val },
+    }));
 
   const parsed = parsePcts(pcts);
   const pctValid = validatePcts(parsed);
-  const hasValues = PLAN_FIELDS.some((f) => Number(form[f.key] || 0) > 0);
-  const canSubmit = hasValues && pctValid.ok;
+  const hasDistributed = PLAN_FIELDS.some((f) => Number(form[f.key] || 0) > 0);
+  const hasFixed = FIXED_WEREDA_FIELDS.some((f) =>
+    WOREDAS.some((w) => Number(fixed[f.key]?.[w.id] || 0) > 0),
+  );
+  const canSubmit = (hasDistributed || hasFixed) && pctValid.ok;
 
   const share = (woredaId, categoryTotal) =>
     pctValid.ok ? pctShare(parsed, woredaId, categoryTotal) : 0;
@@ -2479,16 +2558,25 @@ function BuusaaPlanPage({ onSave }) {
     setSaving(true);
     setSaveError("");
     setSaved(false);
-    // Scale percentages ×10 and round to integers so decimal values like 25.5
-    // become 255. w2 is forced to 250 (25%) so the backend uses the correct
-    // effective percentage for Aanaa Dhadacha Araaraa.
+
     const wForm = Object.fromEntries(
       WOREDAS.map((w) => [w.id, Math.round(parsed[w.id] * 10)]),
     );
+
+    // Build the full plan payload: distributed fields + fixed per-woreda fields
+    const fullPlan = { ...form };
+    // Attach fixed values as w1/w2/w3/w4 per field key
+    FIXED_WEREDA_FIELDS.forEach(({ key }) => {
+      WOREDAS.forEach((w) => {
+        fullPlan[`${key}_${w.id}`] = Number(fixed[key]?.[w.id] || 0);
+      });
+    });
+
     try {
-      await onSave(form, wForm);
+      await onSave(fullPlan, wForm);
       setSaved(true);
       setForm({ ...EMPTY_PLAN });
+      setFixed(JSON.parse(JSON.stringify(EMPTY_FIXED)));
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
       setSaveError(err?.response?.data?.message || "Failed to save plan.");
@@ -2502,17 +2590,15 @@ function BuusaaPlanPage({ onSave }) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Enter subcity totals and woreda allocation percentages. The system
-          distributes the targets proportionally.
+          Distributed fields are split by percentage. Fixed fields are entered
+          per woreda.
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Plan unlock banner */}
         <PlanUnlockBanner sector="buusaa" />
-        {/* Woreda percentage inputs */}
         <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
 
-        {/* Targets */}
+        {/* ── Section 1: Distributed by percentage ── */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
@@ -2521,10 +2607,10 @@ function BuusaaPlanPage({ onSave }) {
             }}
           >
             <p className="text-sm font-semibold text-white">
-              Enter Subcity Annual Totals
+              Distributed Targets
             </p>
             <p className="text-white/60 text-xs mt-0.5">
-              Total targets for the whole subcity
+              Split proportionally across 4 woredas by the percentages above
             </p>
           </div>
           <div className="px-5 py-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -2546,22 +2632,50 @@ function BuusaaPlanPage({ onSave }) {
                   value={form[key]}
                   onChange={handleField}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
                 />
               </div>
             ))}
+            {/* Daldala A — subcity-only, stored as count × 17400 */}
+            <div className="sm:col-span-2">
+              <div className="border border-[#e2e8f0] rounded-xl overflow-hidden">
+                <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0]">
+                  <p className="text-sm font-semibold text-[#1e293b]">
+                    Daldala A (×17,400)
+                  </p>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    Subcity-only field — not distributed to woredas. Enter
+                    count; stored as count × 17,400.
+                  </p>
+                </div>
+                <div className="px-4 py-4">
+                  <input
+                    type="number"
+                    min="0"
+                    name="daldala_a"
+                    value={form.daldala_a}
+                    onChange={handleField}
+                    placeholder="0"
+                    className="w-full sm:w-64 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+                  />
+                  {Number(form.daldala_a) > 0 && (
+                    <p className="text-xs text-[#64748b] mt-1">
+                      = {(Number(form.daldala_a) * 17400).toLocaleString()}{" "}
+                      stored
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Allocation preview */}
-        {hasValues && pctValid.ok && (
+        {/* Allocation preview (distributed only) */}
+        {hasDistributed && pctValid.ok && (
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-[#f8fafc] border-b border-[#e2e8f0]">
               <p className="text-sm font-semibold text-[#1e293b]">
-                Allocation Preview
-              </p>
-              <p className="text-xs text-[#64748b] mt-0.5">
-                Auto-calculated from entered percentages
+                Distributed Allocation Preview
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -2594,7 +2708,7 @@ function BuusaaPlanPage({ onSave }) {
                     return (
                       <tr
                         key={key}
-                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                        className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]"
                       >
                         <td className="px-5 py-3 font-medium text-[#1e293b]">
                           <span className="flex items-center gap-2">
@@ -2622,11 +2736,74 @@ function BuusaaPlanPage({ onSave }) {
           </div>
         )}
 
+        {/* ── Section 2: Fixed per-woreda targets ── */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#065f46 0%,#047857 100%)",
+            }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Fixed Per-Woreda Targets
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Nyaata Barataa, Sukkaara, Zayitii, and Daldala B — enter a
+              separate value for each woreda
+            </p>
+          </div>
+          <div className="px-5 py-5 space-y-6">
+            {FIXED_WEREDA_FIELDS.map(({ key, label, color }) => (
+              <div key={key}>
+                <p className="flex items-center gap-2 text-sm font-semibold text-[#1e293b] mb-3">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
+                  {label}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {WOREDAS.map((w) => (
+                    <div key={w.id}>
+                      <label className="block text-xs text-[#64748b] font-medium mb-1 truncate">
+                        {w.name}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={fixed[key]?.[w.id] ?? ""}
+                        onChange={(e) => handleFixed(key, w.id, e.target.value)}
+                        placeholder="0"
+                        className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#065f46]/20"
+                      />
+                      {/* Show multiplied value for Daldala B */}
+                      {key === "daldala_b_group_a" &&
+                        Number(fixed[key]?.[w.id]) > 0 && (
+                          <p className="text-[10px] text-[#64748b] mt-0.5">
+                            ={" "}
+                            {(Number(fixed[key][w.id]) * 4200).toLocaleString()}
+                          </p>
+                        )}
+                      {key === "daldala_b_group_b" &&
+                        Number(fixed[key]?.[w.id]) > 0 && (
+                          <p className="text-[10px] text-[#64748b] mt-0.5">
+                            ={" "}
+                            {(Number(fixed[key][w.id]) * 8700).toLocaleString()}
+                          </p>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Save bar */}
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
           <div>
             {saved && (
-              <p className="flex items-center gap-2 text-[#92400e] text-sm font-semibold">
+              <p className="flex items-center gap-2 text-[#166534] text-sm font-semibold">
                 <CheckIcon /> Saved successfully.
               </p>
             )}
@@ -5394,12 +5571,12 @@ function WorkAnalysisPage({ sector }) {
 }
 // ─── All Sectors (6) for Report History ──────────────────────────────────────
 const REPORT_SECTORS_ALL = [
-  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
+  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna",       label: "Qonna",              color: "#78350f" },
-  { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
-  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
-  { id: "atk",         label: "ATK",                color: "#7e22ce" },
+  { id: "qonna", label: "Qonna", color: "#78350f" },
+  { id: "galii", label: "Galii Sassaabu", color: "#0f766e" },
+  { id: "daldala", label: "Daldala", color: "#854d0e" },
+  { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
 const REPORT_PERIOD_TYPES_SC = [
@@ -6100,7 +6277,7 @@ function SubcityPrintModal({ rows, onClose }) {
         sector === "all" ? REPORT_SECTORS_ALL.map((s) => s.id) : [sector];
 
       // Map frontend sector ids to API sector ids (backend uses "carraa" not "carraaHojii")
-      const toApiId = (id) => id === "carraaHojii" ? "carraa" : id;
+      const toApiId = (id) => (id === "carraaHojii" ? "carraa" : id);
 
       // Fetch all data for each sector in parallel
       const sectorResults = await Promise.all(
@@ -6468,7 +6645,12 @@ function ReportsPage() {
         }
       })
       .catch((err) =>
-        setFetchError(friendlyError(err, "No connection. Check your internet and try again.")),
+        setFetchError(
+          friendlyError(
+            err,
+            "No connection. Check your internet and try again.",
+          ),
+        ),
       )
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

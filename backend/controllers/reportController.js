@@ -76,9 +76,13 @@ const createReport = async (req, res) => {
       buusi_daldalaa_fi_gumaataa: req.body.buusi_daldalaa_fi_gumaataa,
       inisheetevii_buusaa_gonofaa: req.body.inisheetivii_buusaa_gonofaa,
       gumaata_midhaani: req.body.gumaata_midhaani,
+      gumaata_midhaani_tarsiimoo: req.body.gumaata_midhaani_tarsiimoo ?? 0,
+      gumaata_midhaani_sardamaa: req.body.gumaata_midhaani_sardamaa ?? 0,
       nyaata_barataa: req.body.nyaata_barataa,
       zayitii: req.body.zayitii,
       sukkaara: req.body.sukkaara,
+      daldala_b_group_a: req.body.daldala_b_group_a ?? 0,
+      daldala_b_group_b: req.body.daldala_b_group_b ?? 0,
       yaada_gudinaa: req.body.yaada_gudinaa,
     };
 
@@ -111,9 +115,13 @@ const submitBuusaaReport = async (req, res) => {
       buusi_daldalaa_fi_gumaataa,
       inisheetivii_buusaa_gonofaa, // ← frontend sends this
       gumaata_midhaani,
+      gumaata_midhaani_tarsiimoo,
+      gumaata_midhaani_sardamaa,
       nyaata_barataa,
       zayitii,
       sukkaara,
+      daldala_b_group_a, // already multiplied by 4200 on frontend
+      daldala_b_group_b, // already multiplied by 8700 on frontend
       yaada_gudinaa,
     } = req.body;
 
@@ -135,9 +143,13 @@ const submitBuusaaReport = async (req, res) => {
         buusi_daldalaa_fi_gumaataa,
         inisheetevii_buusaa_gonofaa: inisheetivii_buusaa_gonofaa,
         gumaata_midhaani,
+        gumaata_midhaani_tarsiimoo: gumaata_midhaani_tarsiimoo ?? 0,
+        gumaata_midhaani_sardamaa: gumaata_midhaani_sardamaa ?? 0,
         nyaata_barataa,
         zayitii,
         sukkaara,
+        daldala_b_group_a: daldala_b_group_a ?? 0,
+        daldala_b_group_b: daldala_b_group_b ?? 0,
         yaada_gudinaa,
       },
     ]);
@@ -515,12 +527,12 @@ const getMyReports = async (req, res) => {
     const { sector, report_type, date_from, date_to } = req.query;
 
     const TABLE_MAP = {
-      buusaa:      "buusaa_reports",
+      buusaa: "buusaa_reports",
       carraaHojii: "carraa_hojii_uumuu",
-      qonna:       "qonna",
-      daldala:     "Daldala",
-      atk:         "ATK",
-      galii:       "revenue_entries",
+      qonna: "qonna",
+      daldala: "Daldala",
+      atk: "ATK",
+      galii: "revenue_entries",
     };
 
     const sectorsToFetch =
@@ -532,17 +544,19 @@ const getMyReports = async (req, res) => {
       let q = supabase
         .from(table)
         .select("*")
-        .order(table === "revenue_entries" ? "guyyaa" : "report_date", { ascending: false });
+        .order(table === "revenue_entries" ? "guyyaa" : "report_date", {
+          ascending: false,
+        });
       // revenue_entries uses user_id indirectly via username — filter by username
       if (table === "revenue_entries") {
         q = q.eq("username", req.user.username);
         if (date_from) q = q.gte("guyyaa", date_from);
-        if (date_to)   q = q.lte("guyyaa", date_to);
+        if (date_to) q = q.lte("guyyaa", date_to);
       } else {
         q = q.eq("user_id", userId);
         if (report_type) q = q.eq("report_type", report_type);
-        if (date_from)   q = q.gte("report_date", date_from);
-        if (date_to)     q = q.lte("report_date", date_to);
+        if (date_from) q = q.gte("report_date", date_from);
+        if (date_to) q = q.lte("report_date", date_to);
       }
       return q;
     };
@@ -593,12 +607,12 @@ const getAllWoredaReports = async (req, res) => {
       if (table === "revenue_entries") {
         if (username) q = q.eq("username", username);
         if (date_from) q = q.gte("guyyaa", date_from);
-        if (date_to)   q = q.lte("guyyaa", date_to);
+        if (date_to) q = q.lte("guyyaa", date_to);
       } else {
-        if (username)    q = q.eq("username", username);
+        if (username) q = q.eq("username", username);
         if (report_type) q = q.eq("report_type", report_type);
-        if (date_from)   q = q.gte("report_date", date_from);
-        if (date_to)     q = q.lte("report_date", date_to);
+        if (date_from) q = q.gte("report_date", date_from);
+        if (date_to) q = q.lte("report_date", date_to);
       }
       return q;
     };
@@ -609,12 +623,12 @@ const getAllWoredaReports = async (req, res) => {
         : [sector];
 
     const tableMap = {
-      buusaa:      "buusaa_reports",
+      buusaa: "buusaa_reports",
       carraaHojii: "carraa_hojii_uumuu",
-      qonna:       "qonna",
-      galii:       "revenue_entries",
-      daldala:     "Daldala",
-      atk:         "ATK",
+      qonna: "qonna",
+      galii: "revenue_entries",
+      daldala: "Daldala",
+      atk: "ATK",
     };
 
     const results = await Promise.all(

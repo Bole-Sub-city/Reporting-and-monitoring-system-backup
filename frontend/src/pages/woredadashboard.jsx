@@ -384,25 +384,37 @@ const BUUSAA_FIELDS = [
   },
   {
     name: "buuusiDaldalaa",
-    label: "Buusii Daldalaa ",
+    label: "Buusii Daldalaa",
     required: true,
     type: "number",
   },
   {
     name: "buuusiDaldalaaFiGumaataa",
-    label: "Buusii Fi Gumaataa  Daldalaa ",
+    label: "Buusii Fi Gumaataa Daldalaa",
     required: true,
     type: "number",
   },
   {
     name: "inisheetiviiBuusaaGonofaa",
-    label: "inisheetivii Buusaa Gonofaa",
+    label: "Inisheetivii Buusaa Gonofaa",
     required: true,
     type: "number",
   },
   {
     name: "gumaataMootummaa",
     label: "Gumaata Midhaani (Kuntal)",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "gumaataMidhaaniTarsiimoo",
+    label: "Gumaata Midhaani Tarsiimoo",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "gumaataMidhaaniSardamaa",
+    label: "Gumaata Midhaani Sardamaa",
     required: true,
     type: "number",
   },
@@ -544,6 +556,46 @@ const PLAN_FIELDS = [
     bgColor: "bg-[#f7fee7]",
     borderColor: "border-[#d9f99d]",
     textColor: "text-[#65a30d]",
+  },
+  {
+    key: "gumaata_midhaani_tarsiimoo",
+    planKey: "gumaata_midhaani_tarsiimoo_target",
+    label: "Gumaata Midhaani Tarsiimoo",
+    description: "Planned food (Tarsiimoo)",
+    color: "#0f766e",
+    bgColor: "bg-[#f0fdf9]",
+    borderColor: "border-[#99f6e4]",
+    textColor: "text-[#0f766e]",
+  },
+  {
+    key: "gumaata_midhaani_sardamaa",
+    planKey: "gumaata_midhaani_sardamaa_target",
+    label: "Gumaata Midhaani Sardamaa",
+    description: "Planned food (Sardamaa)",
+    color: "#7c3aed",
+    bgColor: "bg-[#f5f3ff]",
+    borderColor: "border-[#ddd6fe]",
+    textColor: "text-[#7c3aed]",
+  },
+  {
+    key: "daldala_b_group_a",
+    planKey: "daldala_b_group_a_target",
+    label: "Daldala B – Group A (4,200)",
+    description: "Stored value = count × 4,200",
+    color: "#0369a1",
+    bgColor: "bg-[#f0f9ff]",
+    borderColor: "border-[#bae6fd]",
+    textColor: "text-[#0369a1]",
+  },
+  {
+    key: "daldala_b_group_b",
+    planKey: "daldala_b_group_b_target",
+    label: "Daldala B – Group B (8,700)",
+    description: "Stored value = count × 8,700",
+    color: "#b45309",
+    bgColor: "bg-[#fffbeb]",
+    borderColor: "border-[#fde68a]",
+    textColor: "text-[#b45309]",
   },
 ];
 const PERIODS = [
@@ -3337,9 +3389,24 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
               row.inisheetivii_buusaa_gonofaa ?? "",
             ),
             gumaataMootummaa: String(row.gumaata_mootummaa ?? ""),
+            gumaataMidhaaniTarsiimoo: String(
+              row.gumaata_midhaani_tarsiimoo ?? "",
+            ),
+            gumaataMidhaaniSardamaa: String(
+              row.gumaata_midhaani_sardamaa ?? "",
+            ),
             nyaataBarataa: String(row.nyaata_barataa ?? ""),
             zayitii: String(row.zayitii ?? ""),
             sukkaara: String(row.sukkaara ?? ""),
+            // Daldala B: reverse the multiply to show original count
+            daldalaBGroupA:
+              row.daldala_b_group_a != null
+                ? String(Math.round(row.daldala_b_group_a / 4200))
+                : "",
+            daldalaBGroupB:
+              row.daldala_b_group_b != null
+                ? String(Math.round(row.daldala_b_group_b / 8700))
+                : "",
           });
         })
         .catch(() => {}); // silently ignore — form stays empty if fetch fails
@@ -3369,9 +3436,14 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
           form.inisheetiviiBuusaaGonofaa || 0,
         ),
         gumaata_midhaani: Number(form.gumaataMootummaa || 0),
+        gumaata_midhaani_tarsiimoo: Number(form.gumaataMidhaaniTarsiimoo || 0),
+        gumaata_midhaani_sardamaa: Number(form.gumaataMidhaaniSardamaa || 0),
         nyaata_barataa: Number(form.nyaataBarataa || 0),
         zayitii: Number(form.zayitii || 0),
         sukkaara: Number(form.sukkaara || 0),
+        // Daldala B: multiply by the fixed unit values before storing
+        daldala_b_group_a: Number(form.daldalaBGroupA || 0) * 4200,
+        daldala_b_group_b: Number(form.daldalaBGroupB || 0) * 8700,
         yaada_gudinaa: yaada,
       });
       setShowModal(true);
@@ -3456,6 +3528,68 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
                 />
               </div>
             ))}
+
+            {/* ── Daldala B section ── */}
+            <div className="sm:col-span-2">
+              <div className="border border-[#e2e8f0] rounded-xl overflow-hidden">
+                <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0]">
+                  <p className="text-sm font-semibold text-[#1e293b]">
+                    Daldala B
+                  </p>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    Enter count — value is multiplied automatically before
+                    saving
+                  </p>
+                </div>
+                <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Group A */}
+                  <div>
+                    <label className="block text-[#334155] text-sm font-medium mb-1.5">
+                      Group A (×4,200) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="daldalaBGroupA"
+                      value={form.daldalaBGroupA ?? ""}
+                      onChange={handleField}
+                      placeholder="0"
+                      min="0"
+                      className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 placeholder-gray-400 transition-all"
+                    />
+                    {Number(form.daldalaBGroupA) > 0 && (
+                      <p className="text-xs text-[#64748b] mt-1">
+                        ={" "}
+                        {(Number(form.daldalaBGroupA) * 4200).toLocaleString()}{" "}
+                        stored
+                      </p>
+                    )}
+                  </div>
+                  {/* Group B */}
+                  <div>
+                    <label className="block text-[#334155] text-sm font-medium mb-1.5">
+                      Group B (×8,700) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="daldalaBGroupB"
+                      value={form.daldalaBGroupB ?? ""}
+                      onChange={handleField}
+                      placeholder="0"
+                      min="0"
+                      className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 placeholder-gray-400 transition-all"
+                    />
+                    {Number(form.daldalaBGroupB) > 0 && (
+                      <p className="text-xs text-[#64748b] mt-1">
+                        ={" "}
+                        {(Number(form.daldalaBGroupB) * 8700).toLocaleString()}{" "}
+                        stored
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="sm:col-span-2">
               <label className="block text-[#334155] text-sm font-medium mb-1.5">
                 Yaada Gudinaa
@@ -4314,12 +4448,12 @@ const REPORT_PERIOD_TYPES = [
 ];
 
 const REPORT_SECTORS = [
-  { id: "buusaa",      label: "Buusaa Gonofaa",     color: "#0f172a" },
+  { id: "buusaa", label: "Buusaa Gonofaa", color: "#0f172a" },
   { id: "carraaHojii", label: "Carraa Hojii Uumuu", color: "#1e40af" },
-  { id: "qonna",       label: "Qonna",              color: "#78350f" },
-  { id: "galii",       label: "Galii Sassaabu",     color: "#0f766e" },
-  { id: "daldala",     label: "Daldala",            color: "#854d0e" },
-  { id: "atk",         label: "ATK",                color: "#7e22ce" },
+  { id: "qonna", label: "Qonna", color: "#78350f" },
+  { id: "galii", label: "Galii Sassaabu", color: "#0f766e" },
+  { id: "daldala", label: "Daldala", color: "#854d0e" },
+  { id: "atk", label: "ATK", color: "#7e22ce" },
 ];
 
 const HIDDEN_FIELDS = new Set([
@@ -4363,14 +4497,46 @@ function formatDateTime(row) {
 
 const SECTOR_PRINT_FIELDS = {
   buusaa: [
-    { key: "hubannoo_uummuu",           planKey: "hubannoo_uummuu_target",            label: "Hubannoo Uumuu" },
-    { key: "horannaa_misensaa",         planKey: "horannaa_misensaa_target",          label: "Horannaa Misensaa" },
-    { key: "buusi_jirataa",             planKey: "buusi_jiraataa_target",             label: "Buusi Jiraataa" },
-    { key: "gumaata_jiraataa",          planKey: "gumaata_jiraataa_target",           label: "Gumaata Jiraataa" },
-    { key: "buusi_daldalaa",            planKey: "buusi_daldalaa_target",             label: "Buusi fi Gumaata Daldalaa" },
-    { key: "buusi_daldalaa_fi_gumaataa",planKey: "buusi_daldalaa_target",             label: "Buusi Daldalaa fi Gumaataa" },
-    { key: "inisheetevii_buusaa_gonofaa",planKey: "inisheetivii_buusaa_gonofaa_target",label: "Inisheetivii Buusaa Gonofaa" },
-    { key: "gumaata_midhaani",          planKey: "gumaata_mootummaa_target",          label: "Gumaata Midhaani (Kuntal)" },
+    {
+      key: "hubannoo_uummuu",
+      planKey: "hubannoo_uummuu_target",
+      label: "Hubannoo Uumuu",
+    },
+    {
+      key: "horannaa_misensaa",
+      planKey: "horannaa_misensaa_target",
+      label: "Horannaa Misensaa",
+    },
+    {
+      key: "buusi_jirataa",
+      planKey: "buusi_jiraataa_target",
+      label: "Buusi Jiraataa",
+    },
+    {
+      key: "gumaata_jiraataa",
+      planKey: "gumaata_jiraataa_target",
+      label: "Gumaata Jiraataa",
+    },
+    {
+      key: "buusi_daldalaa",
+      planKey: "buusi_daldalaa_target",
+      label: "Buusi fi Gumaata Daldalaa",
+    },
+    {
+      key: "buusi_daldalaa_fi_gumaataa",
+      planKey: "buusi_daldalaa_target",
+      label: "Buusi Daldalaa fi Gumaataa",
+    },
+    {
+      key: "inisheetevii_buusaa_gonofaa",
+      planKey: "inisheetivii_buusaa_gonofaa_target",
+      label: "Inisheetivii Buusaa Gonofaa",
+    },
+    {
+      key: "gumaata_midhaani",
+      planKey: "gumaata_mootummaa_target",
+      label: "Gumaata Midhaani (Kuntal)",
+    },
     { key: "nyaata_barataa", label: "Nyaata Barataa" },
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },
@@ -4436,29 +4602,29 @@ const SECTOR_PRINT_FIELDS = {
   ],
   // Galii Sassaabu — revenue_entries table columns
   galii: [
-    { key: "gosa_galii",  label: "Gosa Galii"  },
+    { key: "gosa_galii", label: "Gosa Galii" },
     { key: "madda_galii", label: "Madda Galii" },
-    { key: "baasii",      label: "Baasii (ETB)" },
+    { key: "baasii", label: "Baasii (ETB)" },
   ],
 };
 
 // Maps a print-modal period value (lowercase) to the report_type prefix stored in the DB.
 // DB stores e.g. "Daily Report (Gabaasa Guyyaa)", "Weekly Report (Gabaasa Torban)", etc.
 const PRINT_PERIOD_PREFIX = {
-  daily:     "Daily",
-  weekly:    "Weekly",
-  monthly:   "Monthly",
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
   quarterly: "Quarterly",
-  annual:    "Annual",
+  annual: "Annual",
 };
 
 // Human-readable Afaan Oromo title for each period key used in the print header.
 const PRINT_PERIOD_LABELS = {
-  daily:     "Gabaasa Guyyaa",
-  weekly:    "Gabaasa Torban",
-  monthly:   "Gabaasa Ji'aa",
+  daily: "Gabaasa Guyyaa",
+  weekly: "Gabaasa Torban",
+  monthly: "Gabaasa Ji'aa",
   quarterly: "Gabaasa Kurmaana",
-  annual:    "Gabaasa Waggaa",
+  annual: "Gabaasa Waggaa",
 };
 
 // Local partitionTarget used inside the print modal (avoids closure over outer scope).
@@ -4491,11 +4657,15 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         // Filter by date range for every named period.
         if (period !== "all") {
           const periodKey =
-            period === "daily"     ? "Daily"
-            : period === "weekly"  ? "Weekly"
-            : period === "monthly" ? "Monthly"
-            : period === "quarterly" ? "Quarterly"
-            : "Annual";
+            period === "daily"
+              ? "Daily"
+              : period === "weekly"
+                ? "Weekly"
+                : period === "monthly"
+                  ? "Monthly"
+                  : period === "quarterly"
+                    ? "Quarterly"
+                    : "Annual";
           const range = getHistoryPeriodDateRange(periodKey);
           if (range) {
             all = all.filter((r) => {
@@ -4513,7 +4683,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         setPreviewCount(count);
       })
       .catch(() => setPreviewCount(0));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [period, sector]);
 
   function buildSectorTable(sectorId, sectorRows, plan) {
@@ -4542,7 +4714,8 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
           const cells = fields
             .map(({ key }) => {
               const val = row[key];
-              if (val === null || val === undefined || val === "") return `<td></td>`;
+              if (val === null || val === undefined || val === "")
+                return `<td></td>`;
               return `<td class="${typeof val === "number" ? "num" : ""}">${
                 typeof val === "number" ? val.toLocaleString() : val
               }</td>`;
@@ -4566,15 +4739,21 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
     const colspan = subCols.length;
 
     const fieldHeaders = fields
-      .map((f) => `<th colspan="${colspan}" class="field-group">${f.label}</th>`)
+      .map(
+        (f) => `<th colspan="${colspan}" class="field-group">${f.label}</th>`,
+      )
       .join("");
     const subHeaders = fields
       .map(() =>
-        subCols.map((c) =>
-          c === "plan"   ? `<th class="sub-col">Karoora</th>`
-          : c === "actual" ? `<th class="sub-col">Raawwii</th>`
-          :                  `<th class="sub-col">%</th>`
-        ).join("")
+        subCols
+          .map((c) =>
+            c === "plan"
+              ? `<th class="sub-col">Karoora</th>`
+              : c === "actual"
+                ? `<th class="sub-col">Raawwii</th>`
+                : `<th class="sub-col">%</th>`,
+          )
+          .join(""),
       )
       .join("");
 
@@ -4592,16 +4771,20 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         const dateFmt = row.report_date ?? "";
         const cells = fields
           .map(({ key, planKey }) => {
-            const planCol = planKey ?? (key + "_target");
+            const planCol = planKey ?? key + "_target";
             const annualTarget = plan ? Number(plan[planCol] ?? 0) : 0;
             const target = printPartitionTarget(annualTarget, period);
             const actual = Number(row[key] ?? 0);
             const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
-            return subCols.map((c) =>
-              c === "plan"   ? `<td class="num plan">${target.toLocaleString()}</td>`
-              : c === "actual" ? `<td class="num">${actual.toLocaleString()}</td>`
-              :                  `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
-            ).join("");
+            return subCols
+              .map((c) =>
+                c === "plan"
+                  ? `<td class="num plan">${target.toLocaleString()}</td>`
+                  : c === "actual"
+                    ? `<td class="num">${actual.toLocaleString()}</td>`
+                    : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`,
+              )
+              .join("");
           })
           .join("");
         return `<tr><td class="rno">${idx + 1}</td><td class="date-col">${dateFmt}</td>${cells}</tr>`;
@@ -4642,11 +4825,15 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       // Filter by date range for every named period (same logic as the history table).
       if (period !== "all") {
         const periodKey =
-          period === "daily"       ? "Daily"
-          : period === "weekly"    ? "Weekly"
-          : period === "monthly"   ? "Monthly"
-          : period === "quarterly" ? "Quarterly"
-          : "Annual";
+          period === "daily"
+            ? "Daily"
+            : period === "weekly"
+              ? "Weekly"
+              : period === "monthly"
+                ? "Monthly"
+                : period === "quarterly"
+                  ? "Quarterly"
+                  : "Annual";
         const range = getHistoryPeriodDateRange(periodKey);
         if (range) {
           allRows = allRows.filter((r) => {
@@ -4657,12 +4844,12 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       }
 
       const planBySector = {
-        buusaa:      buusaaPlanRes?.plan ?? null,
-        carraaHojii: carraaRes?.plan     ?? null,
-        qonna:       qonnaPlanRes?.plan  ?? null,
-        daldala:     daldalRes?.plan     ?? null,
-        atk:         atkRes?.plan        ?? null,
-        galii:       galiiRes?.plan      ?? null,
+        buusaa: buusaaPlanRes?.plan ?? null,
+        carraaHojii: carraaRes?.plan ?? null,
+        qonna: qonnaPlanRes?.plan ?? null,
+        daldala: daldalRes?.plan ?? null,
+        atk: atkRes?.plan ?? null,
+        galii: galiiRes?.plan ?? null,
       };
 
       const generatedDate = new Date().toLocaleString();
@@ -4676,7 +4863,11 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       const sectionsHTML = sectorsToInclude
         .map((sec) => {
           const sectorRows = allRows.filter((r) => r._sector === sec.id);
-          const sectionHTML = buildSectorTable(sec.id, sectorRows, planBySector[sec.id] ?? null);
+          const sectionHTML = buildSectorTable(
+            sec.id,
+            sectorRows,
+            planBySector[sec.id] ?? null,
+          );
           return combined
             ? sectionHTML
             : `<div class="page-section">${sectionHTML}</div>`;
@@ -4689,7 +4880,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         sector === "all"
           ? ""
           : (REPORT_SECTORS.find((s) => s.id === sector)?.label ?? sector);
-      const pageTitle = [periodPart, sectorPart, woredaName].filter(Boolean).join(" | ");
+      const pageTitle = [periodPart, sectorPart, woredaName]
+        .filter(Boolean)
+        .join(" | ");
 
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -4757,7 +4950,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
 
       const win = window.open("", "_blank", "width=1100,height=800");
       if (!win) {
-        alert("Pop-up blocked. Please allow pop-ups for this site and try again.");
+        alert(
+          "Pop-up blocked. Please allow pop-ups for this site and try again.",
+        );
         return;
       }
       win.document.write(html);
@@ -4786,15 +4981,32 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col">
         <div
           className="px-6 py-4 rounded-t-2xl flex items-center justify-between"
-          style={{ background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
+          }}
         >
           <div>
             <p className="text-white font-bold text-base">Download Report</p>
-            <p className="text-white/60 text-xs mt-0.5">Configure and print as PDF</p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Configure and print as PDF
+            </p>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -4831,7 +5043,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
             >
               <option value="all">All Sectors</option>
               {REPORT_SECTORS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
@@ -4870,9 +5084,13 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
                 onClick={() => setShowPct((v) => !v)}
                 className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPct ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`} />
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPct ? "left-5" : "left-0.5"}`}
+                />
               </button>
-              <span className="text-sm text-[#1e293b]">Show <strong>% of Annual Plan</strong> column</span>
+              <span className="text-sm text-[#1e293b]">
+                Show <strong>% of Annual Plan</strong> column
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -4880,9 +5098,13 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
                 onClick={() => setShowPlan((v) => !v)}
                 className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showPlan ? "bg-[#0f172a]" : "bg-[#e2e8f0]"}`}
               >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`} />
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showPlan ? "left-5" : "left-0.5"}`}
+                />
               </button>
-              <span className="text-sm text-[#1e293b]">Show <strong>Annual Plan</strong> column</span>
+              <span className="text-sm text-[#1e293b]">
+                Show <strong>Annual Plan</strong> column
+              </span>
             </div>
             <p className="text-xs text-[#94a3b8]">
               Sub-columns order: Karoora, Raawwii, %.{" "}
@@ -4895,7 +5117,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
           </div>
 
           <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3">
-            <p className="text-sm font-semibold text-[#0f172a]">{selectedSectorLabel}</p>
+            <p className="text-sm font-semibold text-[#0f172a]">
+              {selectedSectorLabel}
+            </p>
             <p className="text-xs text-[#64748b] mt-0.5">
               {previewCount === null
                 ? "Counting…"
@@ -4905,7 +5129,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         </div>
 
         <div className="px-6 pb-5 pt-2 flex items-center justify-between border-t border-[#f1f5f9]">
-          <p className="text-[#94a3b8] text-xs">Opens in a new window. Use Ctrl+P to save as PDF.</p>
+          <p className="text-[#94a3b8] text-xs">
+            Opens in a new window. Use Ctrl+P to save as PDF.
+          </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -4918,8 +5144,18 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
               disabled={printDisabled}
               className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+                />
                 <rect x="6" y="14" width="12" height="8" rx="1" />
               </svg>
               {loading ? "Loading..." : "Print / Save PDF"}
@@ -5129,11 +5365,11 @@ function ReportHistorySection({ woreda }) {
       const r = getHistoryPeriodDateRange(period);
       if (r) {
         filters.date_from = r.from;
-        filters.date_to   = r.to;
+        filters.date_to = r.to;
       }
     } else if (custom && range) {
       filters.date_from = range.from;
-      filters.date_to   = range.to;
+      filters.date_to = range.to;
     }
 
     fetchMyReports(filters)
@@ -5667,11 +5903,15 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
       const stored = JSON.parse(localStorage.getItem("user") || "{}");
       stored.username = res.data.username;
       localStorage.setItem("user", JSON.stringify(stored));
-      setUnameSuccess("Username updated. Refresh the page to see changes everywhere.");
+      setUnameSuccess(
+        "Username updated. Refresh the page to see changes everywhere.",
+      );
       setShowUnameSection(false);
       setTimeout(() => setUnameSuccess(""), 5000);
     } catch (err) {
-      setUnameError(err.response?.data?.message || "Failed to update username.");
+      setUnameError(
+        err.response?.data?.message || "Failed to update username.",
+      );
     } finally {
       setUnameLoading(false);
     }
@@ -5840,7 +6080,9 @@ function WoRedaProfilePage({ u, onPhotoUpdate }) {
         ) : (
           <p className="text-[#1e293b] text-sm border border-[#e2e8f0] rounded-lg px-3 py-2.5 bg-[#f4f6f9]">
             {user.username || (
-              <span className="text-[#dc2626] font-medium">Not set — click Edit to add your username</span>
+              <span className="text-[#dc2626] font-medium">
+                Not set — click Edit to add your username
+              </span>
             )}
           </p>
         )}
