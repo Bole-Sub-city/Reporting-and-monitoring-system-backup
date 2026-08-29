@@ -5524,7 +5524,9 @@ function WorksOverview({ u, onSelect }) {
                     ? "Agriculture sector reports"
                     : id === "revenue"
                       ? "Revenue collection and financial reports"
-                      : "Content coming soon"}
+                      : id === "daldala"
+                        ? "Trade and commerce sector reports"
+                        : "Urban land and construction reports"}
             </p>
             <button
               onClick={() => onSelect(id)}
