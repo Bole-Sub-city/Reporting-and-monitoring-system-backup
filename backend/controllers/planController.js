@@ -709,38 +709,79 @@ const GENERIC_SECTOR_FIELDS = {
     "toannoo_fi_hordoffii_gamoo",
     "galii_atk_galchuu",
   ],
-  galii: ["galii_idilee", "galii_mana_qophessaa", "waliigala_galii"],
+  // galii uses its own dedicated handler (saveSubcityGaliiPlan) — not generic
 };
+
+// Galii Sassabu — Mana Qophessaa sub-item plan fields (KG + Qarshii each)
+// These are written to annual_galii_plan_wereda_N as <field>_kg_target / <field>_qarshii_target
+const GALII_MQ_FIELDS = [
+  "liizii",
+  "kiraa_lafaa",
+  "kiraa_gare_liizii",
+  "baaxii_fi_gooroo",
+  "kiraa_mana_daldalaa",
+  "kiraa_mana_jireenyaa",
+  "other",
+];
+// Idilee stays as a single qarshii field (no KG breakdown)
+const GALII_PLAN_FIELDS_WEREDA = [
+  ...GALII_MQ_FIELDS.flatMap((f) => [
+    `mq_${f}_kg`,
+    `mq_${f}_qarshii`,
+  ]),
+  "idilee_qarshii",
+];
 
 /**
  * POST /api/plans/subcity-generic-plan
- * Save any sector's subcity plan + distribute to 4 wereda tables.
- * Body: { sector, totals: { field: value, ... }, weights: { w1, w2, w3, w4 } }
+ * Save any sector's (carraa/daldala/atk) plan using direct per-woreda entry.
+ * Galii uses its own dedicated endpoint (saveSubcityGaliiPlan).
+ *
+ * Body: { sector, woredaPlans: { w1: { field: value }, w2: {...}, w3: {...}, w4: {...} } }
+ * Also saves subcity totals (sum of all 4 woredas per field) to the subcity table.
  */
 const saveSubcityGenericPlan = async (req, res) => {
   try {
-    const { sector, totals, weights } = req.body;
+    const { sector, woredaPlans } = req.body;
     if (!sector || !GENERIC_SECTOR_SUBCITY_TABLE[sector]) {
       return res.status(400).json({ message: `Unknown sector: ${sector}` });
     }
-    if (!totals || !weights) {
-      return res
-        .status(400)
-        .json({ message: "totals and weights are required." });
+    if (!woredaPlans) {
+      return res.status(400).json({ message: "woredaPlans is required." });
     }
 
     const year = new Date().getFullYear();
     const allowedFields = GENERIC_SECTOR_FIELDS[sector];
+    if (!allowedFields) {
+      return res.status(400).json({ message: `No field config for sector: ${sector}` });
+    }
 
-    // 1. Save to subcity table — only allowed fields for this sector
+    // 1. Save each woreda's direct values to their plan table
+    const errors = [];
+    for (const wId of ["w1", "w2", "w3", "w4"]) {
+      const wData = woredaPlans[wId] || {};
+      const wRow = { year };
+      allowedFields.forEach((f) => {
+        wRow[`${f}_target`] = Number(wData[f] || 0);
+      });
+      const { error } = await supabase
+        .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
+        .upsert([wRow], { onConflict: "year" });
+      if (error)
+        errors.push(`${GENERIC_SECTOR_WEREDA_TABLE[sector][wId]}: ${error.message}`);
+    }
+
+    if (errors.length)
+      return res.status(400).json({ message: errors.join(" | ") });
+
+    // 2. Save subcity totals (sum of 4 woredas) to the subcity table
     const subcityRow = { year };
     allowedFields.forEach((f) => {
-      subcityRow[f] = Number(totals[f] || 0);
+      subcityRow[f] = ["w1", "w2", "w3", "w4"].reduce(
+        (sum, wId) => sum + Number((woredaPlans[wId] || {})[f] || 0),
+        0,
+      );
     });
-    subcityRow.weight_w1 = Number(weights.w1 || 0);
-    subcityRow.weight_w2 = Number(weights.w2 || 0);
-    subcityRow.weight_w3 = Number(weights.w3 || 0);
-    subcityRow.weight_w4 = Number(weights.w4 || 0);
 
     const { error: subcityErr } = await supabase
       .from(GENERIC_SECTOR_SUBCITY_TABLE[sector])
@@ -749,30 +790,6 @@ const saveSubcityGenericPlan = async (req, res) => {
     if (subcityErr)
       return res.status(400).json({ message: subcityErr.message });
 
-    // 2. Distribute to 4 wereda tables using largest-remainder method
-    const genericDistributions = allowedFields.map((field) => ({
-      field,
-      dist: distributeTotal(totals[field] || 0, weights),
-    }));
-
-    const errors = [];
-    for (const wId of ["w1", "w2", "w3", "w4"]) {
-      const wRow = { year };
-      genericDistributions.forEach(({ field, dist }) => {
-        wRow[`${field}_target`] = dist[wId];
-      });
-      const { error } = await supabase
-        .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
-        .upsert([wRow], { onConflict: "year" });
-      if (error)
-        errors.push(
-          `${GENERIC_SECTOR_WEREDA_TABLE[sector][wId]}: ${error.message}`,
-        );
-    }
-
-    if (errors.length)
-      return res.status(400).json({ message: errors.join(" | ") });
-
     res.status(200).json({ message: `${sector} plan saved.` });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -780,8 +797,67 @@ const saveSubcityGenericPlan = async (req, res) => {
 };
 
 /**
- * GET /api/plans/subcity-generic-plan?sector=carraa|daldala|atk|galii
+ * POST /api/plans/subcity-galii-plan
+ * Save Galii Sassabu plan using direct per-woreda entry.
+ * Each woreda gets: mq_<sub>_kg_target, mq_<sub>_qarshii_target for 7 Mana Qophessaa
+ * sub-items, plus idilee_qarshii_target.
+ *
+ * Body: { woredaPlans: { w1: { field: value }, w2: {...}, w3: {...}, w4: {...} } }
+ */
+const saveSubcityGaliiPlan = async (req, res) => {
+  try {
+    const { woredaPlans } = req.body;
+    if (!woredaPlans) {
+      return res.status(400).json({ message: "woredaPlans is required." });
+    }
+
+    const year = new Date().getFullYear();
+    const planFields = GALII_PLAN_FIELDS_WEREDA;
+
+    // 1. Save each woreda's direct values to their galii plan table
+    const errors = [];
+    for (const wId of ["w1", "w2", "w3", "w4"]) {
+      const wData = woredaPlans[wId] || {};
+      const wRow = { year };
+      planFields.forEach((f) => {
+        wRow[`${f}_target`] = Number(wData[f] || 0);
+      });
+      const { error } = await supabase
+        .from(GENERIC_SECTOR_WEREDA_TABLE.galii[wId])
+        .upsert([wRow], { onConflict: "year" });
+      if (error)
+        errors.push(`${GENERIC_SECTOR_WEREDA_TABLE.galii[wId]}: ${error.message}`);
+    }
+
+    if (errors.length)
+      return res.status(400).json({ message: errors.join(" | ") });
+
+    // 2. Save subcity totals to subcity_galii_plan
+    const subcityRow = { year };
+    planFields.forEach((f) => {
+      subcityRow[f] = ["w1", "w2", "w3", "w4"].reduce(
+        (sum, wId) => sum + Number((woredaPlans[wId] || {})[f] || 0),
+        0,
+      );
+    });
+
+    const { error: subcityErr } = await supabase
+      .from("subcity_galii_plan")
+      .upsert([subcityRow], { onConflict: "year" });
+
+    if (subcityErr)
+      return res.status(400).json({ message: subcityErr.message });
+
+    res.status(200).json({ message: "Galii plan saved." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/subcity-generic-plan?sector=carraa|daldala|atk
  * Returns the current year's subcity plan for the given sector.
+ * (Galii uses /subcity-galii-plan)
  */
 const fetchSubcityGenericPlan = async (req, res) => {
   try {
@@ -822,6 +898,51 @@ const getWeredaGenericPlan = async (req, res) => {
 
     const { data, error } = await supabase
       .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
+      .select("*")
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/subcity-galii-plan
+ * Returns the current year's subcity Galii plan.
+ */
+const fetchSubcityGaliiPlan = async (req, res) => {
+  try {
+    const year = new Date().getFullYear();
+    const { data, error } = await supabase
+      .from("subcity_galii_plan")
+      .select("*")
+      .eq("year", year)
+      .maybeSingle();
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/wereda-galii-plan
+ * Returns the current year's Galii plan for the logged-in wereda (read-only).
+ */
+const getWeredaGaliiPlan = async (req, res) => {
+  try {
+    const username = req.user.username;
+    const wId = USERNAME_TO_WEREDA_ID[username];
+    if (!wId)
+      return res
+        .status(403)
+        .json({ message: "Not a recognised wereda account." });
+
+    const { data, error } = await supabase
+      .from(GENERIC_SECTOR_WEREDA_TABLE.galii[wId])
       .select("*")
       .order("year", { ascending: false })
       .limit(1)
@@ -896,5 +1017,8 @@ module.exports = {
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
   getWeredaGenericPlan,
+  saveSubcityGaliiPlan,
+  fetchSubcityGaliiPlan,
+  getWeredaGaliiPlan,
   getSubcityLivePlans,
 };

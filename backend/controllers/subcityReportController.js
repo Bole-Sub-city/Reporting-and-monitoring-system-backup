@@ -103,7 +103,7 @@ const SECTOR_REPORT_FIELDS = {
     "toannoo_fi_hordoffii_gamoo",
     "galii_atk_galchuu",
   ],
-  galii: ["baasii"], // revenue_entries: single amount column
+  galii: ["baasii", "kg"], // revenue_entries: amount (Qarshii) + KG columns
 };
 
 // Map frontend field keys (from SECTOR_CFG) to DB column names for buusaa
@@ -238,8 +238,23 @@ const SECTOR_PLAN_FIELDS = {
     galii_atk_galchuu: "galii_atk_galchuu_target",
   },
   galii: {
-    galii_idilee: "galii_idilee_target",
-    galii_mana_qophessaa: "galii_mana_qophessaa_target",
+    // Mana Qophessaa sub-items: KG + Qarshii per source
+    mq_liizii_kg:               "mq_liizii_kg_target",
+    mq_liizii_qarshii:          "mq_liizii_qarshii_target",
+    mq_kiraa_lafaa_kg:          "mq_kiraa_lafaa_kg_target",
+    mq_kiraa_lafaa_qarshii:     "mq_kiraa_lafaa_qarshii_target",
+    mq_kiraa_gare_liizii_kg:    "mq_kiraa_gare_liizii_kg_target",
+    mq_kiraa_gare_liizii_qarshii: "mq_kiraa_gare_liizii_qarshii_target",
+    mq_baaxii_fi_gooroo_kg:     "mq_baaxii_fi_gooroo_kg_target",
+    mq_baaxii_fi_gooroo_qarshii:"mq_baaxii_fi_gooroo_qarshii_target",
+    mq_kiraa_mana_daldalaa_kg:  "mq_kiraa_mana_daldalaa_kg_target",
+    mq_kiraa_mana_daldalaa_qarshii: "mq_kiraa_mana_daldalaa_qarshii_target",
+    mq_kiraa_mana_jireenyaa_kg: "mq_kiraa_mana_jireenyaa_kg_target",
+    mq_kiraa_mana_jireenyaa_qarshii: "mq_kiraa_mana_jireenyaa_qarshii_target",
+    mq_other_kg:                "mq_other_kg_target",
+    mq_other_qarshii:           "mq_other_qarshii_target",
+    // Idilee (placeholder — Qarshii only)
+    idilee_qarshii:             "idilee_qarshii_target",
   },
 };
 
@@ -354,22 +369,37 @@ function mapQonnaActuals(dbAggregated) {
 }
 
 // ─── Helper: map galii DB fields to frontend field keys ──────────────────────
-function mapGaliiActuals(dbAggregated) {
-  const mapped = {
-    w1: {},
-    w2: {},
-    w3: {},
-    w4: {},
-  };
+// revenue_entries has: madda_galii (source label), baasii (Qarshii), kg
+// We aggregate KG and Qarshii per source label and map to mq_<key>_kg / mq_<key>_qarshii
+const GALII_SOURCE_TO_KEY = {
+  "Liizii":               "liizii",
+  "Kiraa Lafaa":          "kiraa_lafaa",
+  "Kiraa gare Liizii":    "kiraa_gare_liizii",
+  "Baaxii fi Gooroo":     "baaxii_fi_gooroo",
+  "Kiraa Mana Daldalaa":  "kiraa_mana_daldalaa",
+  "Kiraa Mana Jireenyaa": "kiraa_mana_jireenyaa",
+  "Other":                "other",
+  "Idilee":               "_idilee",
+};
 
+function mapGaliiActuals(dbAggregated) {
+  // dbAggregated is keyed by woreda but the rows are individual entries
+  // We need to re-aggregate from raw rows — see getAllWoRedaReports for the approach.
+  // For the actuals shape returned here, we return totals by sub-item key.
+  // NOTE: aggregateByWoreda already sums baasii+kg per woreda from all rows.
+  // Since we need per-source breakdown, we pass through raw baasii/kg sums here
+  // and let the print table use madda_galii-based aggregation from the raw rows instead.
+  // For the ring chart / comparison view we return high-level totals.
+  const mapped = { w1: {}, w2: {}, w3: {}, w4: {} };
   for (const wId of ["w1", "w2", "w3", "w4"]) {
     const raw = dbAggregated[wId];
-    // revenue_entries only has baasii; map it to both galii fields
-    // (we'll split evenly as a simple heuristic — both fields show total)
-    mapped[wId]["galii_idilee"] = raw["baasii"] || 0;
-    mapped[wId]["galii_mana_qophessaa"] = raw["baasii"] || 0;
+    // High-level totals for comparison/ring chart views
+    mapped[wId]["mq_total_qarshii"] = raw["baasii"] || 0;
+    mapped[wId]["idilee_qarshii"] = 0; // breakdown only available from raw rows
+    // Also expose baasii total for any legacy code
+    mapped[wId]["baasii"] = raw["baasii"] || 0;
+    mapped[wId]["kg"] = raw["kg"] || 0;
   }
-
   return mapped;
 }
 
@@ -482,11 +512,15 @@ const getWoRedaAnalysis = async (req, res) => {
     const username = WOREDA_ID_TO_USERNAME[woredaId];
     const reportTable = SECTOR_REPORT_TABLE_MAP[sector];
     const dbFields = SECTOR_REPORT_FIELDS[sector];
+    // For galii we also need madda_galii to break down actuals per source
+    const selectCols = sector === "galii"
+      ? `username, madda_galii, ${dbFields.join(", ")}`
+      : `username, ${dbFields.join(", ")}`;
 
     // Fetch period actuals (for ring chart display)
     const { data: reportData, error: reportError } = await supabase
       .from(reportTable)
-      .select(`username, ${dbFields.join(", ")}`)
+      .select(selectCols)
       .eq("username", username)
       .gte("report_date", from)
       .lte("report_date", to);
@@ -497,7 +531,7 @@ const getWoRedaAnalysis = async (req, res) => {
     // Fetch YTD actuals (for carry-over remaining)
     const { data: ytdData, error: ytdError } = await supabase
       .from(reportTable)
-      .select(`username, ${dbFields.join(", ")}`)
+      .select(selectCols)
       .eq("username", username)
       .gte("report_date", yearStart)
       .lte("report_date", to);
@@ -569,14 +603,45 @@ const getWoRedaAnalysis = async (req, res) => {
       actuals = normalizeQonna(rawSums);
       actualsYtd = normalizeQonna(rawYtd);
     } else if (sector === "galii") {
-      actuals = {
-        galii_idilee: rawSums["baasii"] || 0,
-        galii_mana_qophessaa: rawSums["baasii"] || 0,
+      // For galii we need per-source breakdown keyed by mq_<source_key>_kg / mq_<source_key>_qarshii.
+      // The sumRows helper sums baasii+kg across ALL rows regardless of madda_galii,
+      // so we re-aggregate from the raw rows here using GALII_SOURCE_TO_KEY.
+      const buildGaliiActuals = (rows) => {
+        const result = {};
+        // initialise all known source keys to 0
+        for (const [, sKey] of Object.entries(GALII_SOURCE_TO_KEY)) {
+          if (sKey === "_idilee") {
+            result["idilee_qarshii"] = 0;
+          } else {
+            result[`mq_${sKey}_kg`] = 0;
+            result[`mq_${sKey}_qarshii`] = 0;
+          }
+        }
+        // also keep high-level totals for comparison/ring views
+        result["mq_total_qarshii"] = 0;
+        result["kg"] = 0;
+        result["baasii"] = 0;
+
+        for (const row of rows || []) {
+          const src = row.madda_galii ?? "";
+          const sKey = GALII_SOURCE_TO_KEY[src];
+          const qarshii = Number(row.baasii || 0);
+          const kg = Number(row.kg || 0);
+          result["mq_total_qarshii"] = (result["mq_total_qarshii"] || 0) + qarshii;
+          result["baasii"] = (result["baasii"] || 0) + qarshii;
+          result["kg"] = (result["kg"] || 0) + kg;
+          if (sKey === "_idilee") {
+            result["idilee_qarshii"] = (result["idilee_qarshii"] || 0) + qarshii;
+          } else if (sKey) {
+            result[`mq_${sKey}_qarshii`] = (result[`mq_${sKey}_qarshii`] || 0) + qarshii;
+            result[`mq_${sKey}_kg`] = (result[`mq_${sKey}_kg`] || 0) + kg;
+          }
+        }
+        return result;
       };
-      actualsYtd = {
-        galii_idilee: rawYtd["baasii"] || 0,
-        galii_mana_qophessaa: rawYtd["baasii"] || 0,
-      };
+
+      actuals = buildGaliiActuals(reportData);
+      actualsYtd = buildGaliiActuals(ytdData);
     } else {
       // carraa, daldala, atk — DB keys match frontend keys
       actuals = { ...rawSums };
@@ -660,16 +725,21 @@ const getSubcityGalii = async (req, res) => {
       (sum, row) => sum + Number(row.baasii || 0),
       0,
     );
+    const totalKg = (data || []).reduce(
+      (sum, row) => sum + Number(row.kg || 0),
+      0,
+    );
 
-    // Both galii frontend fields map to the same baasii total
     res.json({
       username: subcityUsername,
       period,
       from,
       to,
       actuals: {
-        galii_idilee: total,
-        galii_mana_qophessaa: total,
+        mq_total_qarshii: total,
+        idilee_qarshii: 0,
+        baasii: total,
+        kg: totalKg,
       },
     });
   } catch (err) {

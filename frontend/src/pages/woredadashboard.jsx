@@ -781,38 +781,15 @@ const REVENUE_FIELDS = [
   },
 ];
 
-// Revenue categories
-const REVENUE_CATEGORIES = [
-  {
-    id: "manaQophessaa",
-    label: "Mana Qophessaa",
-    color: "#0f766e",
-    bgColor: "bg-[#f0fdf9]",
-    borderColor: "border-[#99f6e4]",
-    textColor: "text-[#0f766e]",
-    sources: [
-      "Lizii",
-      "Kiraa",
-      "Baaxii fi Gooroo",
-      "Kiraa Mana Daldalaa",
-      "Kiraa Mana Jireenyaa",
-      "Other",
-    ],
-  },
-  {
-    id: "idilee",
-    label: "Idilee",
-    color: "#1e40af",
-    bgColor: "bg-[#eff6ff]",
-    borderColor: "border-[#bfdbfe]",
-    textColor: "text-[#1e40af]",
-    sources: [
-      "Idilee Madda Galii 1 (Placeholder)",
-      "Idilee Madda Galii 2 (Placeholder)",
-      "Idilee Madda Galii 3 (Placeholder)",
-      "Idilee Madda Galii 4 (Placeholder)",
-    ],
-  },
+// Mana Qophessaa sub-items (each requires KG + Qarshii in the report)
+const MANA_QOPHESSAA_SOURCES = [
+  { id: "liizii",              label: "Liizii",              key: "liizii" },
+  { id: "kiraa_lafaa",         label: "Kiraa Lafaa",         key: "kiraa_lafaa" },
+  { id: "kiraa_gare_liizii",   label: "Kiraa gare Liizii",   key: "kiraa_gare_liizii" },
+  { id: "baaxii_fi_gooroo",    label: "Baaxii fi Gooroo",    key: "baaxii_fi_gooroo" },
+  { id: "kiraa_mana_daldalaa", label: "Kiraa Mana Daldalaa", key: "kiraa_mana_daldalaa" },
+  { id: "kiraa_mana_jireenyaa",label: "Kiraa Mana Jireenyaa",key: "kiraa_mana_jireenyaa" },
+  { id: "other",               label: "Other",               key: "other" },
 ];
 const WORKS = [
   {
@@ -2651,18 +2628,23 @@ const ATK_CATS = ATK_FIELDS.map((f, i) => ({
 }));
 
 const REVENUE_CATS = [
-  {
-    key: "galii_idilee",
-    planKey: "galii_idilee_target",
-    label: "Galii Idilee",
-    color: "#0f766e",
-  },
-  {
-    key: "galii_mana_qophessaa",
-    planKey: "galii_mana_qophessaa_target",
-    label: "Galii Mana Qophessaa",
-    color: "#1e40af",
-  },
+  // Mana Qophessaa sub-items — KG (taxpayer count) + Qarshii (ETB collected)
+  { key: "mq_liizii_kg",                planKey: "mq_liizii_kg_target",                label: "Liizii — KG",               color: "#0f766e" },
+  { key: "mq_liizii_qarshii",           planKey: "mq_liizii_qarshii_target",           label: "Liizii — Qarshii",          color: "#0f766e" },
+  { key: "mq_kiraa_lafaa_kg",           planKey: "mq_kiraa_lafaa_kg_target",           label: "Kiraa Lafaa — KG",          color: "#0d9488" },
+  { key: "mq_kiraa_lafaa_qarshii",      planKey: "mq_kiraa_lafaa_qarshii_target",      label: "Kiraa Lafaa — Qarshii",     color: "#0d9488" },
+  { key: "mq_kiraa_gare_liizii_kg",     planKey: "mq_kiraa_gare_liizii_kg_target",     label: "Kiraa gare Liizii — KG",   color: "#0891b2" },
+  { key: "mq_kiraa_gare_liizii_qarshii",planKey: "mq_kiraa_gare_liizii_qarshii_target",label: "Kiraa gare Liizii — Qarshii",color: "#0891b2" },
+  { key: "mq_baaxii_fi_gooroo_kg",      planKey: "mq_baaxii_fi_gooroo_kg_target",      label: "Baaxii fi Gooroo — KG",     color: "#0369a1" },
+  { key: "mq_baaxii_fi_gooroo_qarshii", planKey: "mq_baaxii_fi_gooroo_qarshii_target", label: "Baaxii fi Gooroo — Qarshii",color: "#0369a1" },
+  { key: "mq_kiraa_mana_daldalaa_kg",        planKey: "mq_kiraa_mana_daldalaa_kg_target",        label: "Kiraa Mana Daldalaa — KG",   color: "#1e40af" },
+  { key: "mq_kiraa_mana_daldalaa_qarshii",   planKey: "mq_kiraa_mana_daldalaa_qarshii_target",   label: "Kiraa Mana Daldalaa — Qarshii",color: "#1e40af" },
+  { key: "mq_kiraa_mana_jireenyaa_kg",       planKey: "mq_kiraa_mana_jireenyaa_kg_target",       label: "Kiraa Mana Jireenyaa — KG",  color: "#4f46e5" },
+  { key: "mq_kiraa_mana_jireenyaa_qarshii",  planKey: "mq_kiraa_mana_jireenyaa_qarshii_target",  label: "Kiraa Mana Jireenyaa — Qarshii",color: "#4f46e5" },
+  { key: "mq_other_kg",                 planKey: "mq_other_kg_target",                 label: "Other — KG",                color: "#64748b" },
+  { key: "mq_other_qarshii",            planKey: "mq_other_qarshii_target",            label: "Other — Qarshii",           color: "#64748b" },
+  // Idilee
+  { key: "idilee_qarshii",              planKey: "idilee_qarshii_target",              label: "Idilee — Qarshii",          color: "#1e40af" },
 ];
 
 const CARRAA_WOREDA_CATS = [
@@ -2804,6 +2786,112 @@ function GenericAnnualPlanSection({
           <p className="text-sm" style={{ color: accentColor }}>
             Targets assigned by sub-city. Contact them if numbers need
             correction.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GaliiAnnualPlanSection ───────────────────────────────────────────────────
+// Woreda read-only view of the Galii annual plan.
+// Shows one row per MQ source with KG + Qarshii targets side by side, plus Idilee.
+function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentBorder }) {
+  const [plan, setPlan] = useState({});
+  const [loading, setLoading] = useState(true);
+  const year = new Date().getFullYear();
+  useEffect(() => {
+    fetchPlanFn()
+      .then((d) => setPlan(d.plan || {}))
+      .catch(() => setPlan({}))
+      .finally(() => setLoading(false));
+  }, [fetchPlanFn]);
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin" style={{ borderTopColor: accentColor }} />
+      </div>
+    );
+
+  const sources = MANA_QOPHESSAA_SOURCES;
+
+  return (
+    <div>
+      <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div
+          className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}
+        >
+          <PlanIcon />
+          <div>
+            <p className="text-white font-bold text-base">Karoora Galii Sassaabu {year}</p>
+            <p className="text-white/60 text-xs mt-0.5">Dubbisuu qofa</p>
+          </div>
+        </div>
+        {/* Mana Qophessaa grouped table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f0fdf9]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f766e] uppercase tracking-wide min-w-[180px]">
+                  Madda Galii (Mana Qophessaa)
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  KG (Karoora)
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Qarshii (Karoora)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sources.map((src, i) => {
+                const kg = Number(plan[`mq_${src.key}_kg_target`] ?? 0);
+                const qarshii = Number(plan[`mq_${src.key}_qarshii_target`] ?? 0);
+                return (
+                  <tr key={src.key} className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 === 0 ? "" : "bg-[#f8fafc]"}`}>
+                    <td className="px-5 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
+                        {src.label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                      {kg.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                      ETB {qarshii.toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+              {/* Idilee row */}
+              <tr className="border-b border-[#e2e8f0] bg-[#eff6ff]">
+                <td className="px-5 py-3 font-medium text-[#1e40af]">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
+                    Idilee
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-right text-[#94a3b8] text-xs">—</td>
+                <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                  ETB {Number(plan["idilee_qarshii_target"] ?? 0).toLocaleString()}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div
+          className="mx-6 mb-5 mt-4 flex items-center gap-2 rounded-xl px-4 py-3 border"
+          style={{ background: accentLight, borderColor: accentBorder }}
+        >
+          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+          <p className="text-sm" style={{ color: accentColor }}>
+            Karoora kun bulchiinsa xiqqaa irraa kenname. Dogongora yoo jiraate quunnamaa.
           </p>
         </div>
       </div>
@@ -3776,68 +3864,74 @@ function GenericSubmitForm({
 }
 
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
+// Each Mana Qophessaa sub-item has KG (number of taxpayers) + Qarshii (ETB).
+// Idilee stays as a single Qarshii amount (placeholder).
 function RevenueSubmitForm({ u }) {
-  const [category, setCategory] = useState(REVENUE_CATEGORIES[0].id);
-  const [source, setSource] = useState(REVENUE_CATEGORIES[0].sources[0]);
-  const [amount, setAmount] = useState("");
+  // mqForm: { [sourceKey]: { kg: string, qarshii: string } }
+  const emptyMq = () =>
+    Object.fromEntries(MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]));
+  const [mqForm, setMqForm] = useState(emptyMq());
+  const [idileeAmount, setIdileeAmount] = useState("");
   const [date, setDate] = useState(todayStr());
-  const [entries, setEntries] = useState([]);
-  const [entryError, setEntryError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const catObj = REVENUE_CATEGORIES.find((c) => c.id === category);
+  const handleMqField = (key, field, val) =>
+    setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
-  const handleCategoryChange = (val) => {
-    setCategory(val);
-    const cat = REVENUE_CATEGORIES.find((c) => c.id === val);
-    setSource(cat.sources[0]);
-    setEntryError("");
-  };
+  const hasAnyMq = MANA_QOPHESSAA_SOURCES.some(
+    (s) => Number(mqForm[s.key]?.kg || 0) > 0 || Number(mqForm[s.key]?.qarshii || 0) > 0,
+  );
+  const hasIdilee = Number(idileeAmount || 0) > 0;
+  const canSubmit = (hasAnyMq || hasIdilee) && date;
 
-  const handleAddEntry = () => {
-    if (!amount || Number(amount) <= 0) {
-      setEntryError("Enter a valid amount greater than zero.");
-      return;
-    }
-    if (!date) {
-      setEntryError("Select a date.");
-      return;
-    }
-    setEntryError("");
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        category: catObj.label,
-        categoryId: category,
-        source,
-        amount: Number(amount),
-        date,
-      },
-    ]);
-    setAmount("");
-    setDate(todayStr());
-  };
+  const mqTotal = MANA_QOPHESSAA_SOURCES.reduce(
+    (sum, s) => sum + Number(mqForm[s.key]?.qarshii || 0),
+    0,
+  );
+  const grandTotal = mqTotal + Number(idileeAmount || 0);
 
-  const handleRemoveEntry = (id) =>
-    setEntries((prev) => prev.filter((e) => e.id !== id));
-
-  const total = entries.reduce((sum, e) => sum + e.amount, 0);
-
-  const handleSubmitReport = async () => {
-    if (entries.length === 0) {
-      setEntryError("Add at least one entry before submitting.");
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      setSubmitError("Xiqqaatii tokkoo ol galchi.");
       return;
     }
     setSubmitting(true);
-    setEntryError("");
+    setSubmitError("");
     try {
-      await submitRevenueReport({ entries, total, report_date: todayStr() });
-      setEntries([]);
+      // Build entries array — one entry per filled Mana Qophessaa source + one for idilee
+      const entries = [];
+      MANA_QOPHESSAA_SOURCES.forEach((s) => {
+        const kg = Number(mqForm[s.key]?.kg || 0);
+        const qarshii = Number(mqForm[s.key]?.qarshii || 0);
+        if (kg > 0 || qarshii > 0) {
+          entries.push({
+            category: "Mana Qophessaa",
+            categoryId: "manaQophessaa",
+            source: s.label,
+            kg,
+            amount: qarshii, // baasii = Qarshii
+            date,
+          });
+        }
+      });
+      if (hasIdilee) {
+        entries.push({
+          category: "Idilee",
+          categoryId: "idilee",
+          source: "Idilee",
+          kg: 0,
+          amount: Number(idileeAmount),
+          date,
+        });
+      }
+      await submitRevenueReport({ entries, total: grandTotal, report_date: date });
+      setMqForm(emptyMq());
+      setIdileeAmount("");
       setShowModal(true);
     } catch (err) {
-      setEntryError(err.response?.data?.message || "Failed to submit report.");
+      setSubmitError(err.response?.data?.message || "Gabaasni hin galiin. Irra deebi'ii yaalii.");
     } finally {
       setSubmitting(false);
     }
@@ -3847,313 +3941,167 @@ function RevenueSubmitForm({ u }) {
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">
-            Galii Complete all required fields
-          </p>
-        </div>
+      <div className="mb-5">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Galii Sassaabu: Mana Qophessaa KG fi Qarshii Galchi
+        </p>
       </div>
 
-      <div className="space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div
-              className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
-              style={{
-                background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
-              }}
-            >
-              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                1
-              </span>
-              <p className="text-sm font-semibold text-white">Gosa Galii</p>
-            </div>
-            <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                Gosa Galii filadhu
-              </label>
-              <select
-                value={category}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a] cursor-pointer"
-              >
-                {REVENUE_CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-[#94a3b8] mt-2">
-                Filatame:{" "}
-                <span className="font-semibold text-[#0f172a]">
-                  {catObj.label}
-                </span>
-              </p>
-            </div>
+      {/* Date picker */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+            Guyyaa Gabaasaa <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full sm:w-56 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          />
+        </div>
+        {grandTotal > 0 && (
+          <div className="text-right flex-shrink-0">
+            <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
+              Walii Galii Qarshii
+            </p>
+            <p className="text-2xl font-bold text-[#0f766e]">
+              ETB {grandTotal.toLocaleString()}
+            </p>
           </div>
+        )}
+      </div>
 
-          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div
-              className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
-              style={{
-                background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
-              }}
-            >
-              <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                2
-              </span>
-              <p className="text-sm font-semibold text-white">
-                Madda Galii{" "}
-                <span className="font-normal text-white/70 ml-1">
-                  ({catObj.label})
-                </span>
-              </p>
-            </div>
-            <div className="px-5 py-4">
-              <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                Madda Galii filadhu
-              </label>
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-semibold text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a] cursor-pointer"
-              >
-                {catObj.sources.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-[#94a3b8] mt-2">
-                Filatame:{" "}
-                <span className="font-semibold text-[#0f172a]">{source}</span>
-              </p>
-            </div>
-          </div>
+      {/* ── Mana Qophessaa section ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+        >
+          <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Hunda kan bakka isaatti KG fi Qarshii galchi
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-          <div
-            className="px-5 py-3 border-b border-[#f1f5f9] flex items-center gap-2"
-            style={{
-              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
-            }}
-          >
-            <span className="w-6 h-6 rounded-full bg-white/20 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-              3
-            </span>
-            <p className="text-sm font-semibold text-white">Galii Galchi</p>
-            {entries.length > 0 && (
-              <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
-                {entries.length} galame
-              </span>
-            )}
-          </div>
-          <div className="px-5 py-4">
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] text-[#0f172a] border border-[#dbeafe] text-xs font-semibold px-3 py-1 rounded-full">
-                <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: catObj.color }}
-                />
-                {catObj.label}
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-[#eff6ff] text-[#0f172a] border border-[#dbeafe] text-xs font-semibold px-3 py-1 rounded-full">
-                {source}
-              </span>
-            </div>
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 px-5 pt-3 pb-1">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+            Madda Galii
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            KG (Lakk.)
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            Qarshii (ETB)
+          </p>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                  Baasii Galii (ETB) <span className="text-red-500">*</span>
-                </label>
+        <div className="divide-y divide-[#f1f5f9] px-5">
+          {MANA_QOPHESSAA_SOURCES.map((src) => {
+            const kg = mqForm[src.key]?.kg ?? "";
+            const qarshii = mqForm[src.key]?.qarshii ?? "";
+            const hasSomeValue = Number(kg) > 0 || Number(qarshii) > 0;
+            return (
+              <div
+                key={src.key}
+                className={`grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center transition-colors ${hasSomeValue ? "bg-[#f0fdf9]/60" : ""}`}
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1e293b]">
+                  <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
+                  {src.label}
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  value={kg}
+                  onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
+                  placeholder="0"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
+                />
                 <input
                   type="number"
                   min="0"
                   step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddEntry()}
+                  value={qarshii}
+                  onChange={(e) => handleMqField(src.key, "qarshii", e.target.value)}
                   placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#64748b] mb-1.5">
-                  Guyyaa <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full border border-[#e2e8f0] rounded-xl px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 focus:border-[#0f172a]"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={handleAddEntry}
-                  className="w-full flex items-center justify-center gap-2 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:opacity-90"
-                  style={{ backgroundColor: "#0f172a" }}
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                    viewBox="0 0 24 24"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Add Entry
-                </button>
-              </div>
+            );
+          })}
+          {/* MQ sub-total row */}
+          {mqTotal > 0 && (
+            <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
+              <span className="text-sm font-bold text-[#0f766e]">Waliigala MQ</span>
+              <span />
+              <span className="text-right text-sm font-bold text-[#0f766e]">
+                ETB {mqTotal.toLocaleString()}
+              </span>
             </div>
-
-            {entryError && (
-              <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-lg px-3 py-2 mb-3">
-                <svg
-                  className="w-4 h-4 text-red-500 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <p className="text-[#dc2626] text-xs font-medium">
-                  {entryError}
-                </p>
-              </div>
-            )}
-
-            <div className="rounded-xl border border-[#e2e8f0] overflow-hidden">
-              <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#f1f5f9] flex items-center justify-between">
-                <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                  Galmeewwan Galame
-                </p>
-                {entries.length > 0 && (
-                  <span className="text-xs font-bold text-[#0f172a] bg-[#eff6ff] border border-[#dbeafe] px-2.5 py-0.5 rounded-full">
-                    Walii Galii: ETB {total.toLocaleString()}
-                  </span>
-                )}
-              </div>
-              {entries.length === 0 ? (
-                <div className="px-5 py-8 text-center">
-                  <p className="text-[#94a3b8] text-sm">
-                    No entries yet. Fill in the fields above and click "Add
-                    Entry".
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-[#f8fafc] border-b border-[#f1f5f9]">
-                    <tr>
-                      {[
-                        "Gosa Galii",
-                        "Madda Galii",
-                        "Baasii (ETB)",
-                        "Guyyaa",
-                        "",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left px-4 py-2.5 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entries.map((e) => (
-                      <tr
-                        key={e.id}
-                        className="border-b border-gray-50 hover:bg-[#eff6ff]/50 transition-colors"
-                      >
-                        <td className="px-4 py-2.5">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{
-                                backgroundColor:
-                                  REVENUE_CATEGORIES.find(
-                                    (c) => c.id === e.categoryId,
-                                  )?.color ?? "#6b7280",
-                              }}
-                            />
-                            <span className="text-[#334155] font-medium">
-                              {e.category}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-[#64748b]">
-                          {e.source}
-                        </td>
-                        <td className="px-4 py-2.5 font-semibold text-[#1e293b]">
-                          {e.amount.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2.5 text-[#64748b] text-xs">
-                          {e.date}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <button
-                            onClick={() => handleRemoveEntry(e.id)}
-                            className="text-red-400 hover:text-[#dc2626] hover:bg-[#fef2f2] text-xs font-medium px-2 py-0.5 rounded transition-all"
-                          >
-                            Haqi
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="bg-[#f8fafc] border-t border-[#e2e8f0]">
-                      <td
-                        colSpan={2}
-                        className="px-4 py-3 font-bold text-[#0f172a] text-sm"
-                      >
-                        Walii Galii
-                      </td>
-                      <td className="px-4 py-3 font-extrabold text-[#0f172a] text-base">
-                        ETB {total.toLocaleString()}
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        {entries.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 shadow-sm">
-            <div>
-              <p className="text-[#1e293b] text-sm font-semibold">
-                {entries.length} {entries.length === 1 ? "entry" : "entries"}{" "}
-                ready to submit
-              </p>
-              <p className="text-[#64748b] text-xs mt-0.5">
-                Total:{" "}
-                <strong className="text-[#1e293b]">
-                  ETB {total.toLocaleString()}
-                </strong>
-              </p>
-            </div>
-            <button
-              onClick={handleSubmitReport}
-              disabled={submitting}
-              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 shadow-sm"
-            >
-              <SubmitIcon />
-              {submitting ? "Submitting..." : "Submit Daily Revenue Report"}
-            </button>
-          </div>
-        )}
+      {/* ── Idilee section (placeholder) ── */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+        >
+          <p className="text-sm font-semibold text-white">Idilee</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Galii Idilee (placeholder): Qarshii qofa galchi
+          </p>
+        </div>
+        <div className="px-5 py-4">
+          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
+            Idilee Qarshii (ETB)
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={idileeAmount}
+            onChange={(e) => setIdileeAmount(e.target.value)}
+            placeholder="0.00"
+            className="w-full sm:w-64 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+          />
+        </div>
+      </div>
+
+      {/* Error */}
+      {submitError && (
+        <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          {submitError}
+        </div>
+      )}
+
+      {/* Submit bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 shadow-sm">
+        <div>
+          <p className="text-[#1e293b] text-sm font-semibold">
+            Walii Galii: ETB {grandTotal.toLocaleString()}
+          </p>
+          <p className="text-[#64748b] text-xs mt-0.5">
+            Hunda guutuu erga guutte booda galchi.
+          </p>
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !canSubmit}
+          className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+        >
+          <SubmitIcon />
+          {submitting ? "Galchaa jira..." : "Gabaasa Galchi"}
+        </button>
       </div>
     </div>
   );
@@ -4539,11 +4487,12 @@ const SECTOR_PRINT_FIELDS = {
     { key: "toannoo_fi_hordoffii_gamoo", label: "To'annoo fi Hordoffii Gamoo" },
     { key: "galii_atk_galchuu", label: "Galii ATK Galchuu" },
   ],
-  // Galii Sassaabu — revenue_entries table columns
+  // Galii Sassaabu — rows are built dynamically from MANA_QOPHESSAA_SOURCES in buildSectorTable.
+  // This array is kept for legacy compatibility only (not used for galii rendering).
   galii: [
-    { key: "gosa_galii", label: "Gosa Galii" },
     { key: "madda_galii", label: "Madda Galii" },
-    { key: "baasii", label: "Baasii (ETB)" },
+    { key: "kg", label: "KG" },
+    { key: "baasii", label: "Qarshii (ETB)" },
   ],
 };
 
@@ -4639,35 +4588,112 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </div>`;
     }
 
-    // Galii Sassaabu — plain columns, no Karoora/Raawwii/% split
-    if (sectorId === "galii") {
-      const fieldHeaders = fields.map((f) => `<th>${f.label}</th>`).join("");
-      const thead = `<thead><tr>
-        <th class="rno">R.No</th>
-        <th class="date-col">Guyyaa</th>
-        ${fieldHeaders}
-      </tr></thead>`;
-      const bodyRows = sectorRows
-        .map((row, idx) => {
-          const dateFmt = row.report_date ?? row.guyyaa ?? "";
-          const cells = fields
-            .map(({ key }) => {
-              const val = row[key];
-              if (val === null || val === undefined || val === "")
-                return `<td></td>`;
-              return `<td class="${typeof val === "number" ? "num" : ""}">${
-                typeof val === "number" ? val.toLocaleString() : val
-              }</td>`;
-            })
-            .join("");
-          return `<tr><td class="rno">${idx + 1}</td><td class="date-col">${dateFmt}</td>${cells}</tr>`;
-        })
-        .join("");
-      return `<div class="sector-block">
-        <div class="sector-title">${sectorLabel}</div>
-        <table>${thead}<tbody>${bodyRows}</tbody></table>
-      </div>`;
+  // Galii Sassaabu — structured table: rows=sub-items, cols=Karoora(KG,Qarshii)/Raawwii(KG,Qarshii)/%/Total
+  if (sectorId === "galii") {
+    // Aggregate actual rows by madda_galii source
+    const aggBySource = {};
+    for (const row of sectorRows) {
+      const src = row.madda_galii ?? row.source ?? "";
+      if (!aggBySource[src]) aggBySource[src] = { kg: 0, qarshii: 0 };
+      aggBySource[src].kg += Number(row.kg ?? 0);
+      aggBySource[src].qarshii += Number(row.baasii ?? 0);
     }
+
+    // Build sub-column list: always show Raawwii; Karoora optional; % optional
+    const subCols = [];
+    if (showPlan) { subCols.push("plan_kg"); subCols.push("plan_qarshii"); }
+    subCols.push("actual_kg");
+    subCols.push("actual_qarshii");
+    if (showPct) subCols.push("pct");
+    const numSubCols = subCols.length;
+
+    const subColLabel = (c) => {
+      if (c === "plan_kg") return "Karoora KG";
+      if (c === "plan_qarshii") return "Karoora Qarshii";
+      if (c === "actual_kg") return "Raawwii KG";
+      if (c === "actual_qarshii") return "Raawwii Qarshii";
+      return "%";
+    };
+
+    const ROW_DEFS = [
+      ...MANA_QOPHESSAA_SOURCES.map((s) => ({
+        label: s.label,
+        sourceLabel: s.label,
+        planKgKey: `mq_${s.key}_kg_target`,
+        planQarshiiKey: `mq_${s.key}_qarshii_target`,
+        isMq: true,
+      })),
+      {
+        label: "Idilee",
+        sourceLabel: "Idilee",
+        planKgKey: null,
+        planQarshiiKey: "idilee_qarshii_target",
+        isMq: false,
+      },
+    ];
+
+    const thead = `<thead>
+      <tr>
+        <th rowspan="2" class="rno">R.No</th>
+        <th rowspan="2" class="gosa">Madda Galii</th>
+        ${subCols.map((c) => `<th class="sub-col">${subColLabel(c)}</th>`).join("")}
+        <th class="sub-col total-hdr">Waliigala Qarshii</th>
+      </tr>
+    </thead>`;
+
+    let grandTotalActualQarshii = 0;
+    let grandTotalPlanQarshii = 0;
+
+    const bodyRows = ROW_DEFS.map((row, idx) => {
+      const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
+      const planKg = plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
+      const planQarshii = plan && row.planQarshiiKey ? Number(plan[row.planQarshiiKey] ?? 0) : 0;
+      const pct = planQarshii > 0 ? Math.round((agg.qarshii / planQarshii) * 100) : 0;
+      grandTotalActualQarshii += agg.qarshii;
+      grandTotalPlanQarshii += planQarshii;
+
+      const cells = subCols.map((c) => {
+        if (c === "plan_kg") return `<td class="num plan">${planKg.toLocaleString()}</td>`;
+        if (c === "plan_qarshii") return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
+        if (c === "actual_kg") return `<td class="num">${agg.kg.toLocaleString()}</td>`;
+        if (c === "actual_qarshii") return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
+        return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
+      }).join("");
+
+      return `<tr>
+        <td class="rno">${idx + 1}</td>
+        <td class="gosa">${row.label}</td>
+        ${cells}
+        <td class="num total-val">${agg.qarshii.toLocaleString()}</td>
+      </tr>`;
+    }).join("");
+
+    const totalPct = grandTotalPlanQarshii > 0
+      ? Math.round((grandTotalActualQarshii / grandTotalPlanQarshii) * 100)
+      : 0;
+    const totalCells = subCols.map((c) => {
+      if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
+      if (c === "plan_qarshii") return `<td class="num plan total-val">${grandTotalPlanQarshii.toLocaleString()}</td>`;
+      if (c === "actual_kg") return `<td class="num total-val">—</td>`;
+      if (c === "actual_qarshii") return `<td class="num total-val">${grandTotalActualQarshii.toLocaleString()}</td>`;
+      return `<td class="num pct total-val">${grandTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
+    }).join("");
+
+    const totalRow = `<tr style="background:#eef2ff;font-weight:bold;">
+      <td class="rno">—</td>
+      <td class="gosa">Waliigala</td>
+      ${totalCells}
+      <td class="num total-val">${grandTotalActualQarshii.toLocaleString()}</td>
+    </tr>`;
+
+    return `<div class="sector-block">
+      <div class="sector-title">${sectorLabel}</div>
+      <table>
+        ${thead}
+        <tbody>${bodyRows}${totalRow}</tbody>
+      </table>
+    </div>`;
+  }
 
     // Build sub-column definitions based on toggles
     // Raawwii (actual) is always shown
@@ -4850,8 +4876,12 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
     th.date-col, td.date-col { white-space: nowrap; font-size: 8pt; width: 68px; }
     th.field-group { text-align: center; }
     th.sub-col { text-align: center; min-width: 44px; }
+    th.gosa { text-align: left; min-width: 120px; }
+    td.gosa { text-align: left; font-weight: 500; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     td.pct { text-align: right; }
+    td.total-val { font-weight: bold; background: #eef2ff; }
+    th.total-hdr { background: #dce8f4; font-weight: bold; }
     tbody tr:nth-child(even) { background: #f7f9fb; }
     .page-section { page-break-after: always; }
     .page-section:last-child { page-break-after: avoid; }
@@ -7094,11 +7124,8 @@ export default function WoRedaDashboard() {
                   );
                 if (wid === "revenue")
                   return (
-                    <GenericAnnualPlanSection
-                      u={u}
-                      cats={REVENUE_CATS}
+                    <GaliiAnnualPlanSection
                       fetchPlanFn={fetchWeredaRevenuePlan}
-                      title="Galii Sassaabu"
                       accentColor="#475569"
                       accentLight="#f8fafc"
                       accentBorder="#e2e8f0"

@@ -459,7 +459,8 @@ const submitRevenueReport = async (req, res) => {
       username,
       gosa_galii: entry.category,
       madda_galii: entry.source,
-      baasii: entry.amount,
+      baasii: Number(entry.amount || 0),
+      kg: Number(entry.kg || 0),
       guyyaa: entry.date,
       report_date,
     }));

@@ -15,6 +15,9 @@ const {
   saveSubcityGenericPlan,
   fetchSubcityGenericPlan,
   getWeredaGenericPlan,
+  saveSubcityGaliiPlan,
+  fetchSubcityGaliiPlan,
+  getWeredaGaliiPlan,
   getSubcityLivePlans,
 } = require("../controllers/planController");
 
@@ -23,10 +26,10 @@ router.post("/", authMiddleware, createPlan);
 router.get("/me", authMiddleware, getMyPlan);
 router.get("/summary", authMiddleware, getSummary);
 
-// Subcity → per-wereda tables (proportional split)
+// Subcity → per-wereda tables (proportional split — Buusaa Gonofaa)
 router.post("/subcity", authMiddleware, saveSubcityPlan);
 
-// Subcity's own annual plan table
+// Subcity's own annual plan table (Buusaa Gonofaa)
 router.post("/subcity-plan", authMiddleware, saveSubcityOwnPlan);
 router.get("/subcity-plan", authMiddleware, fetchSubcityOwnPlan);
 
@@ -40,10 +43,15 @@ router.get("/subcity-qonna-plan", authMiddleware, fetchSubcityQonnaPlan);
 // Wereda reads its own Qonna plan (read-only)
 router.get("/wereda-qonna-plan", authMiddleware, getWeredaQonnaPlan);
 
-// Generic sector plans (carraa, daldala, atk, galii)
+// Generic sector plans (carraa, daldala, atk) — direct per-woreda entry
 router.post("/subcity-generic-plan", authMiddleware, saveSubcityGenericPlan);
 router.get("/subcity-generic-plan", authMiddleware, fetchSubcityGenericPlan);
 router.get("/wereda-generic-plan", authMiddleware, getWeredaGenericPlan);
+
+// Galii Sassabu plan — direct per-woreda entry (separate from generic)
+router.post("/subcity-galii-plan", authMiddleware, saveSubcityGaliiPlan);
+router.get("/subcity-galii-plan", authMiddleware, fetchSubcityGaliiPlan);
+router.get("/wereda-galii-plan", authMiddleware, getWeredaGaliiPlan);
 
 // Dedicated wereda plan routes for each sector (avoids req.query mutation issue in Express 5)
 router.get("/wereda-daldala-plan", authMiddleware, (req, res) => {
@@ -54,10 +62,8 @@ router.get("/wereda-atk-plan", authMiddleware, (req, res) => {
   req._sector = "atk";
   getWeredaGenericPlan(req, res);
 });
-router.get("/wereda-revenue-plan", authMiddleware, (req, res) => {
-  req._sector = "galii";
-  getWeredaGenericPlan(req, res);
-});
+// /wereda-revenue-plan now served by getWeredaGaliiPlan
+router.get("/wereda-revenue-plan", authMiddleware, getWeredaGaliiPlan);
 router.get("/wereda-carraa-plan", authMiddleware, (req, res) => {
   req._sector = "carraa";
   getWeredaGenericPlan(req, res);

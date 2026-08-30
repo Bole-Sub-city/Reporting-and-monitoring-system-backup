@@ -123,27 +123,46 @@ export const fetchWeredaQonnaPlan = async () => {
 };
 
 /**
- * Save a generic subcity plan (galii, carraa, daldala, atk) and distribute
- * to the 4 wereda tables.
- * @param {string} sector  - one of "galii" | "carraa" | "daldala" | "atk"
- * @param {Object} totals  - field totals keyed by field name
- * @param {Object} weights - { w1, w2, w3, w4 } woreda weights
+ * Save a generic subcity plan (carraa, daldala, atk) using direct per-woreda entry.
+ * Each woreda's values are entered directly (no % distribution).
+ * @param {string} sector      - "carraa" | "daldala" | "atk"
+ * @param {Object} woredaPlans - { w1: { field: value }, w2: {...}, w3: {...}, w4: {...} }
  */
-export const saveSubcityGenericPlan = async (sector, totals, weights) => {
+export const saveSubcityGenericPlan = async (sector, woredaPlans) => {
   const res = await api.post(
     "/plans/subcity-generic-plan",
-    { sector, totals, weights },
+    { sector, woredaPlans },
     authHeader(),
   );
   return res.data;
 };
 
-/** Fetch a generic subcity plan by sector. */
+/**
+ * Save the Galii Sassabu subcity plan using direct per-woreda entry.
+ * Each woreda's values are entered directly (no % distribution).
+ * @param {Object} woredaPlans - { w1: { mq_liizii_kg, mq_liizii_qarshii, ... }, w2: {...}, ... }
+ */
+export const saveSubcityGaliiPlan = async (woredaPlans) => {
+  const res = await api.post(
+    "/plans/subcity-galii-plan",
+    { woredaPlans },
+    authHeader(),
+  );
+  return res.data;
+};
+
+/** Fetch a generic subcity plan by sector (carraa/daldala/atk). */
 export const fetchSubcityGenericPlan = async (sector) => {
   const res = await api.get(
     `/plans/subcity-generic-plan?sector=${sector}`,
     authHeader(),
   );
+  return res.data; // { plan: {...} | null }
+};
+
+/** Fetch the current year's subcity Galii Sassabu plan. */
+export const fetchSubcityGaliiPlan = async () => {
+  const res = await api.get("/plans/subcity-galii-plan", authHeader());
   return res.data; // { plan: {...} | null }
 };
 
