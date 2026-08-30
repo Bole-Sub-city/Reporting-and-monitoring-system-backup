@@ -586,60 +586,63 @@ const OROMO_MONTHS = [
 
 // Generate day options 1-30
 const OROMO_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
-const CARRAA_HOJII_FIELDS = [
-  { name: "leenjii", label: "Leenjii", required: true, type: "number" },
-  {
-    name: "carraa_hojii_dhaabbii",
-    label: "Carraa Hojii Dhaabbii",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "carraa_hojii_qacarrii",
-    label: "Carraa Hojii Qacarrii",
-    required: true,
-    type: "number",
-  },
-
-  {
-    name: "qusannaa_haawaasaa",
-    label: "Qusannaa Haawaasaa",
-    required: true,
-    type: "number",
-  },
-
-  {
-    name: "qusanna_dirqii",
-    label: "Qusanna Dirqii",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "kenna_liqii",
-    label: "Kenna Liqii ",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "deebii_liqii_bilchaate",
-    label: "Deebii Liqii Bilchaate",
-    required: true,
-    type: "number",
-  },
-  {
-    name: "deebii_liqii_bulee",
-    label: "Deebii Liqii Bulee",
-    required: true,
-    type: "number",
-  },
-
-  {
-    name: "industrii_godoo",
-    label: "Industrii Godoo",
-    required: true,
-    type: "number",
-  },
+// Each entry with hasSubs:true gets three sub-fields: _int (Enterprise), _dhi (Dhiira/Male), _dub (Dubartii/Female).
+// Industrii Godoo has no subs — single number field.
+const CARRAA_HOJII_BASE_FIELDS = [
+// Exact sub-columns per field from the official CHUO Excel template:
+// Leenjii              → int, dhi, dub
+// Carraa Hojii Dhaabbii → int, dhi, dub
+// Carraa Hojii Qacarrii → int, dhi, dub
+// Qusannaa Haawaasaa   → int, qarshii
+// Kenna Liqii          → int, mise, qarshii
+// Qusanna Dirqii       → int, mise, qarshii
+// Deebii Liqii Bilchaate → int, qarshii
+// Deebii Liqii Bulee    → int, qarshii
+// Industrii Godoo       → kilaastera, lafa, carraa_hojii
+  { name: "leenjii",                label: "Leenjii",                color: "#1e40af",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
+    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
 ];
+// CARRAA_WD_SUBS kept for reference
+const CARRAA_WD_SUBS = [
+  { suffix: "_int", label: "Int" },
+  { suffix: "_dhi", label: "Dhi" },
+  { suffix: "_dub", label: "Dub" },
+  { suffix: "_qarshii", label: "Qarshii" },
+  { suffix: "_mise", label: "Mise" },
+  { suffix: "_kilaastera", label: "Kilaastera" },
+  { suffix: "_lafa", label: "Lafa (Hek)" },
+  { suffix: "_carraa_hojii", label: "Carraa Hojii" },
+];
+// Flat list of all sub-field descriptors used by the submit form and analysis
+const CARRAA_HOJII_FIELDS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) =>
+  f.subs.length
+    ? f.subs.map((s) => ({
+        name: `${f.name}${s.suffix}`,
+        label: `${f.label} — ${s.label}`,
+        required: true,
+        type: "number",
+        _parent: f.name,
+        _parentLabel: f.label,
+        _sub: s.label,
+      }))
+    : [{ name: f.name, label: f.label, required: true, type: "number" }],
+);
 const QONNA_FIELDS = [
   {
     name: "furdisa",
@@ -2259,136 +2262,40 @@ function QonnaAnalysisSection() {
 
 // ─── CarraaHojii Annual Plan fields with display metadata ────────────────────
 const CARRAA_PLAN_FIELDS = [
-  {
-    planKey: "leenjii_target",
-    label: "Leenjii",
-    color: "#1e40af",
-    bg: "bg-[#eff6ff]",
-    border: "border-[#bfdbfe]",
-    text: "text-[#1e40af]",
-  },
-  {
-    planKey: "carraa_hojii_dhaabbii_target",
-    label: "Carraa Hojii Dhaabbii",
-    color: "#0f766e",
-    bg: "bg-[#f0fdfa]",
-    border: "border-[#99f6e4]",
-    text: "text-[#0f766e]",
-  },
-  {
-    planKey: "carraa_hojii_qacarrii_target",
-    label: "Carraa Hojii Qacarrii",
-    color: "#7c3aed",
-    bg: "bg-[#f5f3ff]",
-    border: "border-[#ddd6fe]",
-    text: "text-[#7c3aed]",
-  },
-  {
-    planKey: "qusannaa_haawaasaa_target",
-    label: "Qusannaa Haawaasaa",
-    color: "#475569",
-    bg: "bg-[#f8fafc]",
-    border: "border-[#e2e8f0]",
-    text: "text-[#475569]",
-  },
-  {
-    planKey: "qusanna_dirqii_target",
-    label: "Qusanna Dirqii",
-    color: "#475569",
-    bg: "bg-[#f8fafc]",
-    border: "border-[#e2e8f0]",
-    text: "text-[#475569]",
-  },
-  {
-    planKey: "kenna_liqii_target",
-    label: "Kenna Liqii",
-    color: "#b45309",
-    bg: "bg-[#fffbeb]",
-    border: "border-[#fde68a]",
-    text: "text-[#b45309]",
-  },
-  {
-    planKey: "deebii_liqii_bilchaate_target",
-    label: "Deebii Liqii Bilchaate",
-    color: "#78350f",
-    bg: "bg-[#fffbeb]",
-    border: "border-[#fde68a]",
-    text: "text-[#78350f]",
-  },
-  {
-    planKey: "deebii_liqii_bulee_target",
-    label: "Deebii Liqii Bulee",
-    color: "#dc2626",
-    bg: "bg-[#fef2f2]",
-    border: "border-[#fecaca]",
-    text: "text-[#dc2626]",
-  },
-  {
-    planKey: "industrii_godoo_target",
-    label: "Industrii Godoo",
-    color: "#0369a1",
-    bg: "bg-[#f0f9ff]",
-    border: "border-[#bae6fd]",
-    text: "text-[#0369a1]",
-  },
+  // Fields drive the read-only plan display in CarraaHojiiAnnualPlanSection.
+  // subs matches CARRAA_HOJII_BASE_FIELDS exactly.
+  { name: "leenjii",                label: "Leenjii",                color: "#1e40af",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { name: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { name: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
+    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
 ];
 
-const CARRAA_SUMMARY_KEYS = [
-  {
-    summaryKey: "leenjii",
-    key: "leenjii_target",
-    label: "Leenjii",
-    color: "#1e40af",
-  },
-  {
-    summaryKey: "carraa_hojii_dhaabbii",
-    key: "carraa_hojii_dhaabbii_target",
-    label: "Carraa Hojii Dhaabbii",
-    color: "#0f766e",
-  },
-  {
-    summaryKey: "carraa_hojii_qacarrii",
-    key: "carraa_hojii_qacarrii_target",
-    label: "Carraa Hojii Qacarrii",
-    color: "#7c3aed",
-  },
-  {
-    summaryKey: "qusannnaa",
-    key: "qusannaa_target",
-    label: "Qusannaa Haawaasaa",
-    color: "#475569",
-  },
-  {
-    summaryKey: "qusanna_dirqii",
-    key: "qusanna_dirqii_target",
-    label: "Qusanna Dirqii",
-    color: "#475569",
-  },
-  {
-    summaryKey: "liqii",
-    key: "liqii_target",
-    label: "Kenna Liqii",
-    color: "#b45309",
-  },
-  {
-    summaryKey: "deebii_liqii_bilchaate",
-    key: "deebii_liqii_bilchaate_target",
-    label: "Deebii Liqii Bilchaate",
-    color: "#78350f",
-  },
-  {
-    summaryKey: "deebii_liqii_bulee",
-    key: "deebii_liqii_bulee_target",
-    label: "Deebii Liqii Bulee",
-    color: "#dc2626",
-  },
-  {
-    summaryKey: "industrii_godoo",
-    key: "industrii_godoo_target",
-    label: "Industrii Godoo",
-    color: "#0369a1",
-  },
-];
+// CARRAA_SUMMARY_KEYS drives the ring-chart analysis — flat list of all sub-keys.
+const CARRAA_SUMMARY_KEYS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
+  if (!f.subs.length) {
+    return [{ summaryKey: f.name, key: `${f.name}_target`, label: f.label, color: f.color }];
+  }
+  return f.subs.map((s) => ({
+    summaryKey: `${f.name}${s.suffix}`,
+    key: `${f.name}${s.suffix}_target`,
+    label: `${f.label} — ${s.label}`,
+    color: f.color,
+  }));
+});
 
 function CarraaHojiiAnnualPlanSection({ u }) {
   const [plan, setPlan] = useState(null);
@@ -2396,7 +2303,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
   const year = new Date().getFullYear();
 
   useEffect(() => {
-    fetchWeredaPlan()
+    fetchWeredaCarraaHojiiPlan()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null))
       .finally(() => setLoading(false));
@@ -2412,64 +2319,55 @@ function CarraaHojiiAnnualPlanSection({ u }) {
   return (
     <div>
       {plan ? (
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-          <div
-            className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
-            }}
-          >
-            <PlanIcon />
-            <div>
-              <p className="text-white font-bold text-base">
-                Annual Plan {year}
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">Read-only</p>
+        <div>
+          <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mb-4">
+            <div
+              className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
+              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+            >
+              <PlanIcon />
+              <div>
+                <p className="text-white font-bold text-base">Annual Plan {year}</p>
+                <p className="text-white/60 text-xs mt-0.5">Read-only — assigned by sub-city office</p>
+              </div>
             </div>
           </div>
-          <div className="px-6 py-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {CARRAA_PLAN_FIELDS.map(
-                ({ planKey, label, bg, border, text, color }) => (
-                  <div
-                    key={planKey}
-                    className={`rounded-xl border ${border} ${bg} px-5 py-4`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: color }}
-                      />
-                      <p
-                        className={`text-xs font-bold uppercase tracking-wide ${text}`}
-                      >
-                        {label}
+
+          {/* One card per field — shows sub-column values */}
+          <div className="space-y-3">
+            {CARRAA_PLAN_FIELDS.map((f) => (
+              <div key={f.name} className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                {/* Field header */}
+                <div className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2 bg-[#f8fafc]">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
+                  <p className="text-sm font-semibold text-[#1e293b]">{f.label}</p>
+                </div>
+                {/* Sub-column values */}
+                <div className={`grid divide-x divide-[#f1f5f9] ${
+                  f.subs.length === 3 ? "grid-cols-3" :
+                  f.subs.length === 2 ? "grid-cols-2" : "grid-cols-1"
+                }`}>
+                  {f.subs.map((s) => (
+                    <div key={s.suffix} className="px-5 py-4 text-center">
+                      <p className="text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1">{s.label}</p>
+                      <p className="text-2xl font-extrabold text-[#1e293b]">
+                        {(plan[`${f.name}${s.suffix}_target`] ?? 0).toLocaleString()}
                       </p>
+                      <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
                     </div>
-                    <p className="text-3xl font-extrabold text-[#1e293b]">
-                      {(plan[planKey] ?? 0).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
-                  </div>
-                ),
-              )}
-            </div>
-            <div className="mt-5 flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-3">
-              <svg
-                className="w-5 h-5 text-[#1e40af] flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
-              <p className="text-[#1e40af] text-sm">
-                These targets were assigned by your sub-city office. Contact
-                them if the numbers need correction.
-              </p>
-            </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-3">
+            <svg className="w-5 h-5 text-[#1e40af] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-[#1e40af] text-sm">
+              These targets were assigned by your sub-city office. Contact them if the numbers need correction.
+            </p>
           </div>
         </div>
       ) : (
@@ -2477,12 +2375,9 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3">
             <PlanIcon />
           </div>
-          <p className="text-[#334155] font-semibold mb-1">
-            No Plan Assigned Yet
-          </p>
+          <p className="text-[#334155] font-semibold mb-1">No Plan Assigned Yet</p>
           <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved a Carraa Hojii plan for {year}{" "}
-            yet. Once they do, your targets will appear here automatically.
+            Your sub-city office hasn't saved a Carraa Hojii plan for {year} yet. Once they do, your targets will appear here automatically.
           </p>
         </div>
       )}
@@ -2647,62 +2542,18 @@ const REVENUE_CATS = [
   { key: "idilee_qarshii",              planKey: "idilee_qarshii_target",              label: "Idilee — Qarshii",          color: "#1e40af" },
 ];
 
-const CARRAA_WOREDA_CATS = [
-  {
-    key: "leenjii",
-    label: "Leenjii",
-    planKey: "leenjii_target",
-    color: "#1e40af",
-  },
-  {
-    key: "carraa_hojii_dhaabbii",
-    label: "Carraa Hojii Dhaabbii",
-    planKey: "carraa_hojii_dhaabbii_target",
-    color: "#0f766e",
-  },
-  {
-    key: "carraa_hojii_qacarrii",
-    label: "Carraa Hojii Qacarrii",
-    planKey: "carraa_hojii_qacarrii_target",
-    color: "#7c3aed",
-  },
-  {
-    key: "qusannaa_haawaasaa",
-    label: "Qusannaa Haawaasaa",
-    planKey: "qusannaa_haawaasaa_target",
-    color: "#475569",
-  },
-  {
-    key: "qusanna_dirqii",
-    label: "Qusanna Dirqii",
-    planKey: "qusanna_dirqii_target",
-    color: "#64748b",
-  },
-  {
-    key: "kenna_liqii",
-    label: "Kenna Liqii",
-    planKey: "kenna_liqii_target",
-    color: "#b45309",
-  },
-  {
-    key: "deebii_liqii_bilchaate",
-    label: "Deebii Liqii Bilchaate",
-    planKey: "deebii_liqii_bilchaate_target",
-    color: "#78350f",
-  },
-  {
-    key: "deebii_liqii_bulee",
-    label: "Deebii Liqii Bulee",
-    planKey: "deebii_liqii_bulee_target",
-    color: "#dc2626",
-  },
-  {
-    key: "industrii_godoo",
-    label: "Industrii Godoo",
-    planKey: "industrii_godoo_target",
-    color: "#0369a1",
-  },
-];
+// CARRAA_WOREDA_CATS drives GenericAnnualPlanSection and GenericAnalysisSection — flat sub-key list.
+const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
+  if (!f.subs.length) {
+    return [{ key: f.name, label: f.label, planKey: `${f.name}_target`, color: f.color }];
+  }
+  return f.subs.map((s) => ({
+    key: `${f.name}${s.suffix}`,
+    label: `${f.label} — ${s.label}`,
+    planKey: `${f.name}${s.suffix}_target`,
+    color: f.color,
+  }));
+});
 
 function GenericAnnualPlanSection({
   u,
@@ -3863,6 +3714,195 @@ function GenericSubmitForm({
   );
 }
 
+// ─── Carraa Hojii Submit Form ─────────────────────────────────────────────────
+// Shows each base field as a group header with three sub-inputs: Int, Dhi, Dub.
+// Industrii Godoo has no subs — shows a single input.
+function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
+  const [reportType, setReportType] = useState(REPORT_TYPES[0]);
+  const [form, setForm] = useState({});
+  const [yaada, setYaada] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      const today = todayStr();
+      fetchMyReports({ sector: "carraa", date_from: today, date_to: today })
+        .then((data) => {
+          const rows = Array.isArray(data) ? data : [];
+          const row = rows.find((r) => r.report_date === today && r._sector === "carraa");
+          if (!row) return;
+          setReportType(row.report_type || REPORT_TYPES[0]);
+          setYaada(row.yaada_gudinaa || "");
+          const prefilled = {};
+          CARRAA_HOJII_FIELDS.forEach(({ name }) => {
+            if (row[name] !== undefined && row[name] !== null)
+              prefilled[name] = String(row[name]);
+          });
+          setForm(prefilled);
+        })
+        .catch(() => {});
+    }
+  }, [locked]);
+
+  const handleField = (name, val) =>
+    setForm((p) => ({ ...p, [name]: val }));
+
+  const handleClear = () => { setForm({}); setYaada(""); setError(""); };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (locked) return;
+    setError("");
+    setSaving(true);
+    try {
+      const payload = { report_type: reportType, report_date: todayStr(), yaada_gudinaa: yaada };
+      CARRAA_HOJII_FIELDS.forEach(({ name }) => {
+        payload[name] = Number(form[name] || 0);
+      });
+      await submitCarraaHojiiReport(payload);
+      setShowModal(true);
+      handleClear();
+      onSubmitSuccess && onSubmitSuccess();
+    } catch (err) {
+      setError(friendlyError(err, "Failed to submit report."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+      {locked && (
+        <div className="mb-5">
+          <LockBanner sector="carraa" reportType={reportType} onUnlocked={onSubmitSuccess} />
+        </div>
+      )}
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">Carraa Hojii Uumuu — complete all required fields</p>
+        </div>
+      </div>
+
+      {/* Report type + date row */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">Report Type</p>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          >
+            {REPORT_TYPES.map((t) => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">Reporting Period</p>
+          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden mb-5">
+          {/* Header */}
+          <div className="px-5 py-4" style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+            <p className="text-white font-bold text-base">Carraa Hojii Uumuu</p>
+            <p className="text-white/60 text-xs mt-0.5">{u?.username}</p>
+          </div>
+
+          {/* Field groups — each field renders its subs as labeled inputs */}
+          <div className="divide-y divide-[#f1f5f9]">
+            {CARRAA_HOJII_BASE_FIELDS.map((f) => {
+              // Number of subs determines grid: 1→single, 2→2-col, 3→3-col
+              const gridCols = f.subs.length === 3 ? "grid-cols-3" :
+                               f.subs.length === 2 ? "grid-cols-2" : "";
+              return (
+                <div key={f.name} className="px-5 py-4">
+                  <p className="text-[#334155] text-sm font-semibold mb-3 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
+                    {f.label}
+                  </p>
+                  <div className={f.subs.length > 0 ? `grid gap-3 ${gridCols}` : ""}>
+                    {f.subs.length > 0 ? f.subs.map((sub) => {
+                      const fieldName = `${f.name}${sub.suffix}`;
+                      return (
+                        <div key={fieldName}>
+                          <label className="block text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1.5">
+                            {sub.label} <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            type="number" min="0"
+                            name={fieldName}
+                            value={form[fieldName] ?? ""}
+                            onChange={(e) => handleField(fieldName, e.target.value)}
+                            required
+                            placeholder="0"
+                            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+                          />
+                        </div>
+                      );
+                    }) : (
+                      /* Field with no subs — plain single input (shouldn't happen but guard) */
+                      <input
+                        type="number" min="0"
+                        name={f.name}
+                        value={form[f.name] ?? ""}
+                        onChange={(e) => handleField(f.name, e.target.value)}
+                        required
+                        placeholder="0"
+                        className="w-full sm:w-48 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Yaada Gudinaa */}
+            <div className="px-5 py-4">
+              <label className="block text-[#334155] text-sm font-medium mb-1.5">Yaada Gudinaa</label>
+              <textarea
+                value={yaada}
+                onChange={(e) => setYaada(e.target.value)}
+                placeholder="Enter Yaada Gudinaa"
+                rows={3}
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">Fields marked <span className="text-red-500">*</span> are required</p>
+          <div className="flex gap-3">
+            <button type="button" onClick={handleClear}
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all">
+              Clear Form
+            </button>
+            <button type="submit" disabled={saving || locked}
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5">
+              <SubmitIcon />
+              {saving ? "Submitting..." : "Submit Report"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 // Each Mana Qophessaa sub-item has KG (number of taxpayers) + Qarshii (ETB).
 // Idilee stays as a single Qarshii amount (placeholder).
@@ -4428,17 +4468,12 @@ const SECTOR_PRINT_FIELDS = {
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },
   ],
-  carraaHojii: [
-    { key: "leenjii", label: "Leenjii" },
-    { key: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
-    { key: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
-    { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa" },
-    { key: "qusanna_dirqii", label: "Qusanna Dirqii" },
-    { key: "kenna_liqii", label: "Kenna Liqii" },
-    { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
-    { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
-    { key: "industrii_godoo", label: "Industrii Godoo" },
-  ],
+  // Carraa Hojii: Dhaabbii+Qacarrii have Dhi/Dub; others have Int; Industrii Godoo plain
+  carraaHojii: CARRAA_HOJII_BASE_FIELDS.flatMap((f) =>
+    f.subs.length
+      ? f.subs.map((s) => ({ key: `${f.name}${s.suffix}`, label: `${f.label} — ${s.label}` }))
+      : [{ key: f.name, label: f.label }],
+  ),
   qonna: [
     { key: "furdisa_bakka_qophaawe", label: "Furdisa - Bakka Qophaawe" },
     { key: "furdisa_sheedii_ijaaraman", label: "Furdisa - Sheedii Ijaaraman" },
@@ -7220,15 +7255,10 @@ export default function WoRedaDashboard() {
                 );
               if (wid === "carraaHojii")
                 return (
-                  <GenericSubmitForm
+                  <CarraaSubmitForm
                     u={u}
-                    fields={CARRAA_HOJII_FIELDS}
-                    submitFn={submitCarraaHojiiReport}
-                    title="Carraa Hojii Uumuu"
-                    sectorKey="carraa"
                     locked={!!locked.carraa}
                     onSubmitSuccess={refreshLocks}
-                    headerColor="linear-gradient(90deg,#1e40af 0%,#2563eb 100%)"
                   />
                 );
               if (wid === "qonna")

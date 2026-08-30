@@ -2352,14 +2352,67 @@ function OverviewPage({
         </div>
       )}
 
-      {/* ── Generic sector plans (Carraa, Daldala, ATK) ── */}
+      {/* ── Carraa Hojii plan — per-field cards with dynamic sub-columns ── */}
+      {(() => {
+        const plan = dbCarraPlan;
+        const hasPlanData = plan && CARRAA_FIELDS.some((f) =>
+          f.subs.length
+            ? f.subs.some((s) => Number(plan[`${f.key}${s.suffix}`] || 0) > 0)
+            : Number(plan[f.key] || 0) > 0,
+        );
+        return (
+          <div className="mt-6">
+            {hasPlanData ? (
+              <div className="space-y-3">
+                {/* Section header */}
+                <div className="rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                  <div className="px-5 py-3"
+                    style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+                    <p className="text-sm font-semibold text-white">Carraa Hojii Uumuu Karoora</p>
+                    <p className="text-white/60 text-xs mt-0.5">Waggaa {plan?.year} · Waliigala Subcity</p>
+                  </div>
+                </div>
+                {/* One card per field */}
+                {CARRAA_FIELDS.map((f) => (
+                  <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                    <div className="px-5 py-2.5 border-b border-[#f1f5f9] bg-[#f8fafc] flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
+                      <p className="text-sm font-semibold text-[#1e293b]">{f.label}</p>
+                    </div>
+                    <div className={`grid divide-x divide-[#f1f5f9] ${
+                      f.subs.length === 3 ? "grid-cols-3" :
+                      f.subs.length === 2 ? "grid-cols-2" : "grid-cols-1"
+                    }`}>
+                      {f.subs.map((s) => (
+                        <div key={s.suffix} className="px-5 py-3 text-center">
+                          <p className="text-[10px] font-bold text-[#1e40af] uppercase tracking-wide mb-1">{s.label}</p>
+                          <p className="text-xl font-extrabold text-[#1e293b]">
+                            {Number(plan[`${f.key}${s.suffix}`] || 0).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <p className="px-2 text-xs text-[#94a3b8]">
+                  Karoora Aanaa hundaa argachuuf Karoora Waggaa irraa ilaalaa.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-[#eff6ff] flex items-center justify-center mb-2 text-[#1e40af]">
+                  <TargetIcon />
+                </div>
+                <p className="text-[#1e293b] font-semibold text-sm mb-1">Karoora Carraa Hojii Uumuu Hin Jiru</p>
+                <p className="text-[#94a3b8] text-xs">Karoora Waggaa irraa Carraa Hojii Uumuu filadhu.</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Generic sector plans (Daldala, ATK) ── */}
       {[
-        {
-          plan: dbCarraPlan,
-          fields: CARRAA_FIELDS,
-          label: "Carraa Hojii Uumuu",
-          gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
-        },
         {
           plan: dbDaldalaPlan,
           fields: DALDALA_FIELDS_SC,
@@ -3647,28 +3700,47 @@ const GALII_FIELDS = [
   { key: "idilee_qarshii",   label: "Idilee (Qarshii)",          color: "#1e40af" },
 ];
 
+// Each field carries its own subs array: [{suffix, label}]
+// Exact sub-columns per field derived from the official CHUO Excel template:
+// Leenjii              → int, dhi, dub
+// Carraa Hojii Dhaabbii → int, dhi, dub
+// Carraa Hojii Qacarrii → int, dhi, dub
+// Qusannaa Haawaasaa   → int, qarshii
+// Kenna Liqii          → int, mise, qarshii
+// Qusanna Dirqii       → int, mise, qarshii
+// Deebii Liqii Bilchaate → int, qarshii
+// Deebii Liqii Bulee    → int, qarshii
+// Industrii Godoo       → kilaastera, lafa, carraa_hojii
 const CARRAA_FIELDS = [
-  { key: "leenjii", label: "Leenjii", color: "#1e40af" },
-  {
-    key: "carraa_hojii_dhaabbii",
-    label: "Carraa Hojii Dhaabbii",
-    color: "#0f766e",
-  },
-  {
-    key: "carraa_hojii_qacarrii",
-    label: "Carraa Hojii Qacarrii",
-    color: "#7c3aed",
-  },
-  { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa", color: "#475569" },
-  { key: "qusanna_dirqii", label: "Qusanna Dirqii", color: "#64748b" },
-  { key: "kenna_liqii", label: "Kenna Liqii", color: "#b45309" },
-  {
-    key: "deebii_liqii_bilchaate",
-    label: "Deebii Liqii Bilchaate",
-    color: "#78350f",
-  },
-  { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee", color: "#dc2626" },
-  { key: "industrii_godoo", label: "Industrii Godoo", color: "#0369a1" },
+  { key: "leenjii",                label: "Leenjii",                color: "#1e40af",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { key: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { key: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
+  { key: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { key: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { key: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { key: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
+    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
+  { key: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
+    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
+];
+// CARRAA_SUBS — all possible suffixes for reference
+const CARRAA_SUBS = [
+  { suffix: "_int", label: "Int" },
+  { suffix: "_dhi", label: "Dhi" },
+  { suffix: "_dub", label: "Dub" },
+  { suffix: "_qarshii", label: "Qarshii" },
+  { suffix: "_mise", label: "Mise" },
+  { suffix: "_kilaastera", label: "Kilaastera" },
+  { suffix: "_lafa", label: "Lafa (Hek)" },
+  { suffix: "_carraa_hojii", label: "Carraa Hojii" },
 ];
 
 const DALDALA_FIELDS_SC = [
@@ -3832,7 +3904,14 @@ const SECTOR_CFG = {
     gradient: "linear-gradient(90deg,#475569 0%,#64748b 100%)",
   },
   carraa: {
-    fields: CARRAA_FIELDS,
+    // Expand CARRAA_FIELDS to a flat list using per-field subs
+    // so ComparisonView, WoredaAnalysisTable, WorkAnalysisRingSection, RankView
+    // all show correct Dhi/Dub for Dhaabbii+Qacarrii and Int for others.
+    fields: CARRAA_FIELDS.flatMap((f) =>
+      f.subs.length
+        ? f.subs.map((s) => ({ key: `${f.key}${s.suffix}`, label: `${f.label} — ${s.label}`, color: f.color }))
+        : [{ key: f.key, label: f.label, color: f.color }],
+    ),
     label: "Carraa Hojii Uumuu",
     color: "#1e40af",
     gradient: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
@@ -4025,8 +4104,199 @@ function GenericSubcityPlanPage({ sector }) {
   );
 }
 
+// ─── Carraa Hojii Subcity Annual Plan Page ───────────────────────────────────
+// Subcity enters per-woreda values for each Carraa Hojii field.
+// Fields with hasSubs:true get three sub-rows: Int (Enterprise), Dhi (Dhiira/Male), Dub (Dubartii/Female).
+// Industrii Godoo has no subs — single value per woreda.
+function CarraaSubcityPlanPage() {
+  // Build empty form keyed by woreda → sub-field keys from CARRAA_FIELDS.subs
+  const emptyWoForms = () =>
+    Object.fromEntries(
+      WOREDAS.map((w) => [
+        w.id,
+        Object.fromEntries(
+          CARRAA_FIELDS.flatMap((f) =>
+            f.subs.length ? f.subs.map((s) => [`${f.key}${s.suffix}`, ""]) : [[f.key, ""]],
+          ),
+        ),
+      ]),
+    );
+
+  const [woredaForms, setWoredaForms] = useState(emptyWoForms());
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const handleField = (wId, key, val) =>
+    setWoredaForms((p) => ({ ...p, [wId]: { ...p[wId], [key]: val } }));
+
+  const hasValues = WOREDAS.some((w) =>
+    Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
+  );
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError("");
+    setSaved(false);
+    const woredaPlans = Object.fromEntries(
+      WOREDAS.map((w) => [
+        w.id,
+        Object.fromEntries(
+          Object.entries(woredaForms[w.id]).map(([k, v]) => [k, Number(v || 0)]),
+        ),
+      ]),
+    );
+    try {
+      await saveSubcityGenericPlan("carraa", woredaPlans);
+      setSaved(true);
+      setWoredaForms(emptyWoForms());
+      setTimeout(() => setSaved(false), 4000);
+    } catch (err) {
+      setSaveError(err?.response?.data?.message || "Failed to save plan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Total per sub-key across all woredas
+  const subTotal = (key) =>
+    WOREDAS.reduce((s, w) => s + Number(woredaForms[w.id][key] || 0), 0);
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Annual Plan</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Karoora Aanaa hundaaf Qopha'ee Galchi — Carraa Hojii Uumuu
+        </p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <PlanUnlockBanner sector="carraa" />
+
+        {/* One table per field — each has woreda columns with sub-column inputs */}
+        {CARRAA_FIELDS.map((f) => {
+          const maxSubs = f.subs.length || 1;
+          return (
+            <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+              {/* Field header */}
+              <div className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2"
+                style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-white/70" />
+                <p className="text-sm font-semibold text-white">{f.label}</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    {/* Row 1: woreda names */}
+                    <tr className="bg-[#f8fafc]">
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-[#64748b] uppercase tracking-wide border-r border-b border-[#e2e8f0] min-w-[130px]">
+                        Gosa
+                      </th>
+                      {WOREDAS.map((w) => (
+                        <th key={w.id} colSpan={maxSubs}
+                          className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-b border-r border-[#e2e8f0]">
+                          {w.name}
+                        </th>
+                      ))}
+                      <th className="text-center px-3 py-2 text-xs font-semibold text-[#0f172a] uppercase tracking-wide bg-[#eff6ff] border-b border-[#e2e8f0] min-w-[90px]">
+                        Waliigala
+                      </th>
+                    </tr>
+                    {/* Row 2: sub-col labels */}
+                    {f.subs.length > 0 && (
+                      <tr className="bg-[#f8fafc]">
+                        <th className="border-r border-b border-[#e2e8f0]" />
+                        {WOREDAS.map((w) =>
+                          f.subs.map((s, si) => (
+                            <th key={`${w.id}-${s.suffix}`}
+                              className={`text-center px-2 py-1 text-[10px] font-bold text-[#1e40af] uppercase tracking-wide border-b border-[#e2e8f0] min-w-[72px] ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}>
+                              {s.label}
+                            </th>
+                          ))
+                        )}
+                        <th className="bg-[#eff6ff] border-b border-[#e2e8f0]" />
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-[#f8fafc]">
+                      <td className="px-4 py-2.5 font-medium text-[#475569] text-xs border-r border-[#e2e8f0]">
+                        Karoora
+                      </td>
+                      {WOREDAS.map((w) => {
+                        if (!f.subs.length) {
+                          // Industrii Godoo — shouldn't reach here but guard
+                          return (
+                            <td key={w.id} colSpan={1} className="px-2 py-2 border-r border-[#e2e8f0]">
+                              <input type="number" min="0"
+                                value={woredaForms[w.id][f.key] ?? ""}
+                                onChange={(e) => handleField(w.id, f.key, e.target.value)}
+                                placeholder="0"
+                                className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+                              />
+                            </td>
+                          );
+                        }
+                        return f.subs.map((s, si) => {
+                          const subKey = `${f.key}${s.suffix}`;
+                          return (
+                            <td key={`${w.id}-${s.suffix}`}
+                              className={`px-2 py-2 ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}>
+                              <input type="number" min="0"
+                                value={woredaForms[w.id][subKey] ?? ""}
+                                onChange={(e) => handleField(w.id, subKey, e.target.value)}
+                                placeholder="0"
+                                className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+                              />
+                            </td>
+                          );
+                        });
+                      })}
+                      {/* Waliigala: sum of all sub-keys across all woredas */}
+                      <td className="px-3 py-2.5 text-right font-bold text-[#0f172a] bg-[#eff6ff] text-sm">
+                        {f.subs.length
+                          ? f.subs.reduce((acc, s) =>
+                              acc + WOREDAS.reduce((wa, w) => wa + Number(woredaForms[w.id][`${f.key}${s.suffix}`] || 0), 0), 0
+                            ).toLocaleString()
+                          : WOREDAS.reduce((wa, w) => wa + Number(woredaForms[w.id][f.key] || 0), 0).toLocaleString()
+                        }
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <div>
+            {saved && (
+              <p className="flex items-center gap-2 text-[#0f766e] text-sm font-semibold">
+                <CheckIcon /> Karoora Carraa Hojii Uumuu Aanaa hundaaf Olkaa'ame.
+              </p>
+            )}
+            {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
+            {!saved && !saveError && (
+              <p className="text-[#94a3b8] text-xs">Karoora Carraa Hojii duraani ni bakka bu'a.</p>
+            )}
+          </div>
+          <button type="submit" disabled={saving || !hasValues}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50 bg-[#1e40af] hover:bg-[#1e3a8a]">
+            {saving ? (
+              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving...</>
+            ) : (
+              <><CheckIcon /> Karoora Olkaa'i</>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ─── Galii Sassabu Subcity Annual Plan Page ───────────────────────────────────
-// Subcity enters each woreda's KG + Qarshii per Mana Qophessaa sub-item + Idilee directly.
 // No percentage distribution — direct per-woreda entry.
 function GaliiSubcityPlanPage() {
   const WOREDAS_LIST = WOREDAS;
@@ -6026,17 +6296,12 @@ const SECTOR_PRINT_FIELDS = {
     { key: "sukkaara", label: "Sukkaara (KG)" },
     { key: "zayitii", label: "Zayitii (Litre)" },
   ],
-  carraaHojii: [
-    { key: "leenjii", label: "Leenjii" },
-    { key: "carraa_hojii_dhaabbii", label: "Carraa Hojii Dhaabbii" },
-    { key: "carraa_hojii_qacarrii", label: "Carraa Hojii Qacarrii" },
-    { key: "qusannaa_haawaasaa", label: "Qusannaa Haawaasaa" },
-    { key: "qusanna_dirqii", label: "Qusanna Dirqii" },
-    { key: "kenna_liqii", label: "Kenna Liqii" },
-    { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate" },
-    { key: "deebii_liqii_bulee", label: "Deebii Liqii Bulee" },
-    { key: "industrii_godoo", label: "Industrii Godoo" },
-  ],
+  // Carraa Hojii: Dhaabbii+Qacarrii → Dhi/Dub; others → Int; Industrii Godoo plain
+  carraaHojii: CARRAA_FIELDS.flatMap((f) =>
+    f.subs.length
+      ? f.subs.map((s) => ({ key: `${f.key}${s.suffix}`, label: `${f.label} — ${s.label}` }))
+      : [{ key: f.key, label: f.label }],
+  ),
   qonna: [
     { key: "furdisa_qophi_lafa", label: "Furdisa - Qophi Lafa" },
     { key: "furdisa_lakk_sheedii", label: "Furdisa - Lakk Sheedii" },
@@ -8075,8 +8340,9 @@ export default function SubCityDashboard({ user: propUser }) {
       if (activePlanSector === "qonna") return <QonnaPlanPage />;
       if (activePlanSector === "galii")
         return <GaliiSubcityPlanPage />;
+      if (activePlanSector === "carraa")
+        return <CarraaSubcityPlanPage />;
       if (
-        activePlanSector === "carraa" ||
         activePlanSector === "daldala" ||
         activePlanSector === "atk"
       )

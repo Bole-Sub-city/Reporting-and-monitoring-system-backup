@@ -680,15 +680,24 @@ const GENERIC_SECTOR_WEREDA_TABLE = {
 // This prevents cross-sector field pollution when form sends extra keys.
 const GENERIC_SECTOR_FIELDS = {
   carraa: [
-    "leenjii",
-    "carraa_hojii_dhaabbii",
-    "carraa_hojii_qacarrii",
-    "qusannaa_haawaasaa",
-    "qusanna_dirqii",
-    "kenna_liqii",
-    "deebii_liqii_bilchaate",
-    "deebii_liqii_bulee",
-    "industrii_godoo",
+    // Leenjii: int, dhi, dub
+    "leenjii_int", "leenjii_dhi", "leenjii_dub",
+    // Carraa Hojii Dhaabbii: int, dhi, dub
+    "carraa_hojii_dhaabbii_int", "carraa_hojii_dhaabbii_dhi", "carraa_hojii_dhaabbii_dub",
+    // Carraa Hojii Qacarrii: int, dhi, dub
+    "carraa_hojii_qacarrii_int", "carraa_hojii_qacarrii_dhi", "carraa_hojii_qacarrii_dub",
+    // Qusannaa Haawaasaa: int, qarshii
+    "qusannaa_haawaasaa_int", "qusannaa_haawaasaa_qarshii",
+    // Kenna Liqii: int, mise, qarshii
+    "kenna_liqii_int", "kenna_liqii_mise", "kenna_liqii_qarshii",
+    // Qusanna Dirqii: int, mise, qarshii
+    "qusanna_dirqii_int", "qusanna_dirqii_mise", "qusanna_dirqii_qarshii",
+    // Deebii Liqii Bilchaate: int, qarshii
+    "deebii_liqii_bilchaate_int", "deebii_liqii_bilchaate_qarshii",
+    // Deebii Liqii Bulee: int, qarshii
+    "deebii_liqii_bulee_int", "deebii_liqii_bulee_qarshii",
+    // Industrii Godoo: kilaastera, lafa, carraa_hojii
+    "industrii_godoo_kilaastera", "industrii_godoo_lafa", "industrii_godoo_carraa_hojii",
   ],
   daldala: [
     "galmee_haraa",

@@ -74,15 +74,24 @@ const SECTOR_REPORT_FIELDS = {
     "qurxummii_lakk_qurxummii",
   ],
   carraa: [
-    "leenjii",
-    "carraa_hojii_dhaabbii",
-    "carraa_hojii_qacarrii",
-    "qusannaa_haawaasaa",
-    "qusanna_dirqii",
-    "kenna_liqii",
-    "deebii_liqii_bilchaate",
-    "deebii_liqii_bulee",
-    "industrii_godoo",
+    // Leenjii: int, dhi, dub
+    "leenjii_int", "leenjii_dhi", "leenjii_dub",
+    // Carraa Hojii Dhaabbii: int, dhi, dub
+    "carraa_hojii_dhaabbii_int", "carraa_hojii_dhaabbii_dhi", "carraa_hojii_dhaabbii_dub",
+    // Carraa Hojii Qacarrii: int, dhi, dub
+    "carraa_hojii_qacarrii_int", "carraa_hojii_qacarrii_dhi", "carraa_hojii_qacarrii_dub",
+    // Qusannaa Haawaasaa: int, qarshii
+    "qusannaa_haawaasaa_int", "qusannaa_haawaasaa_qarshii",
+    // Kenna Liqii: int, mise, qarshii
+    "kenna_liqii_int", "kenna_liqii_mise", "kenna_liqii_qarshii",
+    // Qusanna Dirqii: int, mise, qarshii
+    "qusanna_dirqii_int", "qusanna_dirqii_mise", "qusanna_dirqii_qarshii",
+    // Deebii Liqii Bilchaate: int, qarshii
+    "deebii_liqii_bilchaate_int", "deebii_liqii_bilchaate_qarshii",
+    // Deebii Liqii Bulee: int, qarshii
+    "deebii_liqii_bulee_int", "deebii_liqii_bulee_qarshii",
+    // Industrii Godoo: kilaastera, lafa, carraa_hojii
+    "industrii_godoo_kilaastera", "industrii_godoo_lafa", "industrii_godoo_carraa_hojii",
   ],
   daldala: [
     "galmee_haraa",
@@ -208,15 +217,30 @@ const SECTOR_PLAN_FIELDS = {
       "qurxummii_lakk_qurxummii_waliigalaa_target",
   },
   carraa: {
-    leenjii: "leenjii_target",
-    carraa_hojii_dhaabbii: "carraa_hojii_dhaabbii_target",
-    carraa_hojii_qacarrii: "carraa_hojii_qacarrii_target",
-    qusannaa_haawaasaa: "qusannaa_haawaasaa_target",
-    qusanna_dirqii: "qusanna_dirqii_target",
-    kenna_liqii: "kenna_liqii_target",
-    deebii_liqii_bilchaate: "deebii_liqii_bilchaate_target",
-    deebii_liqii_bulee: "deebii_liqii_bulee_target",
-    industrii_godoo: "industrii_godoo_target",
+    leenjii_int:                    "leenjii_int_target",
+    leenjii_dhi:                    "leenjii_dhi_target",
+    leenjii_dub:                    "leenjii_dub_target",
+    carraa_hojii_dhaabbii_int:      "carraa_hojii_dhaabbii_int_target",
+    carraa_hojii_dhaabbii_dhi:      "carraa_hojii_dhaabbii_dhi_target",
+    carraa_hojii_dhaabbii_dub:      "carraa_hojii_dhaabbii_dub_target",
+    carraa_hojii_qacarrii_int:      "carraa_hojii_qacarrii_int_target",
+    carraa_hojii_qacarrii_dhi:      "carraa_hojii_qacarrii_dhi_target",
+    carraa_hojii_qacarrii_dub:      "carraa_hojii_qacarrii_dub_target",
+    qusannaa_haawaasaa_int:         "qusannaa_haawaasaa_int_target",
+    qusannaa_haawaasaa_qarshii:     "qusannaa_haawaasaa_qarshii_target",
+    kenna_liqii_int:                "kenna_liqii_int_target",
+    kenna_liqii_mise:               "kenna_liqii_mise_target",
+    kenna_liqii_qarshii:            "kenna_liqii_qarshii_target",
+    qusanna_dirqii_int:             "qusanna_dirqii_int_target",
+    qusanna_dirqii_mise:            "qusanna_dirqii_mise_target",
+    qusanna_dirqii_qarshii:         "qusanna_dirqii_qarshii_target",
+    deebii_liqii_bilchaate_int:     "deebii_liqii_bilchaate_int_target",
+    deebii_liqii_bilchaate_qarshii: "deebii_liqii_bilchaate_qarshii_target",
+    deebii_liqii_bulee_int:         "deebii_liqii_bulee_int_target",
+    deebii_liqii_bulee_qarshii:     "deebii_liqii_bulee_qarshii_target",
+    industrii_godoo_kilaastera:     "industrii_godoo_kilaastera_target",
+    industrii_godoo_lafa:           "industrii_godoo_lafa_target",
+    industrii_godoo_carraa_hojii:   "industrii_godoo_carraa_hojii_target",
   },
   daldala: {
     galmee_haraa: "galmee_haraa_target",

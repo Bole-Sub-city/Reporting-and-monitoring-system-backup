@@ -186,53 +186,67 @@ const getUserReports = async (req, res) => {
 };
 
 // Carraa Hojii Uummuu report
+// Carraa Hojii Uummuu report — exact sub-columns from the official CHUO template
 const submitCarraaHojiiReport = async (req, res) => {
   try {
     const {
-      report_date,
-      report_type,
-      leenjii,
-      carraa_hojii_dhaabbii,
-      carraa_hojii_qacarrii,
-      qusannaa_haawaasaa,
-      qusanna_dirqii,
-      kenna_liqii,
-      deebii_liqii_bilchaate,
-      deebii_liqii_bulee,
-      industrii_godoo,
-      yaada_gudinaa,
+      report_date, report_type, yaada_gudinaa,
+      // Leenjii: int, dhi, dub
+      leenjii_int, leenjii_dhi, leenjii_dub,
+      // Carraa Hojii Dhaabbii: int, dhi, dub
+      carraa_hojii_dhaabbii_int, carraa_hojii_dhaabbii_dhi, carraa_hojii_dhaabbii_dub,
+      // Carraa Hojii Qacarrii: int, dhi, dub
+      carraa_hojii_qacarrii_int, carraa_hojii_qacarrii_dhi, carraa_hojii_qacarrii_dub,
+      // Qusannaa Haawaasaa: int, qarshii
+      qusannaa_haawaasaa_int, qusannaa_haawaasaa_qarshii,
+      // Kenna Liqii: int, mise, qarshii
+      kenna_liqii_int, kenna_liqii_mise, kenna_liqii_qarshii,
+      // Qusanna Dirqii: int, mise, qarshii
+      qusanna_dirqii_int, qusanna_dirqii_mise, qusanna_dirqii_qarshii,
+      // Deebii Liqii Bilchaate: int, qarshii
+      deebii_liqii_bilchaate_int, deebii_liqii_bilchaate_qarshii,
+      // Deebii Liqii Bulee: int, qarshii
+      deebii_liqii_bulee_int, deebii_liqii_bulee_qarshii,
+      // Industrii Godoo: kilaastera, lafa (hek), carraa_hojii
+      industrii_godoo_kilaastera, industrii_godoo_lafa, industrii_godoo_carraa_hojii,
     } = req.body;
 
     const lock = await checkSubmitLock(req.user.id, "carraa", report_date);
     if (lock) return res.status(lock.status).json({ message: lock.message });
 
-    const { error } = await supabase.from("carraa_hojii_uumuu").insert([
-      {
-        user_id: req.user.id,
-        username: req.user.username,
-        role: req.user.role,
-        report_date,
-        report_type,
-        leenjii,
-        carraa_hojii_dhaabbii,
-        carraa_hojii_qacarrii,
-        qusannaa_haawaasaa,
-        qusanna_dirqii,
-        kenna_liqii,
-        deebii_liqii_bilchaate,
-        deebii_liqii_bulee,
-        industrii_godoo,
-        yaada_gudinaa,
-      },
-    ]);
+    const { error } = await supabase.from("carraa_hojii_uumuu").insert([{
+      user_id:    req.user.id,
+      username:   req.user.username,
+      role:       req.user.role,
+      report_date, report_type, yaada_gudinaa,
+      leenjii_int:                    Number(leenjii_int || 0),
+      leenjii_dhi:                    Number(leenjii_dhi || 0),
+      leenjii_dub:                    Number(leenjii_dub || 0),
+      carraa_hojii_dhaabbii_int:      Number(carraa_hojii_dhaabbii_int || 0),
+      carraa_hojii_dhaabbii_dhi:      Number(carraa_hojii_dhaabbii_dhi || 0),
+      carraa_hojii_dhaabbii_dub:      Number(carraa_hojii_dhaabbii_dub || 0),
+      carraa_hojii_qacarrii_int:      Number(carraa_hojii_qacarrii_int || 0),
+      carraa_hojii_qacarrii_dhi:      Number(carraa_hojii_qacarrii_dhi || 0),
+      carraa_hojii_qacarrii_dub:      Number(carraa_hojii_qacarrii_dub || 0),
+      qusannaa_haawaasaa_int:         Number(qusannaa_haawaasaa_int || 0),
+      qusannaa_haawaasaa_qarshii:     Number(qusannaa_haawaasaa_qarshii || 0),
+      kenna_liqii_int:                Number(kenna_liqii_int || 0),
+      kenna_liqii_mise:               Number(kenna_liqii_mise || 0),
+      kenna_liqii_qarshii:            Number(kenna_liqii_qarshii || 0),
+      qusanna_dirqii_int:             Number(qusanna_dirqii_int || 0),
+      qusanna_dirqii_mise:            Number(qusanna_dirqii_mise || 0),
+      qusanna_dirqii_qarshii:         Number(qusanna_dirqii_qarshii || 0),
+      deebii_liqii_bilchaate_int:     Number(deebii_liqii_bilchaate_int || 0),
+      deebii_liqii_bilchaate_qarshii: Number(deebii_liqii_bilchaate_qarshii || 0),
+      deebii_liqii_bulee_int:         Number(deebii_liqii_bulee_int || 0),
+      deebii_liqii_bulee_qarshii:     Number(deebii_liqii_bulee_qarshii || 0),
+      industrii_godoo_kilaastera:     Number(industrii_godoo_kilaastera || 0),
+      industrii_godoo_lafa:           Number(industrii_godoo_lafa || 0),
+      industrii_godoo_carraa_hojii:   Number(industrii_godoo_carraa_hojii || 0),
+    }]);
 
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
-
-    res
-      .status(201)
-      .json({ message: "Carraa Hojii Uumuu report submitted successfully." });
+    if (error) return res.status(400).json({ message: error.message });
+    res.status(201).json({ message: "Carraa Hojii Uumuu report submitted successfully." });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
