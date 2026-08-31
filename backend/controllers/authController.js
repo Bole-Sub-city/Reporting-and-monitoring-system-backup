@@ -77,11 +77,19 @@ const login = async (req, res) => {
       });
     }
 
-    const { data: user } = await supabase
+    const { data: user, error: dbError } = await supabase
       .from("users")
       .select("*")
       .eq("username", username)
       .maybeSingle();
+
+    // Supabase couldn't be reached (no internet / DNS failure)
+    if (dbError) {
+      return res.status(503).json({
+        message:
+          "No connection to the database. Please check your internet connection and try again.",
+      });
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -311,7 +319,9 @@ const updateMyUsername = async (req, res) => {
     }
     const trimmed = username.trim();
     if (trimmed.length < 3) {
-      return res.status(400).json({ message: "Username must be at least 3 characters." });
+      return res
+        .status(400)
+        .json({ message: "Username must be at least 3 characters." });
     }
 
     // Make sure the username isn't already taken by someone else
@@ -830,11 +840,19 @@ const loginWithActiveCheck = async (req, res) => {
       });
     }
 
-    const { data: user } = await supabase
+    const { data: user, error: dbError } = await supabase
       .from("users")
       .select("*")
       .eq("username", username)
       .maybeSingle();
+
+    // Supabase couldn't be reached (no internet / DNS failure)
+    if (dbError) {
+      return res.status(503).json({
+        message:
+          "No connection to the database. Please check your internet connection and try again.",
+      });
+    }
 
     if (!user) {
       return res.status(401).json({
