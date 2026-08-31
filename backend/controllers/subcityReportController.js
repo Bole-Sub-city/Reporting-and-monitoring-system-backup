@@ -455,9 +455,14 @@ const getAllWoRedaReports = async (req, res) => {
     const dbFields = SECTOR_REPORT_FIELDS[sector];
 
     // Fetch all rows for this sector from all 4 woredas in the date range
+    // For galii we also select madda_galii to enable per-source breakdown
+    const selectCols = sector === "galii"
+      ? `username, madda_galii, ${dbFields.join(", ")}`
+      : `username, ${dbFields.join(", ")}`;
+
     const { data, error } = await supabase
       .from(reportTable)
-      .select(`username, ${dbFields.join(", ")}`)
+      .select(selectCols)
       .in("username", WOREDA_USERNAMES)
       .gte("report_date", from)
       .lte("report_date", to);
@@ -474,7 +479,39 @@ const getAllWoRedaReports = async (req, res) => {
     } else if (sector === "qonna") {
       normalizedActuals = mapQonnaActuals(aggregated);
     } else if (sector === "galii") {
-      normalizedActuals = mapGaliiActuals(aggregated);
+      // Per-source breakdown: group raw rows by username + madda_galii
+      normalizedActuals = { w1: {}, w2: {}, w3: {}, w4: {} };
+      // initialise all source keys to 0 for each woreda
+      for (const wId of ["w1", "w2", "w3", "w4"]) {
+        for (const [, sKey] of Object.entries(GALII_SOURCE_TO_KEY)) {
+          if (sKey === "_idilee") {
+            normalizedActuals[wId]["idilee_qarshii"] = 0;
+          } else {
+            normalizedActuals[wId][`mq_${sKey}_kg`] = 0;
+            normalizedActuals[wId][`mq_${sKey}_qarshii`] = 0;
+          }
+        }
+        normalizedActuals[wId]["mq_total_qarshii"] = 0;
+        normalizedActuals[wId]["baasii"] = 0;
+        normalizedActuals[wId]["kg"] = 0;
+      }
+      for (const row of rows) {
+        const wId = USERNAME_TO_WOREDA_ID[row.username];
+        if (!wId) continue;
+        const src = row.madda_galii ?? "";
+        const sKey = GALII_SOURCE_TO_KEY[src];
+        const qarshii = Number(row.baasii || 0);
+        const kg = Number(row.kg || 0);
+        normalizedActuals[wId]["mq_total_qarshii"] += qarshii;
+        normalizedActuals[wId]["baasii"] += qarshii;
+        normalizedActuals[wId]["kg"] += kg;
+        if (sKey === "_idilee") {
+          normalizedActuals[wId]["idilee_qarshii"] += qarshii;
+        } else if (sKey) {
+          normalizedActuals[wId][`mq_${sKey}_qarshii`] += qarshii;
+          normalizedActuals[wId][`mq_${sKey}_kg`] += kg;
+        }
+      }
     } else {
       // carraa, daldala, atk — DB keys match frontend keys
       normalizedActuals = aggregated;

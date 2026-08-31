@@ -939,7 +939,7 @@ function AnnualPlanSection({ u }) {
             <p className="text-white font-bold text-base">
               Annual Plan {year} <LockIcon />
             </p>
-            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
+            <p className="text-white/60 text-xs mt-0.5">Dubbisu qofa</p>
           </div>
         </div>
         <div className="px-6 py-5">
@@ -1263,7 +1263,7 @@ function PlaceholderSubmit({ title, color, icon: Icon, u, onBack }) {
           ← Back
         </button>
         <h1 className="text-2xl font-bold text-[#1e293b]">
-          {title} Submit Report
+          {title} Gabaasa Galchi
         </h1>
       </div>
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-12 flex flex-col items-center justify-center text-center">
@@ -1432,7 +1432,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
       )}
 
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
       </div>
 
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1601,7 +1601,7 @@ function QonnaSubmitForm({ u, locked, onSubmitSuccess }) {
               className="flex items-center gap-2 bg-[#78350f] hover:bg-[#064e3b] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <SubmitIcon />
-              {saving ? "Submitting..." : "Submit Report"}
+              {saving ? "Galchaa jira..." : "Gabaasa Galchi"}
             </button>
           </div>
         </div>
@@ -1723,7 +1723,7 @@ function QonnaAnnualPlanSection({ u }) {
           <PlanIcon />
           <div>
             <p className="text-white font-bold text-base">Annual Plan {year}</p>
-            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
+            <p className="text-white/60 text-xs mt-0.5">Dubbisu qofa</p>
           </div>
         </div>
 
@@ -2328,7 +2328,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
               <PlanIcon />
               <div>
                 <p className="text-white font-bold text-base">Annual Plan {year}</p>
-                <p className="text-white/60 text-xs mt-0.5">Read-only — assigned by sub-city office</p>
+                <p className="text-white/60 text-xs mt-0.5">Dubbisu qofa — bulchiinsa xiqqaa irraa kenname</p>
               </div>
             </div>
           </div>
@@ -2594,7 +2594,7 @@ function GenericAnnualPlanSection({
           <PlanIcon />
           <div>
             <p className="text-white font-bold text-base">Annual Plan {year}</p>
-            <p className="text-white/60 text-xs mt-0.5">Read-only</p>
+            <p className="text-white/60 text-xs mt-0.5">Dubbisu qofa</p>
           </div>
         </div>
         <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -3247,7 +3247,7 @@ function LockBanner({ sector, reportType, onUnlocked }) {
           >
             <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
           </svg>
-          {requesting ? "Sending..." : "Request Edit Access"}
+          {requesting ? "Ergaa jira..." : "Gulaala Gaafadhu"}
         </button>
       )}
     </div>
@@ -3359,9 +3359,9 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
       )}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            Complete all required fields and submit before the deadline
+            Dirree hunda guutii gabaasi
           </p>
         </div>
       </div>
@@ -3514,7 +3514,7 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
               disabled={locked}
               className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
-              <SubmitIcon /> Submit Report
+              <SubmitIcon /> Gabaasa Galchi
             </button>
           </div>
         </div>
@@ -3614,9 +3614,9 @@ function GenericSubmitForm({
       )}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
           <p className="text-[#64748b] text-sm mt-0.5">
-            {title} complete all required fields
+            {title} Dirree hunda guutii gabaasi
           </p>
         </div>
       </div>
@@ -3705,7 +3705,7 @@ function GenericSubmitForm({
               className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <SubmitIcon />
-              {saving ? "Submitting..." : "Submit Report"}
+              {saving ? "Galchaa jira..." : "Gabaasa Galchi"}
             </button>
           </div>
         </div>
@@ -3785,8 +3785,8 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
       )}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">Carraa Hojii Uumuu — complete all required fields</p>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">Carraa Hojii Uumuu — Dirree hunda guutii gabaasi</p>
         </div>
       </div>
 
@@ -3894,7 +3894,7 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
             <button type="submit" disabled={saving || locked}
               className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5">
               <SubmitIcon />
-              {saving ? "Submitting..." : "Submit Report"}
+              {saving ? "Galchaa jira..." : "Gabaasa Galchi"}
             </button>
           </div>
         </div>
@@ -3982,7 +3982,7 @@ function RevenueSubmitForm({ u }) {
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
 
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
           Galii Sassaabu: Mana Qophessaa KG fi Qarshii Galchi
         </p>
@@ -5772,7 +5772,7 @@ function WorksOverview({ u, onSelect }) {
               onClick={() => onSelect(id)}
               className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
-              <SubmitIcon /> Submit Report
+              <SubmitIcon /> Gabaasa Galchi
             </button>
           </div>
         ))}

@@ -154,8 +154,8 @@ function Home() {
 
         {/* Subtitle — exact original text */}
         <p className="relative z-10 text-white/60 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10 animate-rise">
-          Reporting and monitoring for Sub-city, Wereda, and Section teams 
-          daily, weekly, and monthly submissions in one place.
+          Reporting and monitoring for Adama City Bole Sub-City
+          daily, weekly, and monthly submissions in one place For woredas.
         </p>
 
         {/* CTA buttons — exact original text */}
