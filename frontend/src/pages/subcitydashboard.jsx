@@ -2604,8 +2604,8 @@ function OverviewPage({
       color: "#b45309",
       fields: [
         { col: "kannisaa_qophi_lafa", label: "Qophi Lafa" },
-        { col: "kannisaa_lakk_gaaguraa", label: "Lakk Gaaguraa" },
-        { col: "kannisaa_lakk_kannisaa_waliigalaa", label: "Lakk Kannisaa" },
+        { col: "kannisaa_lakk_gaaguraa", label: "Lakk Sheedii" },
+        { col: "kannisaa_lakk_kannisaa_waliigalaa", label: "Lakk Gaaguraa" },
       ],
     },
     {
@@ -3542,9 +3542,9 @@ const QONNA_ROW_CFG = {
     unitName: "booyyee",
   },
   kannisaa: {
-    houseLabel: "Lakk.Gaaguraa",
-    haLabel: "Hektaara/Gaaguraa",
-    unitLabel: "Lakk.Kannisaa/Gaaguraa",
+    houseLabel: "Lakk.Sheedii",
+    haLabel: "Hektaara/Sheedii",
+    unitLabel: "Lakk.Gaaguraa/Sheedii",
     unitName: "kannisaa",
   },
   qurxummii: {
@@ -4049,8 +4049,8 @@ function QonnaPlanPage() {
                           key: "kannisaa",
                           fields: [
                             { label: "Qophi Lafa" },
+                            { label: "Lakk Sheedii" },
                             { label: "Lakk Gaaguraa" },
-                            { label: "Lakk Kannisaa" },
                           ],
                         },
                         {
@@ -4471,12 +4471,12 @@ const SECTOR_CFG = {
       },
       {
         key: "kannisaa_lakk_gaaguraa",
-        label: "Kannisaa - Gaaguraa",
+        label: "Kannisaa - Lakk Sheedii",
         color: "#b45309",
       },
       {
         key: "kannisaa_lakk_kannisaa_waliigalaa",
-        label: "Kannisaa - Lakk Kannisaa",
+        label: "Kannisaa - Lakk Gaaguraa",
         color: "#b45309",
       },
       // Qurxummii
@@ -7116,10 +7116,10 @@ const SECTOR_PRINT_FIELDS = {
     { key: "booyee_lakk_sheedii", label: "Booyyee - Lakk Sheedii" },
     { key: "booyee_lakk_booyyee_waliigalaa", label: "Booyyee - Lakk Booyyee" },
     { key: "kannisaa_qophi_lafa", label: "Kannisaa - Qophi Lafa" },
-    { key: "kannisaa_lakk_gaaguraa", label: "Kannisaa - Lakk Gaaguraa" },
+    { key: "kannisaa_lakk_gaaguraa", label: "Kannisaa - Lakk Sheedii" },
     {
       key: "kannisaa_lakk_kannisaa_waliigalaa",
-      label: "Kannisaa - Lakk Kannisaa",
+      label: "Kannisaa - Lakk Gaaguraa",
     },
     { key: "qurxummii_qophi_lafa", label: "Qurxummii - Qophi Lafa" },
     { key: "qurxummii_lakk_pondii", label: "Qurxummii - Lakk Pondii" },

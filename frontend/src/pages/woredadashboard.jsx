@@ -775,7 +775,7 @@ const QONNA_FIELDS = [
   },
   {
     name: "kanniissa",
-    label: "Kanniissa (Lakk. Gaaguraa)",
+    label: "Kanniissa (Lakk. Sheedii)",
     required: true,
     type: "number",
   },
@@ -1421,9 +1421,9 @@ const QONNA_HOUSE_LABEL = {
     animalPH: "0",
   },
   kannisaa: {
-    house: "Gaaguraa Ijaaraman",
-    housePH: "Lakk. gaaguraa",
-    animalLabel: "Lakk.Kannisaa ",
+    house: "Sheedii Ijaaraman",
+    housePH: "Lakk. Sheedii",
+    animalLabel: "Lakk.Gaaguraa/Sheedii",
     animalPH: "0",
   },
   qurxummii: {
@@ -1795,10 +1795,10 @@ function QonnaAnnualPlanSection({ u }) {
       color: "#b45309",
       fields: [
         { planKey: "kannisaa_qophi_lafa_target", label: "Qophi Lafa (ha)" },
-        { planKey: "kannisaa_lakk_gaaguraa_target", label: "Lakk Gaaguraa" },
+        { planKey: "kannisaa_lakk_gaaguraa_target", label: "Lakk Sheedii" },
         {
           planKey: "kannisaa_lakk_kannisaa_waliigalaa_target",
-          label: "Lakk Kannisaa Waliigalaa",
+          label: "Lakk Gaaguraa Waliigalaa",
         },
       ],
     },
@@ -1947,10 +1947,10 @@ const QONNA_ANALYSIS_CATS = [
     color: "#b45309",
     fields: [
       { key: "kannisaa_qophi_lafa", label: "Lafa Qophaawe (ha)", unit: "ha" },
-      { key: "kannisaa_lakk_gaaguraa", label: "Gaaguraa Ijaaraman", unit: "" },
+      { key: "kannisaa_lakk_gaaguraa", label: "Sheedii Ijaaraman", unit: "" },
       {
         key: "kannisaa_lakk_kannisaa_waliigalaa",
-        label: "Lakk Kannisaa",
+        label: "Lakk Gaaguraa",
         unit: "",
       },
     ],
@@ -4900,7 +4900,7 @@ const SECTOR_PRINT_FIELDS = {
     { key: "kannisaa_bakka_qophaawe", label: "Kannisaa - Bakka Qophaawe" },
     {
       key: "kannisaa_gaaguraa_ijaaraman",
-      label: "Kannisaa - Gaaguraa Ijaaraman",
+      label: "Kannisaa - Sheedii Ijaaraman",
     },
     { key: "kannisaa_lakk_kannisaa", label: "Kannisaa - Lakk Kannisaa" },
     { key: "qurxummii_bakka_qophaawe", label: "Qurxummii - Bakka Qophaawe" },
