@@ -999,6 +999,405 @@ function PlanUnlockBanner({ sector }) {
   );
 }
 
+// ─── Daldala A — Subcity-only submit form and analysis ───────────────────────
+const DALDALA_A_PERIODS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "annual", label: "Annual" },
+];
+
+function DaldalASubmitForm() {
+  const [reportType, setReportType] = useState("Daily Report (Gabaasa Guyyaa)");
+  const [reportDate, setReportDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [count, setCount] = useState(""); // user enters count
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const storedBirr = Number(count || 0) * 17400;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!count || Number(count) <= 0) {
+      setError("Enter a valid count greater than 0.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const apiInst = (await import("../api/api")).default;
+      await apiInst.post(
+        "/subcity/daldala-a",
+        {
+          report_date: reportDate,
+          report_type: reportType,
+          lakk_daldala_a: Number(count),
+          birr_daldala_a: storedBirr,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
+      setSuccess(true);
+      setCount("");
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to submit report.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1e293b]">Daldala A</h1>
+        <p className="text-[#64748b] text-sm mt-0.5">
+          Submit Daldala A report. Count is stored as count × 17,400 Birr.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
+        {/* Report type */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4">
+          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-2">
+            Report Type
+          </label>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          >
+            {[
+              "Daily Report (Gabaasa Guyyaa)",
+              "Weekly Report (Gabaasa Torban)",
+              "Monthly Report (Gabaasa Ji'aa)",
+            ].map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4">
+          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-2">
+            Report Date
+          </label>
+          <input
+            type="date"
+            value={reportDate}
+            onChange={(e) => setReportDate(e.target.value)}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          />
+        </div>
+
+        {/* Count input */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-5">
+          <div
+            className="px-5 py-3 -mx-5 -mt-5 mb-5 rounded-t-xl border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
+            }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Daldala A (×17,400)
+            </p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Enter count — stored as count × 17,400 Birr
+            </p>
+          </div>
+
+          <label className="block text-sm font-medium text-[#334155] mb-1.5">
+            Lakk Daldala A <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            min="1"
+            value={count}
+            onChange={(e) => {
+              setCount(e.target.value);
+              setError("");
+            }}
+            placeholder="0"
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          />
+          {Number(count) > 0 && (
+            <p className="text-xs text-[#64748b] mt-1.5">
+              ={" "}
+              <span className="font-semibold text-[#0f172a]">
+                {storedBirr.toLocaleString()} Birr
+              </span>{" "}
+              will be stored
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#dc2626] text-sm">
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="flex items-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-3 text-[#166534] text-sm">
+            <CheckIcon /> Report submitted successfully.
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={submitting || !count}
+            className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+          >
+            {submitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />{" "}
+                Submitting...
+              </>
+            ) : (
+              <>
+                <CheckIcon /> Submit Report
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function DaldalAAnalysisPage() {
+  const [period, setPeriod] = useState("monthly");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const authHdr = {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    import("../api/api").then(({ default: apiInst }) =>
+      apiInst
+        .get(`/subcity/daldala-a?period=${period}`, authHdr)
+        .then((res) => setData(res.data))
+        .catch((err) =>
+          setError(friendlyError(err, "Failed to load Daldala A data.")),
+        )
+        .finally(() => setLoading(false)),
+    );
+  }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const periodLabel =
+    DALDALA_A_PERIODS.find((p) => p.value === period)?.label ?? "";
+  const ACCENT = "#0f172a";
+
+  const partitionDaldalA = (annual, p) => {
+    if (!annual) return 0;
+    const d = { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 };
+    return Math.round(annual / (d[p] ?? 1));
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">
+            Daldala A — Work Analysis
+          </h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Subcity Daldala A performance vs annual plan.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
+          <AnalysisIcon />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {DALDALA_A_PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#dbeafe] border-t-[#0f172a] rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+          {error}
+        </div>
+      ) : (
+        <>
+          {/* Banner */}
+          <div className="mb-5 bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span className="text-[#0f172a] text-xs font-bold uppercase tracking-wide">
+              {periodLabel} View
+            </span>
+            <span className="text-[#0f172a] text-xs">
+              — Targets partitioned from annual plan
+            </span>
+          </div>
+
+          {/* Ring charts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+            {[
+              {
+                key: "lakk_daldala_a",
+                label: "Lakk Daldala A (Birr)",
+                color: ACCENT,
+              },
+              {
+                key: "birr_daldala_a",
+                label: "Birr Daldala A",
+                color: "#065f46",
+              },
+            ].map(({ key, label, color }) => {
+              const annual = key === "lakk_daldala_a" ? data?.target || 0 : 0;
+              const pt = partitionDaldalA(annual, period);
+              const ac = data?.actuals?.[key] ?? 0;
+              const acYtd = data?.actualsYtd?.[key] ?? 0;
+              return (
+                <RingChart
+                  key={key}
+                  actual={ac}
+                  target={pt}
+                  color={color}
+                  label={label}
+                  description=""
+                />
+              );
+            })}
+          </div>
+
+          {/* Summary table */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#f1f5f9] bg-[#f8fafc]">
+              <p className="text-sm font-semibold text-[#334155]">
+                {periodLabel} Summary Table
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#f1f5f9]">
+                    {[
+                      "Metric",
+                      "Annual Target",
+                      "Period Target",
+                      "Actual",
+                      "% Complete",
+                      "Remaining",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    {
+                      key: "lakk_daldala_a",
+                      label: "Lakk Daldala A (Birr)",
+                      useTarget: true,
+                      color: ACCENT,
+                    },
+                    {
+                      key: "birr_daldala_a",
+                      label: "Birr Daldala A",
+                      useTarget: false,
+                      color: "#065f46",
+                    },
+                  ].map(({ key, label, useTarget, color }) => {
+                    const annual = useTarget ? data?.target || 0 : 0;
+                    const pt = partitionDaldalA(annual, period);
+                    const ac = data?.actuals?.[key] ?? 0;
+                    const acYtd = data?.actualsYtd?.[key] ?? 0;
+                    const pct = pt > 0 ? Math.round((ac / pt) * 100) : 0;
+                    const elapsed = data?.daysElapsed ?? 1;
+                    const cumul = Math.round((elapsed / 365) * annual);
+                    const remaining = Math.max(cumul - acYtd, 0);
+                    return (
+                      <tr
+                        key={key}
+                        className="border-b border-gray-50 hover:bg-[#f8fafc]"
+                      >
+                        <td className="px-5 py-3 font-medium text-[#1e293b]">
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                            {label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[#64748b]">
+                          {annual.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 text-[#64748b]">
+                          {pt.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 font-semibold text-[#1e293b]">
+                          {ac.toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span
+                            className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                            style={{ backgroundColor: `${color}22`, color }}
+                          >
+                            {pct}%
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          {remaining > 0 ? (
+                            <span className="text-xs font-semibold text-[#dc2626]">
+                              {remaining.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-semibold text-[#d97706]">
+                              Done
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── History helpers ──────────────────────────────────────────────────────────
 
 /** fiscal year that starts on July 8 of `y` */
@@ -2504,39 +2903,67 @@ function OverviewPage({
       {/* ── Carraa Hojii plan — per-field cards with dynamic sub-columns ── */}
       {(() => {
         const plan = dbCarraPlan;
-        const hasPlanData = plan && CARRAA_FIELDS.some((f) =>
-          f.subs.length
-            ? f.subs.some((s) => Number(plan[`${f.key}${s.suffix}`] || 0) > 0)
-            : Number(plan[f.key] || 0) > 0,
-        );
+        const hasPlanData =
+          plan &&
+          CARRAA_FIELDS.some((f) =>
+            f.subs.length
+              ? f.subs.some((s) => Number(plan[`${f.key}${s.suffix}`] || 0) > 0)
+              : Number(plan[f.key] || 0) > 0,
+          );
         return (
           <div className="mt-6">
             {hasPlanData ? (
               <div className="space-y-3">
                 {/* Section header */}
                 <div className="rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-                  <div className="px-5 py-3"
-                    style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
-                    <p className="text-sm font-semibold text-white">Carraa Hojii Uumuu Karoora</p>
-                    <p className="text-white/60 text-xs mt-0.5">Waggaa {plan?.year} · Waliigala Subcity</p>
+                  <div
+                    className="px-5 py-3"
+                    style={{
+                      background:
+                        "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+                    }}
+                  >
+                    <p className="text-sm font-semibold text-white">
+                      Carraa Hojii Uumuu Karoora
+                    </p>
+                    <p className="text-white/60 text-xs mt-0.5">
+                      Waggaa {plan?.year} · Waliigala Subcity
+                    </p>
                   </div>
                 </div>
                 {/* One card per field */}
                 {CARRAA_FIELDS.map((f) => (
-                  <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                  <div
+                    key={f.key}
+                    className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm"
+                  >
                     <div className="px-5 py-2.5 border-b border-[#f1f5f9] bg-[#f8fafc] flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
-                      <p className="text-sm font-semibold text-[#1e293b]">{f.label}</p>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: f.color }}
+                      />
+                      <p className="text-sm font-semibold text-[#1e293b]">
+                        {f.label}
+                      </p>
                     </div>
-                    <div className={`grid divide-x divide-[#f1f5f9] ${
-                      f.subs.length === 3 ? "grid-cols-3" :
-                      f.subs.length === 2 ? "grid-cols-2" : "grid-cols-1"
-                    }`}>
+                    <div
+                      className={`grid divide-x divide-[#f1f5f9] ${
+                        f.subs.length === 3
+                          ? "grid-cols-3"
+                          : f.subs.length === 2
+                            ? "grid-cols-2"
+                            : "grid-cols-1"
+                      }`}
+                    >
                       {f.subs.map((s) => (
                         <div key={s.suffix} className="px-5 py-3 text-center">
-                          <p className="text-[10px] font-bold text-[#1e40af] uppercase tracking-wide mb-1">{s.label}</p>
+                          <p className="text-[10px] font-bold text-[#1e40af] uppercase tracking-wide mb-1">
+                            {s.label}
+                          </p>
                           <p className="text-xl font-extrabold text-[#1e293b]">
-                            {Number(plan[`${f.key}${s.suffix}`] || 0).toLocaleString()}
+                            {Number(
+                              plan[`${f.key}${s.suffix}`] || 0,
+                            ).toLocaleString()}
                           </p>
                         </div>
                       ))}
@@ -2552,8 +2979,12 @@ function OverviewPage({
                 <div className="w-12 h-12 rounded-full bg-[#eff6ff] flex items-center justify-center mb-2 text-[#1e40af]">
                   <TargetIcon />
                 </div>
-                <p className="text-[#1e293b] font-semibold text-sm mb-1">Karoora Carraa Hojii Uumuu Hin Jiru</p>
-                <p className="text-[#94a3b8] text-xs">Karoora Waggaa irraa Carraa Hojii Uumuu filadhu.</p>
+                <p className="text-[#1e293b] font-semibold text-sm mb-1">
+                  Karoora Carraa Hojii Uumuu Hin Jiru
+                </p>
+                <p className="text-[#94a3b8] text-xs">
+                  Karoora Waggaa irraa Carraa Hojii Uumuu filadhu.
+                </p>
               </div>
             )}
           </div>
@@ -3728,36 +4159,87 @@ function QonnaPlanPage() {
 // ─── Generic sector field definitions ────────────────────────────────────────
 // Mana Qophessaa sub-items shared across plan + report forms
 const SC_MANA_QOPHESSAA_SOURCES = [
-  { id: "liizii",               label: "Liizii",               key: "liizii" },
-  { id: "kiraa_lafaa",          label: "Kiraa Lafaa",          key: "kiraa_lafaa" },
-  { id: "kiraa_gare_liizii",    label: "Kiraa gare Liizii",    key: "kiraa_gare_liizii" },
-  { id: "baaxii_fi_gooroo",     label: "Baaxii fi Gooroo",     key: "baaxii_fi_gooroo" },
-  { id: "kiraa_mana_daldalaa",  label: "Kiraa Mana Daldalaa",  key: "kiraa_mana_daldalaa" },
-  { id: "kiraa_mana_jireenyaa", label: "Kiraa Mana Jireenyaa", key: "kiraa_mana_jireenyaa" },
-  { id: "other",                label: "Other",                key: "other" },
+  { id: "liizii", label: "Liizii", key: "liizii" },
+  { id: "kiraa_lafaa", label: "Kiraa Lafaa", key: "kiraa_lafaa" },
+  {
+    id: "kiraa_gare_liizii",
+    label: "Kiraa gare Liizii",
+    key: "kiraa_gare_liizii",
+  },
+  {
+    id: "baaxii_fi_gooroo",
+    label: "Baaxii fi Gooroo",
+    key: "baaxii_fi_gooroo",
+  },
+  {
+    id: "kiraa_mana_daldalaa",
+    label: "Kiraa Mana Daldalaa",
+    key: "kiraa_mana_daldalaa",
+  },
+  {
+    id: "kiraa_mana_jireenyaa",
+    label: "Kiraa Mana Jireenyaa",
+    key: "kiraa_mana_jireenyaa",
+  },
+  { id: "other", label: "Other", key: "other" },
 ];
 
 // For analysis/comparison ring-chart views — full per-source breakdown
 const GALII_FIELDS = [
   // Mana Qophessaa sub-items
-  { key: "mq_liizii_kg",                  label: "Liizii KG",               color: "#0f766e" },
-  { key: "mq_liizii_qarshii",             label: "Liizii Qarshii",          color: "#0f766e" },
-  { key: "mq_kiraa_lafaa_kg",             label: "Kiraa Lafaa KG",          color: "#0d9488" },
-  { key: "mq_kiraa_lafaa_qarshii",        label: "Kiraa Lafaa Qarshii",     color: "#0d9488" },
-  { key: "mq_kiraa_gare_liizii_kg",       label: "Kiraa gare Liizii KG",    color: "#0891b2" },
-  { key: "mq_kiraa_gare_liizii_qarshii",  label: "Kiraa gare Liizii Qarshii",color: "#0891b2" },
-  { key: "mq_baaxii_fi_gooroo_kg",        label: "Baaxii fi Gooroo KG",     color: "#0369a1" },
-  { key: "mq_baaxii_fi_gooroo_qarshii",   label: "Baaxii fi Gooroo Qarshii",color: "#0369a1" },
-  { key: "mq_kiraa_mana_daldalaa_kg",     label: "Kiraa Mana Daldalaa KG",  color: "#1e40af" },
-  { key: "mq_kiraa_mana_daldalaa_qarshii",label: "Kiraa Mana Daldalaa Qarshii",color: "#1e40af" },
-  { key: "mq_kiraa_mana_jireenyaa_kg",    label: "Kiraa Mana Jireenyaa KG", color: "#4f46e5" },
-  { key: "mq_kiraa_mana_jireenyaa_qarshii",label: "Kiraa Mana Jireenyaa Qarshii",color: "#4f46e5" },
-  { key: "mq_other_kg",                   label: "Other KG",                color: "#64748b" },
-  { key: "mq_other_qarshii",              label: "Other Qarshii",           color: "#64748b" },
+  { key: "mq_liizii_kg", label: "Liizii KG", color: "#0f766e" },
+  { key: "mq_liizii_qarshii", label: "Liizii Qarshii", color: "#0f766e" },
+  { key: "mq_kiraa_lafaa_kg", label: "Kiraa Lafaa KG", color: "#0d9488" },
+  {
+    key: "mq_kiraa_lafaa_qarshii",
+    label: "Kiraa Lafaa Qarshii",
+    color: "#0d9488",
+  },
+  {
+    key: "mq_kiraa_gare_liizii_kg",
+    label: "Kiraa gare Liizii KG",
+    color: "#0891b2",
+  },
+  {
+    key: "mq_kiraa_gare_liizii_qarshii",
+    label: "Kiraa gare Liizii Qarshii",
+    color: "#0891b2",
+  },
+  {
+    key: "mq_baaxii_fi_gooroo_kg",
+    label: "Baaxii fi Gooroo KG",
+    color: "#0369a1",
+  },
+  {
+    key: "mq_baaxii_fi_gooroo_qarshii",
+    label: "Baaxii fi Gooroo Qarshii",
+    color: "#0369a1",
+  },
+  {
+    key: "mq_kiraa_mana_daldalaa_kg",
+    label: "Kiraa Mana Daldalaa KG",
+    color: "#1e40af",
+  },
+  {
+    key: "mq_kiraa_mana_daldalaa_qarshii",
+    label: "Kiraa Mana Daldalaa Qarshii",
+    color: "#1e40af",
+  },
+  {
+    key: "mq_kiraa_mana_jireenyaa_kg",
+    label: "Kiraa Mana Jireenyaa KG",
+    color: "#4f46e5",
+  },
+  {
+    key: "mq_kiraa_mana_jireenyaa_qarshii",
+    label: "Kiraa Mana Jireenyaa Qarshii",
+    color: "#4f46e5",
+  },
+  { key: "mq_other_kg", label: "Other KG", color: "#64748b" },
+  { key: "mq_other_qarshii", label: "Other Qarshii", color: "#64748b" },
   // Idilee
-  { key: "idilee_qarshii",                label: "Idilee Qarshii",          color: "#1e40af" },
+  { key: "idilee_qarshii", label: "Idilee Qarshii", color: "#1e40af" },
 ];
-
 
 // Each field carries its own subs array: [{suffix, label}]
 // Exact sub-columns per field derived from the official CHUO Excel template:
@@ -3771,24 +4253,93 @@ const GALII_FIELDS = [
 // Deebii Liqii Bulee    → int, qarshii
 // Industrii Godoo       → kilaastera, lafa, carraa_hojii
 const CARRAA_FIELDS = [
-  { key: "leenjii",                label: "Leenjii",                color: "#1e40af",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { key: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { key: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { key: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { key: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { key: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { key: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { key: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { key: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
-    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
+  {
+    key: "leenjii",
+    label: "Leenjii",
+    color: "#1e40af",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    key: "carraa_hojii_dhaabbii",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    key: "carraa_hojii_qacarrii",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    key: "qusannaa_haawaasaa",
+    label: "Qusannaa Haawaasaa",
+    color: "#475569",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    key: "kenna_liqii",
+    label: "Kenna Liqii",
+    color: "#b45309",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    key: "qusanna_dirqii",
+    label: "Qusanna Dirqii",
+    color: "#64748b",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    key: "deebii_liqii_bilchaate",
+    label: "Deebii Liqii Bilchaate",
+    color: "#78350f",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    key: "deebii_liqii_bulee",
+    label: "Deebii Liqii Bulee",
+    color: "#dc2626",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    key: "industrii_godoo",
+    label: "Industrii Godoo",
+    color: "#0369a1",
+    subs: [
+      { suffix: "_kilaastera", label: "Kilaastera" },
+      { suffix: "_lafa", label: "Lafa (Hek)" },
+      { suffix: "_carraa_hojii", label: "Carraa Hojii" },
+    ],
+  },
 ];
 // CARRAA_SUBS — all possible suffixes for reference
 const CARRAA_SUBS = [
@@ -3850,7 +4401,14 @@ const ATK_FIELDS_SC = [
 // Sector config map used by GenericSubcityPlanPage and GenericSubcityAnalysisPage
 const SECTOR_CFG = {
   buusaa: {
-    fields: PLAN_FIELDS.map(({ key, label, color }) => ({ key, label, color })),
+    fields: [
+      ...PLAN_FIELDS.map(({ key, label, color }) => ({ key, label, color })),
+      ...FIXED_WEREDA_FIELDS.map(({ key, label, color }) => ({
+        key,
+        label,
+        color,
+      })),
+    ],
     label: "Buusaa Gonofaa",
     color: "#0f172a",
     gradient: "linear-gradient(90deg,#0f172a 0%,#1e3a5f 100%)",
@@ -3968,7 +4526,11 @@ const SECTOR_CFG = {
     // all show correct Dhi/Dub for Dhaabbii+Qacarrii and Int for others.
     fields: CARRAA_FIELDS.flatMap((f) =>
       f.subs.length
-        ? f.subs.map((s) => ({ key: `${f.key}${s.suffix}`, label: `${f.label} — ${s.label}`, color: f.color }))
+        ? f.subs.map((s) => ({
+            key: `${f.key}${s.suffix}`,
+            label: `${f.label} — ${s.label}`,
+            color: f.color,
+          }))
         : [{ key: f.key, label: f.label, color: f.color }],
     ),
     label: "Carraa Hojii Uumuu",
@@ -4069,7 +4631,9 @@ function GenericSubcityPlanPage({ sector }) {
             className="px-5 py-3 border-b border-[#e2e8f0]"
             style={{ background: cfg.gradient }}
           >
-            <p className="text-sm font-semibold text-white">Karoora {cfg.label}</p>
+            <p className="text-sm font-semibold text-white">
+              Karoora {cfg.label}
+            </p>
             <p className="text-white/60 text-xs mt-0.5">
               Karoora Aanaa hundaaf Qopha'ee Galchi
             </p>
@@ -4096,7 +4660,10 @@ function GenericSubcityPlanPage({ sector }) {
               </thead>
               <tbody>
                 {cfg.fields.map(({ key, label, color }) => (
-                  <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]">
+                  <tr
+                    key={key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]"
+                  >
                     <td className="px-4 py-2.5 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
                         <span
@@ -4112,7 +4679,9 @@ function GenericSubcityPlanPage({ sector }) {
                           type="number"
                           min="0"
                           value={woredaForms[w.id][key]}
-                          onChange={(e) => handleField(w.id, key, e.target.value)}
+                          onChange={(e) =>
+                            handleField(w.id, key, e.target.value)
+                          }
                           placeholder="0"
                           className="w-full border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 text-right"
                         />
@@ -4154,7 +4723,9 @@ function GenericSubcityPlanPage({ sector }) {
                 Olkaa'aa jira...
               </>
             ) : (
-              <><CheckIcon /> Karoora {cfg.label} Olkaa'i</>
+              <>
+                <CheckIcon /> Karoora {cfg.label} Olkaa'i
+              </>
             )}
           </button>
         </div>
@@ -4175,7 +4746,9 @@ function CarraaSubcityPlanPage() {
         w.id,
         Object.fromEntries(
           CARRAA_FIELDS.flatMap((f) =>
-            f.subs.length ? f.subs.map((s) => [`${f.key}${s.suffix}`, ""]) : [[f.key, ""]],
+            f.subs.length
+              ? f.subs.map((s) => [`${f.key}${s.suffix}`, ""])
+              : [[f.key, ""]],
           ),
         ),
       ]),
@@ -4202,7 +4775,10 @@ function CarraaSubcityPlanPage() {
       WOREDAS.map((w) => [
         w.id,
         Object.fromEntries(
-          Object.entries(woredaForms[w.id]).map(([k, v]) => [k, Number(v || 0)]),
+          Object.entries(woredaForms[w.id]).map(([k, v]) => [
+            k,
+            Number(v || 0),
+          ]),
         ),
       ]),
     );
@@ -4237,10 +4813,17 @@ function CarraaSubcityPlanPage() {
         {CARRAA_FIELDS.map((f) => {
           const maxSubs = f.subs.length || 1;
           return (
-            <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            <div
+              key={f.key}
+              className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
+            >
               {/* Field header */}
-              <div className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2"
-                style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+              <div
+                className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2"
+                style={{
+                  background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+                }}
+              >
                 <span className="w-2 h-2 rounded-full flex-shrink-0 bg-white/70" />
                 <p className="text-sm font-semibold text-white">{f.label}</p>
               </div>
@@ -4253,8 +4836,11 @@ function CarraaSubcityPlanPage() {
                         Gosa
                       </th>
                       {WOREDAS.map((w) => (
-                        <th key={w.id} colSpan={maxSubs}
-                          className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-b border-r border-[#e2e8f0]">
+                        <th
+                          key={w.id}
+                          colSpan={maxSubs}
+                          className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-b border-r border-[#e2e8f0]"
+                        >
                           {w.name}
                         </th>
                       ))}
@@ -4268,11 +4854,13 @@ function CarraaSubcityPlanPage() {
                         <th className="border-r border-b border-[#e2e8f0]" />
                         {WOREDAS.map((w) =>
                           f.subs.map((s, si) => (
-                            <th key={`${w.id}-${s.suffix}`}
-                              className={`text-center px-2 py-1 text-[10px] font-bold text-[#1e40af] uppercase tracking-wide border-b border-[#e2e8f0] min-w-[72px] ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}>
+                            <th
+                              key={`${w.id}-${s.suffix}`}
+                              className={`text-center px-2 py-1 text-[10px] font-bold text-[#1e40af] uppercase tracking-wide border-b border-[#e2e8f0] min-w-[72px] ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}
+                            >
                               {s.label}
                             </th>
-                          ))
+                          )),
                         )}
                         <th className="bg-[#eff6ff] border-b border-[#e2e8f0]" />
                       </tr>
@@ -4287,10 +4875,18 @@ function CarraaSubcityPlanPage() {
                         if (!f.subs.length) {
                           // Industrii Godoo — shouldn't reach here but guard
                           return (
-                            <td key={w.id} colSpan={1} className="px-2 py-2 border-r border-[#e2e8f0]">
-                              <input type="number" min="0"
+                            <td
+                              key={w.id}
+                              colSpan={1}
+                              className="px-2 py-2 border-r border-[#e2e8f0]"
+                            >
+                              <input
+                                type="number"
+                                min="0"
                                 value={woredaForms[w.id][f.key] ?? ""}
-                                onChange={(e) => handleField(w.id, f.key, e.target.value)}
+                                onChange={(e) =>
+                                  handleField(w.id, f.key, e.target.value)
+                                }
                                 placeholder="0"
                                 className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
                               />
@@ -4300,11 +4896,17 @@ function CarraaSubcityPlanPage() {
                         return f.subs.map((s, si) => {
                           const subKey = `${f.key}${s.suffix}`;
                           return (
-                            <td key={`${w.id}-${s.suffix}`}
-                              className={`px-2 py-2 ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}>
-                              <input type="number" min="0"
+                            <td
+                              key={`${w.id}-${s.suffix}`}
+                              className={`px-2 py-2 ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}
+                            >
+                              <input
+                                type="number"
+                                min="0"
                                 value={woredaForms[w.id][subKey] ?? ""}
-                                onChange={(e) => handleField(w.id, subKey, e.target.value)}
+                                onChange={(e) =>
+                                  handleField(w.id, subKey, e.target.value)
+                                }
                                 placeholder="0"
                                 className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
                               />
@@ -4315,11 +4917,28 @@ function CarraaSubcityPlanPage() {
                       {/* Waliigala: sum of all sub-keys across all woredas */}
                       <td className="px-3 py-2.5 text-right font-bold text-[#0f172a] bg-[#eff6ff] text-sm">
                         {f.subs.length
-                          ? f.subs.reduce((acc, s) =>
-                              acc + WOREDAS.reduce((wa, w) => wa + Number(woredaForms[w.id][`${f.key}${s.suffix}`] || 0), 0), 0
-                            ).toLocaleString()
-                          : WOREDAS.reduce((wa, w) => wa + Number(woredaForms[w.id][f.key] || 0), 0).toLocaleString()
-                        }
+                          ? f.subs
+                              .reduce(
+                                (acc, s) =>
+                                  acc +
+                                  WOREDAS.reduce(
+                                    (wa, w) =>
+                                      wa +
+                                      Number(
+                                        woredaForms[w.id][
+                                          `${f.key}${s.suffix}`
+                                        ] || 0,
+                                      ),
+                                    0,
+                                  ),
+                                0,
+                              )
+                              .toLocaleString()
+                          : WOREDAS.reduce(
+                              (wa, w) =>
+                                wa + Number(woredaForms[w.id][f.key] || 0),
+                              0,
+                            ).toLocaleString()}
                       </td>
                     </tr>
                   </tbody>
@@ -4333,20 +4952,31 @@ function CarraaSubcityPlanPage() {
           <div>
             {saved && (
               <p className="flex items-center gap-2 text-[#0f766e] text-sm font-semibold">
-                <CheckIcon /> Karoora Carraa Hojii Uumuu Aanaa hundaaf Olkaa'ame.
+                <CheckIcon /> Karoora Carraa Hojii Uumuu Aanaa hundaaf
+                Olkaa'ame.
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
-              <p className="text-[#94a3b8] text-xs">Karoora Carraa Hojii duraani ni bakka bu'a.</p>
+              <p className="text-[#94a3b8] text-xs">
+                Karoora Carraa Hojii duraani ni bakka bu'a.
+              </p>
             )}
           </div>
-          <button type="submit" disabled={saving || !hasValues}
-            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50 bg-[#1e40af] hover:bg-[#1e3a8a]">
+          <button
+            type="submit"
+            disabled={saving || !hasValues}
+            className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50 bg-[#1e40af] hover:bg-[#1e3a8a]"
+          >
             {saving ? (
-              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Olkaa'aa jira...</>
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Olkaa'aa jira...
+              </>
             ) : (
-              <><CheckIcon /> Karoora Olkaa'i</>
+              <>
+                <CheckIcon /> Karoora Olkaa'i
+              </>
             )}
           </button>
         </div>
@@ -4399,7 +5029,10 @@ function GaliiSubcityPlanPage() {
       WOREDAS_LIST.map((w) => [
         w.id,
         Object.fromEntries(
-          Object.entries(woredaForms[w.id]).map(([k, v]) => [k, Number(v || 0)]),
+          Object.entries(woredaForms[w.id]).map(([k, v]) => [
+            k,
+            Number(v || 0),
+          ]),
         ),
       ]),
     );
@@ -4409,7 +5042,9 @@ function GaliiSubcityPlanPage() {
       setWoredaForms(emptyWoForms());
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
-      setSaveError(err?.response?.data?.message || "Failed to save Galii plan.");
+      setSaveError(
+        err?.response?.data?.message || "Failed to save Galii plan.",
+      );
     } finally {
       setSaving(false);
     }
@@ -4420,11 +5055,18 @@ function GaliiSubcityPlanPage() {
     SC_MANA_QOPHESSAA_SOURCES.flatMap((s) => [
       [
         `mq_${s.key}_kg`,
-        WOREDAS_LIST.reduce((sum, w) => sum + Number(woredaForms[w.id][`mq_${s.key}_kg`] || 0), 0),
+        WOREDAS_LIST.reduce(
+          (sum, w) => sum + Number(woredaForms[w.id][`mq_${s.key}_kg`] || 0),
+          0,
+        ),
       ],
       [
         `mq_${s.key}_qarshii`,
-        WOREDAS_LIST.reduce((sum, w) => sum + Number(woredaForms[w.id][`mq_${s.key}_qarshii`] || 0), 0),
+        WOREDAS_LIST.reduce(
+          (sum, w) =>
+            sum + Number(woredaForms[w.id][`mq_${s.key}_qarshii`] || 0),
+          0,
+        ),
       ],
     ]),
   );
@@ -4446,8 +5088,13 @@ function GaliiSubcityPlanPage() {
 
         {/* Mana Qophessaa section */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: gradient }}>
-            <p className="text-sm font-semibold text-white">Karoora Mana Qophessaa</p>
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: gradient }}
+          >
+            <p className="text-sm font-semibold text-white">
+              Karoora Mana Qophessaa
+            </p>
             <p className="text-white/60 text-xs mt-0.5">
               Karoora Aanaa hundaaf KG fi Qarshii Galchi
             </p>
@@ -4468,7 +5115,10 @@ function GaliiSubcityPlanPage() {
                       {w.name}
                     </th>
                   ))}
-                  <th colSpan={2} className="text-center px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase bg-[#eff6ff] min-w-[140px]">
+                  <th
+                    colSpan={2}
+                    className="text-center px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase bg-[#eff6ff] min-w-[140px]"
+                  >
                     Waliigala
                   </th>
                 </tr>
@@ -4476,17 +5126,34 @@ function GaliiSubcityPlanPage() {
                   <th className="px-4 py-2" />
                   {WOREDAS_LIST.map((w) => (
                     <>
-                      <th key={`${w.id}-kg`} className="px-3 py-2 text-xs font-semibold text-[#64748b] text-right border-l border-[#f1f5f9]">KG</th>
-                      <th key={`${w.id}-q`} className="px-3 py-2 text-xs font-semibold text-[#64748b] text-right">Qarshii</th>
+                      <th
+                        key={`${w.id}-kg`}
+                        className="px-3 py-2 text-xs font-semibold text-[#64748b] text-right border-l border-[#f1f5f9]"
+                      >
+                        KG
+                      </th>
+                      <th
+                        key={`${w.id}-q`}
+                        className="px-3 py-2 text-xs font-semibold text-[#64748b] text-right"
+                      >
+                        Qarshii
+                      </th>
                     </>
                   ))}
-                  <th className="px-3 py-2 text-xs font-semibold text-[#0f172a] text-right bg-[#eff6ff] border-l border-[#f1f5f9]">KG</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-[#0f172a] text-right bg-[#eff6ff]">Qarshii</th>
+                  <th className="px-3 py-2 text-xs font-semibold text-[#0f172a] text-right bg-[#eff6ff] border-l border-[#f1f5f9]">
+                    KG
+                  </th>
+                  <th className="px-3 py-2 text-xs font-semibold text-[#0f172a] text-right bg-[#eff6ff]">
+                    Qarshii
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {SC_MANA_QOPHESSAA_SOURCES.map((src) => (
-                  <tr key={src.key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]">
+                  <tr
+                    key={src.key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]"
+                  >
                     <td className="px-4 py-2 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
@@ -4495,12 +5162,21 @@ function GaliiSubcityPlanPage() {
                     </td>
                     {WOREDAS_LIST.map((w) => (
                       <>
-                        <td key={`${w.id}-kg`} className="px-2 py-1.5 border-l border-[#f1f5f9]">
+                        <td
+                          key={`${w.id}-kg`}
+                          className="px-2 py-1.5 border-l border-[#f1f5f9]"
+                        >
                           <input
                             type="number"
                             min="0"
                             value={woredaForms[w.id][`mq_${src.key}_kg`]}
-                            onChange={(e) => handleField(w.id, `mq_${src.key}_kg`, e.target.value)}
+                            onChange={(e) =>
+                              handleField(
+                                w.id,
+                                `mq_${src.key}_kg`,
+                                e.target.value,
+                              )
+                            }
                             placeholder="0"
                             className="w-20 border border-[#e2e8f0] rounded px-2 py-1.5 text-xs text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-1 focus:ring-[#0f766e]/30"
                           />
@@ -4511,7 +5187,13 @@ function GaliiSubcityPlanPage() {
                             min="0"
                             step="0.01"
                             value={woredaForms[w.id][`mq_${src.key}_qarshii`]}
-                            onChange={(e) => handleField(w.id, `mq_${src.key}_qarshii`, e.target.value)}
+                            onChange={(e) =>
+                              handleField(
+                                w.id,
+                                `mq_${src.key}_qarshii`,
+                                e.target.value,
+                              )
+                            }
                             placeholder="0.00"
                             className="w-24 border border-[#e2e8f0] rounded px-2 py-1.5 text-xs text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-1 focus:ring-[#0f766e]/30"
                           />
@@ -4535,21 +5217,32 @@ function GaliiSubcityPlanPage() {
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
           <div
             className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+            style={{
+              background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+            }}
           >
-            <p className="text-sm font-semibold text-white">Karoora Idilee (Placeholder)</p>
+            <p className="text-sm font-semibold text-white">
+              Karoora Idilee (Placeholder)
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[160px]">Gosa</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[160px]">
+                    Gosa
+                  </th>
                   {WOREDAS_LIST.map((w) => (
-                    <th key={w.id} className="text-right px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[130px]">
+                    <th
+                      key={w.id}
+                      className="text-right px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[130px]"
+                    >
                       {w.name}
                     </th>
                   ))}
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase bg-[#eff6ff] min-w-[100px]">Waliigala</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase bg-[#eff6ff] min-w-[100px]">
+                    Waliigala
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -4567,7 +5260,9 @@ function GaliiSubcityPlanPage() {
                         min="0"
                         step="0.01"
                         value={woredaForms[w.id].idilee_qarshii}
-                        onChange={(e) => handleField(w.id, "idilee_qarshii", e.target.value)}
+                        onChange={(e) =>
+                          handleField(w.id, "idilee_qarshii", e.target.value)
+                        }
                         placeholder="0.00"
                         className="w-full border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
                       />
@@ -4591,7 +5286,9 @@ function GaliiSubcityPlanPage() {
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
-              <p className="text-[#94a3b8] text-xs">Karoora Galii duraani ni bakka bu'a.</p>
+              <p className="text-[#94a3b8] text-xs">
+                Karoora Galii duraani ni bakka bu'a.
+              </p>
             )}
           </div>
           <button
@@ -4605,7 +5302,9 @@ function GaliiSubcityPlanPage() {
                 Olkaa'aa jira...
               </>
             ) : (
-              <><CheckIcon /> Karoora Galii Olkaa'i</>
+              <>
+                <CheckIcon /> Karoora Galii Olkaa'i
+              </>
             )}
           </button>
         </div>
@@ -5022,10 +5721,14 @@ const SUBCITY_REVENUE_CATEGORIES = [
 function SubcityGaliiSubmitForm({ u }) {
   // mqForm: { [sourceKey]: { kg: string, qarshii: string } }
   const emptyMq = () =>
-    Object.fromEntries(SC_MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]));
+    Object.fromEntries(
+      SC_MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
+    );
   const [mqForm, setMqForm] = useState(emptyMq());
   const [idileeAmount, setIdileeAmount] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -5034,7 +5737,9 @@ function SubcityGaliiSubmitForm({ u }) {
     setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
   const hasAnyMq = SC_MANA_QOPHESSAA_SOURCES.some(
-    (s) => Number(mqForm[s.key]?.kg || 0) > 0 || Number(mqForm[s.key]?.qarshii || 0) > 0,
+    (s) =>
+      Number(mqForm[s.key]?.kg || 0) > 0 ||
+      Number(mqForm[s.key]?.qarshii || 0) > 0,
   );
   const hasIdilee = Number(idileeAmount || 0) > 0;
   const canSubmit = (hasAnyMq || hasIdilee) && date;
@@ -5133,7 +5838,9 @@ function SubcityGaliiSubmitForm({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
           <p className="text-white/60 text-xs mt-0.5">
@@ -5141,9 +5848,15 @@ function SubcityGaliiSubmitForm({ u }) {
           </p>
         </div>
         <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">Madda Galii</p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">KG</p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">Qarshii (ETB)</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+            Madda Galii
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            KG
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            Qarshii (ETB)
+          </p>
         </div>
         <div className="divide-y divide-[#f1f5f9] px-5">
           {SC_MANA_QOPHESSAA_SOURCES.map((src) => {
@@ -5172,7 +5885,9 @@ function SubcityGaliiSubmitForm({ u }) {
                   min="0"
                   step="0.01"
                   value={qarshii}
-                  onChange={(e) => handleMqField(src.key, "qarshii", e.target.value)}
+                  onChange={(e) =>
+                    handleMqField(src.key, "qarshii", e.target.value)
+                  }
                   placeholder="0.00"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
                 />
@@ -5181,7 +5896,9 @@ function SubcityGaliiSubmitForm({ u }) {
           })}
           {mqTotal > 0 && (
             <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
-              <span className="text-sm font-bold text-[#0f766e]">Waliigala MQ</span>
+              <span className="text-sm font-bold text-[#0f766e]">
+                Waliigala MQ
+              </span>
               <span />
               <span className="text-right text-sm font-bold text-[#0f766e]">
                 ETB {mqTotal.toLocaleString()}
@@ -5195,10 +5912,14 @@ function SubcityGaliiSubmitForm({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Idilee</p>
-          <p className="text-white/60 text-xs mt-0.5">Galii Idilee: Qarshii qofa (placeholder)</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Galii Idilee: Qarshii qofa (placeholder)
+          </p>
         </div>
         <div className="px-5 py-4">
           <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
@@ -5218,7 +5939,13 @@ function SubcityGaliiSubmitForm({ u }) {
 
       {submitError && (
         <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -5228,13 +5955,15 @@ function SubcityGaliiSubmitForm({ u }) {
       )}
 
       <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-        <p className="text-[#94a3b8] text-xs">
-          Hunda galchii booda galchi.
-        </p>
+        <p className="text-[#94a3b8] text-xs">Hunda galchii booda galchi.</p>
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => { setMqForm(emptyMq()); setIdileeAmount(""); setSubmitError(""); }}
+            onClick={() => {
+              setMqForm(emptyMq());
+              setIdileeAmount("");
+              setSubmitError("");
+            }}
             className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
           >
             Haqi
@@ -5245,7 +5974,13 @@ function SubcityGaliiSubmitForm({ u }) {
             disabled={submitting || !canSubmit}
             className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
               <path d="M22 2L11 13" />
               <path d="M22 2L15 22l-4-9-9-4 20-7z" />
             </svg>
@@ -5909,9 +6644,12 @@ function GenericSubcityAnalysisPage({ sector }) {
   const [activeView, setActiveView] = useState("woreda"); // "woreda" | "comparison" | "rank"
 
   useEffect(() => {
-    const fetch = cfg.fetchFn ?? (() =>
-      sector === "galii" ? fetchSubcityGaliiPlan() : fetchSubcityGenericPlan(sector)
-    );
+    const fetch =
+      cfg.fetchFn ??
+      (() =>
+        sector === "galii"
+          ? fetchSubcityGaliiPlan()
+          : fetchSubcityGenericPlan(sector));
     fetch()
       .then((d) => setPlan(d.plan))
       .catch(() => setPlan(null))
@@ -5920,8 +6658,21 @@ function GenericSubcityAnalysisPage({ sector }) {
 
   const woredaLabel = WOREDAS.find((w) => w.id === activeWoreda)?.name ?? "";
 
-  // For display: subcity totals overview cards use getPlanTotal.
-  const getPlanTotal = (fieldKey) => (plan ? Number(plan[fieldKey] || 0) : 0);
+  // For display: subcity totals overview cards.
+  // For buusaa fixed-per-woreda fields, sum across all 4 woreda suffixes.
+  const FIXED_KEYS = new Set(
+    sector === "buusaa" ? FIXED_WEREDA_FIELDS.map((f) => f.key) : [],
+  );
+  const getPlanTotal = (fieldKey) => {
+    if (!plan) return 0;
+    if (FIXED_KEYS.has(fieldKey)) {
+      return WOREDAS.reduce(
+        (s, w) => s + Number(plan[`${fieldKey}_${w.id}`] || 0),
+        0,
+      );
+    }
+    return Number(plan[fieldKey] || 0);
+  };
 
   if (loading)
     return (
@@ -6358,7 +7109,10 @@ const SECTOR_PRINT_FIELDS = {
   // Carraa Hojii: Dhaabbii+Qacarrii → Dhi/Dub; others → Int; Industrii Godoo plain
   carraaHojii: CARRAA_FIELDS.flatMap((f) =>
     f.subs.length
-      ? f.subs.map((s) => ({ key: `${f.key}${s.suffix}`, label: `${f.label} — ${s.label}` }))
+      ? f.subs.map((s) => ({
+          key: `${f.key}${s.suffix}`,
+          label: `${f.label} — ${s.label}`,
+        }))
       : [{ key: f.key, label: f.label }],
   ),
   qonna: [
@@ -6413,7 +7167,7 @@ const SECTOR_PRINT_FIELDS = {
     // Rows are built dynamically from SC_MANA_QOPHESSAA_SOURCES in buildSubcityPrintTable.
     // These entries represent the high-level categories used as fallback.
     { key: "mq_total_qarshii", label: "Mana Qophessaa (Qarshii)" },
-    { key: "idilee_qarshii",   label: "Idilee (Qarshii)" },
+    { key: "idilee_qarshii", label: "Idilee (Qarshii)" },
   ],
 };
 
@@ -6463,7 +7217,10 @@ function buildSubcityPrintTable({
 
     // Build sub-column list: always show Raawwii KG+Qarshii; Karoora optional; % optional
     const subCols = [];
-    if (showPlan) { subCols.push("plan_kg"); subCols.push("plan_qarshii"); }
+    if (showPlan) {
+      subCols.push("plan_kg");
+      subCols.push("plan_qarshii");
+    }
     subCols.push("actual_kg");
     subCols.push("actual_qarshii");
     if (showPct) subCols.push("pct");
@@ -6483,43 +7240,59 @@ function buildSubcityPrintTable({
     for (const w of WOREDAS_PRINT) {
       thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
     }
-    if (showTotal) thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+    if (showTotal)
+      thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
     thead += `</tr><tr class="sub-header">`;
     const totalGroupCount = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
     for (let i = 0; i < totalGroupCount; i++) {
-      for (const sc of subCols) thead += `<th class="sub-col">${scLabel(sc)}</th>`;
+      for (const sc of subCols)
+        thead += `<th class="sub-col">${scLabel(sc)}</th>`;
     }
     thead += `</tr></thead>`;
 
     let tbody = "<tbody>";
-    let grandActualQarshii = 0, grandPlanQarshii = 0;
+    let grandActualQarshii = 0,
+      grandPlanQarshii = 0;
 
     ROW_DEFS.forEach((row, idx) => {
       // Aggregate actuals from all woreda rows where madda_galii matches
       // woredaData.woredas[i].actuals already keyed by source via subcityReportController
       tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${row.label}</td>`;
-      let rowTotalActualQarshii = 0, rowTotalPlanQarshii = 0;
+      let rowTotalActualQarshii = 0,
+        rowTotalPlanQarshii = 0;
 
       for (const w of WOREDAS_PRINT) {
         const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
-        const actKg = row.feKey === "_idilee"
-          ? 0
-          : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
-        const actQarshii = row.feKey === "_idilee"
-          ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
-          : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
-        const planKg = row.planKgKey ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0) : 0;
-        const planQarshii = row.planQarshiiKey ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0) : 0;
-        const pct = planQarshii > 0 ? Math.round((actQarshii / planQarshii) * 100) : 0;
+        const actKg =
+          row.feKey === "_idilee"
+            ? 0
+            : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
+        const actQarshii =
+          row.feKey === "_idilee"
+            ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
+            : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
+        const planKg = row.planKgKey
+          ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)
+          : 0;
+        const planQarshii = row.planQarshiiKey
+          ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0)
+          : 0;
+        const pct =
+          planQarshii > 0 ? Math.round((actQarshii / planQarshii) * 100) : 0;
         rowTotalActualQarshii += actQarshii;
         rowTotalPlanQarshii += planQarshii;
 
         for (const sc of subCols) {
-          if (sc === "plan_kg") tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
-          if (sc === "plan_qarshii") tbody += `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
-          if (sc === "actual_kg") tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
-          if (sc === "actual_qarshii") tbody += `<td class="num">${actQarshii.toLocaleString()}</td>`;
-          if (sc === "pct") tbody += `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
+          if (sc === "plan_kg")
+            tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
+          if (sc === "plan_qarshii")
+            tbody += `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
+          if (sc === "actual_kg")
+            tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
+          if (sc === "actual_qarshii")
+            tbody += `<td class="num">${actQarshii.toLocaleString()}</td>`;
+          if (sc === "pct")
+            tbody += `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
         }
       }
 
@@ -6527,13 +7300,20 @@ function buildSubcityPrintTable({
       grandPlanQarshii += rowTotalPlanQarshii;
 
       if (showTotal) {
-        const totalPct = rowTotalPlanQarshii > 0 ? Math.round((rowTotalActualQarshii / rowTotalPlanQarshii) * 100) : 0;
+        const totalPct =
+          rowTotalPlanQarshii > 0
+            ? Math.round((rowTotalActualQarshii / rowTotalPlanQarshii) * 100)
+            : 0;
         for (const sc of subCols) {
-          if (sc === "plan_kg") tbody += `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii") tbody += `<td class="num plan total-val">${rowTotalPlanQarshii.toLocaleString()}</td>`;
+          if (sc === "plan_kg")
+            tbody += `<td class="num plan total-val">—</td>`;
+          if (sc === "plan_qarshii")
+            tbody += `<td class="num plan total-val">${rowTotalPlanQarshii.toLocaleString()}</td>`;
           if (sc === "actual_kg") tbody += `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii") tbody += `<td class="num total-val">${rowTotalActualQarshii.toLocaleString()}</td>`;
-          if (sc === "pct") tbody += `<td class="num pct total-val">${rowTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
+          if (sc === "actual_qarshii")
+            tbody += `<td class="num total-val">${rowTotalActualQarshii.toLocaleString()}</td>`;
+          if (sc === "pct")
+            tbody += `<td class="num pct total-val">${rowTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
         }
       }
       tbody += `</tr>`;
@@ -6541,17 +7321,24 @@ function buildSubcityPrintTable({
 
     // Grand total row
     if (showTotal) {
-      const grandPct = grandPlanQarshii > 0 ? Math.round((grandActualQarshii / grandPlanQarshii) * 100) : 0;
+      const grandPct =
+        grandPlanQarshii > 0
+          ? Math.round((grandActualQarshii / grandPlanQarshii) * 100)
+          : 0;
       const emptyWoredaCells = WOREDAS_PRINT.map(() =>
-        subCols.map(() => `<td class="num total-val">—</td>`).join("")
+        subCols.map(() => `<td class="num total-val">—</td>`).join(""),
       ).join("");
-      const grandTotalCells = subCols.map((sc) => {
-        if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
-        if (sc === "plan_qarshii") return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
-        if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
-        if (sc === "actual_qarshii") return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
-        return `<td class="num pct total-val">${grandPlanQarshii > 0 ? grandPct + "%" : "—"}</td>`;
-      }).join("");
+      const grandTotalCells = subCols
+        .map((sc) => {
+          if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
+          if (sc === "plan_qarshii")
+            return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
+          if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
+          if (sc === "actual_qarshii")
+            return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
+          return `<td class="num pct total-val">${grandPlanQarshii > 0 ? grandPct + "%" : "—"}</td>`;
+        })
+        .join("");
       tbody += `<tr style="background:#eef2ff;font-weight:bold;">
         <td class="rno">—</td><td class="gosa">Waliigala</td>
         ${emptyWoredaCells}${grandTotalCells}
@@ -6797,7 +7584,10 @@ function buildSubcityPrintHTML({
   if (sector === "galii") {
     // Build sub-columns for galii: always Raawwii KG+Qarshii; Karoora optional; % optional
     const galiiSubCols = [];
-    if (showPlan) { galiiSubCols.push("plan_kg"); galiiSubCols.push("plan_qarshii"); }
+    if (showPlan) {
+      galiiSubCols.push("plan_kg");
+      galiiSubCols.push("plan_qarshii");
+    }
     galiiSubCols.push("actual_kg");
     galiiSubCols.push("actual_qarshii");
     if (showPct) galiiSubCols.push("pct");
@@ -6819,11 +7609,13 @@ function buildSubcityPrintHTML({
     for (const w of WOREDAS_PRINT) {
       thead += `<th colspan="${numGaliiSubCols}" class="woreda-header">${w.name}</th>`;
     }
-    if (showTotal) thead += `<th colspan="${numGaliiSubCols}" class="woreda-header total-header">Waliigala</th>`;
+    if (showTotal)
+      thead += `<th colspan="${numGaliiSubCols}" class="woreda-header total-header">Waliigala</th>`;
     thead += `</tr><tr class="sub-header">`;
     const gTotalGroups = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
     for (let i = 0; i < gTotalGroups; i++) {
-      for (const sc of galiiSubCols) thead += `<th class="sub-col">${scLabel(sc)}</th>`;
+      for (const sc of galiiSubCols)
+        thead += `<th class="sub-col">${scLabel(sc)}</th>`;
     }
     thead += `</tr></thead>`;
 
@@ -6834,34 +7626,52 @@ function buildSubcityPrintHTML({
         planKgKey: `mq_${s.key}_kg`,
         planQarshiiKey: `mq_${s.key}_qarshii`,
       })),
-      { label: "Idilee", feKey: "_idilee", planKgKey: null, planQarshiiKey: "idilee_qarshii" },
+      {
+        label: "Idilee",
+        feKey: "_idilee",
+        planKgKey: null,
+        planQarshiiKey: "idilee_qarshii",
+      },
     ];
 
-    let grandActualQarshii = 0, grandPlanQarshii = 0;
+    let grandActualQarshii = 0,
+      grandPlanQarshii = 0;
 
     ROW_DEFS.forEach((row, idx) => {
       tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${row.label}</td>`;
-      let rowTotalActQ = 0, rowTotalPlanQ = 0;
+      let rowTotalActQ = 0,
+        rowTotalPlanQ = 0;
 
       for (const w of WOREDAS_PRINT) {
         const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
-        const actKg = row.feKey === "_idilee"
-          ? 0
-          : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
-        const actQ = row.feKey === "_idilee"
-          ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
-          : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
-        const planKg = row.planKgKey ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0) : 0;
-        const planQ = row.planQarshiiKey ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0) : 0;
+        const actKg =
+          row.feKey === "_idilee"
+            ? 0
+            : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
+        const actQ =
+          row.feKey === "_idilee"
+            ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
+            : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
+        const planKg = row.planKgKey
+          ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)
+          : 0;
+        const planQ = row.planQarshiiKey
+          ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0)
+          : 0;
         const pct = planQ > 0 ? Math.round((actQ / planQ) * 100) : 0;
         rowTotalActQ += actQ;
         rowTotalPlanQ += planQ;
         for (const sc of galiiSubCols) {
-          if (sc === "plan_kg") tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
-          if (sc === "plan_qarshii") tbody += `<td class="num plan">${planQ.toLocaleString()}</td>`;
-          if (sc === "actual_kg") tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
-          if (sc === "actual_qarshii") tbody += `<td class="num">${actQ.toLocaleString()}</td>`;
-          if (sc === "pct") tbody += `<td class="num pct">${planQ > 0 ? pct + "%" : "—"}</td>`;
+          if (sc === "plan_kg")
+            tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
+          if (sc === "plan_qarshii")
+            tbody += `<td class="num plan">${planQ.toLocaleString()}</td>`;
+          if (sc === "actual_kg")
+            tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
+          if (sc === "actual_qarshii")
+            tbody += `<td class="num">${actQ.toLocaleString()}</td>`;
+          if (sc === "pct")
+            tbody += `<td class="num pct">${planQ > 0 ? pct + "%" : "—"}</td>`;
         }
       }
 
@@ -6869,28 +7679,44 @@ function buildSubcityPrintHTML({
       grandPlanQarshii += rowTotalPlanQ;
 
       if (showTotal) {
-        const rPct = rowTotalPlanQ > 0 ? Math.round((rowTotalActQ / rowTotalPlanQ) * 100) : 0;
+        const rPct =
+          rowTotalPlanQ > 0
+            ? Math.round((rowTotalActQ / rowTotalPlanQ) * 100)
+            : 0;
         for (const sc of galiiSubCols) {
-          if (sc === "plan_kg") tbody += `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii") tbody += `<td class="num plan total-val">${rowTotalPlanQ.toLocaleString()}</td>`;
+          if (sc === "plan_kg")
+            tbody += `<td class="num plan total-val">—</td>`;
+          if (sc === "plan_qarshii")
+            tbody += `<td class="num plan total-val">${rowTotalPlanQ.toLocaleString()}</td>`;
           if (sc === "actual_kg") tbody += `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii") tbody += `<td class="num total-val">${rowTotalActQ.toLocaleString()}</td>`;
-          if (sc === "pct") tbody += `<td class="num pct total-val">${rowTotalPlanQ > 0 ? rPct + "%" : "—"}</td>`;
+          if (sc === "actual_qarshii")
+            tbody += `<td class="num total-val">${rowTotalActQ.toLocaleString()}</td>`;
+          if (sc === "pct")
+            tbody += `<td class="num pct total-val">${rowTotalPlanQ > 0 ? rPct + "%" : "—"}</td>`;
         }
       }
       tbody += `</tr>`;
     });
 
     if (showTotal) {
-      const gPct = grandPlanQarshii > 0 ? Math.round((grandActualQarshii / grandPlanQarshii) * 100) : 0;
-      const emptyCells = WOREDAS_PRINT.map(() => galiiSubCols.map(() => `<td class="num total-val">—</td>`).join("")).join("");
-      const totCells = galiiSubCols.map((sc) => {
-        if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
-        if (sc === "plan_qarshii") return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
-        if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
-        if (sc === "actual_qarshii") return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
-        return `<td class="num pct total-val">${grandPlanQarshii > 0 ? gPct + "%" : "—"}</td>`;
-      }).join("");
+      const gPct =
+        grandPlanQarshii > 0
+          ? Math.round((grandActualQarshii / grandPlanQarshii) * 100)
+          : 0;
+      const emptyCells = WOREDAS_PRINT.map(() =>
+        galiiSubCols.map(() => `<td class="num total-val">—</td>`).join(""),
+      ).join("");
+      const totCells = galiiSubCols
+        .map((sc) => {
+          if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
+          if (sc === "plan_qarshii")
+            return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
+          if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
+          if (sc === "actual_qarshii")
+            return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
+          return `<td class="num pct total-val">${grandPlanQarshii > 0 ? gPct + "%" : "—"}</td>`;
+        })
+        .join("");
       tbody += `<tr style="background:#eef2ff;font-weight:bold;">
         <td class="rno">—</td><td class="gosa">Waliigala</td>${emptyCells}${totCells}</tr>`;
     }
@@ -8358,6 +9184,8 @@ export default function SubCityDashboard({ user: propUser }) {
     if (activeNav === "reports") return <ReportsPage />;
     if (activeNav === "photos") return <SubcityPhotoGalleryPage />;
     if (activeNav === "galii_submit") return <SubcityGaliiSubmitForm u={u} />;
+    if (activeNav === "daldala_a_submit") return <DaldalASubmitForm />;
+    if (activeNav === "daldala_a_analysis") return <DaldalAAnalysisPage />;
     if (activeNav === "announcements") return <AnnouncementsPage />;
     if (activeNav === "archive") return <HistorySection />;
     if (activeNav === "profile")
@@ -8406,14 +9234,9 @@ export default function SubCityDashboard({ user: propUser }) {
       if (activePlanSector === "buusaa")
         return <BuusaaPlanPage onSave={handleSavePlan} />;
       if (activePlanSector === "qonna") return <QonnaPlanPage />;
-      if (activePlanSector === "galii")
-        return <GaliiSubcityPlanPage />;
-      if (activePlanSector === "carraa")
-        return <CarraaSubcityPlanPage />;
-      if (
-        activePlanSector === "daldala" ||
-        activePlanSector === "atk"
-      )
+      if (activePlanSector === "galii") return <GaliiSubcityPlanPage />;
+      if (activePlanSector === "carraa") return <CarraaSubcityPlanPage />;
+      if (activePlanSector === "daldala" || activePlanSector === "atk")
         return <GenericSubcityPlanPage sector={activePlanSector} />;
       return (
         <ComingSoonPage
@@ -8561,6 +9384,47 @@ export default function SubCityDashboard({ user: propUser }) {
           >
             <RevenueNavIcon />
             {!collapsed && <span className="truncate">Galii Sassaabu</span>}
+          </button>
+
+          {/* ── Daldala A (subcity-only) ── */}
+          <button
+            onClick={() => {
+              setActiveNav("daldala_a_submit");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "daldala_a_submit"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <svg
+              className="w-4 h-4 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              viewBox="0 0 24 24"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+            {!collapsed && <span className="truncate">Daldala A</span>}
+          </button>
+          <button
+            onClick={() => {
+              setActiveNav("daldala_a_analysis");
+              setActivePlanSector(null);
+              setActiveAnalysisSector(null);
+            }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              activeNav === "daldala_a_analysis"
+                ? "bg-white/15 text-white"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <AnalysisIcon />
+            {!collapsed && <span className="truncate">Daldala A Analysis</span>}
           </button>
 
           {/* ── Work Analysis (dropdown) ── */}
@@ -8728,6 +9592,8 @@ export default function SubCityDashboard({ user: propUser }) {
               analysis: "Work Analysis",
               reports: "Woreda Reports",
               galii_submit: "Submit Revenue",
+              daldala_a_submit: "Daldala A – Submit",
+              daldala_a_analysis: "Daldala A – Work Analysis",
               announcements: "Announcements",
               archive: "History",
               photos: "Photo Gallery",

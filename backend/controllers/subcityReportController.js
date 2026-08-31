@@ -75,23 +75,38 @@ const SECTOR_REPORT_FIELDS = {
   ],
   carraa: [
     // Leenjii: int, dhi, dub
-    "leenjii_int", "leenjii_dhi", "leenjii_dub",
+    "leenjii_int",
+    "leenjii_dhi",
+    "leenjii_dub",
     // Carraa Hojii Dhaabbii: int, dhi, dub
-    "carraa_hojii_dhaabbii_int", "carraa_hojii_dhaabbii_dhi", "carraa_hojii_dhaabbii_dub",
+    "carraa_hojii_dhaabbii_int",
+    "carraa_hojii_dhaabbii_dhi",
+    "carraa_hojii_dhaabbii_dub",
     // Carraa Hojii Qacarrii: int, dhi, dub
-    "carraa_hojii_qacarrii_int", "carraa_hojii_qacarrii_dhi", "carraa_hojii_qacarrii_dub",
+    "carraa_hojii_qacarrii_int",
+    "carraa_hojii_qacarrii_dhi",
+    "carraa_hojii_qacarrii_dub",
     // Qusannaa Haawaasaa: int, qarshii
-    "qusannaa_haawaasaa_int", "qusannaa_haawaasaa_qarshii",
+    "qusannaa_haawaasaa_int",
+    "qusannaa_haawaasaa_qarshii",
     // Kenna Liqii: int, mise, qarshii
-    "kenna_liqii_int", "kenna_liqii_mise", "kenna_liqii_qarshii",
+    "kenna_liqii_int",
+    "kenna_liqii_mise",
+    "kenna_liqii_qarshii",
     // Qusanna Dirqii: int, mise, qarshii
-    "qusanna_dirqii_int", "qusanna_dirqii_mise", "qusanna_dirqii_qarshii",
+    "qusanna_dirqii_int",
+    "qusanna_dirqii_mise",
+    "qusanna_dirqii_qarshii",
     // Deebii Liqii Bilchaate: int, qarshii
-    "deebii_liqii_bilchaate_int", "deebii_liqii_bilchaate_qarshii",
+    "deebii_liqii_bilchaate_int",
+    "deebii_liqii_bilchaate_qarshii",
     // Deebii Liqii Bulee: int, qarshii
-    "deebii_liqii_bulee_int", "deebii_liqii_bulee_qarshii",
+    "deebii_liqii_bulee_int",
+    "deebii_liqii_bulee_qarshii",
     // Industrii Godoo: kilaastera, lafa, carraa_hojii
-    "industrii_godoo_kilaastera", "industrii_godoo_lafa", "industrii_godoo_carraa_hojii",
+    "industrii_godoo_kilaastera",
+    "industrii_godoo_lafa",
+    "industrii_godoo_carraa_hojii",
   ],
   daldala: [
     "galmee_haraa",
@@ -217,30 +232,30 @@ const SECTOR_PLAN_FIELDS = {
       "qurxummii_lakk_qurxummii_waliigalaa_target",
   },
   carraa: {
-    leenjii_int:                    "leenjii_int_target",
-    leenjii_dhi:                    "leenjii_dhi_target",
-    leenjii_dub:                    "leenjii_dub_target",
-    carraa_hojii_dhaabbii_int:      "carraa_hojii_dhaabbii_int_target",
-    carraa_hojii_dhaabbii_dhi:      "carraa_hojii_dhaabbii_dhi_target",
-    carraa_hojii_dhaabbii_dub:      "carraa_hojii_dhaabbii_dub_target",
-    carraa_hojii_qacarrii_int:      "carraa_hojii_qacarrii_int_target",
-    carraa_hojii_qacarrii_dhi:      "carraa_hojii_qacarrii_dhi_target",
-    carraa_hojii_qacarrii_dub:      "carraa_hojii_qacarrii_dub_target",
-    qusannaa_haawaasaa_int:         "qusannaa_haawaasaa_int_target",
-    qusannaa_haawaasaa_qarshii:     "qusannaa_haawaasaa_qarshii_target",
-    kenna_liqii_int:                "kenna_liqii_int_target",
-    kenna_liqii_mise:               "kenna_liqii_mise_target",
-    kenna_liqii_qarshii:            "kenna_liqii_qarshii_target",
-    qusanna_dirqii_int:             "qusanna_dirqii_int_target",
-    qusanna_dirqii_mise:            "qusanna_dirqii_mise_target",
-    qusanna_dirqii_qarshii:         "qusanna_dirqii_qarshii_target",
-    deebii_liqii_bilchaate_int:     "deebii_liqii_bilchaate_int_target",
+    leenjii_int: "leenjii_int_target",
+    leenjii_dhi: "leenjii_dhi_target",
+    leenjii_dub: "leenjii_dub_target",
+    carraa_hojii_dhaabbii_int: "carraa_hojii_dhaabbii_int_target",
+    carraa_hojii_dhaabbii_dhi: "carraa_hojii_dhaabbii_dhi_target",
+    carraa_hojii_dhaabbii_dub: "carraa_hojii_dhaabbii_dub_target",
+    carraa_hojii_qacarrii_int: "carraa_hojii_qacarrii_int_target",
+    carraa_hojii_qacarrii_dhi: "carraa_hojii_qacarrii_dhi_target",
+    carraa_hojii_qacarrii_dub: "carraa_hojii_qacarrii_dub_target",
+    qusannaa_haawaasaa_int: "qusannaa_haawaasaa_int_target",
+    qusannaa_haawaasaa_qarshii: "qusannaa_haawaasaa_qarshii_target",
+    kenna_liqii_int: "kenna_liqii_int_target",
+    kenna_liqii_mise: "kenna_liqii_mise_target",
+    kenna_liqii_qarshii: "kenna_liqii_qarshii_target",
+    qusanna_dirqii_int: "qusanna_dirqii_int_target",
+    qusanna_dirqii_mise: "qusanna_dirqii_mise_target",
+    qusanna_dirqii_qarshii: "qusanna_dirqii_qarshii_target",
+    deebii_liqii_bilchaate_int: "deebii_liqii_bilchaate_int_target",
     deebii_liqii_bilchaate_qarshii: "deebii_liqii_bilchaate_qarshii_target",
-    deebii_liqii_bulee_int:         "deebii_liqii_bulee_int_target",
-    deebii_liqii_bulee_qarshii:     "deebii_liqii_bulee_qarshii_target",
-    industrii_godoo_kilaastera:     "industrii_godoo_kilaastera_target",
-    industrii_godoo_lafa:           "industrii_godoo_lafa_target",
-    industrii_godoo_carraa_hojii:   "industrii_godoo_carraa_hojii_target",
+    deebii_liqii_bulee_int: "deebii_liqii_bulee_int_target",
+    deebii_liqii_bulee_qarshii: "deebii_liqii_bulee_qarshii_target",
+    industrii_godoo_kilaastera: "industrii_godoo_kilaastera_target",
+    industrii_godoo_lafa: "industrii_godoo_lafa_target",
+    industrii_godoo_carraa_hojii: "industrii_godoo_carraa_hojii_target",
   },
   daldala: {
     galmee_haraa: "galmee_haraa_target",
@@ -263,22 +278,22 @@ const SECTOR_PLAN_FIELDS = {
   },
   galii: {
     // Mana Qophessaa sub-items: KG + Qarshii per source
-    mq_liizii_kg:               "mq_liizii_kg_target",
-    mq_liizii_qarshii:          "mq_liizii_qarshii_target",
-    mq_kiraa_lafaa_kg:          "mq_kiraa_lafaa_kg_target",
-    mq_kiraa_lafaa_qarshii:     "mq_kiraa_lafaa_qarshii_target",
-    mq_kiraa_gare_liizii_kg:    "mq_kiraa_gare_liizii_kg_target",
+    mq_liizii_kg: "mq_liizii_kg_target",
+    mq_liizii_qarshii: "mq_liizii_qarshii_target",
+    mq_kiraa_lafaa_kg: "mq_kiraa_lafaa_kg_target",
+    mq_kiraa_lafaa_qarshii: "mq_kiraa_lafaa_qarshii_target",
+    mq_kiraa_gare_liizii_kg: "mq_kiraa_gare_liizii_kg_target",
     mq_kiraa_gare_liizii_qarshii: "mq_kiraa_gare_liizii_qarshii_target",
-    mq_baaxii_fi_gooroo_kg:     "mq_baaxii_fi_gooroo_kg_target",
-    mq_baaxii_fi_gooroo_qarshii:"mq_baaxii_fi_gooroo_qarshii_target",
-    mq_kiraa_mana_daldalaa_kg:  "mq_kiraa_mana_daldalaa_kg_target",
+    mq_baaxii_fi_gooroo_kg: "mq_baaxii_fi_gooroo_kg_target",
+    mq_baaxii_fi_gooroo_qarshii: "mq_baaxii_fi_gooroo_qarshii_target",
+    mq_kiraa_mana_daldalaa_kg: "mq_kiraa_mana_daldalaa_kg_target",
     mq_kiraa_mana_daldalaa_qarshii: "mq_kiraa_mana_daldalaa_qarshii_target",
     mq_kiraa_mana_jireenyaa_kg: "mq_kiraa_mana_jireenyaa_kg_target",
     mq_kiraa_mana_jireenyaa_qarshii: "mq_kiraa_mana_jireenyaa_qarshii_target",
-    mq_other_kg:                "mq_other_kg_target",
-    mq_other_qarshii:           "mq_other_qarshii_target",
+    mq_other_kg: "mq_other_kg_target",
+    mq_other_qarshii: "mq_other_qarshii_target",
     // Idilee (placeholder — Qarshii only)
-    idilee_qarshii:             "idilee_qarshii_target",
+    idilee_qarshii: "idilee_qarshii_target",
   },
 };
 
@@ -396,14 +411,14 @@ function mapQonnaActuals(dbAggregated) {
 // revenue_entries has: madda_galii (source label), baasii (Qarshii), kg
 // We aggregate KG and Qarshii per source label and map to mq_<key>_kg / mq_<key>_qarshii
 const GALII_SOURCE_TO_KEY = {
-  "Liizii":               "liizii",
-  "Kiraa Lafaa":          "kiraa_lafaa",
-  "Kiraa gare Liizii":    "kiraa_gare_liizii",
-  "Baaxii fi Gooroo":     "baaxii_fi_gooroo",
-  "Kiraa Mana Daldalaa":  "kiraa_mana_daldalaa",
+  Liizii: "liizii",
+  "Kiraa Lafaa": "kiraa_lafaa",
+  "Kiraa gare Liizii": "kiraa_gare_liizii",
+  "Baaxii fi Gooroo": "baaxii_fi_gooroo",
+  "Kiraa Mana Daldalaa": "kiraa_mana_daldalaa",
   "Kiraa Mana Jireenyaa": "kiraa_mana_jireenyaa",
-  "Other":                "other",
-  "Idilee":               "_idilee",
+  Other: "other",
+  Idilee: "_idilee",
 };
 
 function mapGaliiActuals(dbAggregated) {
@@ -456,9 +471,10 @@ const getAllWoRedaReports = async (req, res) => {
 
     // Fetch all rows for this sector from all 4 woredas in the date range
     // For galii we also select madda_galii to enable per-source breakdown
-    const selectCols = sector === "galii"
-      ? `username, madda_galii, ${dbFields.join(", ")}`
-      : `username, ${dbFields.join(", ")}`;
+    const selectCols =
+      sector === "galii"
+        ? `username, madda_galii, ${dbFields.join(", ")}`
+        : `username, ${dbFields.join(", ")}`;
 
     const { data, error } = await supabase
       .from(reportTable)
@@ -574,9 +590,10 @@ const getWoRedaAnalysis = async (req, res) => {
     const reportTable = SECTOR_REPORT_TABLE_MAP[sector];
     const dbFields = SECTOR_REPORT_FIELDS[sector];
     // For galii we also need madda_galii to break down actuals per source
-    const selectCols = sector === "galii"
-      ? `username, madda_galii, ${dbFields.join(", ")}`
-      : `username, ${dbFields.join(", ")}`;
+    const selectCols =
+      sector === "galii"
+        ? `username, madda_galii, ${dbFields.join(", ")}`
+        : `username, ${dbFields.join(", ")}`;
 
     // Fetch period actuals (for ring chart display)
     const { data: reportData, error: reportError } = await supabase
@@ -688,13 +705,16 @@ const getWoRedaAnalysis = async (req, res) => {
           const sKey = GALII_SOURCE_TO_KEY[src];
           const qarshii = Number(row.baasii || 0);
           const kg = Number(row.kg || 0);
-          result["mq_total_qarshii"] = (result["mq_total_qarshii"] || 0) + qarshii;
+          result["mq_total_qarshii"] =
+            (result["mq_total_qarshii"] || 0) + qarshii;
           result["baasii"] = (result["baasii"] || 0) + qarshii;
           result["kg"] = (result["kg"] || 0) + kg;
           if (sKey === "_idilee") {
-            result["idilee_qarshii"] = (result["idilee_qarshii"] || 0) + qarshii;
+            result["idilee_qarshii"] =
+              (result["idilee_qarshii"] || 0) + qarshii;
           } else if (sKey) {
-            result[`mq_${sKey}_qarshii`] = (result[`mq_${sKey}_qarshii`] || 0) + qarshii;
+            result[`mq_${sKey}_qarshii`] =
+              (result[`mq_${sKey}_qarshii`] || 0) + qarshii;
             result[`mq_${sKey}_kg`] = (result[`mq_${sKey}_kg`] || 0) + kg;
           }
         }
@@ -808,8 +828,135 @@ const getSubcityGalii = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/subcity/daldala-a
+ * Subcity submits a Daldala A report.
+ * lakk_daldala_a: count entered by user — stored as count × 17400 (birr).
+ * birr_daldala_a: total birr value stored directly.
+ */
+const submitDaldalAReport = async (req, res) => {
+  try {
+    const {
+      report_date,
+      report_type,
+      lakk_daldala_a, // count — stored multiplied × 17400
+      birr_daldala_a, // total birr (auto-computed on frontend)
+    } = req.body;
+
+    if (!report_date) {
+      return res.status(400).json({ message: "report_date is required." });
+    }
+
+    const { error } = await supabase.from("daldala_a_reports").insert([
+      {
+        user_id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        report_date,
+        report_type: report_type || "Daily Report",
+        lakk_daldala_a: Number(lakk_daldala_a || 0) * 17400,
+        birr_daldala_a: Number(birr_daldala_a || 0),
+      },
+    ]);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res
+      .status(201)
+      .json({ message: "Daldala A report submitted successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/subcity/daldala-a?period=
+ * Returns the subcity's own Daldala A actuals for the given period,
+ * plus the plan target from subcity_buusaa_gonofaa_plan.daldala_a.
+ */
+const getSubcityDaldalA = async (req, res) => {
+  try {
+    const { period = "monthly" } = req.query;
+    const username = req.user.username;
+
+    const now = new Date();
+    const to = now.toISOString().split("T")[0];
+    const yearStart = `${now.getFullYear()}-01-01`;
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysElapsed = Math.floor((now - new Date(yearStart)) / msPerDay) + 1;
+
+    let from;
+    if (period === "daily") from = to;
+    else if (period === "weekly") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - d.getDay());
+      from = d.toISOString().split("T")[0];
+    } else if (period === "monthly")
+      from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    else if (period === "quarterly") {
+      const q = Math.floor(now.getMonth() / 3);
+      from = `${now.getFullYear()}-${String(q * 3 + 1).padStart(2, "0")}-01`;
+    } else from = yearStart;
+
+    // Fetch period actuals
+    const { data: periodData, error: periodErr } = await supabase
+      .from("daldala_a_reports")
+      .select("lakk_daldala_a, birr_daldala_a")
+      .eq("username", username)
+      .gte("report_date", from)
+      .lte("report_date", to);
+
+    if (periodErr) return res.status(500).json({ message: periodErr.message });
+
+    // Fetch YTD actuals
+    const { data: ytdData, error: ytdErr } = await supabase
+      .from("daldala_a_reports")
+      .select("lakk_daldala_a, birr_daldala_a")
+      .eq("username", username)
+      .gte("report_date", yearStart)
+      .lte("report_date", to);
+
+    if (ytdErr) return res.status(500).json({ message: ytdErr.message });
+
+    const sumRows = (rows) =>
+      (rows || []).reduce(
+        (acc, r) => ({
+          lakk_daldala_a: acc.lakk_daldala_a + Number(r.lakk_daldala_a || 0),
+          birr_daldala_a: acc.birr_daldala_a + Number(r.birr_daldala_a || 0),
+        }),
+        { lakk_daldala_a: 0, birr_daldala_a: 0 },
+      );
+
+    const actuals = sumRows(periodData);
+    const actualsYtd = sumRows(ytdData);
+
+    // Fetch plan target from subcity_buusaa_gonofaa_plan.daldala_a
+    const year = now.getFullYear();
+    const { data: planData } = await supabase
+      .from("subcity_buusaa_gonofaa_plan")
+      .select("daldala_a")
+      .eq("year", year)
+      .maybeSingle();
+
+    const target = Number(planData?.daldala_a || 0);
+
+    res.json({
+      period,
+      from,
+      to,
+      daysElapsed,
+      actuals,
+      actualsYtd,
+      target, // annual plan value (already stored multiplied)
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getAllWoRedaReports,
   getWoRedaAnalysis,
   getSubcityGalii,
+  submitDaldalAReport,
+  getSubcityDaldalA,
 };

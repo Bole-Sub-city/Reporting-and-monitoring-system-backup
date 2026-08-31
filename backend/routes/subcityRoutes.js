@@ -5,20 +5,25 @@ const {
   getAllWoRedaReports,
   getWoRedaAnalysis,
   getSubcityGalii,
+  submitDaldalAReport,
+  getSubcityDaldalA,
 } = require("../controllers/subcityReportController");
 
 const authMiddleware = require("../middleware/authMiddleware");
 
 // GET /api/subcity/woreda-reports?sector=&period=
-// Returns all 4 woredas' summed actual report values (used by Comparison & Rank views)
 router.get("/woreda-reports", authMiddleware, getAllWoRedaReports);
 
 // GET /api/subcity/woreda-analysis?sector=&woredaId=&period=
-// Returns one woreda's actuals + plan targets (used by ring charts)
 router.get("/woreda-analysis", authMiddleware, getWoRedaAnalysis);
 
 // GET /api/subcity/subcity-galii?period=
-// Returns the subcity's own Galii Sassaabu (revenue) actuals for the period
 router.get("/subcity-galii", authMiddleware, getSubcityGalii);
+
+// POST /api/subcity/daldala-a — subcity submits a Daldala A report
+router.post("/daldala-a", authMiddleware, submitDaldalAReport);
+
+// GET /api/subcity/daldala-a?period= — subcity fetches own Daldala A actuals + plan target
+router.get("/daldala-a", authMiddleware, getSubcityDaldalA);
 
 module.exports = router;
