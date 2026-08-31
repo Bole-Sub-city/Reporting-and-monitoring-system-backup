@@ -2838,19 +2838,8 @@ const REVENUE_CATS = [
 // CARRAA_WOREDA_CATS — flat list with _parent grouping metadata for ring charts + analysis.
 const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
   if (!f.subs.length) {
-<<<<<<< Updated upstream
-    return [
-      {
-        key: f.name,
-        label: f.label,
-        planKey: `${f.name}_target`,
-        color: f.color,
-      },
-    ];
-=======
     return [{ key: f.name, label: f.label, planKey: `${f.name}_target`, color: f.color,
       _parent: f.name, _parentLabel: f.label, _subLabel: null, _firstSub: true, _lastSub: true, _totalSubs: 1 }];
->>>>>>> Stashed changes
   }
   return f.subs.map((s, si) => ({
     key: `${f.name}${s.suffix}`,

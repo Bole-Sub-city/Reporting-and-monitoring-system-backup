@@ -4512,14 +4512,6 @@ const SECTOR_CFG = {
     // under their parent field name and show an Ida'ama subtotal row.
     fields: CARRAA_FIELDS.flatMap((f) =>
       f.subs.length
-<<<<<<< Updated upstream
-        ? f.subs.map((s) => ({
-            key: `${f.key}${s.suffix}`,
-            label: `${f.label} — ${s.label}`,
-            color: f.color,
-          }))
-        : [{ key: f.key, label: f.label, color: f.color }],
-=======
         ? f.subs.map((s, si) => ({
             key: `${f.key}${s.suffix}`,
             label: `${f.label} — ${s.label}`,
@@ -4532,7 +4524,6 @@ const SECTOR_CFG = {
             _totalSubs: f.subs.length,
           }))
         : [{ key: f.key, label: f.label, color: f.color, _parent: f.key, _parentLabel: f.label, _subLabel: null, _firstSub: true, _lastSub: true, _totalSubs: 1 }],
->>>>>>> Stashed changes
     ),
     label: "Carraa Hojii Uumuu",
     color: "#1e40af",
@@ -4810,143 +4801,6 @@ function CarraaSubcityPlanPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <PlanUnlockBanner sector="carraa" />
 
-<<<<<<< Updated upstream
-        {/* One table per field — each has woreda columns with sub-column inputs */}
-        {CARRAA_FIELDS.map((f) => {
-          const maxSubs = f.subs.length || 1;
-          return (
-            <div
-              key={f.key}
-              className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
-            >
-              {/* Field header */}
-              <div
-                className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2"
-                style={{
-                  background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
-                }}
-              >
-                <span className="w-2 h-2 rounded-full flex-shrink-0 bg-white/70" />
-                <p className="text-sm font-semibold text-white">{f.label}</p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    {/* Row 1: woreda names */}
-                    <tr className="bg-[#f8fafc]">
-                      <th className="text-left px-4 py-2 text-xs font-semibold text-[#64748b] uppercase tracking-wide border-r border-b border-[#e2e8f0] min-w-[130px]">
-                        Gosa
-                      </th>
-                      {WOREDAS.map((w) => (
-                        <th
-                          key={w.id}
-                          colSpan={maxSubs}
-                          className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-b border-r border-[#e2e8f0]"
-                        >
-                          {w.name}
-                        </th>
-                      ))}
-                      <th className="text-center px-3 py-2 text-xs font-semibold text-[#0f172a] uppercase tracking-wide bg-[#eff6ff] border-b border-[#e2e8f0] min-w-[90px]">
-                        Waliigala
-                      </th>
-                    </tr>
-                    {/* Row 2: sub-col labels */}
-                    {f.subs.length > 0 && (
-                      <tr className="bg-[#f8fafc]">
-                        <th className="border-r border-b border-[#e2e8f0]" />
-                        {WOREDAS.map((w) =>
-                          f.subs.map((s, si) => (
-                            <th
-                              key={`${w.id}-${s.suffix}`}
-                              className={`text-center px-2 py-1 text-[10px] font-bold text-[#1e40af] uppercase tracking-wide border-b border-[#e2e8f0] min-w-[72px] ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}
-                            >
-                              {s.label}
-                            </th>
-                          )),
-                        )}
-                        <th className="bg-[#eff6ff] border-b border-[#e2e8f0]" />
-                      </tr>
-                    )}
-                  </thead>
-                  <tbody>
-                    <tr className="hover:bg-[#f8fafc]">
-                      <td className="px-4 py-2.5 font-medium text-[#475569] text-xs border-r border-[#e2e8f0]">
-                        Karoora
-                      </td>
-                      {WOREDAS.map((w) => {
-                        if (!f.subs.length) {
-                          // Industrii Godoo — shouldn't reach here but guard
-                          return (
-                            <td
-                              key={w.id}
-                              colSpan={1}
-                              className="px-2 py-2 border-r border-[#e2e8f0]"
-                            >
-                              <input
-                                type="number"
-                                min="0"
-                                value={woredaForms[w.id][f.key] ?? ""}
-                                onChange={(e) =>
-                                  handleField(w.id, f.key, e.target.value)
-                                }
-                                placeholder="0"
-                                className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
-                              />
-                            </td>
-                          );
-                        }
-                        return f.subs.map((s, si) => {
-                          const subKey = `${f.key}${s.suffix}`;
-                          return (
-                            <td
-                              key={`${w.id}-${s.suffix}`}
-                              className={`px-2 py-2 ${si === f.subs.length - 1 ? "border-r border-[#e2e8f0]" : ""}`}
-                            >
-                              <input
-                                type="number"
-                                min="0"
-                                value={woredaForms[w.id][subKey] ?? ""}
-                                onChange={(e) =>
-                                  handleField(w.id, subKey, e.target.value)
-                                }
-                                placeholder="0"
-                                className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
-                              />
-                            </td>
-                          );
-                        });
-                      })}
-                      {/* Waliigala: sum of all sub-keys across all woredas */}
-                      <td className="px-3 py-2.5 text-right font-bold text-[#0f172a] bg-[#eff6ff] text-sm">
-                        {f.subs.length
-                          ? f.subs
-                              .reduce(
-                                (acc, s) =>
-                                  acc +
-                                  WOREDAS.reduce(
-                                    (wa, w) =>
-                                      wa +
-                                      Number(
-                                        woredaForms[w.id][
-                                          `${f.key}${s.suffix}`
-                                        ] || 0,
-                                      ),
-                                    0,
-                                  ),
-                                0,
-                              )
-                              .toLocaleString()
-                          : WOREDAS.reduce(
-                              (wa, w) =>
-                                wa + Number(woredaForms[w.id][f.key] || 0),
-                              0,
-                            ).toLocaleString()}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-=======
         {/* One table per field — subs as rows, woredas + Total as columns */}
         {CARRAA_FIELDS.map((f) => (
           <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
@@ -4955,7 +4809,6 @@ function CarraaSubcityPlanPage() {
               style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color ?? "#fff" }} />
               <p className="text-sm font-semibold text-white">{f.label}</p>
->>>>>>> Stashed changes
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
