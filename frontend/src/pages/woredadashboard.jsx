@@ -589,34 +589,103 @@ const OROMO_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 // Each entry with hasSubs:true gets three sub-fields: _int (Enterprise), _dhi (Dhiira/Male), _dub (Dubartii/Female).
 // Industrii Godoo has no subs — single number field.
 const CARRAA_HOJII_BASE_FIELDS = [
-// Exact sub-columns per field from the official CHUO Excel template:
-// Leenjii              → int, dhi, dub
-// Carraa Hojii Dhaabbii → int, dhi, dub
-// Carraa Hojii Qacarrii → int, dhi, dub
-// Qusannaa Haawaasaa   → int, qarshii
-// Kenna Liqii          → int, mise, qarshii
-// Qusanna Dirqii       → int, mise, qarshii
-// Deebii Liqii Bilchaate → int, qarshii
-// Deebii Liqii Bulee    → int, qarshii
-// Industrii Godoo       → kilaastera, lafa, carraa_hojii
-  { name: "leenjii",                label: "Leenjii",                color: "#1e40af",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
-    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
+  // Exact sub-columns per field from the official CHUO Excel template:
+  // Leenjii              → int, dhi, dub
+  // Carraa Hojii Dhaabbii → int, dhi, dub
+  // Carraa Hojii Qacarrii → int, dhi, dub
+  // Qusannaa Haawaasaa   → int, qarshii
+  // Kenna Liqii          → int, mise, qarshii
+  // Qusanna Dirqii       → int, mise, qarshii
+  // Deebii Liqii Bilchaate → int, qarshii
+  // Deebii Liqii Bulee    → int, qarshii
+  // Industrii Godoo       → kilaastera, lafa, carraa_hojii
+  {
+    name: "leenjii",
+    label: "Leenjii",
+    color: "#1e40af",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "carraa_hojii_dhaabbii",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "carraa_hojii_qacarrii",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "qusannaa_haawaasaa",
+    label: "Qusannaa Haawaasaa",
+    color: "#475569",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "kenna_liqii",
+    label: "Kenna Liqii",
+    color: "#b45309",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "qusanna_dirqii",
+    label: "Qusanna Dirqii",
+    color: "#64748b",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "deebii_liqii_bilchaate",
+    label: "Deebii Liqii Bilchaate",
+    color: "#78350f",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "deebii_liqii_bulee",
+    label: "Deebii Liqii Bulee",
+    color: "#dc2626",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "industrii_godoo",
+    label: "Industrii Godoo",
+    color: "#0369a1",
+    subs: [
+      { suffix: "_kilaastera", label: "Kilaastera" },
+      { suffix: "_lafa", label: "Lafa (Hek)" },
+      { suffix: "_carraa_hojii", label: "Carraa Hojii" },
+    ],
+  },
 ];
 // CARRAA_WD_SUBS kept for reference
 const CARRAA_WD_SUBS = [
@@ -786,13 +855,29 @@ const REVENUE_FIELDS = [
 
 // Mana Qophessaa sub-items (each requires KG + Qarshii in the report)
 const MANA_QOPHESSAA_SOURCES = [
-  { id: "liizii",              label: "Liizii",              key: "liizii" },
-  { id: "kiraa_lafaa",         label: "Kiraa Lafaa",         key: "kiraa_lafaa" },
-  { id: "kiraa_gare_liizii",   label: "Kiraa gare Liizii",   key: "kiraa_gare_liizii" },
-  { id: "baaxii_fi_gooroo",    label: "Baaxii fi Gooroo",    key: "baaxii_fi_gooroo" },
-  { id: "kiraa_mana_daldalaa", label: "Kiraa Mana Daldalaa", key: "kiraa_mana_daldalaa" },
-  { id: "kiraa_mana_jireenyaa",label: "Kiraa Mana Jireenyaa",key: "kiraa_mana_jireenyaa" },
-  { id: "other",               label: "Other",               key: "other" },
+  { id: "liizii", label: "Liizii", key: "liizii" },
+  { id: "kiraa_lafaa", label: "Kiraa Lafaa", key: "kiraa_lafaa" },
+  {
+    id: "kiraa_gare_liizii",
+    label: "Kiraa gare Liizii",
+    key: "kiraa_gare_liizii",
+  },
+  {
+    id: "baaxii_fi_gooroo",
+    label: "Baaxii fi Gooroo",
+    key: "baaxii_fi_gooroo",
+  },
+  {
+    id: "kiraa_mana_daldalaa",
+    label: "Kiraa Mana Daldalaa",
+    key: "kiraa_mana_daldalaa",
+  },
+  {
+    id: "kiraa_mana_jireenyaa",
+    label: "Kiraa Mana Jireenyaa",
+    key: "kiraa_mana_jireenyaa",
+  },
+  { id: "other", label: "Other", key: "other" },
 ];
 const WORKS = [
   {
@@ -1104,12 +1189,21 @@ function AnalysisSection() {
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PLAN_FIELDS.map(({ key, planKey, label, description, color }) => {
-              const at = plan ? (plan[planKey] ?? 0) : 0;
-              const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
-              // Use adjusted target so carry-over deficit raises the bar,
-              // but overperformance never lowers it
+              // Fields stored multiplied — divide back to show base count
+              const divisor =
+                key === "daldala_b_group_a"
+                  ? 4200
+                  : key === "daldala_b_group_b"
+                    ? 8700
+                    : 1;
+              const at = plan ? Math.round((plan[planKey] ?? 0) / divisor) : 0;
+              const acYtd = summaryYtd
+                ? Math.round((summaryYtd[key] ?? 0) / divisor)
+                : 0;
               const pt = adjustedTarget(at, period, daysElapsed, acYtd);
-              const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+              const ac = activeSummary
+                ? Math.round((activeSummary[key] ?? 0) / divisor)
+                : 0;
               return (
                 <RingChart
                   key={key}
@@ -1154,16 +1248,28 @@ function AnalysisSection() {
                 </thead>
                 <tbody>
                   {PLAN_FIELDS.map(({ key, planKey, label, color }) => {
-                    const at = plan ? (plan[planKey] ?? 0) : 0;
+                    const divisor =
+                      key === "daldala_b_group_a"
+                        ? 4200
+                        : key === "daldala_b_group_b"
+                          ? 8700
+                          : 1;
+                    const at = plan
+                      ? Math.round((plan[planKey] ?? 0) / divisor)
+                      : 0;
                     const staticPt = partitionTarget(at, period);
-                    const acYtd = summaryYtd ? (summaryYtd[key] ?? 0) : 0;
+                    const acYtd = summaryYtd
+                      ? Math.round((summaryYtd[key] ?? 0) / divisor)
+                      : 0;
                     const adjPt = adjustedTarget(
                       at,
                       period,
                       daysElapsed,
                       acYtd,
                     );
-                    const ac = activeSummary ? (activeSummary[key] ?? 0) : 0;
+                    const ac = activeSummary
+                      ? Math.round((activeSummary[key] ?? 0) / divisor)
+                      : 0;
                     // % is against the adjusted target so carry-over is reflected
                     const pct = adjPt > 0 ? Math.round((ac / adjPt) * 100) : 0;
                     const cumulTarget = Math.round((daysElapsed / 365) * at);
@@ -2264,30 +2370,106 @@ function QonnaAnalysisSection() {
 const CARRAA_PLAN_FIELDS = [
   // Fields drive the read-only plan display in CarraaHojiiAnnualPlanSection.
   // subs matches CARRAA_HOJII_BASE_FIELDS exactly.
-  { name: "leenjii",                label: "Leenjii",                color: "#1e40af",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "carraa_hojii_dhaabbii",  label: "Carraa Hojii Dhaabbii",  color: "#0f766e",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "carraa_hojii_qacarrii",  label: "Carraa Hojii Qacarrii",  color: "#7c3aed",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_dhi", label: "Dhi" }, { suffix: "_dub", label: "Dub" }] },
-  { name: "qusannaa_haawaasaa",     label: "Qusannaa Haawaasaa",     color: "#475569",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "kenna_liqii",            label: "Kenna Liqii",            color: "#b45309",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "qusanna_dirqii",         label: "Qusanna Dirqii",         color: "#64748b",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_mise", label: "Mise" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "deebii_liqii_bilchaate", label: "Deebii Liqii Bilchaate", color: "#78350f",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "deebii_liqii_bulee",     label: "Deebii Liqii Bulee",     color: "#dc2626",
-    subs: [{ suffix: "_int", label: "Int" }, { suffix: "_qarshii", label: "Qarshii" }] },
-  { name: "industrii_godoo",        label: "Industrii Godoo",        color: "#0369a1",
-    subs: [{ suffix: "_kilaastera", label: "Kilaastera" }, { suffix: "_lafa", label: "Lafa (Hek)" }, { suffix: "_carraa_hojii", label: "Carraa Hojii" }] },
+  {
+    name: "leenjii",
+    label: "Leenjii",
+    color: "#1e40af",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "carraa_hojii_dhaabbii",
+    label: "Carraa Hojii Dhaabbii",
+    color: "#0f766e",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "carraa_hojii_qacarrii",
+    label: "Carraa Hojii Qacarrii",
+    color: "#7c3aed",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_dhi", label: "Dhi" },
+      { suffix: "_dub", label: "Dub" },
+    ],
+  },
+  {
+    name: "qusannaa_haawaasaa",
+    label: "Qusannaa Haawaasaa",
+    color: "#475569",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "kenna_liqii",
+    label: "Kenna Liqii",
+    color: "#b45309",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "qusanna_dirqii",
+    label: "Qusanna Dirqii",
+    color: "#64748b",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_mise", label: "Mise" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "deebii_liqii_bilchaate",
+    label: "Deebii Liqii Bilchaate",
+    color: "#78350f",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "deebii_liqii_bulee",
+    label: "Deebii Liqii Bulee",
+    color: "#dc2626",
+    subs: [
+      { suffix: "_int", label: "Int" },
+      { suffix: "_qarshii", label: "Qarshii" },
+    ],
+  },
+  {
+    name: "industrii_godoo",
+    label: "Industrii Godoo",
+    color: "#0369a1",
+    subs: [
+      { suffix: "_kilaastera", label: "Kilaastera" },
+      { suffix: "_lafa", label: "Lafa (Hek)" },
+      { suffix: "_carraa_hojii", label: "Carraa Hojii" },
+    ],
+  },
 ];
 
 // CARRAA_SUMMARY_KEYS drives the ring-chart analysis — flat list of all sub-keys.
 const CARRAA_SUMMARY_KEYS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
   if (!f.subs.length) {
-    return [{ summaryKey: f.name, key: `${f.name}_target`, label: f.label, color: f.color }];
+    return [
+      {
+        summaryKey: f.name,
+        key: `${f.name}_target`,
+        label: f.label,
+        color: f.color,
+      },
+    ];
   }
   return f.subs.map((s) => ({
     summaryKey: `${f.name}${s.suffix}`,
@@ -2323,12 +2505,18 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm mb-4">
             <div
               className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+              style={{
+                background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+              }}
             >
               <PlanIcon />
               <div>
-                <p className="text-white font-bold text-base">Annual Plan {year}</p>
-                <p className="text-white/60 text-xs mt-0.5">Dubbisu qofa — bulchiinsa xiqqaa irraa kenname</p>
+                <p className="text-white font-bold text-base">
+                  Annual Plan {year}
+                </p>
+                <p className="text-white/60 text-xs mt-0.5">
+                  Dubbisu qofa — bulchiinsa xiqqaa irraa kenname
+                </p>
               </div>
             </div>
           </div>
@@ -2336,24 +2524,43 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           {/* One card per field — shows sub-column values */}
           <div className="space-y-3">
             {CARRAA_PLAN_FIELDS.map((f) => (
-              <div key={f.name} className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+              <div
+                key={f.name}
+                className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm"
+              >
                 {/* Field header */}
                 <div className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2 bg-[#f8fafc]">
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
-                  <p className="text-sm font-semibold text-[#1e293b]">{f.label}</p>
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: f.color }}
+                  />
+                  <p className="text-sm font-semibold text-[#1e293b]">
+                    {f.label}
+                  </p>
                 </div>
                 {/* Sub-column values */}
-                <div className={`grid divide-x divide-[#f1f5f9] ${
-                  f.subs.length === 3 ? "grid-cols-3" :
-                  f.subs.length === 2 ? "grid-cols-2" : "grid-cols-1"
-                }`}>
+                <div
+                  className={`grid divide-x divide-[#f1f5f9] ${
+                    f.subs.length === 3
+                      ? "grid-cols-3"
+                      : f.subs.length === 2
+                        ? "grid-cols-2"
+                        : "grid-cols-1"
+                  }`}
+                >
                   {f.subs.map((s) => (
                     <div key={s.suffix} className="px-5 py-4 text-center">
-                      <p className="text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1">{s.label}</p>
-                      <p className="text-2xl font-extrabold text-[#1e293b]">
-                        {(plan[`${f.name}${s.suffix}_target`] ?? 0).toLocaleString()}
+                      <p className="text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1">
+                        {s.label}
                       </p>
-                      <p className="text-xs text-[#94a3b8] mt-1">Annual target</p>
+                      <p className="text-2xl font-extrabold text-[#1e293b]">
+                        {(
+                          plan[`${f.name}${s.suffix}_target`] ?? 0
+                        ).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-[#94a3b8] mt-1">
+                        Annual target
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -2362,11 +2569,19 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           </div>
 
           <div className="mt-4 flex items-center gap-2 bg-[#eff6ff] border border-[#bfdbfe] rounded-xl px-4 py-3">
-            <svg className="w-5 h-5 text-[#1e40af] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" />
+            <svg
+              className="w-5 h-5 text-[#1e40af] flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4M12 16h.01" />
             </svg>
             <p className="text-[#1e40af] text-sm">
-              These targets were assigned by your sub-city office. Contact them if the numbers need correction.
+              These targets were assigned by your sub-city office. Contact them
+              if the numbers need correction.
             </p>
           </div>
         </div>
@@ -2375,9 +2590,12 @@ function CarraaHojiiAnnualPlanSection({ u }) {
           <div className="w-14 h-14 rounded-full bg-[#eff6ff] flex items-center justify-center mb-3">
             <PlanIcon />
           </div>
-          <p className="text-[#334155] font-semibold mb-1">No Plan Assigned Yet</p>
+          <p className="text-[#334155] font-semibold mb-1">
+            No Plan Assigned Yet
+          </p>
           <p className="text-[#94a3b8] text-sm max-w-xs">
-            Your sub-city office hasn't saved a Carraa Hojii plan for {year} yet. Once they do, your targets will appear here automatically.
+            Your sub-city office hasn't saved a Carraa Hojii plan for {year}{" "}
+            yet. Once they do, your targets will appear here automatically.
           </p>
         </div>
       )}
@@ -2524,28 +2742,110 @@ const ATK_CATS = ATK_FIELDS.map((f, i) => ({
 
 const REVENUE_CATS = [
   // Mana Qophessaa sub-items — KG (taxpayer count) + Qarshii (ETB collected)
-  { key: "mq_liizii_kg",                planKey: "mq_liizii_kg_target",                label: "Liizii — KG",               color: "#0f766e" },
-  { key: "mq_liizii_qarshii",           planKey: "mq_liizii_qarshii_target",           label: "Liizii — Qarshii",          color: "#0f766e" },
-  { key: "mq_kiraa_lafaa_kg",           planKey: "mq_kiraa_lafaa_kg_target",           label: "Kiraa Lafaa — KG",          color: "#0d9488" },
-  { key: "mq_kiraa_lafaa_qarshii",      planKey: "mq_kiraa_lafaa_qarshii_target",      label: "Kiraa Lafaa — Qarshii",     color: "#0d9488" },
-  { key: "mq_kiraa_gare_liizii_kg",     planKey: "mq_kiraa_gare_liizii_kg_target",     label: "Kiraa gare Liizii — KG",   color: "#0891b2" },
-  { key: "mq_kiraa_gare_liizii_qarshii",planKey: "mq_kiraa_gare_liizii_qarshii_target",label: "Kiraa gare Liizii — Qarshii",color: "#0891b2" },
-  { key: "mq_baaxii_fi_gooroo_kg",      planKey: "mq_baaxii_fi_gooroo_kg_target",      label: "Baaxii fi Gooroo — KG",     color: "#0369a1" },
-  { key: "mq_baaxii_fi_gooroo_qarshii", planKey: "mq_baaxii_fi_gooroo_qarshii_target", label: "Baaxii fi Gooroo — Qarshii",color: "#0369a1" },
-  { key: "mq_kiraa_mana_daldalaa_kg",        planKey: "mq_kiraa_mana_daldalaa_kg_target",        label: "Kiraa Mana Daldalaa — KG",   color: "#1e40af" },
-  { key: "mq_kiraa_mana_daldalaa_qarshii",   planKey: "mq_kiraa_mana_daldalaa_qarshii_target",   label: "Kiraa Mana Daldalaa — Qarshii",color: "#1e40af" },
-  { key: "mq_kiraa_mana_jireenyaa_kg",       planKey: "mq_kiraa_mana_jireenyaa_kg_target",       label: "Kiraa Mana Jireenyaa — KG",  color: "#4f46e5" },
-  { key: "mq_kiraa_mana_jireenyaa_qarshii",  planKey: "mq_kiraa_mana_jireenyaa_qarshii_target",  label: "Kiraa Mana Jireenyaa — Qarshii",color: "#4f46e5" },
-  { key: "mq_other_kg",                 planKey: "mq_other_kg_target",                 label: "Other — KG",                color: "#64748b" },
-  { key: "mq_other_qarshii",            planKey: "mq_other_qarshii_target",            label: "Other — Qarshii",           color: "#64748b" },
+  {
+    key: "mq_liizii_kg",
+    planKey: "mq_liizii_kg_target",
+    label: "Liizii — KG",
+    color: "#0f766e",
+  },
+  {
+    key: "mq_liizii_qarshii",
+    planKey: "mq_liizii_qarshii_target",
+    label: "Liizii — Qarshii",
+    color: "#0f766e",
+  },
+  {
+    key: "mq_kiraa_lafaa_kg",
+    planKey: "mq_kiraa_lafaa_kg_target",
+    label: "Kiraa Lafaa — KG",
+    color: "#0d9488",
+  },
+  {
+    key: "mq_kiraa_lafaa_qarshii",
+    planKey: "mq_kiraa_lafaa_qarshii_target",
+    label: "Kiraa Lafaa — Qarshii",
+    color: "#0d9488",
+  },
+  {
+    key: "mq_kiraa_gare_liizii_kg",
+    planKey: "mq_kiraa_gare_liizii_kg_target",
+    label: "Kiraa gare Liizii — KG",
+    color: "#0891b2",
+  },
+  {
+    key: "mq_kiraa_gare_liizii_qarshii",
+    planKey: "mq_kiraa_gare_liizii_qarshii_target",
+    label: "Kiraa gare Liizii — Qarshii",
+    color: "#0891b2",
+  },
+  {
+    key: "mq_baaxii_fi_gooroo_kg",
+    planKey: "mq_baaxii_fi_gooroo_kg_target",
+    label: "Baaxii fi Gooroo — KG",
+    color: "#0369a1",
+  },
+  {
+    key: "mq_baaxii_fi_gooroo_qarshii",
+    planKey: "mq_baaxii_fi_gooroo_qarshii_target",
+    label: "Baaxii fi Gooroo — Qarshii",
+    color: "#0369a1",
+  },
+  {
+    key: "mq_kiraa_mana_daldalaa_kg",
+    planKey: "mq_kiraa_mana_daldalaa_kg_target",
+    label: "Kiraa Mana Daldalaa — KG",
+    color: "#1e40af",
+  },
+  {
+    key: "mq_kiraa_mana_daldalaa_qarshii",
+    planKey: "mq_kiraa_mana_daldalaa_qarshii_target",
+    label: "Kiraa Mana Daldalaa — Qarshii",
+    color: "#1e40af",
+  },
+  {
+    key: "mq_kiraa_mana_jireenyaa_kg",
+    planKey: "mq_kiraa_mana_jireenyaa_kg_target",
+    label: "Kiraa Mana Jireenyaa — KG",
+    color: "#4f46e5",
+  },
+  {
+    key: "mq_kiraa_mana_jireenyaa_qarshii",
+    planKey: "mq_kiraa_mana_jireenyaa_qarshii_target",
+    label: "Kiraa Mana Jireenyaa — Qarshii",
+    color: "#4f46e5",
+  },
+  {
+    key: "mq_other_kg",
+    planKey: "mq_other_kg_target",
+    label: "Other — KG",
+    color: "#64748b",
+  },
+  {
+    key: "mq_other_qarshii",
+    planKey: "mq_other_qarshii_target",
+    label: "Other — Qarshii",
+    color: "#64748b",
+  },
   // Idilee
-  { key: "idilee_qarshii",              planKey: "idilee_qarshii_target",              label: "Idilee — Qarshii",          color: "#1e40af" },
+  {
+    key: "idilee_qarshii",
+    planKey: "idilee_qarshii_target",
+    label: "Idilee — Qarshii",
+    color: "#1e40af",
+  },
 ];
 
 // CARRAA_WOREDA_CATS drives GenericAnnualPlanSection and GenericAnalysisSection — flat sub-key list.
 const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
   if (!f.subs.length) {
-    return [{ key: f.name, label: f.label, planKey: `${f.name}_target`, color: f.color }];
+    return [
+      {
+        key: f.name,
+        label: f.label,
+        planKey: `${f.name}_target`,
+        color: f.color,
+      },
+    ];
   }
   return f.subs.map((s) => ({
     key: `${f.name}${s.suffix}`,
@@ -2647,7 +2947,12 @@ function GenericAnnualPlanSection({
 // ─── GaliiAnnualPlanSection ───────────────────────────────────────────────────
 // Woreda read-only view of the Galii annual plan.
 // Shows one row per MQ source with KG + Qarshii targets side by side, plus Idilee.
-function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentBorder }) {
+function GaliiAnnualPlanSection({
+  fetchPlanFn,
+  accentColor,
+  accentLight,
+  accentBorder,
+}) {
   const [plan, setPlan] = useState({});
   const [loading, setLoading] = useState(true);
   const year = new Date().getFullYear();
@@ -2661,7 +2966,10 @@ function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentB
   if (loading)
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin" style={{ borderTopColor: accentColor }} />
+        <div
+          className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
+          style={{ borderTopColor: accentColor }}
+        />
       </div>
     );
 
@@ -2672,11 +2980,15 @@ function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentB
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div
           className="px-6 py-4 flex items-center gap-3 border-b border-[#e2e8f0]"
-          style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}
+          style={{
+            background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+          }}
         >
           <PlanIcon />
           <div>
-            <p className="text-white font-bold text-base">Karoora Galii Sassaabu {year}</p>
+            <p className="text-white font-bold text-base">
+              Karoora Galii Sassaabu {year}
+            </p>
             <p className="text-white/60 text-xs mt-0.5">Dubbisuu qofa</p>
           </div>
         </div>
@@ -2699,9 +3011,14 @@ function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentB
             <tbody>
               {sources.map((src, i) => {
                 const kg = Number(plan[`mq_${src.key}_kg_target`] ?? 0);
-                const qarshii = Number(plan[`mq_${src.key}_qarshii_target`] ?? 0);
+                const qarshii = Number(
+                  plan[`mq_${src.key}_qarshii_target`] ?? 0,
+                );
                 return (
-                  <tr key={src.key} className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 === 0 ? "" : "bg-[#f8fafc]"}`}>
+                  <tr
+                    key={src.key}
+                    className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 === 0 ? "" : "bg-[#f8fafc]"}`}
+                  >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
@@ -2725,9 +3042,12 @@ function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentB
                     Idilee
                   </span>
                 </td>
-                <td className="px-5 py-3 text-right text-[#94a3b8] text-xs">—</td>
+                <td className="px-5 py-3 text-right text-[#94a3b8] text-xs">
+                  —
+                </td>
                 <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
-                  ETB {Number(plan["idilee_qarshii_target"] ?? 0).toLocaleString()}
+                  ETB{" "}
+                  {Number(plan["idilee_qarshii_target"] ?? 0).toLocaleString()}
                 </td>
               </tr>
             </tbody>
@@ -2737,12 +3057,20 @@ function GaliiAnnualPlanSection({ fetchPlanFn, accentColor, accentLight, accentB
           className="mx-6 mb-5 mt-4 flex items-center gap-2 rounded-xl px-4 py-3 border"
           style={{ background: accentLight, borderColor: accentBorder }}
         >
-          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 flex-shrink-0"
+            style={{ color: accentColor }}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="9" />
             <path d="M12 8v4M12 16h.01" />
           </svg>
           <p className="text-sm" style={{ color: accentColor }}>
-            Karoora kun bulchiinsa xiqqaa irraa kenname. Dogongora yoo jiraate quunnamaa.
+            Karoora kun bulchiinsa xiqqaa irraa kenname. Dogongora yoo jiraate
+            quunnamaa.
           </p>
         </div>
       </div>
@@ -3734,7 +4062,9 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
       fetchMyReports({ sector: "carraa", date_from: today, date_to: today })
         .then((data) => {
           const rows = Array.isArray(data) ? data : [];
-          const row = rows.find((r) => r.report_date === today && r._sector === "carraa");
+          const row = rows.find(
+            (r) => r.report_date === today && r._sector === "carraa",
+          );
           if (!row) return;
           setReportType(row.report_type || REPORT_TYPES[0]);
           setYaada(row.yaada_gudinaa || "");
@@ -3749,10 +4079,13 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
     }
   }, [locked]);
 
-  const handleField = (name, val) =>
-    setForm((p) => ({ ...p, [name]: val }));
+  const handleField = (name, val) => setForm((p) => ({ ...p, [name]: val }));
 
-  const handleClear = () => { setForm({}); setYaada(""); setError(""); };
+  const handleClear = () => {
+    setForm({});
+    setYaada("");
+    setError("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -3760,7 +4093,11 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
     setError("");
     setSaving(true);
     try {
-      const payload = { report_type: reportType, report_date: todayStr(), yaada_gudinaa: yaada };
+      const payload = {
+        report_type: reportType,
+        report_date: todayStr(),
+        yaada_gudinaa: yaada,
+      };
       CARRAA_HOJII_FIELDS.forEach(({ name }) => {
         payload[name] = Number(form[name] || 0);
       });
@@ -3780,30 +4117,42 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
       {locked && (
         <div className="mb-5">
-          <LockBanner sector="carraa" reportType={reportType} onUnlocked={onSubmitSuccess} />
+          <LockBanner
+            sector="carraa"
+            reportType={reportType}
+            onUnlocked={onSubmitSuccess}
+          />
         </div>
       )}
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
-          <p className="text-[#64748b] text-sm mt-0.5">Carraa Hojii Uumuu — Dirree hunda guutii gabaasi</p>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Carraa Hojii Uumuu — Dirree hunda guutii gabaasi
+          </p>
         </div>
       </div>
 
       {/* Report type + date row */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
-          <p className="text-[#64748b] text-sm font-medium mb-1.5">Report Type</p>
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">
+            Report Type
+          </p>
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value)}
             className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
           >
-            {REPORT_TYPES.map((t) => <option key={t}>{t}</option>)}
+            {REPORT_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
           </select>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">Reporting Period</p>
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
+            Reporting Period
+          </p>
           <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
         </div>
       </div>
@@ -3811,7 +4160,12 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
       <form onSubmit={handleSubmit}>
         <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden mb-5">
           {/* Header */}
-          <div className="px-5 py-4" style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+          <div
+            className="px-5 py-4"
+            style={{
+              background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+            }}
+          >
             <p className="text-white font-bold text-base">Carraa Hojii Uumuu</p>
             <p className="text-white/60 text-xs mt-0.5">{u?.username}</p>
           </div>
@@ -3820,37 +4174,55 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
           <div className="divide-y divide-[#f1f5f9]">
             {CARRAA_HOJII_BASE_FIELDS.map((f) => {
               // Number of subs determines grid: 1→single, 2→2-col, 3→3-col
-              const gridCols = f.subs.length === 3 ? "grid-cols-3" :
-                               f.subs.length === 2 ? "grid-cols-2" : "";
+              const gridCols =
+                f.subs.length === 3
+                  ? "grid-cols-3"
+                  : f.subs.length === 2
+                    ? "grid-cols-2"
+                    : "";
               return (
                 <div key={f.name} className="px-5 py-4">
                   <p className="text-[#334155] text-sm font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: f.color }}
+                    />
                     {f.label}
                   </p>
-                  <div className={f.subs.length > 0 ? `grid gap-3 ${gridCols}` : ""}>
-                    {f.subs.length > 0 ? f.subs.map((sub) => {
-                      const fieldName = `${f.name}${sub.suffix}`;
-                      return (
-                        <div key={fieldName}>
-                          <label className="block text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1.5">
-                            {sub.label} <span className="text-red-400">*</span>
-                          </label>
-                          <input
-                            type="number" min="0"
-                            name={fieldName}
-                            value={form[fieldName] ?? ""}
-                            onChange={(e) => handleField(fieldName, e.target.value)}
-                            required
-                            placeholder="0"
-                            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
-                          />
-                        </div>
-                      );
-                    }) : (
+                  <div
+                    className={
+                      f.subs.length > 0 ? `grid gap-3 ${gridCols}` : ""
+                    }
+                  >
+                    {f.subs.length > 0 ? (
+                      f.subs.map((sub) => {
+                        const fieldName = `${f.name}${sub.suffix}`;
+                        return (
+                          <div key={fieldName}>
+                            <label className="block text-xs font-bold text-[#1e40af] uppercase tracking-wide mb-1.5">
+                              {sub.label}{" "}
+                              <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              name={fieldName}
+                              value={form[fieldName] ?? ""}
+                              onChange={(e) =>
+                                handleField(fieldName, e.target.value)
+                              }
+                              required
+                              placeholder="0"
+                              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
                       /* Field with no subs — plain single input (shouldn't happen but guard) */
                       <input
-                        type="number" min="0"
+                        type="number"
+                        min="0"
                         name={f.name}
                         value={form[f.name] ?? ""}
                         onChange={(e) => handleField(f.name, e.target.value)}
@@ -3866,7 +4238,9 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
 
             {/* Yaada Gudinaa */}
             <div className="px-5 py-4">
-              <label className="block text-[#334155] text-sm font-medium mb-1.5">Yaada Gudinaa</label>
+              <label className="block text-[#334155] text-sm font-medium mb-1.5">
+                Yaada Gudinaa
+              </label>
               <textarea
                 value={yaada}
                 onChange={(e) => setYaada(e.target.value)}
@@ -3885,14 +4259,22 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
         )}
 
         <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-          <p className="text-[#94a3b8] text-xs">Fields marked <span className="text-red-500">*</span> are required</p>
+          <p className="text-[#94a3b8] text-xs">
+            Fields marked <span className="text-red-500">*</span> are required
+          </p>
           <div className="flex gap-3">
-            <button type="button" onClick={handleClear}
-              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
+            >
               Clear Form
             </button>
-            <button type="submit" disabled={saving || locked}
-              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5">
+            <button
+              type="submit"
+              disabled={saving || locked}
+              className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5"
+            >
               <SubmitIcon />
               {saving ? "Galchaa jira..." : "Gabaasa Galchi"}
             </button>
@@ -3909,7 +4291,9 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
 function RevenueSubmitForm({ u }) {
   // mqForm: { [sourceKey]: { kg: string, qarshii: string } }
   const emptyMq = () =>
-    Object.fromEntries(MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]));
+    Object.fromEntries(
+      MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
+    );
   const [mqForm, setMqForm] = useState(emptyMq());
   const [idileeAmount, setIdileeAmount] = useState("");
   const [date, setDate] = useState(todayStr());
@@ -3921,7 +4305,9 @@ function RevenueSubmitForm({ u }) {
     setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
 
   const hasAnyMq = MANA_QOPHESSAA_SOURCES.some(
-    (s) => Number(mqForm[s.key]?.kg || 0) > 0 || Number(mqForm[s.key]?.qarshii || 0) > 0,
+    (s) =>
+      Number(mqForm[s.key]?.kg || 0) > 0 ||
+      Number(mqForm[s.key]?.qarshii || 0) > 0,
   );
   const hasIdilee = Number(idileeAmount || 0) > 0;
   const canSubmit = (hasAnyMq || hasIdilee) && date;
@@ -3966,12 +4352,19 @@ function RevenueSubmitForm({ u }) {
           date,
         });
       }
-      await submitRevenueReport({ entries, total: grandTotal, report_date: date });
+      await submitRevenueReport({
+        entries,
+        total: grandTotal,
+        report_date: date,
+      });
       setMqForm(emptyMq());
       setIdileeAmount("");
       setShowModal(true);
     } catch (err) {
-      setSubmitError(err.response?.data?.message || "Gabaasni hin galiin. Irra deebi'ii yaalii.");
+      setSubmitError(
+        err.response?.data?.message ||
+          "Gabaasni hin galiin. Irra deebi'ii yaalii.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -4017,7 +4410,9 @@ function RevenueSubmitForm({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
           <p className="text-white/60 text-xs mt-0.5">
@@ -4065,7 +4460,9 @@ function RevenueSubmitForm({ u }) {
                   min="0"
                   step="0.01"
                   value={qarshii}
-                  onChange={(e) => handleMqField(src.key, "qarshii", e.target.value)}
+                  onChange={(e) =>
+                    handleMqField(src.key, "qarshii", e.target.value)
+                  }
                   placeholder="0.00"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
@@ -4075,7 +4472,9 @@ function RevenueSubmitForm({ u }) {
           {/* MQ sub-total row */}
           {mqTotal > 0 && (
             <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
-              <span className="text-sm font-bold text-[#0f766e]">Waliigala MQ</span>
+              <span className="text-sm font-bold text-[#0f766e]">
+                Waliigala MQ
+              </span>
               <span />
               <span className="text-right text-sm font-bold text-[#0f766e]">
                 ETB {mqTotal.toLocaleString()}
@@ -4089,7 +4488,9 @@ function RevenueSubmitForm({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Idilee</p>
           <p className="text-white/60 text-xs mt-0.5">
@@ -4115,7 +4516,13 @@ function RevenueSubmitForm({ u }) {
       {/* Error */}
       {submitError && (
         <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -4471,7 +4878,10 @@ const SECTOR_PRINT_FIELDS = {
   // Carraa Hojii: Dhaabbii+Qacarrii have Dhi/Dub; others have Int; Industrii Godoo plain
   carraaHojii: CARRAA_HOJII_BASE_FIELDS.flatMap((f) =>
     f.subs.length
-      ? f.subs.map((s) => ({ key: `${f.name}${s.suffix}`, label: `${f.label} — ${s.label}` }))
+      ? f.subs.map((s) => ({
+          key: `${f.name}${s.suffix}`,
+          label: `${f.label} — ${s.label}`,
+        }))
       : [{ key: f.name, label: f.label }],
   ),
   qonna: [
@@ -4623,51 +5033,54 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </div>`;
     }
 
-  // Galii Sassaabu — structured table: rows=sub-items, cols=Karoora(KG,Qarshii)/Raawwii(KG,Qarshii)/%/Total
-  if (sectorId === "galii") {
-    // Aggregate actual rows by madda_galii source
-    const aggBySource = {};
-    for (const row of sectorRows) {
-      const src = row.madda_galii ?? row.source ?? "";
-      if (!aggBySource[src]) aggBySource[src] = { kg: 0, qarshii: 0 };
-      aggBySource[src].kg += Number(row.kg ?? 0);
-      aggBySource[src].qarshii += Number(row.baasii ?? 0);
-    }
+    // Galii Sassaabu — structured table: rows=sub-items, cols=Karoora(KG,Qarshii)/Raawwii(KG,Qarshii)/%/Total
+    if (sectorId === "galii") {
+      // Aggregate actual rows by madda_galii source
+      const aggBySource = {};
+      for (const row of sectorRows) {
+        const src = row.madda_galii ?? row.source ?? "";
+        if (!aggBySource[src]) aggBySource[src] = { kg: 0, qarshii: 0 };
+        aggBySource[src].kg += Number(row.kg ?? 0);
+        aggBySource[src].qarshii += Number(row.baasii ?? 0);
+      }
 
-    // Build sub-column list: always show Raawwii; Karoora optional; % optional
-    const subCols = [];
-    if (showPlan) { subCols.push("plan_kg"); subCols.push("plan_qarshii"); }
-    subCols.push("actual_kg");
-    subCols.push("actual_qarshii");
-    if (showPct) subCols.push("pct");
-    const numSubCols = subCols.length;
+      // Build sub-column list: always show Raawwii; Karoora optional; % optional
+      const subCols = [];
+      if (showPlan) {
+        subCols.push("plan_kg");
+        subCols.push("plan_qarshii");
+      }
+      subCols.push("actual_kg");
+      subCols.push("actual_qarshii");
+      if (showPct) subCols.push("pct");
+      const numSubCols = subCols.length;
 
-    const subColLabel = (c) => {
-      if (c === "plan_kg") return "Karoora KG";
-      if (c === "plan_qarshii") return "Karoora Qarshii";
-      if (c === "actual_kg") return "Raawwii KG";
-      if (c === "actual_qarshii") return "Raawwii Qarshii";
-      return "%";
-    };
+      const subColLabel = (c) => {
+        if (c === "plan_kg") return "Karoora KG";
+        if (c === "plan_qarshii") return "Karoora Qarshii";
+        if (c === "actual_kg") return "Raawwii KG";
+        if (c === "actual_qarshii") return "Raawwii Qarshii";
+        return "%";
+      };
 
-    const ROW_DEFS = [
-      ...MANA_QOPHESSAA_SOURCES.map((s) => ({
-        label: s.label,
-        sourceLabel: s.label,
-        planKgKey: `mq_${s.key}_kg_target`,
-        planQarshiiKey: `mq_${s.key}_qarshii_target`,
-        isMq: true,
-      })),
-      {
-        label: "Idilee",
-        sourceLabel: "Idilee",
-        planKgKey: null,
-        planQarshiiKey: "idilee_qarshii_target",
-        isMq: false,
-      },
-    ];
+      const ROW_DEFS = [
+        ...MANA_QOPHESSAA_SOURCES.map((s) => ({
+          label: s.label,
+          sourceLabel: s.label,
+          planKgKey: `mq_${s.key}_kg_target`,
+          planQarshiiKey: `mq_${s.key}_qarshii_target`,
+          isMq: true,
+        })),
+        {
+          label: "Idilee",
+          sourceLabel: "Idilee",
+          planKgKey: null,
+          planQarshiiKey: "idilee_qarshii_target",
+          isMq: false,
+        },
+      ];
 
-    const thead = `<thead>
+      const thead = `<thead>
       <tr>
         <th rowspan="2" class="rno">R.No</th>
         <th rowspan="2" class="gosa">Madda Galii</th>
@@ -4676,59 +5089,75 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </tr>
     </thead>`;
 
-    let grandTotalActualQarshii = 0;
-    let grandTotalPlanQarshii = 0;
+      let grandTotalActualQarshii = 0;
+      let grandTotalPlanQarshii = 0;
 
-    const bodyRows = ROW_DEFS.map((row, idx) => {
-      const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
-      const planKg = plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
-      const planQarshii = plan && row.planQarshiiKey ? Number(plan[row.planQarshiiKey] ?? 0) : 0;
-      const pct = planQarshii > 0 ? Math.round((agg.qarshii / planQarshii) * 100) : 0;
-      grandTotalActualQarshii += agg.qarshii;
-      grandTotalPlanQarshii += planQarshii;
+      const bodyRows = ROW_DEFS.map((row, idx) => {
+        const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
+        const planKg =
+          plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
+        const planQarshii =
+          plan && row.planQarshiiKey
+            ? Number(plan[row.planQarshiiKey] ?? 0)
+            : 0;
+        const pct =
+          planQarshii > 0 ? Math.round((agg.qarshii / planQarshii) * 100) : 0;
+        grandTotalActualQarshii += agg.qarshii;
+        grandTotalPlanQarshii += planQarshii;
 
-      const cells = subCols.map((c) => {
-        if (c === "plan_kg") return `<td class="num plan">${planKg.toLocaleString()}</td>`;
-        if (c === "plan_qarshii") return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
-        if (c === "actual_kg") return `<td class="num">${agg.kg.toLocaleString()}</td>`;
-        if (c === "actual_qarshii") return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
-        return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
-      }).join("");
+        const cells = subCols
+          .map((c) => {
+            if (c === "plan_kg")
+              return `<td class="num plan">${planKg.toLocaleString()}</td>`;
+            if (c === "plan_qarshii")
+              return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
+            if (c === "actual_kg")
+              return `<td class="num">${agg.kg.toLocaleString()}</td>`;
+            if (c === "actual_qarshii")
+              return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
+            return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
+          })
+          .join("");
 
-      return `<tr>
+        return `<tr>
         <td class="rno">${idx + 1}</td>
         <td class="gosa">${row.label}</td>
         ${cells}
         <td class="num total-val">${agg.qarshii.toLocaleString()}</td>
       </tr>`;
-    }).join("");
+      }).join("");
 
-    const totalPct = grandTotalPlanQarshii > 0
-      ? Math.round((grandTotalActualQarshii / grandTotalPlanQarshii) * 100)
-      : 0;
-    const totalCells = subCols.map((c) => {
-      if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
-      if (c === "plan_qarshii") return `<td class="num plan total-val">${grandTotalPlanQarshii.toLocaleString()}</td>`;
-      if (c === "actual_kg") return `<td class="num total-val">—</td>`;
-      if (c === "actual_qarshii") return `<td class="num total-val">${grandTotalActualQarshii.toLocaleString()}</td>`;
-      return `<td class="num pct total-val">${grandTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
-    }).join("");
+      const totalPct =
+        grandTotalPlanQarshii > 0
+          ? Math.round((grandTotalActualQarshii / grandTotalPlanQarshii) * 100)
+          : 0;
+      const totalCells = subCols
+        .map((c) => {
+          if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
+          if (c === "plan_qarshii")
+            return `<td class="num plan total-val">${grandTotalPlanQarshii.toLocaleString()}</td>`;
+          if (c === "actual_kg") return `<td class="num total-val">—</td>`;
+          if (c === "actual_qarshii")
+            return `<td class="num total-val">${grandTotalActualQarshii.toLocaleString()}</td>`;
+          return `<td class="num pct total-val">${grandTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
+        })
+        .join("");
 
-    const totalRow = `<tr style="background:#eef2ff;font-weight:bold;">
+      const totalRow = `<tr style="background:#eef2ff;font-weight:bold;">
       <td class="rno">—</td>
       <td class="gosa">Waliigala</td>
       ${totalCells}
       <td class="num total-val">${grandTotalActualQarshii.toLocaleString()}</td>
     </tr>`;
 
-    return `<div class="sector-block">
+      return `<div class="sector-block">
       <div class="sector-title">${sectorLabel}</div>
       <table>
         ${thead}
         <tbody>${bodyRows}${totalRow}</tbody>
       </table>
     </div>`;
-  }
+    }
 
     // Build sub-column definitions based on toggles
     // Raawwii (actual) is always shown

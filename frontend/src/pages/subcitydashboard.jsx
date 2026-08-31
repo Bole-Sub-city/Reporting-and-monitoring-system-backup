@@ -1213,6 +1213,9 @@ function DaldalAAnalysisPage() {
     return Math.round(annual / (d[p] ?? 1));
   };
 
+  // Divisor: both stored values and plan target are count × 17400 → show base count
+  const DA_DIV = 17400;
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -1263,16 +1266,11 @@ function DaldalAAnalysisPage() {
           {/* Ring charts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
             {[
-              {
-                key: "lakk_daldala_a",
-                label: "Lakk Daldala A (Birr)",
-                color: ACCENT,
-              },
+              { key: "lakk_daldala_a", label: "Lakk Daldala A", color: ACCENT },
             ].map(({ key, label, color }) => {
-              const annual = data?.target || 0;
+              const annual = Math.round((data?.target || 0) / DA_DIV);
               const pt = partitionDaldalA(annual, period);
-              const ac = data?.actuals?.[key] ?? 0;
-              const acYtd = data?.actualsYtd?.[key] ?? 0;
+              const ac = Math.round((data?.actuals?.[key] ?? 0) / DA_DIV);
               return (
                 <RingChart
                   key={key}
@@ -1318,14 +1316,16 @@ function DaldalAAnalysisPage() {
                   {[
                     {
                       key: "lakk_daldala_a",
-                      label: "Lakk Daldala A (Birr)",
+                      label: "Lakk Daldala A",
                       color: ACCENT,
                     },
                   ].map(({ key, label, color }) => {
-                    const annual = data?.target || 0;
+                    const annual = Math.round((data?.target || 0) / DA_DIV);
                     const pt = partitionDaldalA(annual, period);
-                    const ac = data?.actuals?.[key] ?? 0;
-                    const acYtd = data?.actualsYtd?.[key] ?? 0;
+                    const ac = Math.round((data?.actuals?.[key] ?? 0) / DA_DIV);
+                    const acYtd = Math.round(
+                      (data?.actualsYtd?.[key] ?? 0) / DA_DIV,
+                    );
                     const pct = pt > 0 ? Math.round((ac / pt) * 100) : 0;
                     const elapsed = data?.daysElapsed ?? 1;
                     const cumul = Math.round((elapsed / 365) * annual);
