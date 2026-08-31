@@ -1036,7 +1036,6 @@ function DaldalASubmitForm() {
           report_date: reportDate,
           report_type: reportType,
           lakk_daldala_a: Number(count),
-          birr_daldala_a: storedBirr,
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -1269,13 +1268,8 @@ function DaldalAAnalysisPage() {
                 label: "Lakk Daldala A (Birr)",
                 color: ACCENT,
               },
-              {
-                key: "birr_daldala_a",
-                label: "Birr Daldala A",
-                color: "#065f46",
-              },
             ].map(({ key, label, color }) => {
-              const annual = key === "lakk_daldala_a" ? data?.target || 0 : 0;
+              const annual = data?.target || 0;
               const pt = partitionDaldalA(annual, period);
               const ac = data?.actuals?.[key] ?? 0;
               const acYtd = data?.actualsYtd?.[key] ?? 0;
@@ -1325,17 +1319,10 @@ function DaldalAAnalysisPage() {
                     {
                       key: "lakk_daldala_a",
                       label: "Lakk Daldala A (Birr)",
-                      useTarget: true,
                       color: ACCENT,
                     },
-                    {
-                      key: "birr_daldala_a",
-                      label: "Birr Daldala A",
-                      useTarget: false,
-                      color: "#065f46",
-                    },
-                  ].map(({ key, label, useTarget, color }) => {
-                    const annual = useTarget ? data?.target || 0 : 0;
+                  ].map(({ key, label, color }) => {
+                    const annual = data?.target || 0;
                     const pt = partitionDaldalA(annual, period);
                     const ac = data?.actuals?.[key] ?? 0;
                     const acYtd = data?.actualsYtd?.[key] ?? 0;

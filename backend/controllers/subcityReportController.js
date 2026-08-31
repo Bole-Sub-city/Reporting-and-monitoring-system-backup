@@ -832,7 +832,6 @@ const getSubcityGalii = async (req, res) => {
  * POST /api/subcity/daldala-a
  * Subcity submits a Daldala A report.
  * lakk_daldala_a: count entered by user — stored as count × 17400 (birr).
- * birr_daldala_a: total birr value stored directly.
  */
 const submitDaldalAReport = async (req, res) => {
   try {
@@ -840,7 +839,6 @@ const submitDaldalAReport = async (req, res) => {
       report_date,
       report_type,
       lakk_daldala_a, // count — stored multiplied × 17400
-      birr_daldala_a, // total birr (auto-computed on frontend)
     } = req.body;
 
     if (!report_date) {
@@ -855,7 +853,6 @@ const submitDaldalAReport = async (req, res) => {
         report_date,
         report_type: report_type || "Daily Report",
         lakk_daldala_a: Number(lakk_daldala_a || 0) * 17400,
-        birr_daldala_a: Number(birr_daldala_a || 0),
       },
     ]);
 
@@ -900,7 +897,7 @@ const getSubcityDaldalA = async (req, res) => {
     // Fetch period actuals
     const { data: periodData, error: periodErr } = await supabase
       .from("daldala_a_reports")
-      .select("lakk_daldala_a, birr_daldala_a")
+      .select("lakk_daldala_a")
       .eq("username", username)
       .gte("report_date", from)
       .lte("report_date", to);
@@ -910,7 +907,7 @@ const getSubcityDaldalA = async (req, res) => {
     // Fetch YTD actuals
     const { data: ytdData, error: ytdErr } = await supabase
       .from("daldala_a_reports")
-      .select("lakk_daldala_a, birr_daldala_a")
+      .select("lakk_daldala_a")
       .eq("username", username)
       .gte("report_date", yearStart)
       .lte("report_date", to);
@@ -921,9 +918,8 @@ const getSubcityDaldalA = async (req, res) => {
       (rows || []).reduce(
         (acc, r) => ({
           lakk_daldala_a: acc.lakk_daldala_a + Number(r.lakk_daldala_a || 0),
-          birr_daldala_a: acc.birr_daldala_a + Number(r.birr_daldala_a || 0),
         }),
-        { lakk_daldala_a: 0, birr_daldala_a: 0 },
+        { lakk_daldala_a: 0 },
       );
 
     const actuals = sumRows(periodData);
