@@ -753,10 +753,19 @@ const GALII_MQ_FIELDS = [
   "kiraa_mana_jireenyaa",
   "other",
 ];
-// Idilee stays as a single qarshii field (no KG breakdown)
+// Idilee per-source fields — match SC_IDILEE_SOURCES keys in the frontend
+const GALII_IDILEE_FIELDS = [
+  "idilee_gibira_mindaa_qarshii",
+  "idilee_galii_kiraa_qarshii",
+  "idilee_gibira_buaa_qarshii",
+  "idilee_qonnaan_bultoota_qarshii",
+  "idilee_with_holding_qarshii",
+  "idilee_vat_qarshii",
+  "idilee_tot_qarshii",
+];
 const GALII_PLAN_FIELDS_WEREDA = [
   ...GALII_MQ_FIELDS.flatMap((f) => [`mq_${f}_kg`, `mq_${f}_qarshii`]),
-  "idilee_qarshii",
+  ...GALII_IDILEE_FIELDS,
 ];
 
 /**

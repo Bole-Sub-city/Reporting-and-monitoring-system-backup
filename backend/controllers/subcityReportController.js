@@ -300,8 +300,14 @@ const SECTOR_PLAN_FIELDS = {
     mq_kiraa_mana_jireenyaa_qarshii: "mq_kiraa_mana_jireenyaa_qarshii_target",
     mq_other_kg: "mq_other_kg_target",
     mq_other_qarshii: "mq_other_qarshii_target",
-    // Idilee (placeholder — Qarshii only)
-    idilee_qarshii: "idilee_qarshii_target",
+    // Idilee per-source keys — match SC_IDILEE_SOURCES in the frontend
+    idilee_gibira_mindaa_qarshii: "idilee_gibira_mindaa_qarshii_target",
+    idilee_galii_kiraa_qarshii: "idilee_galii_kiraa_qarshii_target",
+    idilee_gibira_buaa_qarshii: "idilee_gibira_buaa_qarshii_target",
+    idilee_qonnaan_bultoota_qarshii: "idilee_qonnaan_bultoota_qarshii_target",
+    idilee_with_holding_qarshii: "idilee_with_holding_qarshii_target",
+    idilee_vat_qarshii: "idilee_vat_qarshii_target",
+    idilee_tot_qarshii: "idilee_tot_qarshii_target",
   },
   galii_sassabu: {
     mana_qophessaa_total: "mana_qophessaa_total_target",
@@ -430,7 +436,16 @@ const GALII_SOURCE_TO_KEY = {
   "Kiraa Mana Daldalaa": "kiraa_mana_daldalaa",
   "Kiraa Mana Jireenyaa": "kiraa_mana_jireenyaa",
   Other: "other",
-  Idilee: "_idilee",
+  // Idilee sub-sources — each maps to _idilee_<key> so actuals use idilee_<key>_qarshii
+  "Gibira mindaa hojjettootaa dhuunfaa": "_idilee_gibira_mindaa",
+  "Galii Kiraa": "_idilee_galii_kiraa",
+  "Gibira bu'aa daldalaa namoota dhuunfaarraa": "_idilee_gibira_buaa",
+  "Qonnaan bultoota dhuunfaarraa": "_idilee_qonnaan_bultoota",
+  "With holding": "_idilee_with_holding",
+  VAT: "_idilee_vat",
+  TOT: "_idilee_tot",
+  // Legacy fallback — old entries stored with generic "Idilee" label
+  Idilee: "_idilee_legacy",
 };
 
 function mapGaliiActuals(dbAggregated) {
@@ -512,9 +527,9 @@ const getAllWoRedaReports = async (req, res) => {
       // initialise all source keys to 0 for each woreda
       for (const wId of ["w1", "w2", "w3", "w4"]) {
         for (const [, sKey] of Object.entries(GALII_SOURCE_TO_KEY)) {
-          if (sKey === "_idilee") {
-            normalizedActuals[wId]["idilee_qarshii"] = 0;
-          } else {
+          if (sKey.startsWith("_idilee_")) {
+            normalizedActuals[wId][`idilee_${sKey.slice(8)}_qarshii`] = 0;
+          } else if (sKey !== "_idilee_legacy") {
             normalizedActuals[wId][`mq_${sKey}_kg`] = 0;
             normalizedActuals[wId][`mq_${sKey}_qarshii`] = 0;
           }
@@ -533,9 +548,10 @@ const getAllWoRedaReports = async (req, res) => {
         normalizedActuals[wId]["mq_total_qarshii"] += qarshii;
         normalizedActuals[wId]["baasii"] += qarshii;
         normalizedActuals[wId]["kg"] += kg;
-        if (sKey === "_idilee") {
-          normalizedActuals[wId]["idilee_qarshii"] += qarshii;
-        } else if (sKey) {
+        if (sKey && sKey.startsWith("_idilee_")) {
+          const feKey = `idilee_${sKey.slice(8)}_qarshii`;
+          normalizedActuals[wId][feKey] = (normalizedActuals[wId][feKey] || 0) + qarshii;
+        } else if (sKey && sKey !== "_idilee_legacy") {
           normalizedActuals[wId][`mq_${sKey}_qarshii`] += qarshii;
           normalizedActuals[wId][`mq_${sKey}_kg`] += kg;
         }
@@ -700,9 +716,9 @@ const getWoRedaAnalysis = async (req, res) => {
         const result = {};
         // initialise all known source keys to 0
         for (const [, sKey] of Object.entries(GALII_SOURCE_TO_KEY)) {
-          if (sKey === "_idilee") {
-            result["idilee_qarshii"] = 0;
-          } else {
+          if (sKey.startsWith("_idilee_")) {
+            result[`idilee_${sKey.slice(8)}_qarshii`] = 0;
+          } else if (sKey !== "_idilee_legacy") {
             result[`mq_${sKey}_kg`] = 0;
             result[`mq_${sKey}_qarshii`] = 0;
           }
@@ -717,16 +733,14 @@ const getWoRedaAnalysis = async (req, res) => {
           const sKey = GALII_SOURCE_TO_KEY[src];
           const qarshii = Number(row.baasii || 0);
           const kg = Number(row.kg || 0);
-          result["mq_total_qarshii"] =
-            (result["mq_total_qarshii"] || 0) + qarshii;
+          result["mq_total_qarshii"] = (result["mq_total_qarshii"] || 0) + qarshii;
           result["baasii"] = (result["baasii"] || 0) + qarshii;
           result["kg"] = (result["kg"] || 0) + kg;
-          if (sKey === "_idilee") {
-            result["idilee_qarshii"] =
-              (result["idilee_qarshii"] || 0) + qarshii;
-          } else if (sKey) {
-            result[`mq_${sKey}_qarshii`] =
-              (result[`mq_${sKey}_qarshii`] || 0) + qarshii;
+          if (sKey && sKey.startsWith("_idilee_")) {
+            const feKey = `idilee_${sKey.slice(8)}_qarshii`;
+            result[feKey] = (result[feKey] || 0) + qarshii;
+          } else if (sKey && sKey !== "_idilee_legacy") {
+            result[`mq_${sKey}_qarshii`] = (result[`mq_${sKey}_qarshii`] || 0) + qarshii;
             result[`mq_${sKey}_kg`] = (result[`mq_${sKey}_kg`] || 0) + kg;
           }
         }
@@ -807,34 +821,42 @@ const getSubcityGalii = async (req, res) => {
     // Fetch all revenue_entries rows for this subcity user in the date range
     const { data, error } = await supabase
       .from("revenue_entries")
-      .select("baasii")
+      .select("madda_galii, baasii, kg")
       .eq("username", subcityUsername)
       .gte("report_date", from)
       .lte("report_date", to);
 
     if (error) return res.status(500).json({ message: error.message });
 
-    const total = (data || []).reduce(
-      (sum, row) => sum + Number(row.baasii || 0),
-      0,
-    );
-    const totalKg = (data || []).reduce(
-      (sum, row) => sum + Number(row.kg || 0),
-      0,
-    );
+    const rows = data || [];
+    const total = rows.reduce((sum, r) => sum + Number(r.baasii || 0), 0);
+    const totalKg = rows.reduce((sum, r) => sum + Number(r.kg || 0), 0);
 
-    res.json({
-      username: subcityUsername,
-      period,
-      from,
-      to,
-      actuals: {
-        mq_total_qarshii: total,
-        idilee_qarshii: 0,
-        baasii: total,
-        kg: totalKg,
-      },
-    });
+    // Build per-source actuals using the same GALII_SOURCE_TO_KEY mapping
+    const actuals = { mq_total_qarshii: total, baasii: total, kg: totalKg };
+    // Initialise all idilee keys to 0
+    for (const [, sKey] of Object.entries(GALII_SOURCE_TO_KEY)) {
+      if (sKey.startsWith("_idilee_")) {
+        actuals[`idilee_${sKey.slice(8)}_qarshii`] = 0;
+      } else if (sKey !== "_idilee_legacy") {
+        actuals[`mq_${sKey}_kg`] = 0;
+        actuals[`mq_${sKey}_qarshii`] = 0;
+      }
+    }
+    for (const row of rows) {
+      const sKey = GALII_SOURCE_TO_KEY[row.madda_galii ?? ""];
+      const qarshii = Number(row.baasii || 0);
+      const kg = Number(row.kg || 0);
+      if (sKey && sKey.startsWith("_idilee_")) {
+        const feKey = `idilee_${sKey.slice(8)}_qarshii`;
+        actuals[feKey] = (actuals[feKey] || 0) + qarshii;
+      } else if (sKey && sKey !== "_idilee_legacy") {
+        actuals[`mq_${sKey}_qarshii`] = (actuals[`mq_${sKey}_qarshii`] || 0) + qarshii;
+        actuals[`mq_${sKey}_kg`] = (actuals[`mq_${sKey}_kg`] || 0) + kg;
+      }
+    }
+
+    res.json({ username: subcityUsername, period, from, to, actuals });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
