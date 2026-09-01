@@ -768,8 +768,8 @@ function SubcityProfilePage({ user, onPhotoUpdate }) {
 // ─── Plan Unlock Request Banner ───────────────────────────────────────────────
 // Posts to /auth/plan-unlock-requests (the dedicated plan_unlock_requests table).
 // Keyed on sector + plan_year so it never touches the edit_requests table.
-function PlanUnlockBanner({ sector }) {
-  const [status, setStatus] = useState(null); // null | "pending" | "approved" | "denied" | "expired"
+function PlanUnlockBanner({ sector, onStatusChange }) {
+  const [status, setStatus] = useState(null); // null | "pending" | "approved" | "denied" | "expired" | "used"
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
@@ -803,24 +803,21 @@ function PlanUnlockBanner({ sector }) {
       // Check for expired requests first (auto-expire by comparing dates)
       const now = new Date();
       const mine = reqs.find(
-        (r) => r.sector === sector && r.plan_year === planYear,
+        (r) => r.sector === sector && Number(r.plan_year) === planYear,
       );
 
       if (mine) {
-        // Treat as expired if past expiry
-        if (
-          mine.expires_at &&
-          new Date(mine.expires_at) < now &&
-          mine.status === "pending"
-        ) {
-          setStatus("expired");
-        } else {
-          setStatus(mine.status);
-        }
+        const resolved =
+          mine.expires_at && new Date(mine.expires_at) < now && mine.status === "pending"
+            ? "expired"
+            : mine.status;
+        setStatus(resolved);
         setExpiresAt(mine.expires_at || null);
+        onStatusChange && onStatusChange(resolved);
       } else {
         setStatus(null);
         setExpiresAt(null);
+        onStatusChange && onStatusChange(null);
       }
     } catch {
       /* silent */
@@ -3422,6 +3419,20 @@ function BuusaaPlanPage({ onSave }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
+
+  useEffect(() => {
+    import("../api/planApi").then(({ fetchSubcityOwnPlan }) => {
+      fetchSubcityOwnPlan()
+        .then((d) => {
+          const p = d?.plan;
+          if (p && Object.values(p).some((v) => typeof v === "number" && v > 0))
+            setPlanExists(true);
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
   const handleField = (e) =>
@@ -3438,7 +3449,10 @@ function BuusaaPlanPage({ onSave }) {
   const hasFixed = FIXED_WEREDA_FIELDS.some((f) =>
     WOREDAS.some((w) => Number(fixed[f.key]?.[w.id] || 0) > 0),
   );
-  const canSubmit = (hasDistributed || hasFixed) && pctValid.ok;
+  const canSubmit =
+    (hasDistributed || hasFixed) &&
+    pctValid.ok &&
+    (!planExists || unlockStatus === "approved");
 
   const share = (woredaId, categoryTotal) =>
     pctValid.ok ? pctShare(parsed, woredaId, categoryTotal) : 0;
@@ -3466,6 +3480,8 @@ function BuusaaPlanPage({ onSave }) {
     try {
       await onSave(fullPlan, wForm);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setForm({ ...EMPTY_PLAN });
       setFixed(JSON.parse(JSON.stringify(EMPTY_FIXED)));
       setTimeout(() => setSaved(false), 4000);
@@ -3486,7 +3502,7 @@ function BuusaaPlanPage({ onSave }) {
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <PlanUnlockBanner sector="buusaa" />
+        <PlanUnlockBanner sector="buusaa" onStatusChange={setUnlockStatus} />
         <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
 
         {/* ── Section 1: Distributed by percentage ── */}
@@ -3699,7 +3715,12 @@ function BuusaaPlanPage({ onSave }) {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && (
+            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
+              <p className="text-[#b45309] text-xs font-medium">
+                Plan is locked. Request edit access above to re-save.
+              </p>
+            )}
+            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
               <p className="text-[#94a3b8] text-xs">
                 Saving overwrites the current plan.
               </p>
@@ -3963,6 +3984,20 @@ function QonnaPlanPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
+
+  useEffect(() => {
+    import("../api/planApi").then(({ fetchSubcityQonnaPlan }) => {
+      fetchSubcityQonnaPlan()
+        .then((d) => {
+          const p = d?.plan;
+          if (p && Object.values(p).some((v) => typeof v === "number" && v > 0))
+            setPlanExists(true);
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const handlePct = (id, val) => setPcts((p) => ({ ...p, [id]: val }));
   const handleForm = (key, field, val) =>
@@ -3981,7 +4016,8 @@ function QonnaPlanPage() {
     }),
   );
   const hasAnyTarget = QONNA_CATEGORIES.some((c) => totalAnimals[c.key] > 0);
-  const canSubmit = hasAnyTarget && pctValid.ok;
+  const canSubmit =
+    hasAnyTarget && pctValid.ok && (!planExists || unlockStatus === "approved");
 
   // Column name helpers — keep naming consistent with DB columns
   // Subcity-only (not distributed): hektaara_*, lakk_*_per_*
@@ -4066,6 +4102,8 @@ function QonnaPlanPage() {
     try {
       await saveSubcityQonnaPlan(planData, weights);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
       setSaveError(
@@ -4087,7 +4125,7 @@ function QonnaPlanPage() {
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Plan unlock banner */}
-        <PlanUnlockBanner sector="qonna" />
+        <PlanUnlockBanner sector="qonna" onStatusChange={setUnlockStatus} />
         {/* Woreda % allocation */}
         <WoRedaPctInputs pcts={pcts} onChange={handlePct} />
 
@@ -4348,7 +4386,12 @@ function QonnaPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && (
+            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
+              <p className="text-[#b45309] text-xs font-medium">
+                Plan is locked. Request edit access above to re-save.
+              </p>
+            )}
+            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
               <p className="text-[#94a3b8] text-xs">
                 Saving distributes targets to all 4 woreda plan tables.
               </p>
@@ -4854,6 +4897,20 @@ function GenericSubcityPlanPage({ sector }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
+
+  useEffect(() => {
+    import("../api/planApi").then(({ fetchSubcityGenericPlan }) => {
+      fetchSubcityGenericPlan(sector)
+        .then((d) => {
+          const p = d?.plan;
+          if (p && Object.values(p).some((v) => typeof v === "number" && v > 0))
+            setPlanExists(true);
+        })
+        .catch(() => {});
+    });
+  }, [sector]);
 
   const handleField = (wId, key, val) =>
     setWoredaForms((p) => ({
@@ -4861,9 +4918,10 @@ function GenericSubcityPlanPage({ sector }) {
       [wId]: { ...p[wId], [key]: val },
     }));
 
-  const hasValues = WOREDAS.some((w) =>
-    cfg.fields.some((f) => Number(woredaForms[w.id][f.key] || 0) > 0),
-  );
+  const hasValues =
+    WOREDAS.some((w) =>
+      cfg.fields.some((f) => Number(woredaForms[w.id][f.key] || 0) > 0),
+    ) && (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -4882,6 +4940,8 @@ function GenericSubcityPlanPage({ sector }) {
     try {
       await saveSubcityGenericPlan(sector, woredaPlans);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setWoredaForms(emptyWoForms());
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
@@ -4908,7 +4968,7 @@ function GenericSubcityPlanPage({ sector }) {
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <PlanUnlockBanner sector={sector} />
+        <PlanUnlockBanner sector={sector} onStatusChange={setUnlockStatus} />
 
         {/* Per-woreda input grid */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
@@ -4990,7 +5050,12 @@ function GenericSubcityPlanPage({ sector }) {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && (
+            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
+              <p className="text-[#b45309] text-xs font-medium">
+                Plan is locked. Request edit access above to re-save.
+              </p>
+            )}
+            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
               <p className="text-[#94a3b8] text-xs">
                 This will replace the previous {cfg.label} plan.
               </p>
@@ -5043,13 +5108,28 @@ function CarraaSubcityPlanPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
+
+  useEffect(() => {
+    import("../api/planApi").then(({ fetchSubcityGenericPlan }) => {
+      fetchSubcityGenericPlan("carraa")
+        .then((d) => {
+          const p = d?.plan;
+          if (p && Object.values(p).some((v) => typeof v === "number" && v > 0))
+            setPlanExists(true);
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const handleField = (wId, key, val) =>
     setWoredaForms((p) => ({ ...p, [wId]: { ...p[wId], [key]: val } }));
 
-  const hasValues = WOREDAS.some((w) =>
-    Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
-  );
+  const hasValues =
+    WOREDAS.some((w) =>
+      Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
+    ) && (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5070,6 +5150,8 @@ function CarraaSubcityPlanPage() {
     try {
       await saveSubcityGenericPlan("carraa", woredaPlans);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setWoredaForms(emptyWoForms());
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
@@ -5092,7 +5174,7 @@ function CarraaSubcityPlanPage() {
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <PlanUnlockBanner sector="carraa" />
+        <PlanUnlockBanner sector="carraa" onStatusChange={setUnlockStatus} />
 
         {/* One table per field — subs as rows, woredas + Total as columns */}
         {CARRAA_FIELDS.map((f) => (
@@ -5187,6 +5269,7 @@ function CarraaSubcityPlanPage() {
                                 <input
                                   type="number"
                                   min="0"
+                                  step={subKey === "industrii_godoo_lafa" ? "any" : "1"}
                                   value={woredaForms[w.id][subKey] ?? ""}
                                   onChange={(e) =>
                                     handleField(w.id, subKey, e.target.value)
@@ -5303,7 +5386,12 @@ function CarraaSubcityPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && (
+            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
+              <p className="text-[#b45309] text-xs font-medium">
+                Plan is locked. Request edit access above to re-save.
+              </p>
+            )}
+            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
               <p className="text-[#94a3b8] text-xs">
                 This will replace the previous Carraa Hojii plan.
               </p>
@@ -5601,13 +5689,28 @@ function GaliiSubcityPlanPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
+
+  useEffect(() => {
+    import("../api/planApi").then(({ fetchSubcityGaliiPlan }) => {
+      fetchSubcityGaliiPlan()
+        .then((d) => {
+          const p = d?.plan;
+          if (p && Object.values(p).some((v) => typeof v === "number" && v > 0))
+            setPlanExists(true);
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const handleField = (wId, key, val) =>
     setWoredaForms((p) => ({ ...p, [wId]: { ...p[wId], [key]: val } }));
 
-  const hasValues = WOREDAS_LIST.some((w) =>
-    Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
-  );
+  const hasValues =
+    WOREDAS_LIST.some((w) =>
+      Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
+    ) && (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5628,6 +5731,8 @@ function GaliiSubcityPlanPage() {
     try {
       await saveSubcityGaliiPlan(woredaPlans);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setWoredaForms(emptyWoForms());
       setTimeout(() => setSaved(false), 4000);
     } catch (err) {
@@ -5684,7 +5789,7 @@ function GaliiSubcityPlanPage() {
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-5">
-        <PlanUnlockBanner sector="galii" />
+        <PlanUnlockBanner sector="galii" onStatusChange={setUnlockStatus} />
 
         {/* Mana Qophessaa section */}
         <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
@@ -5927,7 +6032,12 @@ function GaliiSubcityPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && (
+            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
+              <p className="text-[#b45309] text-xs font-medium">
+                Plan is locked. Request edit access above to re-save.
+              </p>
+            )}
+            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
               <p className="text-[#94a3b8] text-xs">
                 This will replace the previous Galii plan.
               </p>

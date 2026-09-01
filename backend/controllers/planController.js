@@ -1,5 +1,31 @@
 const supabase = require("../config/supabase");
 
+// ─── Plan lock helpers ────────────────────────────────────────────────────────
+
+async function markPlanUnlockUsed(userId, sector, year) {
+  try {
+    await supabase
+      .from("plan_unlock_requests")
+      .update({ status: "used" })
+      .eq("user_id", userId)
+      .eq("sector", sector)
+      .eq("plan_year", Number(year))
+      .eq("status", "approved");
+  } catch (_) { /* non-critical */ }
+}
+
+async function checkPlanLock(userId, sector, planTable, year) {
+  const { data: existing } = await supabase
+    .from(planTable).select("year").eq("year", year).maybeSingle();
+  if (!existing) return null;
+  const { data: unlock } = await supabase
+    .from("plan_unlock_requests").select("id")
+    .eq("user_id", userId).eq("sector", sector)
+    .eq("plan_year", Number(year)).eq("status", "approved").maybeSingle();
+  if (unlock) return null;
+  return { status: 403, message: "Annual plan is locked. Request edit access from the admin to re-save." };
+}
+
 /**
  * POST /api/plans
  * Create a new annual plan for the logged-in woreda user.
@@ -287,6 +313,9 @@ const saveSubcityPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
 
+    const lock1 = await checkPlanLock(req.user.id, "buusaa", "subcity_buusaa_gonofaa_plan", year);
+    if (lock1) return res.status(lock1.status).json({ message: lock1.message });
+
     const errors = [];
 
     // ── Fields distributed by percentage ──────────────────────────────────────
@@ -359,6 +388,7 @@ const saveSubcityPlan = async (req, res) => {
       return res.status(400).json({ message: errors.join(" | ") });
     }
 
+    await markPlanUnlockUsed(req.user.id, "buusaa", year);
     res.status(200).json({ message: "Plan saved to all 4 wereda tables." });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -416,6 +446,9 @@ const saveSubcityOwnPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
 
+    const lock2 = await checkPlanLock(req.user.id, "buusaa", "subcity_buusaa_gonofaa_plan", year);
+    if (lock2) return res.status(lock2.status).json({ message: lock2.message });
+
     const { error } = await supabase.from("subcity_buusaa_gonofaa_plan").upsert(
       [
         {
@@ -472,6 +505,7 @@ const saveSubcityOwnPlan = async (req, res) => {
 
     if (error) return res.status(400).json({ message: error.message });
 
+    await markPlanUnlockUsed(req.user.id, "buusaa", year);
     res.status(200).json({ message: "Subcity plan saved." });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -548,6 +582,9 @@ const saveSubcityQonnaPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
 
+    const lock3 = await checkPlanLock(req.user.id, "qonna", "subcity_qonna_plan", year);
+    if (lock3) return res.status(lock3.status).json({ message: lock3.message });
+
     // 1. Save full plan to subcity table (all fields including subcity-only ones)
     const { error: subcityErr } = await supabase
       .from("subcity_qonna_plan")
@@ -583,6 +620,7 @@ const saveSubcityQonnaPlan = async (req, res) => {
     if (errors.length)
       return res.status(400).json({ message: errors.join(" | ") });
 
+    await markPlanUnlockUsed(req.user.id, "qonna", year);
     res.status(200).json({
       message: "Qonna plan saved to subcity and all 4 wereda tables.",
     });
@@ -794,6 +832,8 @@ const saveSubcityGenericPlan = async (req, res) => {
         .json({ message: `No field config for sector: ${sector}` });
     }
 
+    const lock4 = await checkPlanLock(req.user.id, sector, GENERIC_SECTOR_SUBCITY_TABLE[sector], year);
+    if (lock4) return res.status(lock4.status).json({ message: lock4.message });
     // 1. Save each woreda's direct values to their plan table
     const errors = [];
     for (const wId of ["w1", "w2", "w3", "w4"]) {
@@ -830,6 +870,7 @@ const saveSubcityGenericPlan = async (req, res) => {
     if (subcityErr)
       return res.status(400).json({ message: subcityErr.message });
 
+    await markPlanUnlockUsed(req.user.id, sector, year);
     res.status(200).json({ message: `${sector} plan saved.` });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -853,6 +894,9 @@ const saveSubcityGaliiPlan = async (req, res) => {
 
     const year = new Date().getFullYear();
     const planFields = GALII_PLAN_FIELDS_WEREDA;
+
+    const lock5 = await checkPlanLock(req.user.id, "galii", "subcity_galii_plan", year);
+    if (lock5) return res.status(lock5.status).json({ message: lock5.message });
 
     // 1. Save each woreda's direct values to their galii plan table
     const errors = [];
@@ -890,6 +934,7 @@ const saveSubcityGaliiPlan = async (req, res) => {
     if (subcityErr)
       return res.status(400).json({ message: subcityErr.message });
 
+    await markPlanUnlockUsed(req.user.id, "galii", year);
     res.status(200).json({ message: "Galii plan saved." });
   } catch (err) {
     res.status(500).json({ message: err.message });

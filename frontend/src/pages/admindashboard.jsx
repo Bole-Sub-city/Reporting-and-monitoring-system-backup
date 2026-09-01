@@ -405,10 +405,11 @@ function PlanUnlockApproveModal({ request, onClose, onApproved }) {
       .then((res) => {
         const plan = res.data?.plan || {};
         setPlanData(plan);
-        // Only keep numeric fields for editing
+        // Skip weight/internal fields — they're 0 for non-buusaa sectors
+        const SKIP = new Set(["id", "year", "weight_w1", "weight_w2", "weight_w3", "weight_w4"]);
         const editable = {};
         Object.keys(plan).forEach((k) => {
-          if (k === "id" || k === "year") return;
+          if (SKIP.has(k)) return;
           if (typeof plan[k] === "number") editable[k] = plan[k];
         });
         setEditedPlan(editable);
@@ -450,10 +451,6 @@ function PlanUnlockApproveModal({ request, onClose, onApproved }) {
     nyaata_barataa: "Nyaata Barataa",
     sukkaara: "Sukkaara",
     zayitii: "Zayitii",
-    weight_w1: "Weight W1 (%)",
-    weight_w2: "Weight W2 (%)",
-    weight_w3: "Weight W3 (%)",
-    weight_w4: "Weight W4 (%)",
   };
 
   return (

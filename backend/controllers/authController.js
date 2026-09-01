@@ -507,11 +507,6 @@ const requestPlanUnlock = async (req, res) => {
       .maybeSingle();
 
     if (existing) {
-      if (existing.status === "approved") {
-        return res.status(400).json({
-          message: "You already have an approved unlock for this plan.",
-        });
-      }
       if (existing.status === "pending") {
         // Check if it has expired
         const isExpired =
@@ -528,8 +523,8 @@ const requestPlanUnlock = async (req, res) => {
           });
         }
       }
-      // "denied", "expired", "used" — delete so we can resubmit fresh
-      if (["denied", "expired"].includes(existing.status)) {
+      // "approved", "denied", "expired", "used" — delete so we can resubmit fresh
+      if (["approved", "denied", "expired", "used"].includes(existing.status)) {
         await supabase
           .from("plan_unlock_requests")
           .delete()
