@@ -11,6 +11,7 @@ const {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  submitGaliiSassabuReport,
   getAllReports,
   getMyReports,
   getAllWoredaReports,
@@ -50,6 +51,9 @@ router.post("/daldala", authMiddleware, submitDaldalReport);
 
 // ─── ATK route ─────────────────────────────────────────────────────────
 router.post("/atk", authMiddleware, submitAtkReport);
+
+// ─── Galii Sassabu route ────────────────────────────────────────────────
+router.post("/galii-sassabu", authMiddleware, submitGaliiSassabuReport);
 
 // Existing routes
 router.get("/:user_id", authMiddleware, getUserReports);

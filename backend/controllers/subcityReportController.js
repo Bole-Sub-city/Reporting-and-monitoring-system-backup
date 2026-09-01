@@ -31,6 +31,7 @@ const SECTOR_REPORT_TABLE_MAP = {
   daldala: "Daldala", // capital D — matches Supabase
   atk: "ATK", // all caps — matches Supabase
   galii: "revenue_entries",
+  galii_sassabu: "galii_sassabu_reports",
 };
 
 // Report fields to aggregate per sector
@@ -128,6 +129,7 @@ const SECTOR_REPORT_FIELDS = {
     "galii_atk_galchuu",
   ],
   galii: ["baasii", "kg"], // revenue_entries: amount (Qarshii) + KG columns
+  galii_sassabu: ["mana_qophessaa_total", "idilee_total"],
 };
 
 // Map frontend field keys (from SECTOR_CFG) to DB column names for buusaa
@@ -184,6 +186,12 @@ const SECTOR_PLAN_TABLE_MAP = {
     w2: "annual_galii_plan_wereda_2",
     w3: "annual_galii_plan_wereda_3",
     w4: "annual_galii_plan_wereda_4",
+  },
+  galii_sassabu: {
+    w1: "annual_galii_sassabu_plan_wereda_1",
+    w2: "annual_galii_sassabu_plan_wereda_2",
+    w3: "annual_galii_sassabu_plan_wereda_3",
+    w4: "annual_galii_sassabu_plan_wereda_4",
   },
 };
 
@@ -294,6 +302,10 @@ const SECTOR_PLAN_FIELDS = {
     mq_other_qarshii: "mq_other_qarshii_target",
     // Idilee (placeholder — Qarshii only)
     idilee_qarshii: "idilee_qarshii_target",
+  },
+  galii_sassabu: {
+    mana_qophessaa_total: "mana_qophessaa_total_target",
+    idilee_total: "idilee_total_target",
   },
 };
 
@@ -454,7 +466,7 @@ const getAllWoRedaReports = async (req, res) => {
 
     if (!sector || !SECTOR_REPORT_TABLE_MAP[sector]) {
       return res.status(400).json({
-        message: `Unknown sector: "${sector}". Valid values: buusaa, qonna, galii, carraa, daldala, atk`,
+        message: `Unknown sector: "${sector}". Valid values: buusaa, qonna, galii, carraa, daldala, atk, galii_sassabu`,
       });
     }
 
@@ -561,7 +573,7 @@ const getWoRedaAnalysis = async (req, res) => {
 
     if (!sector || !SECTOR_REPORT_TABLE_MAP[sector]) {
       return res.status(400).json({
-        message: `Unknown sector: "${sector}". Valid values: buusaa, qonna, galii, carraa, daldala, atk`,
+        message: `Unknown sector: "${sector}". Valid values: buusaa, qonna, galii, carraa, daldala, atk, galii_sassabu`,
       });
     }
 

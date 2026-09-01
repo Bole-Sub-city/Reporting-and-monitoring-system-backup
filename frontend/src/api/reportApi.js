@@ -53,6 +53,18 @@ export const submitAtkReport = async (reportData) => {
   return response.data;
 };
 
+/**
+ * Submit a Galii Sassabu report from the woreda dashboard.
+ * Sends mana_qophessaa_total, idilee_total, optional detail arrays.
+ */
+export const submitGaliiSassabuReport = async (reportData) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post("/reports/galii-sassabu", reportData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const submitBuusaaReport = async (reportData) => {
   const token = localStorage.getItem("token");
 

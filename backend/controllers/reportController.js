@@ -15,6 +15,7 @@ async function checkSubmitLock(userId, sector, reportDate) {
     qonna: "qonna",
     daldala: "Daldala",
     atk: "ATK",
+    galii_sassabu: "galii_sassabu_reports",
   }[sector];
 
   if (!table) return null; // unknown sector — let it through
@@ -571,6 +572,54 @@ const submitRevenueReport = async (req, res) => {
   }
 };
 
+// ─── Galii Sassabu report ─────────────────────────────────────────────────────
+const submitGaliiSassabuReport = async (req, res) => {
+  try {
+    const {
+      report_date,
+      report_type,
+      mana_qophessaa_total,
+      idilee_total,
+      mana_qophessaa_detail, // optional JSON array [{source, amount}]
+      idilee_detail, // optional JSON array [{source, amount}]
+      yaada_gudinaa,
+    } = req.body;
+
+    if (!report_date) {
+      return res.status(400).json({ message: "report_date is required." });
+    }
+
+    const lock = await checkSubmitLock(
+      req.user.id,
+      "galii_sassabu",
+      report_date,
+    );
+    if (lock) return res.status(lock.status).json({ message: lock.message });
+
+    const { error } = await supabase.from("galii_sassabu_reports").insert([
+      {
+        user_id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        report_date,
+        report_type: report_type || "Daily Report (Gabaasa Guyyaa)",
+        mana_qophessaa_total: Number(mana_qophessaa_total || 0),
+        idilee_total: Number(idilee_total || 0),
+        mana_qophessaa_detail: mana_qophessaa_detail ?? null,
+        idilee_detail: idilee_detail ?? null,
+        yaada_gudinaa: yaada_gudinaa ?? "",
+      },
+    ]);
+
+    if (error) return res.status(400).json({ message: error.message });
+    res
+      .status(201)
+      .json({ message: "Galii Sassabu report submitted successfully." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ─── Get ALL reports (for subcity/admin monitoring) ──────────────────────────
 const getAllReports = async (req, res) => {
   try {
@@ -616,6 +665,7 @@ const getMyReports = async (req, res) => {
       daldala: "Daldala",
       atk: "ATK",
       galii: "revenue_entries",
+      galii_sassabu: "galii_sassabu_reports",
     };
 
     const sectorsToFetch =
@@ -702,7 +752,15 @@ const getAllWoredaReports = async (req, res) => {
 
     const sectorsToFetch =
       !sector || sector === "all"
-        ? ["buusaa", "carraaHojii", "qonna", "galii", "daldala", "atk"]
+        ? [
+            "buusaa",
+            "carraaHojii",
+            "qonna",
+            "galii",
+            "daldala",
+            "atk",
+            "galii_sassabu",
+          ]
         : [sector];
 
     const tableMap = {
@@ -712,6 +770,7 @@ const getAllWoredaReports = async (req, res) => {
       galii: "revenue_entries",
       daldala: "Daldala",
       atk: "ATK",
+      galii_sassabu: "galii_sassabu_reports",
     };
 
     const results = await Promise.all(
@@ -760,6 +819,7 @@ const getLockStatus = async (req, res) => {
       qonna: "qonna",
       daldala: "Daldala",
       atk: "ATK",
+      galii_sassabu: "galii_sassabu_reports",
     };
 
     const results = {};
@@ -801,6 +861,7 @@ module.exports = {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  submitGaliiSassabuReport,
   getAllReports,
   getMyReports,
   getAllWoredaReports,

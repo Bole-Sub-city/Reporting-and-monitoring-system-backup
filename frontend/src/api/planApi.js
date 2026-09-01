@@ -166,6 +166,34 @@ export const fetchSubcityGaliiPlan = async () => {
   return res.data; // { plan: {...} | null }
 };
 
+// ─── Galii Sassabu (new sector) plan API ─────────────────────────────────────
+
+/**
+ * Save the Galii Sassabu subcity plan — direct per-woreda entry (no % distribution).
+ * Each woreda gets its own Mana Qophessaa + Idilee totals entered directly.
+ * @param {{ w1: { mana_qophessaa_total, idilee_total }, w2: ..., w3: ..., w4: ... }} woredaPlans
+ */
+export const saveSubcityGaliiSassabuPlan = async (woredaPlans) => {
+  const res = await api.post(
+    "/plans/subcity-galii-sassabu-plan",
+    { woredaPlans },
+    authHeader(),
+  );
+  return res.data;
+};
+
+/** Fetch the current year's subcity Galii Sassabu plan. */
+export const fetchSubcityGaliiSassabuPlan = async () => {
+  const res = await api.get("/plans/subcity-galii-sassabu-plan", authHeader());
+  return res.data; // { plan: { mana_qophessaa_total, idilee_total } | null }
+};
+
+/** Fetch the current year's Galii Sassabu plan for the logged-in wereda (read-only). */
+export const fetchWeredaGaliiSassabuPlan = async () => {
+  const res = await api.get("/plans/wereda-galii-sassabu-plan", authHeader());
+  return res.data; // { plan: { mana_qophessaa_total_target, idilee_total_target } | null }
+};
+
 // ─── Subcity Work Analysis API Functions ─────────────────────────────────────
 
 /**

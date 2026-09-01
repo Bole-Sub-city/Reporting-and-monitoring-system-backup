@@ -18,6 +18,9 @@ const {
   saveSubcityGaliiPlan,
   fetchSubcityGaliiPlan,
   getWeredaGaliiPlan,
+  saveSubcityGaliiSassabuPlan,
+  fetchSubcityGaliiSassabuPlan,
+  getWeredaGaliiSassabuPlan,
   getSubcityLivePlans,
 } = require("../controllers/planController");
 
@@ -68,6 +71,23 @@ router.get("/wereda-carraa-plan", authMiddleware, (req, res) => {
   req._sector = "carraa";
   getWeredaGenericPlan(req, res);
 });
+
+// Galii Sassabu (new sector) plan routes
+router.post(
+  "/subcity-galii-sassabu-plan",
+  authMiddleware,
+  saveSubcityGaliiSassabuPlan,
+);
+router.get(
+  "/subcity-galii-sassabu-plan",
+  authMiddleware,
+  fetchSubcityGaliiSassabuPlan,
+);
+router.get(
+  "/wereda-galii-sassabu-plan",
+  authMiddleware,
+  getWeredaGaliiSassabuPlan,
+);
 
 // Subcity live plan data for any year (used by History tab)
 router.get("/subcity-live-plans", authMiddleware, getSubcityLivePlans);

@@ -674,6 +674,12 @@ const GENERIC_SECTOR_WEREDA_TABLE = {
     w3: "annual_galii_plan_wereda_3",
     w4: "annual_galii_plan_wereda_4",
   },
+  galii_sassabu: {
+    w1: "annual_galii_sassabu_plan_wereda_1",
+    w2: "annual_galii_sassabu_plan_wereda_2",
+    w3: "annual_galii_sassabu_plan_wereda_3",
+    w4: "annual_galii_sassabu_plan_wereda_4",
+  },
 };
 
 // Explicit field lists per sector — only these keys are written to the DB.
@@ -681,23 +687,38 @@ const GENERIC_SECTOR_WEREDA_TABLE = {
 const GENERIC_SECTOR_FIELDS = {
   carraa: [
     // Leenjii: int, dhi, dub
-    "leenjii_int", "leenjii_dhi", "leenjii_dub",
+    "leenjii_int",
+    "leenjii_dhi",
+    "leenjii_dub",
     // Carraa Hojii Dhaabbii: int, dhi, dub
-    "carraa_hojii_dhaabbii_int", "carraa_hojii_dhaabbii_dhi", "carraa_hojii_dhaabbii_dub",
+    "carraa_hojii_dhaabbii_int",
+    "carraa_hojii_dhaabbii_dhi",
+    "carraa_hojii_dhaabbii_dub",
     // Carraa Hojii Qacarrii: int, dhi, dub
-    "carraa_hojii_qacarrii_int", "carraa_hojii_qacarrii_dhi", "carraa_hojii_qacarrii_dub",
+    "carraa_hojii_qacarrii_int",
+    "carraa_hojii_qacarrii_dhi",
+    "carraa_hojii_qacarrii_dub",
     // Qusannaa Haawaasaa: int, qarshii
-    "qusannaa_haawaasaa_int", "qusannaa_haawaasaa_qarshii",
+    "qusannaa_haawaasaa_int",
+    "qusannaa_haawaasaa_qarshii",
     // Kenna Liqii: int, mise, qarshii
-    "kenna_liqii_int", "kenna_liqii_mise", "kenna_liqii_qarshii",
+    "kenna_liqii_int",
+    "kenna_liqii_mise",
+    "kenna_liqii_qarshii",
     // Qusanna Dirqii: int, mise, qarshii
-    "qusanna_dirqii_int", "qusanna_dirqii_mise", "qusanna_dirqii_qarshii",
+    "qusanna_dirqii_int",
+    "qusanna_dirqii_mise",
+    "qusanna_dirqii_qarshii",
     // Deebii Liqii Bilchaate: int, qarshii
-    "deebii_liqii_bilchaate_int", "deebii_liqii_bilchaate_qarshii",
+    "deebii_liqii_bilchaate_int",
+    "deebii_liqii_bilchaate_qarshii",
     // Deebii Liqii Bulee: int, qarshii
-    "deebii_liqii_bulee_int", "deebii_liqii_bulee_qarshii",
+    "deebii_liqii_bulee_int",
+    "deebii_liqii_bulee_qarshii",
     // Industrii Godoo: kilaastera, lafa, carraa_hojii
-    "industrii_godoo_kilaastera", "industrii_godoo_lafa", "industrii_godoo_carraa_hojii",
+    "industrii_godoo_kilaastera",
+    "industrii_godoo_lafa",
+    "industrii_godoo_carraa_hojii",
   ],
   daldala: [
     "galmee_haraa",
@@ -734,10 +755,7 @@ const GALII_MQ_FIELDS = [
 ];
 // Idilee stays as a single qarshii field (no KG breakdown)
 const GALII_PLAN_FIELDS_WEREDA = [
-  ...GALII_MQ_FIELDS.flatMap((f) => [
-    `mq_${f}_kg`,
-    `mq_${f}_qarshii`,
-  ]),
+  ...GALII_MQ_FIELDS.flatMap((f) => [`mq_${f}_kg`, `mq_${f}_qarshii`]),
   "idilee_qarshii",
 ];
 
@@ -762,7 +780,9 @@ const saveSubcityGenericPlan = async (req, res) => {
     const year = new Date().getFullYear();
     const allowedFields = GENERIC_SECTOR_FIELDS[sector];
     if (!allowedFields) {
-      return res.status(400).json({ message: `No field config for sector: ${sector}` });
+      return res
+        .status(400)
+        .json({ message: `No field config for sector: ${sector}` });
     }
 
     // 1. Save each woreda's direct values to their plan table
@@ -777,7 +797,9 @@ const saveSubcityGenericPlan = async (req, res) => {
         .from(GENERIC_SECTOR_WEREDA_TABLE[sector][wId])
         .upsert([wRow], { onConflict: "year" });
       if (error)
-        errors.push(`${GENERIC_SECTOR_WEREDA_TABLE[sector][wId]}: ${error.message}`);
+        errors.push(
+          `${GENERIC_SECTOR_WEREDA_TABLE[sector][wId]}: ${error.message}`,
+        );
     }
 
     if (errors.length)
@@ -835,7 +857,9 @@ const saveSubcityGaliiPlan = async (req, res) => {
         .from(GENERIC_SECTOR_WEREDA_TABLE.galii[wId])
         .upsert([wRow], { onConflict: "year" });
       if (error)
-        errors.push(`${GENERIC_SECTOR_WEREDA_TABLE.galii[wId]}: ${error.message}`);
+        errors.push(
+          `${GENERIC_SECTOR_WEREDA_TABLE.galii[wId]}: ${error.message}`,
+        );
     }
 
     if (errors.length)
@@ -983,6 +1007,7 @@ const getSubcityLivePlans = async (req, res) => {
       "subcity_daldala_plan",
       "subcity_atk_plan",
       "subcity_galii_plan",
+      "subcity_galii_sassabu_plan",
     ];
 
     const plans = [];
@@ -1012,6 +1037,127 @@ const getSubcityLivePlans = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/plans/subcity-galii-sassabu-plan
+ * Save Galii Sassabu subcity plan — two totals only (Mana Qophessaa + Idilee).
+ * Distributes proportionally to all 4 woreda tables using provided weights.
+ * Body: { mana_qophessaa_total, idilee_total, weights: { w1, w2, w3, w4 } }
+ */
+/**
+ * POST /api/plans/subcity-galii-sassabu-plan
+ * Save Galii Sassabu subcity plan — direct per-woreda entry (no % distribution).
+ * Each woreda gets its own Mana Qophessaa Total + Idilee Total targets entered
+ * directly by the subcity user.
+ * Body: { woredaPlans: { w1: { mana_qophessaa_total, idilee_total }, w2: {...}, w3: {...}, w4: {...} } }
+ */
+const saveSubcityGaliiSassabuPlan = async (req, res) => {
+  try {
+    const { woredaPlans } = req.body;
+
+    if (!woredaPlans) {
+      return res.status(400).json({ message: "woredaPlans is required." });
+    }
+
+    const year = new Date().getFullYear();
+
+    // 1. Save each woreda's direct values to their plan table
+    const errors = [];
+    for (const wId of ["w1", "w2", "w3", "w4"]) {
+      const wData = woredaPlans[wId] || {};
+      const { error } = await supabase
+        .from(GENERIC_SECTOR_WEREDA_TABLE.galii_sassabu[wId])
+        .upsert(
+          [
+            {
+              year,
+              mana_qophessaa_total_target: Number(
+                wData.mana_qophessaa_total || 0,
+              ),
+              idilee_total_target: Number(wData.idilee_total || 0),
+            },
+          ],
+          { onConflict: "year" },
+        );
+      if (error)
+        errors.push(
+          `${GENERIC_SECTOR_WEREDA_TABLE.galii_sassabu[wId]}: ${error.message}`,
+        );
+    }
+
+    if (errors.length)
+      return res.status(400).json({ message: errors.join(" | ") });
+
+    // 2. Save subcity totals (sum of all 4 woredas)
+    const mqTotal = ["w1", "w2", "w3", "w4"].reduce(
+      (s, wId) =>
+        s + Number((woredaPlans[wId] || {}).mana_qophessaa_total || 0),
+      0,
+    );
+    const idTotal = ["w1", "w2", "w3", "w4"].reduce(
+      (s, wId) => s + Number((woredaPlans[wId] || {}).idilee_total || 0),
+      0,
+    );
+
+    const { error: subcityErr } = await supabase
+      .from("subcity_galii_sassabu_plan")
+      .upsert(
+        [{ year, mana_qophessaa_total: mqTotal, idilee_total: idTotal }],
+        { onConflict: "year" },
+      );
+    if (subcityErr)
+      return res.status(400).json({ message: subcityErr.message });
+
+    res.status(200).json({ message: "Galii Sassabu plan saved." });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/subcity-galii-sassabu-plan
+ * Returns the current year's subcity Galii Sassabu plan.
+ */
+const fetchSubcityGaliiSassabuPlan = async (req, res) => {
+  try {
+    const year = new Date().getFullYear();
+    const { data, error } = await supabase
+      .from("subcity_galii_sassabu_plan")
+      .select("*")
+      .eq("year", year)
+      .maybeSingle();
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /api/plans/wereda-galii-sassabu-plan
+ * Returns the current year's Galii Sassabu plan for the logged-in wereda (read-only).
+ */
+const getWeredaGaliiSassabuPlan = async (req, res) => {
+  try {
+    const username = req.user.username;
+    const wId = USERNAME_TO_WEREDA_ID[username];
+    if (!wId)
+      return res
+        .status(403)
+        .json({ message: "Not a recognised wereda account." });
+
+    const { data, error } = await supabase
+      .from(GENERIC_SECTOR_WEREDA_TABLE.galii_sassabu[wId])
+      .select("*")
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return res.status(400).json({ message: error.message });
+    res.json({ plan: data || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   createPlan,
   getMyPlan,
@@ -1029,5 +1175,8 @@ module.exports = {
   saveSubcityGaliiPlan,
   fetchSubcityGaliiPlan,
   getWeredaGaliiPlan,
+  saveSubcityGaliiSassabuPlan,
+  fetchSubcityGaliiSassabuPlan,
+  getWeredaGaliiSassabuPlan,
   getSubcityLivePlans,
 };

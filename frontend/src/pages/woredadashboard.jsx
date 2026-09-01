@@ -8,6 +8,7 @@ import {
   submitRevenueReport,
   submitDaldalReport,
   submitAtkReport,
+  submitGaliiSassabuReport,
   fetchMyReports,
   fetchLockStatus,
   requestEditAccess,
@@ -22,6 +23,7 @@ import {
   fetchWeredaAtkPlan,
   fetchWeredaRevenuePlan,
   fetchWeredaCarraaHojiiPlan,
+  fetchWeredaGaliiSassabuPlan,
   fetchAnnouncements,
   fetchUnreadCount,
   markAnnouncementsRead,
@@ -941,6 +943,13 @@ const WORKS = [
     sidebarLabel: "ATK",
     icon: BuildingIcon,
     color: "bg-[#fdf4ff] text-[#7e22ce]",
+  },
+  {
+    id: "galiiSassabu",
+    label: "Galii Sassabu",
+    sidebarLabel: "Galii Sassabu",
+    icon: RevenueIcon,
+    color: "bg-[#fff7ed] text-[#c2410c]",
   },
 ];
 // Returns today's date in YYYY-MM-DD using LOCAL timezone (not UTC).
@@ -2726,6 +2735,449 @@ const DALDALA_CATS = DALDALA_FIELDS.map((f, i) => ({
   ][i % 11],
 }));
 
+// ─── Galii Sassabu Submit Form ────────────────────────────────────────────────
+// Two totals + optional per-source breakdown for each category.
+// Mana Qophessaa sources and Idilee sources match MANA_QOPHESSAA_SOURCES /
+// IDILEE_SOURCES already defined above.
+function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
+  const ACCENT = "#c2410c";
+  const HEADER_GRADIENT = "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)";
+
+  const emptyDetail = () => [{ source: "", amount: "" }];
+
+  const [reportType, setReportType] = useState(REPORT_TYPES[0]);
+  const [mqTotal, setMqTotal] = useState("");
+  const [idTotal, setIdTotal] = useState("");
+  const [mqDetails, setMqDetails] = useState(emptyDetail());
+  const [idDetails, setIdDetails] = useState(emptyDetail());
+  const [showMqDetail, setShowMqDetail] = useState(false);
+  const [showIdDetail, setShowIdDetail] = useState(false);
+  const [yaada, setYaada] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  // Pre-fill when admin unlocks
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      const today = todayStr();
+      fetchMyReports({
+        sector: "galii_sassabu",
+        date_from: today,
+        date_to: today,
+      })
+        .then((data) => {
+          const row = (Array.isArray(data) ? data : []).find(
+            (r) => r.report_date === today && r._sector === "galii_sassabu",
+          );
+          if (!row) return;
+          setReportType(row.report_type || REPORT_TYPES[0]);
+          setMqTotal(String(row.mana_qophessaa_total ?? ""));
+          setIdTotal(String(row.idilee_total ?? ""));
+          setYaada(row.yaada_gudinaa || "");
+          if (
+            Array.isArray(row.mana_qophessaa_detail) &&
+            row.mana_qophessaa_detail.length
+          ) {
+            setMqDetails(
+              row.mana_qophessaa_detail.map((d) => ({
+                source: d.source ?? "",
+                amount: String(d.amount ?? ""),
+              })),
+            );
+            setShowMqDetail(true);
+          }
+          if (Array.isArray(row.idilee_detail) && row.idilee_detail.length) {
+            setIdDetails(
+              row.idilee_detail.map((d) => ({
+                source: d.source ?? "",
+                amount: String(d.amount ?? ""),
+              })),
+            );
+            setShowIdDetail(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [locked]);
+
+  const handleClear = () => {
+    setMqTotal("");
+    setIdTotal("");
+    setMqDetails(emptyDetail());
+    setIdDetails(emptyDetail());
+    setShowMqDetail(false);
+    setShowIdDetail(false);
+    setYaada("");
+    setError("");
+  };
+
+  // Detail helpers
+  const updateDetail = (setter, idx, field, val) =>
+    setter((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
+    );
+  const addDetailRow = (setter) =>
+    setter((prev) => [...prev, { source: "", amount: "" }]);
+  const removeDetailRow = (setter, idx) =>
+    setter((prev) => prev.filter((_, i) => i !== idx));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (locked) return;
+    setError("");
+    setSaving(true);
+
+    const mqNum = Number(mqTotal || 0);
+    const idNum = Number(idTotal || 0);
+
+    // Validate: if detail is shown, detail sum should not exceed total
+    if (showMqDetail) {
+      const detailSum = mqDetails.reduce(
+        (s, d) => s + Number(d.amount || 0),
+        0,
+      );
+      if (detailSum > mqNum) {
+        setError(
+          `Mana Qophessaa detail sum (${detailSum.toLocaleString()}) exceeds total (${mqNum.toLocaleString()}).`,
+        );
+        setSaving(false);
+        return;
+      }
+    }
+    if (showIdDetail) {
+      const detailSum = idDetails.reduce(
+        (s, d) => s + Number(d.amount || 0),
+        0,
+      );
+      if (detailSum > idNum) {
+        setError(
+          `Idilee detail sum (${detailSum.toLocaleString()}) exceeds total (${idNum.toLocaleString()}).`,
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
+    const payload = {
+      report_date: todayStr(),
+      report_type: reportType,
+      mana_qophessaa_total: mqNum,
+      idilee_total: idNum,
+      mana_qophessaa_detail: showMqDetail
+        ? mqDetails
+            .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+            .map((d) => ({
+              source: d.source.trim(),
+              amount: Number(d.amount || 0),
+            }))
+        : null,
+      idilee_detail: showIdDetail
+        ? idDetails
+            .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+            .map((d) => ({
+              source: d.source.trim(),
+              amount: Number(d.amount || 0),
+            }))
+        : null,
+      yaada_gudinaa: yaada,
+    };
+
+    try {
+      await submitGaliiSassabuReport(payload);
+      setShowModal(true);
+      handleClear();
+      onSubmitSuccess && onSubmitSuccess();
+    } catch (err) {
+      setError(friendlyError(err, "Failed to submit Galii Sassabu report."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Detail sub-form for one category
+  function DetailSubForm({ details, setDetails, sources, accentColor }) {
+    return (
+      <div className="mt-3 space-y-2">
+        {details.map((d, idx) => (
+          <div key={idx} className="flex gap-2 items-start">
+            <div className="flex-1">
+              <select
+                value={d.source}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "source", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+                style={{ "--tw-ring-color": accentColor + "33" }}
+              >
+                <option value="">Select source…</option>
+                {sources.map((s) => (
+                  <option key={s.key} value={s.label}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-36">
+              <input
+                type="number"
+                min="0"
+                placeholder="Amount"
+                value={d.amount}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "amount", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+              />
+            </div>
+            {details.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeDetailRow(setDetails, idx)}
+                className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
+                title="Remove row"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => addDetailRow(setDetails)}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
+          style={{
+            color: accentColor,
+            borderColor: accentColor + "55",
+            background: accentColor + "11",
+          }}
+        >
+          + Add Row
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+      {locked && (
+        <div className="mb-5">
+          <LockBanner
+            sector="galii_sassabu"
+            reportType={reportType}
+            onUnlocked={onSubmitSuccess}
+          />
+        </div>
+      )}
+
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Galii Sassabu — Mana Qophessaa fi Idilee
+          </p>
+        </div>
+      </div>
+
+      {/* Report type + date row */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">
+            Report Type
+          </p>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          >
+            {REPORT_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
+            Reporting Period
+          </p>
+          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Mana Qophessaa block */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: HEADER_GRADIENT }}
+          >
+            <p className="text-white font-bold text-sm">Mana Qophessaa</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div>
+              <label className="block text-sm font-semibold text-[#334155] mb-1.5">
+                Mana Qophessaa Total (Qarshii){" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                required
+                value={mqTotal}
+                onChange={(e) => setMqTotal(e.target.value)}
+                placeholder="0"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#c2410c]/20"
+              />
+            </div>
+            {/* Toggle detail */}
+            <button
+              type="button"
+              onClick={() => setShowMqDetail((p) => !p)}
+              className="text-xs font-semibold flex items-center gap-1.5 transition-all"
+              style={{ color: ACCENT }}
+            >
+              <ChevronIcon open={showMqDetail} />
+              {showMqDetail
+                ? "Hide sub-source breakdown"
+                : "Add sub-source breakdown (optional)"}
+            </button>
+            {showMqDetail && (
+              <DetailSubForm
+                details={mqDetails}
+                setDetails={setMqDetails}
+                sources={MANA_QOPHESSAA_SOURCES}
+                accentColor={ACCENT}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Idilee block */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#ea580c 0%,#f97316 100%)",
+            }}
+          >
+            <p className="text-white font-bold text-sm">Idilee</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div>
+              <label className="block text-sm font-semibold text-[#334155] mb-1.5">
+                Idilee Total (Qarshii) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                required
+                value={idTotal}
+                onChange={(e) => setIdTotal(e.target.value)}
+                placeholder="0"
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#ea580c]/20"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowIdDetail((p) => !p)}
+              className="text-xs font-semibold flex items-center gap-1.5 transition-all"
+              style={{ color: "#ea580c" }}
+            >
+              <ChevronIcon open={showIdDetail} />
+              {showIdDetail
+                ? "Hide sub-source breakdown"
+                : "Add sub-source breakdown (optional)"}
+            </button>
+            {showIdDetail && (
+              <DetailSubForm
+                details={idDetails}
+                setDetails={setIdDetails}
+                sources={IDILEE_SOURCES}
+                accentColor="#ea580c"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Grand total preview */}
+        {(Number(mqTotal || 0) > 0 || Number(idTotal || 0) > 0) && (
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
+          >
+            <span className="text-sm font-semibold text-[#c2410c]">
+              Grand Total
+            </span>
+            <span className="text-xl font-extrabold text-[#c2410c]">
+              {(Number(mqTotal || 0) + Number(idTotal || 0)).toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        {/* Yaada Gudinaa */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <label className="block text-[#334155] text-sm font-medium mb-1.5">
+            Yaada Gudinaa
+          </label>
+          <textarea
+            value={yaada}
+            onChange={(e) => setYaada(e.target.value)}
+            placeholder="Yaada Gudinaa…"
+            rows={3}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none"
+          />
+        </div>
+
+        {error && (
+          <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">
+            Fields marked <span className="text-red-500">*</span> are required
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
+            >
+              Clear Form
+            </button>
+            <button
+              type="submit"
+              disabled={saving || locked}
+              className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: HEADER_GRADIENT }}
+            >
+              <SubmitIcon />
+              {saving ? "Submitting…" : "Submit Report"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ─── ATK sector ───────────────────────────────────────────────────────────────
 const ATK_FIELDS = [
   {
@@ -2887,6 +3339,38 @@ const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
     _totalSubs: f.subs.length,
   }));
 });
+
+// ─── Galii Sassabu sector (new) ───────────────────────────────────────────────
+// Two simple totals: Mana Qophessaa Total (Qarshii) + Idilee Total (Qarshii)
+const GALII_SASSABU_FIELDS = [
+  {
+    name: "mana_qophessaa_total",
+    label: "Mana Qophessaa Total (Qarshii)",
+    required: true,
+    type: "number",
+  },
+  {
+    name: "idilee_total",
+    label: "Idilee Total (Qarshii)",
+    required: true,
+    type: "number",
+  },
+];
+
+const GALII_SASSABU_CATS = [
+  {
+    key: "mana_qophessaa_total",
+    planKey: "mana_qophessaa_total_target",
+    label: "Mana Qophessaa Total",
+    color: "#c2410c",
+  },
+  {
+    key: "idilee_total",
+    planKey: "idilee_total_target",
+    label: "Idilee Total",
+    color: "#ea580c",
+  },
+];
 
 function GenericAnnualPlanSection({
   u,
@@ -6114,6 +6598,7 @@ const REPORT_SECTORS = [
   { id: "galii", label: "Galii Sassaabu", color: "#0f766e" },
   { id: "daldala", label: "Daldala", color: "#854d0e" },
   { id: "atk", label: "ATK", color: "#7e22ce" },
+  { id: "galii_sassabu", label: "Galii Sassabu", color: "#c2410c" },
 ];
 
 const HIDDEN_FIELDS = new Set([
@@ -6124,14 +6609,87 @@ const HIDDEN_FIELDS = new Set([
   "_sector",
   "created_at",
   "updated_at",
-  // Removed from UI — stored as 0 to satisfy DB NOT NULL but should not be displayed
+  // Buusaa — removed from UI but NOT NULL in DB
   "buusi_daldalaa",
   "buusi_daldalaa_fi_gumaataa",
   "gumaata_midhaani",
+  // Carraa Hojii — old flat columns replaced by sub-field columns (_int/_dhi/_dub etc.)
+  "leenjii",
+  "carraa_hojii_dhaabbii",
+  "carraa_hojii_qacarrii",
+  "qusannaa_haawaasaa",
+  "kenna_liqii",
+  "qusanna_dirqii",
+  "deebii_liqii_bilchaate",
+  "deebii_liqii_bulee",
+  "industrii_godoo",
 ]);
 
+// Human-readable labels for DB column names shown in the report detail modal
+const FIELD_LABEL_MAP = {
+  // Buusaa
+  hubannoo_uummuu: "Hubannoo Uumuu",
+  horannaa_misensaa: "Horannaa Misensaa",
+  buusi_jirataa: "Buusi Jiraataa",
+  gumaata_jiraataa: "Gumaata Jiraataa",
+  inisheetevii_buusaa_gonofaa: "Inisheetivii Buusaa Gonofaa",
+  gumaata_midhaani_tarsiimoo: "Gumaata Midhaani Tarsiimoo",
+  gumaata_midhaani_sardamaa: "Gumaata Midhaani Sardamaa",
+  nyaata_barataa: "Nyaata Barataa",
+  zayitii: "Zayitii (Litre)",
+  sukkaara: "Sukkaara (KG)",
+  daldala_b_group_a: "Daldala B – Group A",
+  daldala_b_group_b: "Daldala B – Group B",
+  // Carraa Hojii sub-fields
+  leenjii_int: "Leenjii — Int",
+  leenjii_dhi: "Leenjii — Dhiira",
+  leenjii_dub: "Leenjii — Dubartii",
+  carraa_hojii_dhaabbii_int: "Carraa Hojii Dhaabbii — Int",
+  carraa_hojii_dhaabbii_dhi: "Carraa Hojii Dhaabbii — Dhiira",
+  carraa_hojii_dhaabbii_dub: "Carraa Hojii Dhaabbii — Dubartii",
+  carraa_hojii_qacarrii_int: "Carraa Hojii Qacarrii — Int",
+  carraa_hojii_qacarrii_dhi: "Carraa Hojii Qacarrii — Dhiira",
+  carraa_hojii_qacarrii_dub: "Carraa Hojii Qacarrii — Dubartii",
+  qusannaa_haawaasaa_int: "Qusannaa Haawaasaa — Int",
+  qusannaa_haawaasaa_qarshii: "Qusannaa Haawaasaa — Qarshii",
+  kenna_liqii_int: "Kenna Liqii — Int",
+  kenna_liqii_mise: "Kenna Liqii — Mise",
+  kenna_liqii_qarshii: "Kenna Liqii — Qarshii",
+  qusanna_dirqii_int: "Qusanna Dirqii — Int",
+  qusanna_dirqii_mise: "Qusanna Dirqii — Mise",
+  qusanna_dirqii_qarshii: "Qusanna Dirqii — Qarshii",
+  deebii_liqii_bilchaate_int: "Deebii Liqii Bilchaate — Int",
+  deebii_liqii_bilchaate_qarshii: "Deebii Liqii Bilchaate — Qarshii",
+  deebii_liqii_bulee_int: "Deebii Liqii Bulee — Int",
+  deebii_liqii_bulee_qarshii: "Deebii Liqii Bulee — Qarshii",
+  industrii_godoo_kilaastera: "Industrii Godoo — Kilaastera",
+  industrii_godoo_lafa: "Industrii Godoo — Lafa (Hek)",
+  industrii_godoo_carraa_hojii: "Industrii Godoo — Carraa Hojii",
+  // Daldala
+  galmee_haraa: "Galmee Haraa",
+  heyyema_haraa: "Heyyema Haraa",
+  harahessaa: "Harahessaa",
+  galii_daldalarra_galuu: "Galii Daldalarra Galuu",
+  toannoo_walii_gala: "To'annoo Walii Gala",
+  tmd: "Leenjii TMD",
+  intarshippii: "Intarshippii",
+  ggg: "Giddu Gala Gabaa",
+  gabayaa_sanbata: "Gabaa Sanbata",
+  whg_kudraa: "Walitti Hidhinsaa Gabaa — Kudraa",
+  whg_mudraa: "Walitti Hidhinsaa Gabaa — Mudraa",
+  // ATK
+  waliigaltee_pilaanii_kennuu: "Waliigaltee Pilaanii Kennuu",
+  heeyyama_ijaarsaa_kennamee: "Heeyyama Ijaarsaa Kennamee",
+  toannoo_fi_hordoffii_gamoo: "To'annoo Fi Hordoffii Gamoo",
+  galii_atk_galchuu: "Galii ATK Galchuu",
+  yaada_gudinaa: "Yaada Gudinaa",
+};
+
 function fieldLabel(key) {
-  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return (
+    FIELD_LABEL_MAP[key] ??
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 }
 
 function getDisplayFields(row) {
@@ -6258,6 +6816,19 @@ const SECTOR_PRINT_FIELDS = {
       key: `idilee_${s.key}_qarshii`,
       label: s.label,
     })),
+  ],
+  // Galii Sassabu — two totals + optional sub-source details (JSONB)
+  galii_sassabu: [
+    {
+      key: "mana_qophessaa_total",
+      planKey: "mana_qophessaa_total_target",
+      label: "Mana Qophessaa Total",
+    },
+    {
+      key: "idilee_total",
+      planKey: "idilee_total_target",
+      label: "Idilee Total",
+    },
   ],
 };
 
@@ -6631,6 +7202,118 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
     if (showPct) subCols.push("pct");
     const colspan = subCols.length;
 
+    // ── Galii Sassabu — special table: totals row + optional detail breakdown ──
+    if (sectorId === "galii_sassabu") {
+      const mqPlanTarget = plan
+        ? printPartitionTarget(
+            Number(plan.mana_qophessaa_total_target ?? 0),
+            period,
+          )
+        : 0;
+      const idPlanTarget = plan
+        ? printPartitionTarget(Number(plan.idilee_total_target ?? 0), period)
+        : 0;
+
+      const planCols = showPlan ? `<th class="sub-col">Karoora</th>` : "";
+      const pctCols = showPct ? `<th class="sub-col">%</th>` : "";
+
+      const thead = `<thead>
+        <tr>
+          <th rowspan="2" class="rno">R.No</th>
+          <th rowspan="2" class="date-col">Guyyaa</th>
+          <th rowspan="2" class="gosa">Gosa</th>
+          <th rowspan="2" class="gosa">Sub-Source</th>
+          ${planCols}
+          <th class="sub-col">Raawwii</th>
+          ${pctCols}
+        </tr>
+        <tr></tr>
+      </thead>`;
+
+      let rno = 1;
+      const bodyRows = sectorRows
+        .map((row) => {
+          const date = row.report_date ?? "";
+          const mqTotal = Number(row.mana_qophessaa_total ?? 0);
+          const idTotal = Number(row.idilee_total ?? 0);
+          const mqDetail = Array.isArray(row.mana_qophessaa_detail)
+            ? row.mana_qophessaa_detail
+            : [];
+          const idDetail = Array.isArray(row.idilee_detail)
+            ? row.idilee_detail
+            : [];
+
+          const buildCell = (actual, target) => {
+            const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+            return (
+              (showPlan
+                ? `<td class="num plan">${target.toLocaleString()}</td>`
+                : "") +
+              `<td class="num">${actual.toLocaleString()}</td>` +
+              (showPct
+                ? `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
+                : "")
+            );
+          };
+
+          const mqTotalRow = `<tr>
+          <td class="rno" rowspan="${Math.max(1, mqDetail.length) + 1}">${rno}</td>
+          <td class="date-col" rowspan="${Math.max(1, mqDetail.length) + 1}">${date}</td>
+          <td class="gosa" style="font-weight:bold;color:#c2410c;" rowspan="${Math.max(1, mqDetail.length) + 1}">Mana Qophessaa</td>
+          <td class="gosa" style="font-weight:bold;">Total</td>
+          ${buildCell(mqTotal, mqPlanTarget)}
+        </tr>`;
+          const mqDetailRows = mqDetail
+            .map(
+              (d) => `<tr>
+          <td class="gosa" style="padding-left:18px;color:#64748b;">${d.source ?? ""}</td>
+          ${buildCell(Number(d.amount ?? 0), 0)}
+        </tr>`,
+            )
+            .join("");
+
+          const idTotalRow = `<tr>
+          <td class="gosa" style="font-weight:bold;color:#ea580c;" rowspan="${Math.max(1, idDetail.length) + 1}">Idilee</td>
+          <td class="gosa" style="font-weight:bold;">Total</td>
+          ${buildCell(idTotal, idPlanTarget)}
+        </tr>`;
+          const idDetailRows = idDetail
+            .map(
+              (d) => `<tr>
+          <td class="gosa" style="padding-left:18px;color:#64748b;">${d.source ?? ""}</td>
+          ${buildCell(Number(d.amount ?? 0), 0)}
+        </tr>`,
+            )
+            .join("");
+
+          const grandTotal = mqTotal + idTotal;
+          const grandPlan = mqPlanTarget + idPlanTarget;
+          const grandPct =
+            grandPlan > 0 ? Math.round((grandTotal / grandPlan) * 100) : 0;
+          const grandRow = `<tr style="background:#fff7ed;font-weight:bold;">
+          <td class="gosa" colspan="2" style="font-weight:bold;color:#c2410c;">Waliigala</td>
+          ${showPlan ? `<td class="num plan">${grandPlan.toLocaleString()}</td>` : ""}
+          <td class="num">${grandTotal.toLocaleString()}</td>
+          ${showPct ? `<td class="num pct">${grandPlan > 0 ? grandPct + "%" : "—"}</td>` : ""}
+        </tr>`;
+
+          rno++;
+          return (
+            mqTotalRow + mqDetailRows + idTotalRow + idDetailRows + grandRow
+          );
+        })
+        .join("");
+
+      return `<div class="sector-block">
+        <div class="sector-title">${sectorLabel}</div>
+        <table>${thead}<tbody>${bodyRows}</tbody></table>
+      </div>`;
+    }
+    if (showPlan) subCols.push("plan");
+    subCols.push("actual");
+    if (showPct) subCols.push("pct");
+    const colspan = subCols.length;
+
     const fieldHeaders = fields
       .map(
         (f) => `<th colspan="${colspan}" class="field-group">${f.label}</th>`,
@@ -6703,6 +7386,7 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         daldalRes,
         atkRes,
         galiiRes,
+        galiiSassabuRes,
       ] = await Promise.all([
         fetchMyReports({}).catch(() => []),
         fetchWeredaPlan().catch(() => null),
@@ -6711,6 +7395,7 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         fetchWeredaDaldalaPlan().catch(() => null),
         fetchWeredaAtkPlan().catch(() => null),
         fetchWeredaRevenuePlan().catch(() => null),
+        fetchWeredaGaliiSassabuPlan().catch(() => null),
       ]);
 
       let allRows = Array.isArray(freshReportsData) ? freshReportsData : [];
@@ -6743,6 +7428,7 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         daldala: daldalRes?.plan ?? null,
         atk: atkRes?.plan ?? null,
         galii: galiiRes?.plan ?? null,
+        galii_sassabu: galiiSassabuRes?.plan ?? null,
       };
 
       const generatedDate = new Date().toLocaleString();
@@ -9091,6 +9777,18 @@ export default function WoRedaDashboard() {
                       accentBorder="#e9d5ff"
                     />
                   );
+                if (wid === "galiiSassabu")
+                  return (
+                    <GenericAnnualPlanSection
+                      u={u}
+                      cats={GALII_SASSABU_CATS}
+                      fetchPlanFn={fetchWeredaGaliiSassabuPlan}
+                      title="Galii Sassabu"
+                      accentColor="#c2410c"
+                      accentLight="#fff7ed"
+                      accentBorder="#fed7aa"
+                    />
+                  );
                 return <PlaceholderAnnualPlan title={work?.label} u={u} />;
               }
               if (sub === "analysis") {
@@ -9139,6 +9837,18 @@ export default function WoRedaDashboard() {
                       accentColor="#7e22ce"
                       accentLight="#fdf4ff"
                       accentBorder="#e9d5ff"
+                    />
+                  );
+                if (wid === "galiiSassabu")
+                  return (
+                    <GenericAnalysisSection
+                      sector="galii_sassabu"
+                      cats={GALII_SASSABU_CATS}
+                      fetchPlanFn={fetchWeredaGaliiSassabuPlan}
+                      title="Galii Sassabu"
+                      accentColor="#c2410c"
+                      accentLight="#fff7ed"
+                      accentBorder="#fed7aa"
                     />
                   );
                 return <PlaceholderAnalysis title={work?.label} u={u} />;
@@ -9199,6 +9909,14 @@ export default function WoRedaDashboard() {
                     locked={!!locked.atk}
                     onSubmitSuccess={refreshLocks}
                     headerColor="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
+                  />
+                );
+              if (wid === "galiiSassabu")
+                return (
+                  <GaliiSassabuSubmitForm
+                    u={u}
+                    locked={!!locked.galii_sassabu}
+                    onSubmitSuccess={refreshLocks}
                   />
                 );
               return (
