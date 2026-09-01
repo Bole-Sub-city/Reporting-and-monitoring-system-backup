@@ -3311,6 +3311,7 @@ const REVENUE_CATS = [
 // CARRAA_WOREDA_CATS — flat list with _parent grouping metadata for ring charts + analysis.
 const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
   if (!f.subs.length) {
+<<<<<<< Updated upstream
     return [
       {
         key: f.name,
@@ -3325,6 +3326,10 @@ const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
         _totalSubs: 1,
       },
     ];
+=======
+    return [{ key: f.name, label: f.label, planKey: `${f.name}_target`, color: f.color,
+      _parent: f.name, _parentLabel: f.label, _subLabel: null, _firstSub: true, _lastSub: true, _totalSubs: 1 }];
+>>>>>>> Stashed changes
   }
   return f.subs.map((s, si) => ({
     key: `${f.name}${s.suffix}`,
@@ -4445,6 +4450,7 @@ function GenericAnalysisSection({
                     group.push(cats[i]);
                     i++;
                   }
+<<<<<<< Updated upstream
                   groups.push({
                     isGroup: true,
                     parent,
@@ -4452,6 +4458,9 @@ function GenericAnalysisSection({
                     color: cat.color,
                     items: group,
                   });
+=======
+                  groups.push({ isGroup: true, parent, label: cat._parentLabel, color: cat.color, items: group });
+>>>>>>> Stashed changes
                 } else {
                   groups.push({ isGroup: false, ...cat });
                   i++;
@@ -4462,6 +4471,7 @@ function GenericAnalysisSection({
                   const cat = g;
                   const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
                   const periodTarget = partitionTarget(annualTarget, period);
+<<<<<<< Updated upstream
                   const actual = activeSummary
                     ? (activeSummary[cat.key] ?? 0)
                     : 0;
@@ -4549,12 +4559,37 @@ function GenericAnalysisSection({
                             }}
                           />
                         </div>
+=======
+                  const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+                  const pct = periodTarget > 0 ? Math.round((actual / periodTarget) * 100) : 0;
+                  const arcPct = Math.min(pct, 100);
+                  const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                  const offset = circ - (arcPct / 100) * circ;
+                  return (
+                    <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
+                      <p className="text-xs font-bold text-[#334155] mb-2 text-center">{cat.label}</p>
+                      <div className="relative" style={{ width: size, height: size }}>
+                        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-lg font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+                          <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 w-full space-y-0.5">
+                        <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span></div>
+                        <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span></div>
+                        <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1"><div className="h-1 rounded-full transition-all duration-700" style={{ width: `${arcPct}%`, backgroundColor: cat.color }} /></div>
+>>>>>>> Stashed changes
                       </div>
                     </div>
                   );
                 }
                 // Grouped parent: render a parent header + sub ring charts
                 return (
+<<<<<<< Updated upstream
                   <div
                     key={g.parent}
                     className="col-span-2 sm:col-span-3 lg:col-span-4"
@@ -4670,10 +4705,76 @@ function GenericAnalysisSection({
                                   }}
                                 />
                               </div>
+=======
+                  <div key={g.parent} className="col-span-2 sm:col-span-3 lg:col-span-4">
+                    <div className="flex items-center gap-2 mb-3 mt-1">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
+                      <p className="text-sm font-bold text-[#1e293b]">{g.label}</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {g.items.map((cat) => {
+                        const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
+                        const periodTarget = partitionTarget(annualTarget, period);
+                        const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+                        const pct = periodTarget > 0 ? Math.round((actual / periodTarget) * 100) : 0;
+                        const arcPct = Math.min(pct, 100);
+                        const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                        const offset = circ - (arcPct / 100) * circ;
+                        return (
+                          <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
+                            <p className="text-xs font-bold mb-1 text-center" style={{ color: cat.color }}>{cat._subLabel}</p>
+                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">{g.label}</p>
+                            <div className="relative" style={{ width: size, height: size }}>
+                              <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
+                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-lg font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+                                <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                              </div>
+                            </div>
+                            <div className="mt-2 w-full space-y-0.5">
+                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span></div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span></div>
+                              <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1"><div className="h-1 rounded-full" style={{ width: `${arcPct}%`, backgroundColor: cat.color }} /></div>
+>>>>>>> Stashed changes
                             </div>
                           </div>
                         );
                       })}
+<<<<<<< Updated upstream
+=======
+                      {/* Ida'ama summary card */}
+                      {(() => {
+                        const totalActual = g.items.reduce((acc, cat) => acc + (activeSummary ? (activeSummary[cat.key] ?? 0) : 0), 0);
+                        const totalTarget = g.items.reduce((acc, cat) => acc + partitionTarget(plan ? (plan[cat.planKey] ?? 0) : 0, period), 0);
+                        const totalPct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                        const arcPct = Math.min(totalPct, 100);
+                        const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                        const offset = circ - (arcPct / 100) * circ;
+                        return (
+                          <div className="bg-[#eff6ff] rounded-xl border border-[#bfdbfe] p-3 flex flex-col items-center shadow-sm">
+                            <p className="text-xs font-bold text-[#1e40af] mb-1 text-center">Ida'ama</p>
+                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">{g.label}</p>
+                            <div className="relative" style={{ width: size, height: size }}>
+                              <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#dbeafe" strokeWidth={sw} />
+                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1e40af" strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-lg font-extrabold leading-none text-[#1e40af]">{totalPct}%</span>
+                                <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                              </div>
+                            </div>
+                            <div className="mt-2 w-full space-y-0.5">
+                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-bold text-[#1e40af]">{totalActual.toLocaleString()}</span></div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-bold text-[#1e40af]">{totalTarget.toLocaleString()}</span></div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+>>>>>>> Stashed changes
                     </div>
                   </div>
                 );
@@ -4722,6 +4823,7 @@ function GenericAnalysisSection({
                       const isGrouped = (cat._totalSubs ?? 1) > 1;
                       if (!isGrouped) {
                         // Plain single row
+<<<<<<< Updated upstream
                         const annualTarget = plan
                           ? (plan[cat.planKey] ?? 0)
                           : 0;
@@ -4818,12 +4920,39 @@ function GenericAnalysisSection({
                               )}
                             </td>
                           </tr>,
+=======
+                        const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
+                        const periodTarget = partitionTarget(annualTarget, period);
+                        const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
+                        const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                        const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
+                        const actualYtd = actualsYtd ? (actualsYtd[cat.key] ?? 0) : 0;
+                        const remaining = Math.max(cumulTarget - actualYtd, 0);
+                        rows.push(
+                          <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                            <td className="px-4 py-3 font-medium text-[#1e293b]">
+                              <span className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />{cat.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
+                            <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                            <td className="px-4 py-3"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>{pct}%</span></td>
+                            <td className="px-4 py-3">
+                              {remaining > 0
+                                ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>{remaining.toLocaleString()}</span>
+                                : <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Done</span>}
+                            </td>
+                          </tr>
+>>>>>>> Stashed changes
                         );
                         i++;
                       } else {
                         // Grouped: collect all subs for this parent
                         const parentKey = cat._parent;
                         const group = [];
+<<<<<<< Updated upstream
                         while (
                           i < cats.length &&
                           cats[i]._parent === parentKey
@@ -4942,6 +5071,72 @@ function GenericAnalysisSection({
                         });
 
                         // No Waliigala combined row — user requested removal
+=======
+                        while (i < cats.length && cats[i]._parent === parentKey) { group.push(cats[i]); i++; }
+                        const hasDhiDub = group.some((c) => c.key.endsWith("_dhi"));
+
+                        // Sub rows
+                        group.forEach((gc) => {
+                          const annualTarget = plan ? (plan[gc.planKey] ?? 0) : 0;
+                          const periodTarget = partitionTarget(annualTarget, period);
+                          const actual = activeSummary ? (activeSummary[gc.key] ?? 0) : 0;
+                          const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
+                          const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
+                          const actualYtd = actualsYtd ? (actualsYtd[gc.key] ?? 0) : 0;
+                          const remaining = Math.max(cumulTarget - actualYtd, 0);
+                          rows.push(
+                            <tr key={gc.key} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                              <td className="px-4 py-3 text-[#1e293b]">
+                                <span className="flex items-center gap-2 pl-4">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8] flex-shrink-0" />
+                                  <span className="font-medium">{gc._parentLabel}</span>
+                                  <span className="text-xs font-bold text-[#1e40af] bg-[#eff6ff] px-1.5 py-0.5 rounded">{gc._subLabel}</span>
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
+                              <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                              <td className="px-4 py-3"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${gc.color}22`, color: gc.color }}>{pct}%</span></td>
+                              <td className="px-4 py-3">
+                                {remaining > 0
+                                  ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>{remaining.toLocaleString()}</span>
+                                  : <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Done</span>}
+                              </td>
+                            </tr>
+                          );
+                        });
+
+                        // Waliigala combined row for Dhi+Dub gender fields only
+                        if (hasDhiDub) {
+                          const totalAnnual = group.reduce((acc, gc) => acc + (plan ? (plan[gc.planKey] ?? 0) : 0), 0);
+                          const totalPeriod = partitionTarget(totalAnnual, period);
+                          const totalActual = group.reduce((acc, gc) => acc + (activeSummary ? (activeSummary[gc.key] ?? 0) : 0), 0);
+                          const totalPct = totalPeriod > 0 ? Math.min(Math.round((totalActual / totalPeriod) * 100), 999) : 0;
+                          const totalCumul = Math.round((daysElapsed / 365) * totalAnnual);
+                          const totalYtd = group.reduce((acc, gc) => acc + (actualsYtd ? (actualsYtd[gc.key] ?? 0) : 0), 0);
+                          const totalRemaining = Math.max(totalCumul - totalYtd, 0);
+                          rows.push(
+                            <tr key={`${parentKey}-waliigala`} className="border-b border-[#e2e8f0] bg-[#eff6ff]">
+                              <td className="px-4 py-2 text-[#1e293b]">
+                                <span className="flex items-center gap-2 pl-4">
+                                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                                  <span className="font-bold">{cat._parentLabel}</span>
+                                  <span className="text-xs font-bold text-[#1e40af] bg-[#dbeafe] px-1.5 py-0.5 rounded">Waliigala</span>
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">{totalAnnual.toLocaleString()}</td>
+                              <td className="px-4 py-2 font-bold text-[#1e40af]">{totalPeriod.toLocaleString()}</td>
+                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">{totalActual.toLocaleString()}</td>
+                              <td className="px-4 py-2"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-[#dbeafe] text-[#1e40af]">{totalPct}%</span></td>
+                              <td className="px-4 py-2">
+                                {totalRemaining > 0
+                                  ? <span className="text-xs font-semibold text-[#dc2626]">+{totalRemaining.toLocaleString()}</span>
+                                  : <span className="text-xs font-semibold text-[#d97706]">✓ Done</span>}
+                              </td>
+                            </tr>
+                          );
+                        }
+>>>>>>> Stashed changes
                       }
                     }
                     return rows;
@@ -6982,6 +7177,88 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       <table>${thead}<tbody>${bodyRows}</tbody></table>
     </div>`;
     }
+
+  // ── Carraa Hojii — grouped rows: each parent field as a section with sub-key rows + Ida'ama subtotal
+  if (sectorId === "carraaHojii") {
+    // Build sub-column defs
+    const subCols = [];
+    if (showPlan) subCols.push("plan");
+    subCols.push("actual");
+    if (showPct) subCols.push("pct");
+    const colspan = subCols.length;
+
+    const subColLabel = (c) => c === "plan" ? "Karoora" : c === "actual" ? "Raawwii" : "%";
+
+    const thead = `<thead>
+      <tr>
+        <th rowspan="2" class="rno">R.No</th>
+        <th rowspan="2" class="date-col">Guyyaa</th>
+        <th rowspan="2" class="gosa">Gosa Hojii</th>
+        <th rowspan="2" class="gosa">Gosaa</th>
+        ${subCols.map((c) => `<th class="sub-col">${subColLabel(c)}</th>`).join("")}
+      </tr>
+    </thead>`;
+
+    let rno = 1;
+    const bodyRows = sectorRows.map((row) => {
+      const dateFmt = row.report_date ?? "";
+      const rowsHtml = CARRAA_HOJII_BASE_FIELDS.map((f) => {
+        const planKeyForField = (subSuffix) => `${f.name}${subSuffix}_target`;
+        const subRows = f.subs.map((s) => {
+          const fieldKey = `${f.name}${s.suffix}`;
+          const actual = Number(row[fieldKey] ?? 0);
+          const annualTarget = plan ? Number(plan[planKeyForField(s.suffix)] ?? 0) : 0;
+          const target = printPartitionTarget(annualTarget, period);
+          const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+          const cells = subCols.map((c) =>
+            c === "plan" ? `<td class="num plan">${target.toLocaleString()}</td>`
+            : c === "actual" ? `<td class="num">${actual.toLocaleString()}</td>`
+            : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
+          ).join("");
+          return `<tr>
+            <td class="rno" rowspan="1"></td>
+            <td class="date-col">${dateFmt}</td>
+            <td class="gosa">${f.label}</td>
+            <td class="gosa" style="color:#1e40af;font-weight:bold;">${s.label}</td>
+            ${cells}
+          </tr>`;
+        });
+
+        // Ida'ama subtotal row when more than 1 sub
+        let idaamaRow = "";
+        if (f.subs.length > 1) {
+          const totalActual = f.subs.reduce((acc, s) => acc + Number(row[`${f.name}${s.suffix}`] ?? 0), 0);
+          const totalPlan = f.subs.reduce((acc, s) => {
+            const ann = plan ? Number(plan[`${f.name}${s.suffix}_target`] ?? 0) : 0;
+            return acc + printPartitionTarget(ann, period);
+          }, 0);
+          const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+          const cells = subCols.map((c) =>
+            c === "plan" ? `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`
+            : c === "actual" ? `<td class="num total-val">${totalActual.toLocaleString()}</td>`
+            : `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`
+          ).join("");
+          idaamaRow = `<tr style="background:#eef2ff;">
+            <td class="rno"></td>
+            <td class="date-col"></td>
+            <td class="gosa">${f.label}</td>
+            <td class="gosa" style="font-weight:bold;color:#1e40af;">Ida'ama</td>
+            ${cells}
+          </tr>`;
+        }
+
+        return subRows.join("") + idaamaRow;
+      }).join("");
+
+      rno++;
+      return rowsHtml;
+    }).join("");
+
+    return `<div class="sector-block">
+      <div class="sector-title">${sectorLabel}</div>
+      <table>${thead}<tbody>${bodyRows}</tbody></table>
+    </div>`;
+  }
 
     // Build sub-column definitions based on toggles
     // Raawwii (actual) is always shown

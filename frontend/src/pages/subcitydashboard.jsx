@@ -4569,6 +4569,7 @@ const SECTOR_CFG = {
             _lastSub: si === f.subs.length - 1,
             _totalSubs: f.subs.length,
           }))
+<<<<<<< Updated upstream
         : [
             {
               key: f.key,
@@ -4582,6 +4583,9 @@ const SECTOR_CFG = {
               _totalSubs: 1,
             },
           ],
+=======
+        : [{ key: f.key, label: f.label, color: f.color, _parent: f.key, _parentLabel: f.label, _subLabel: null, _firstSub: true, _lastSub: true, _totalSubs: 1 }],
+>>>>>>> Stashed changes
     ),
     label: "Carraa Hojii Uumuu",
     color: "#1e40af",
@@ -4861,6 +4865,7 @@ function CarraaSubcityPlanPage() {
 
         {/* One table per field — subs as rows, woredas + Total as columns */}
         {CARRAA_FIELDS.map((f) => (
+<<<<<<< Updated upstream
           <div
             key={f.key}
             className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden"
@@ -4876,6 +4881,13 @@ function CarraaSubcityPlanPage() {
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: f.color ?? "#fff" }}
               />
+=======
+          <div key={f.key} className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+            {/* Field header */}
+            <div className="px-5 py-2.5 border-b border-[#e2e8f0] flex items-center gap-2"
+              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: f.color ?? "#fff" }} />
+>>>>>>> Stashed changes
               <p className="text-sm font-semibold text-white">{f.label}</p>
             </div>
             <div className="overflow-x-auto">
@@ -4888,10 +4900,14 @@ function CarraaSubcityPlanPage() {
                     </th>
                     {/* One column per woreda */}
                     {WOREDAS.map((w) => (
+<<<<<<< Updated upstream
                       <th
                         key={w.id}
                         className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-r border-[#e2e8f0] min-w-[130px]"
                       >
+=======
+                      <th key={w.id} className="text-center px-3 py-2 text-xs font-semibold text-[#334155] uppercase tracking-wide border-r border-[#e2e8f0] min-w-[130px]">
+>>>>>>> Stashed changes
                         {w.name}
                       </th>
                     ))}
@@ -4907,6 +4923,7 @@ function CarraaSubcityPlanPage() {
                       {/* One row per sub-column */}
                       {f.subs.map((s) => {
                         const subKey = `${f.key}${s.suffix}`;
+<<<<<<< Updated upstream
                         const rowSubTotal = WOREDAS.reduce(
                           (acc, w) =>
                             acc + Number(woredaForms[w.id][subKey] || 0),
@@ -4941,10 +4958,25 @@ function CarraaSubcityPlanPage() {
                             key={subKey}
                             className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]"
                           >
+=======
+                        const rowSubTotal = WOREDAS.reduce((acc, w) => acc + Number(woredaForms[w.id][subKey] || 0), 0);
+                        // Gender subs (Dhi+Dub only — exclude Int)
+                        const genderSubs = f.subs.filter((x) => x.suffix === "_dhi" || x.suffix === "_dub");
+                        const isGenderSub = s.suffix === "_dhi" || s.suffix === "_dub";
+                        // Waliigala for Dhi/Dub rows = Dhi+Dub sum only; for Int/others = per-sub total
+                        const waliigala = isGenderSub
+                          ? WOREDAS.reduce((acc, w) =>
+                              acc + genderSubs.reduce((sa, sx) => sa + Number(woredaForms[w.id][`${f.key}${sx.suffix}`] || 0), 0)
+                            , 0)
+                          : rowSubTotal;
+                        return (
+                          <tr key={subKey} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]">
+>>>>>>> Stashed changes
                             <td className="px-4 py-2 font-semibold text-[#1e40af] text-xs uppercase tracking-wide border-r border-[#e2e8f0]">
                               {s.label}
                             </td>
                             {WOREDAS.map((w) => (
+<<<<<<< Updated upstream
                               <td
                                 key={w.id}
                                 className="px-2 py-2 border-r border-[#e2e8f0]"
@@ -4956,6 +4988,12 @@ function CarraaSubcityPlanPage() {
                                   onChange={(e) =>
                                     handleField(w.id, subKey, e.target.value)
                                   }
+=======
+                              <td key={w.id} className="px-2 py-2 border-r border-[#e2e8f0]">
+                                <input type="number" min="0"
+                                  value={woredaForms[w.id][subKey] ?? ""}
+                                  onChange={(e) => handleField(w.id, subKey, e.target.value)}
+>>>>>>> Stashed changes
                                   placeholder="0"
                                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
                                 />
@@ -4975,6 +5013,7 @@ function CarraaSubcityPlanPage() {
                           </td>
                           {WOREDAS.map((w) => {
                             // Only Dhi+Dub, not Int
+<<<<<<< Updated upstream
                             const genderSubs = f.subs.filter(
                               (s) => s.suffix === "_dhi" || s.suffix === "_dub",
                             );
@@ -4991,6 +5030,14 @@ function CarraaSubcityPlanPage() {
                                 key={w.id}
                                 className="px-3 py-2 text-right font-extrabold text-[#1e40af] bg-[#dbeafe] border-r border-[#bfdbfe]"
                               >
+=======
+                            const genderSubs = f.subs.filter((s) => s.suffix === "_dhi" || s.suffix === "_dub");
+                            const woredaGenderTotal = genderSubs.reduce(
+                              (acc, s) => acc + Number(woredaForms[w.id][`${f.key}${s.suffix}`] || 0), 0
+                            );
+                            return (
+                              <td key={w.id} className="px-3 py-2 text-right font-extrabold text-[#1e40af] bg-[#dbeafe] border-r border-[#bfdbfe]">
+>>>>>>> Stashed changes
                                 {woredaGenderTotal.toLocaleString()}
                               </td>
                             );
@@ -4998,6 +5045,7 @@ function CarraaSubcityPlanPage() {
                           <td className="px-3 py-2 text-right font-extrabold text-[#1e40af] bg-[#bfdbfe]">
                             {/* Grand total: Dhi+Dub only, across all woredas */}
                             {f.subs
+<<<<<<< Updated upstream
                               .filter(
                                 (s) =>
                                   s.suffix === "_dhi" || s.suffix === "_dub",
@@ -5018,6 +5066,12 @@ function CarraaSubcityPlanPage() {
                                 0,
                               )
                               .toLocaleString()}
+=======
+                              .filter((s) => s.suffix === "_dhi" || s.suffix === "_dub")
+                              .reduce((acc, s) =>
+                                acc + WOREDAS.reduce((wa, w) => wa + Number(woredaForms[w.id][`${f.key}${s.suffix}`] || 0), 0), 0
+                              ).toLocaleString()}
+>>>>>>> Stashed changes
                           </td>
                         </tr>
                       )}
@@ -5025,6 +5079,7 @@ function CarraaSubcityPlanPage() {
                   ) : (
                     /* No subs — plain single row */
                     <tr className="border-b border-[#f1f5f9] hover:bg-[#f8fafc]">
+<<<<<<< Updated upstream
                       <td className="px-4 py-2 text-xs text-[#94a3b8] border-r border-[#e2e8f0]">
                         —
                       </td>
@@ -5040,17 +5095,29 @@ function CarraaSubcityPlanPage() {
                             onChange={(e) =>
                               handleField(w.id, f.key, e.target.value)
                             }
+=======
+                      <td className="px-4 py-2 text-xs text-[#94a3b8] border-r border-[#e2e8f0]">—</td>
+                      {WOREDAS.map((w) => (
+                        <td key={w.id} className="px-2 py-2 border-r border-[#e2e8f0]">
+                          <input type="number" min="0"
+                            value={woredaForms[w.id][f.key] ?? ""}
+                            onChange={(e) => handleField(w.id, f.key, e.target.value)}
+>>>>>>> Stashed changes
                             placeholder="0"
                             className="w-full border border-[#e2e8f0] rounded-lg px-2 py-1.5 text-sm text-right bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
                           />
                         </td>
                       ))}
                       <td className="px-3 py-2 text-right font-bold text-[#0f172a] bg-[#eff6ff]">
+<<<<<<< Updated upstream
                         {WOREDAS.reduce(
                           (acc, w) =>
                             acc + Number(woredaForms[w.id][f.key] || 0),
                           0,
                         ).toLocaleString()}
+=======
+                        {WOREDAS.reduce((acc, w) => acc + Number(woredaForms[w.id][f.key] || 0), 0).toLocaleString()}
+>>>>>>> Stashed changes
                       </td>
                     </tr>
                   )}
@@ -5644,6 +5711,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                 // Row total — for Dhi/Dub fields: Dhi+Dub combined; for others: single sub value
                 (key) => {
                   const field = cfg.fields.find((f) => f.key === key);
+<<<<<<< Updated upstream
                   if (
                     field &&
                     cfg.fields.some(
@@ -5659,6 +5727,11 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                         acc + (actuals ? Number(actuals[gf.key] || 0) : 0),
                       0,
                     );
+=======
+                  if (field && cfg.fields.some((f) => f._parent === field._parent && f.key.endsWith("_dhi"))) {
+                    const group = cfg.fields.filter((f) => f._parent === field._parent);
+                    return group.reduce((acc, gf) => acc + (actuals ? Number(actuals[gf.key] || 0) : 0), 0);
+>>>>>>> Stashed changes
                   }
                   return actuals ? Number(actuals[key] || 0) : 0;
                 },
@@ -5667,6 +5740,7 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                   const annualTarget = targets ? Number(targets[key] || 0) : 0;
                   const periodTarget = partitionTarget(annualTarget, period);
                   const submitted = actuals ? Number(actuals[key] || 0) : 0;
+<<<<<<< Updated upstream
                   const pct =
                     periodTarget > 0
                       ? Math.round((submitted / periodTarget) * 100)
@@ -5681,27 +5755,27 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                     >
                       {submitted.toLocaleString()}
                     </td>,
+=======
+                  const pct = periodTarget > 0 ? Math.round((submitted / periodTarget) * 100) : 0;
+                  return [
+                    <td key="target" className="px-5 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>,
+                    <td key="submitted" className="px-5 py-3 font-semibold text-[#1e293b]">{submitted.toLocaleString()}</td>,
+>>>>>>> Stashed changes
                     <td key="pct" className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 max-w-[80px] bg-[#f1f5f9] rounded-full h-1.5">
-                          <div
-                            className="h-1.5 rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(pct, 100)}%`,
-                              backgroundColor:
-                                pct >= 100
-                                  ? "#d97706"
-                                  : pct >= 60
-                                    ? "#ca8a04"
-                                    : cfg.color,
-                            }}
-                          />
+                          <div className="h-1.5 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pct >= 100 ? "#d97706" : pct >= 60 ? "#ca8a04" : cfg.color }} />
                         </div>
+<<<<<<< Updated upstream
                         <span
                           className={`text-xs font-bold ${pct >= 100 ? "text-[#d97706]" : pct >= 60 ? "text-[#ca8a04]" : "text-[#dc2626]"}`}
                         >
                           {pct}%
                         </span>
+=======
+                        <span className={`text-xs font-bold ${pct >= 100 ? "text-[#d97706]" : pct >= 60 ? "text-[#ca8a04]" : "text-[#dc2626]"}`}>{pct}%</span>
+>>>>>>> Stashed changes
                       </div>
                     </td>,
                   ];
@@ -6215,12 +6289,16 @@ function SubcityGaliiSubmitForm({ u }) {
 // Works for any sector — only adds subtotal rows when fields have _totalSubs > 1.
 // getVal(key) → number for that key in the current row context.
 // getCols(key) → array of <td> elements for each data column.
+<<<<<<< Updated upstream
 function renderGroupedFieldRows(
   fields,
   getRowTotal,
   getColValue,
   colorOverride,
 ) {
+=======
+function renderGroupedFieldRows(fields, getRowTotal, getColValue, colorOverride) {
+>>>>>>> Stashed changes
   const rows = [];
   let i = 0;
   while (i < fields.length) {
@@ -6231,6 +6309,7 @@ function renderGroupedFieldRows(
       // Simple row
       const total = getRowTotal(f.key);
       rows.push(
+<<<<<<< Updated upstream
         <tr
           key={f.key}
           className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
@@ -6241,14 +6320,25 @@ function renderGroupedFieldRows(
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: colorOverride ?? f.color }}
               />
+=======
+        <tr key={f.key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+          <td className="px-5 py-3 font-medium text-[#1e293b]">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colorOverride ?? f.color }} />
+>>>>>>> Stashed changes
               {f.label}
             </span>
           </td>
           {getColValue(f.key)}
+<<<<<<< Updated upstream
           <td className="px-5 py-3 font-bold text-[#0f172a] bg-[#eff6ff]">
             {total.toLocaleString()}
           </td>
         </tr>,
+=======
+          <td className="px-5 py-3 font-bold text-[#0f172a] bg-[#eff6ff]">{total.toLocaleString()}</td>
+        </tr>
+>>>>>>> Stashed changes
       );
       i++;
     } else {
@@ -6260,9 +6350,13 @@ function renderGroupedFieldRows(
         i++;
       }
       // Determine if this is a Dhi/Dub gender field (has _dhi and _dub subs)
+<<<<<<< Updated upstream
       const hasDhiDub = group.some(
         (sf) => sf._subLabel === "Dhi" || sf.key.endsWith("_dhi"),
       );
+=======
+      const hasDhiDub = group.some((sf) => sf._subLabel === "Dhi" || sf.key.endsWith("_dhi"));
+>>>>>>> Stashed changes
       // Sub rows — no Ida'ama row; Waliigala = Dhi+Dub sum for gender fields, else per-sub total
       group.forEach((sf) => {
         // For Dhi/Dub fields: show Dhi+Dub combined total in Waliigala; for Int: show its own total
@@ -6270,14 +6364,19 @@ function renderGroupedFieldRows(
           ? group.reduce((acc, gf) => acc + getRowTotal(gf.key), 0)
           : getRowTotal(sf.key);
         rows.push(
+<<<<<<< Updated upstream
           <tr
             key={sf.key}
             className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
           >
+=======
+          <tr key={sf.key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+>>>>>>> Stashed changes
             <td className="px-5 py-3 text-[#1e293b]">
               <span className="flex items-center gap-2 pl-3">
                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#94a3b8]" />
                 <span className="font-medium">{sf._parentLabel}</span>
+<<<<<<< Updated upstream
                 <span className="text-xs text-[#1e40af] font-bold bg-[#eff6ff] px-1.5 py-0.5 rounded">
                   {sf._subLabel}
                 </span>
@@ -6288,6 +6387,14 @@ function renderGroupedFieldRows(
               {rowTotal.toLocaleString()}
             </td>
           </tr>,
+=======
+                <span className="text-xs text-[#1e40af] font-bold bg-[#eff6ff] px-1.5 py-0.5 rounded">{sf._subLabel}</span>
+              </span>
+            </td>
+            {getColValue(sf.key)}
+            <td className="px-5 py-3 font-bold text-[#0f172a] bg-[#eff6ff]">{rowTotal.toLocaleString()}</td>
+          </tr>
+>>>>>>> Stashed changes
         );
       });
       // No Ida'ama row — Waliigala already shows the sum
@@ -6404,6 +6511,7 @@ function ComparisonView({ sector, cfg }) {
                 // row total: for Dhi/Dub fields = Dhi+Dub sum; for others = single sub total
                 (key) => {
                   const field = cfg.fields.find((f) => f.key === key);
+<<<<<<< Updated upstream
                   const hasDhiDub =
                     field &&
                     cfg.fields.some(
@@ -6423,6 +6531,14 @@ function ComparisonView({ sector, cfg }) {
                           0,
                         )
                       );
+=======
+                  const hasDhiDub = field && (cfg.fields.some((f) => f._parent === field._parent && f.key.endsWith("_dhi")));
+                  if (hasDhiDub) {
+                    const group = cfg.fields.filter((f) => f._parent === field._parent);
+                    return WOREDAS.reduce((sum, w) => {
+                      const wd = data.woredas?.find((d) => d.woredaId === w.id);
+                      return sum + group.reduce((acc, gf) => acc + Number(wd?.actuals?.[gf.key] ?? 0), 0);
+>>>>>>> Stashed changes
                     }, 0);
                   }
                   return WOREDAS.reduce((sum, w) => {
@@ -6431,6 +6547,7 @@ function ComparisonView({ sector, cfg }) {
                   }, 0);
                 },
                 // per-woreda cells for each sub-row
+<<<<<<< Updated upstream
                 (key) =>
                   WOREDAS.map((w) => {
                     const wd = data.woredas?.find((d) => d.woredaId === w.id);
@@ -6443,6 +6560,12 @@ function ComparisonView({ sector, cfg }) {
                       </td>
                     );
                   }),
+=======
+                (key) => WOREDAS.map((w) => {
+                  const wd = data.woredas?.find((d) => d.woredaId === w.id);
+                  return <td key={w.id} className="px-5 py-3 font-semibold text-[#1e293b]">{Number(wd?.actuals?.[key] ?? 0).toLocaleString()}</td>;
+                }),
+>>>>>>> Stashed changes
               )}
             </tbody>
           </table>
@@ -6889,6 +7012,7 @@ function RankView({ sector, cfg }) {
                               cfg.fields,
                               // getRowTotal — for Dhi/Dub: use combined Dhi+Dub
                               (key) => {
+<<<<<<< Updated upstream
                                 const field = cfg.fields.find(
                                   (f) => f.key === key,
                                 );
@@ -6908,11 +7032,18 @@ function RankView({ sector, cfg }) {
                                       acc + Number(w.actuals?.[gf.key] || 0),
                                     0,
                                   );
+=======
+                                const field = cfg.fields.find((f) => f.key === key);
+                                if (field && cfg.fields.some((f) => f._parent === field._parent && f.key.endsWith("_dhi"))) {
+                                  const group = cfg.fields.filter((f) => f._parent === field._parent);
+                                  return group.reduce((acc, gf) => acc + Number(w.actuals?.[gf.key] || 0), 0);
+>>>>>>> Stashed changes
                                 }
                                 return Number(w.actuals?.[key] || 0);
                               },
                               // getColValue — data cells for each sub-row
                               (key) => {
+<<<<<<< Updated upstream
                                 const annualTarget = Number(
                                   detail?.targets?.[key] || 0,
                                 );
@@ -6951,6 +7082,17 @@ function RankView({ sector, cfg }) {
                                       {pct}%
                                     </span>
                                   </td>,
+=======
+                                const annualTarget = Number(detail?.targets?.[key] || 0);
+                                const periodTgt = partitionTarget(annualTarget, detailPeriod);
+                                const actual = Number(w.actuals?.[key] || 0);
+                                const pct = periodTgt > 0 ? Math.round((actual / periodTgt) * 100) : 0;
+                                return [
+                                  <td key="a" className="px-4 py-3 text-[#64748b]">{annualTarget.toLocaleString()}</td>,
+                                  <td key="p" className="px-4 py-3 text-[#64748b]">{periodTgt.toLocaleString()}</td>,
+                                  <td key="s" className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>,
+                                  <td key="pct" className="px-4 py-3"><span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 100 ? "bg-amber-100 text-amber-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>{pct}%</span></td>,
+>>>>>>> Stashed changes
                                 ];
                               },
                             )}
@@ -7154,6 +7296,7 @@ function GenericSubcityAnalysisPage({ sector }) {
                 let i = 0;
                 while (i < cfg.fields.length) {
                   const f = cfg.fields[i];
+<<<<<<< Updated upstream
                   const hasDhiDub =
                     f._totalSubs > 1 &&
                     cfg.fields.some(
@@ -7200,10 +7343,33 @@ function GenericSubcityAnalysisPage({ sector }) {
                               <p className="text-base font-extrabold text-[#1e293b]">
                                 {getPlanTotal(gf.key).toLocaleString()}
                               </p>
+=======
+                  const hasDhiDub = f._totalSubs > 1 && cfg.fields.some((x) => x._parent === f._parent && x.key.endsWith("_dhi"));
+                  if (hasDhiDub) {
+                    // Collect group
+                    const group = [];
+                    while (i < cfg.fields.length && cfg.fields[i]._parent === f._parent) {
+                      group.push(cfg.fields[i]); i++;
+                    }
+                    // Combined total card
+                    const combinedTotal = group.reduce((acc, gf) => acc + getPlanTotal(gf.key), 0);
+                    items.push(
+                      <div key={f._parent} className="bg-[#eff6ff] rounded-xl border border-[#bfdbfe] px-4 py-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: f.color }} />
+                          <p className="text-xs font-bold text-[#1e40af] uppercase tracking-wide">{f._parentLabel}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          {group.map((gf) => (
+                            <div key={gf.key} className="text-center bg-white rounded-lg px-2 py-2 border border-[#e2e8f0]">
+                              <p className="text-[9px] font-bold text-[#1e40af] uppercase mb-1">{gf._subLabel}</p>
+                              <p className="text-base font-extrabold text-[#1e293b]">{getPlanTotal(gf.key).toLocaleString()}</p>
+>>>>>>> Stashed changes
                             </div>
                           ))}
                         </div>
                         <div className="text-center border-t border-[#bfdbfe] pt-2">
+<<<<<<< Updated upstream
                           <p className="text-[9px] font-bold text-[#1e40af] uppercase mb-0.5">
                             Waliigala
                           </p>
@@ -7212,11 +7378,18 @@ function GenericSubcityAnalysisPage({ sector }) {
                           </p>
                         </div>
                       </div>,
+=======
+                          <p className="text-[9px] font-bold text-[#1e40af] uppercase mb-0.5">Waliigala</p>
+                          <p className="text-xl font-extrabold text-[#1e40af]">{combinedTotal.toLocaleString()}</p>
+                        </div>
+                      </div>
+>>>>>>> Stashed changes
                     );
                   } else {
                     const { key, label, color } = f;
                     const total = getPlanTotal(key);
                     items.push(
+<<<<<<< Updated upstream
                       <div
                         key={key}
                         className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center"
@@ -7234,15 +7407,28 @@ function GenericSubcityAnalysisPage({ sector }) {
                           {total.toLocaleString()}
                         </p>
                       </div>,
+=======
+                      <div key={key} className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                          <p className="text-xs font-bold text-[#64748b] uppercase tracking-wide truncate">{label}</p>
+                        </div>
+                        <p className="text-xl font-extrabold text-[#1e293b]">{total.toLocaleString()}</p>
+                      </div>
+>>>>>>> Stashed changes
                     );
                     i++;
                   }
                 }
+<<<<<<< Updated upstream
                 return (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {items}
                   </div>
                 );
+=======
+                return <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">{items}</div>;
+>>>>>>> Stashed changes
               })()}
             </div>
           </div>
