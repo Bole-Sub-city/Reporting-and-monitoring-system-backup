@@ -6124,6 +6124,10 @@ const HIDDEN_FIELDS = new Set([
   "_sector",
   "created_at",
   "updated_at",
+  // Removed from UI — stored as 0 to satisfy DB NOT NULL but should not be displayed
+  "buusi_daldalaa",
+  "buusi_daldalaa_fi_gumaataa",
+  "gumaata_midhaani",
 ]);
 
 function fieldLabel(key) {
