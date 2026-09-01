@@ -881,13 +881,25 @@ const MANA_QOPHESSAA_SOURCES = [
 ];
 // Idilee sub-sources (Qarshii only, no KG)
 const IDILEE_SOURCES = [
-  { id: "gibira_mindaa",    label: "Gibira mindaa hojjettootaa dhuunfaa",      key: "gibira_mindaa" },
-  { id: "galii_kiraa",      label: "Galii Kiraa",                              key: "galii_kiraa" },
-  { id: "gibira_buaa",      label: "Gibira bu'aa daldalaa namoota dhuunfaarraa", key: "gibira_buaa" },
-  { id: "qonnaan_bultoota", label: "Qonnaan bultoota dhuunfaarraa",            key: "qonnaan_bultoota" },
-  { id: "with_holding",     label: "With holding",                             key: "with_holding" },
-  { id: "vat",              label: "VAT",                                      key: "vat" },
-  { id: "tot",              label: "TOT",                                      key: "tot" },
+  {
+    id: "gibira_mindaa",
+    label: "Gibira mindaa hojjettootaa dhuunfaa",
+    key: "gibira_mindaa",
+  },
+  { id: "galii_kiraa", label: "Galii Kiraa", key: "galii_kiraa" },
+  {
+    id: "gibira_buaa",
+    label: "Gibira bu'aa daldalaa namoota dhuunfaarraa",
+    key: "gibira_buaa",
+  },
+  {
+    id: "qonnaan_bultoota",
+    label: "Qonnaan bultoota dhuunfaarraa",
+    key: "qonnaan_bultoota",
+  },
+  { id: "with_holding", label: "With holding", key: "with_holding" },
+  { id: "vat", label: "VAT", key: "vat" },
+  { id: "tot", label: "TOT", key: "tot" },
 ];
 
 const WORKS = [
@@ -2525,9 +2537,7 @@ function CarraaHojiiAnnualPlanSection({ u }) {
                 <p className="text-white font-bold text-base">
                   Annual Plan {year}
                 </p>
-                <p className="text-white/60 text-xs mt-0.5">
-                  Read only
-                </p>
+                <p className="text-white/60 text-xs mt-0.5">Read only</p>
               </div>
             </div>
           </div>
@@ -2849,8 +2859,20 @@ const REVENUE_CATS = [
 // CARRAA_WOREDA_CATS — flat list with _parent grouping metadata for ring charts + analysis.
 const CARRAA_WOREDA_CATS = CARRAA_HOJII_BASE_FIELDS.flatMap((f) => {
   if (!f.subs.length) {
-    return [{ key: f.name, label: f.label, planKey: `${f.name}_target`, color: f.color,
-      _parent: f.name, _parentLabel: f.label, _subLabel: null, _firstSub: true, _lastSub: true, _totalSubs: 1 }];
+    return [
+      {
+        key: f.name,
+        label: f.label,
+        planKey: `${f.name}_target`,
+        color: f.color,
+        _parent: f.name,
+        _parentLabel: f.label,
+        _subLabel: null,
+        _firstSub: true,
+        _lastSub: true,
+        _totalSubs: 1,
+      },
+    ];
   }
   return f.subs.map((s, si) => ({
     key: `${f.name}${s.suffix}`,
@@ -2989,54 +3011,87 @@ function GaliiAnnualPlanSection({
       {/* Page header */}
       <div
         className="rounded-xl px-6 py-4 flex items-center gap-3"
-        style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}
+        style={{
+          background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+        }}
       >
         <PlanIcon />
         <div>
-          <p className="text-white font-bold text-base">Annual Revenue Plan {year}</p>
-          <p className="text-white/60 text-xs mt-0.5">Read only — assigned by sub-city</p>
+          <p className="text-white font-bold text-base">
+            Annual Revenue Plan {year}
+          </p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Read only — assigned by sub-city
+          </p>
         </div>
       </div>
 
       {/* ── Mana Qophessaa block ── */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-        <div className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}>
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{
+            background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+          }}
+        >
           <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
-          <p className="text-white/60 text-xs mt-0.5">KG and Qarshii targets per source</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            KG and Qarshii targets per source
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f1f5f9] bg-[#f0fdf9]">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f766e] uppercase tracking-wide min-w-[180px]">Source</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">KG (Plan)</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Qarshii (Plan)</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#0f766e] uppercase tracking-wide min-w-[180px]">
+                  Source
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  KG (Plan)
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Qarshii (Plan)
+                </th>
               </tr>
             </thead>
             <tbody>
               {MANA_QOPHESSAA_SOURCES.map((src, i) => {
                 const kg = Number(plan[`mq_${src.key}_kg_target`] ?? 0);
-                const qarshii = Number(plan[`mq_${src.key}_qarshii_target`] ?? 0);
+                const qarshii = Number(
+                  plan[`mq_${src.key}_qarshii_target`] ?? 0,
+                );
                 return (
-                  <tr key={src.key} className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}>
+                  <tr
+                    key={src.key}
+                    className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}
+                  >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
                         {src.label}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">{kg.toLocaleString()}</td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">ETB {qarshii.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                      {kg.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                      ETB {qarshii.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })}
               {/* MQ Total row */}
               {(() => {
                 const mqTotalQarshii = MANA_QOPHESSAA_SOURCES.reduce(
-                  (sum, src) => sum + Number(plan[`mq_${src.key}_qarshii_target`] ?? 0), 0);
+                  (sum, src) =>
+                    sum + Number(plan[`mq_${src.key}_qarshii_target`] ?? 0),
+                  0,
+                );
                 const mqTotalKg = MANA_QOPHESSAA_SOURCES.reduce(
-                  (sum, src) => sum + Number(plan[`mq_${src.key}_kg_target`] ?? 0), 0);
+                  (sum, src) =>
+                    sum + Number(plan[`mq_${src.key}_kg_target`] ?? 0),
+                  0,
+                );
                 return (
                   <tr className="bg-[#f0fdf9] font-bold border-t-2 border-[#0f766e]/20">
                     <td className="px-5 py-3 text-[#0f766e]">
@@ -3045,8 +3100,12 @@ function GaliiAnnualPlanSection({
                         Mana Qophessaa Total
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right text-[#0f766e]">{mqTotalKg.toLocaleString()}</td>
-                    <td className="px-5 py-3 text-right text-[#0f766e]">ETB {mqTotalQarshii.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-right text-[#0f766e]">
+                      {mqTotalKg.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 text-right text-[#0f766e]">
+                      ETB {mqTotalQarshii.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })()}
@@ -3057,38 +3116,58 @@ function GaliiAnnualPlanSection({
 
       {/* ── Idilee block ── */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-        <div className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+        <div
+          className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{
+            background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+          }}
+        >
           <p className="text-sm font-semibold text-white">Idilee</p>
-          <p className="text-white/60 text-xs mt-0.5">Qarshii targets per source (no KG)</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Qarshii targets per source (no KG)
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f1f5f9] bg-[#eff6ff]">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1e40af] uppercase tracking-wide min-w-[220px]">Source</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Qarshii (Plan)</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#1e40af] uppercase tracking-wide min-w-[220px]">
+                  Source
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+                  Qarshii (Plan)
+                </th>
               </tr>
             </thead>
             <tbody>
               {IDILEE_SOURCES.map((src, i) => {
-                const qarshii = Number(plan[`idilee_${src.key}_qarshii_target`] ?? 0);
+                const qarshii = Number(
+                  plan[`idilee_${src.key}_qarshii_target`] ?? 0,
+                );
                 return (
-                  <tr key={src.key} className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}>
+                  <tr
+                    key={src.key}
+                    className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}
+                  >
                     <td className="px-5 py-3 font-medium text-[#1e293b]">
                       <span className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
                         {src.label}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">ETB {qarshii.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                      ETB {qarshii.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })}
               {/* Idilee Total row */}
               {(() => {
                 const totalIdilee = IDILEE_SOURCES.reduce(
-                  (sum, src) => sum + Number(plan[`idilee_${src.key}_qarshii_target`] ?? 0), 0);
+                  (sum, src) =>
+                    sum + Number(plan[`idilee_${src.key}_qarshii_target`] ?? 0),
+                  0,
+                );
                 return (
                   <tr className="bg-[#eff6ff] font-bold border-t-2 border-[#1e40af]/20">
                     <td className="px-5 py-3 text-[#1e40af]">
@@ -3097,7 +3176,9 @@ function GaliiAnnualPlanSection({
                         Idilee Total
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right text-[#1e40af]">ETB {totalIdilee.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-right text-[#1e40af]">
+                      ETB {totalIdilee.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })()}
@@ -3107,22 +3188,36 @@ function GaliiAnnualPlanSection({
       </div>
 
       {/* Info note */}
-      <div className="flex items-center gap-2 rounded-xl px-4 py-3 border"
-        style={{ background: accentLight, borderColor: accentBorder }}>
-        <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }}
-          fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <div
+        className="flex items-center gap-2 rounded-xl px-4 py-3 border"
+        style={{ background: accentLight, borderColor: accentBorder }}
+      >
+        <svg
+          className="w-5 h-5 flex-shrink-0"
+          style={{ color: accentColor }}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 8v4M12 16h.01" />
         </svg>
         <p className="text-sm" style={{ color: accentColor }}>
-          These targets were assigned by your sub-city office. Contact them if the numbers need correction.
+          These targets were assigned by your sub-city office. Contact them if
+          the numbers need correction.
         </p>
       </div>
     </div>
   );
 }
 
-function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBorder }) {
+function GaliiAnalysisSection({
+  fetchPlanFn,
+  accentColor,
+  accentLight,
+  accentBorder,
+}) {
   const [period, setPeriod] = useState("monthly");
   const [plan, setPlan] = useState(null);
   const [actuals, setActuals] = useState(null);
@@ -3138,9 +3233,15 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
   }, [fetchPlanFn]);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { setLoading(false); return; }
+    if (!localStorage.getItem("token")) {
+      setLoading(false);
+      return;
+    }
     const woredaId = getMyWoredaId();
-    if (!woredaId) { setLoading(false); return; }
+    if (!woredaId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     fetchWoRedaAnalysis("galii", woredaId, period)
@@ -3149,7 +3250,9 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
         setActualsYtd(d.actualsYtd ?? d.actuals ?? {});
         setDaysElapsed(d.daysElapsed ?? 1);
       })
-      .catch((err) => setError(friendlyError(err, "Failed to load revenue analysis.")))
+      .catch((err) =>
+        setError(friendlyError(err, "Failed to load revenue analysis.")),
+      )
       .finally(() => setLoading(false));
   }, [period]);
 
@@ -3159,33 +3262,71 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
   function RingCard({ cat, actual, target }) {
     const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
     const arcPct = Math.min(pct, 100);
-    const size = 100, sw = 10, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+    const size = 100,
+      sw = 10,
+      r = (size - sw) / 2,
+      circ = 2 * Math.PI * r;
     const offset = circ - (arcPct / 100) * circ;
     return (
       <div className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
-        <p className="text-xs font-bold text-[#334155] mb-2 text-center leading-snug">{cat.label}</p>
+        <p className="text-xs font-bold text-[#334155] mb-2 text-center leading-snug">
+          {cat.label}
+        </p>
         <div className="relative" style={{ width: size, height: size }}>
-          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw}
-              strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-              style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+          <svg
+            width={size}
+            height={size}
+            style={{ transform: "rotate(-90deg)" }}
+          >
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke="#f3f4f6"
+              strokeWidth={sw}
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={cat.color}
+              strokeWidth={sw}
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              strokeDashoffset={offset}
+              style={{ transition: "stroke-dashoffset 0.7s ease" }}
+            />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-base font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
+            <span
+              className="text-base font-extrabold leading-none"
+              style={{ color: cat.color }}
+            >
+              {pct}%
+            </span>
             <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
           </div>
         </div>
         <div className="mt-2 w-full space-y-0.5">
           <div className="flex justify-between text-[10px] text-[#64748b]">
-            <span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span>
+            <span>Actual</span>
+            <span className="font-semibold text-[#1e293b]">
+              {actual.toLocaleString()}
+            </span>
           </div>
           <div className="flex justify-between text-[10px] text-[#64748b]">
-            <span>Target</span><span className="font-semibold text-[#1e293b]">{target.toLocaleString()}</span>
+            <span>Target</span>
+            <span className="font-semibold text-[#1e293b]">
+              {target.toLocaleString()}
+            </span>
           </div>
           <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
-            <div className="h-1 rounded-full transition-all duration-700"
-              style={{ width: `${arcPct}%`, backgroundColor: cat.color }} />
+            <div
+              className="h-1 rounded-full transition-all duration-700"
+              style={{ width: `${arcPct}%`, backgroundColor: cat.color }}
+            />
           </div>
         </div>
       </div>
@@ -3212,39 +3353,65 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
         <h1 className="text-2xl font-bold text-[#1e293b]">Work Analysis</h1>
         <div className="flex items-center gap-2 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-sm">
           <AnalysisIcon />
-          <select value={period} onChange={(e) => setPeriod(e.target.value)}
-            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer">
-            {PERIODS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="text-sm text-[#334155] font-medium bg-transparent focus:outline-none cursor-pointer"
+          >
+            {PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       {!plan && (
-        <div className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3"
-          style={{ background: accentLight, borderColor: accentBorder }}>
-          <svg className="w-5 h-5 flex-shrink-0" style={{ color: accentColor }}
-            fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div
+          className="mb-5 border rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: accentLight, borderColor: accentBorder }}
+        >
+          <svg
+            className="w-5 h-5 flex-shrink-0"
+            style={{ color: accentColor }}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <p className="text-sm" style={{ color: accentColor }}>
-            No annual plan assigned yet. Targets will appear once sub-city saves the plan.
+            No annual plan assigned yet. Targets will appear once sub-city saves
+            the plan.
           </p>
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
-            style={{ borderTopColor: accentColor }} />
+          <div
+            className="w-8 h-8 border-4 border-[#dbeafe] rounded-full animate-spin"
+            style={{ borderTopColor: accentColor }}
+          />
         </div>
       ) : error ? (
-        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">{error}</div>
+        <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+          {error}
+        </div>
       ) : (
         <div className="space-y-6">
-          <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 border"
-            style={{ background: accentLight, borderColor: accentBorder }}>
-            <span className="text-xs font-bold uppercase tracking-wide" style={{ color: accentColor }}>
+          <div
+            className="rounded-xl px-4 py-2.5 flex items-center gap-2 border"
+            style={{ background: accentLight, borderColor: accentBorder }}
+          >
+            <span
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ color: accentColor }}
+            >
               {periodLabel} View
             </span>
             <span className="text-xs" style={{ color: accentColor }}>
@@ -3254,48 +3421,115 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
 
           {/* ── Mana Qophessaa ring charts ── */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}>
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{
+                background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+              }}
+            >
               <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
-              <p className="text-white/60 text-xs mt-0.5">{periodLabel} Qarshii actuals vs targets</p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {periodLabel} Qarshii actuals vs targets
+              </p>
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {MQ_CATS.map((cat) => {
                 const actual = actuals ? Number(actuals[cat.key] ?? 0) : 0;
                 const annualTarget = plan ? Number(plan[cat.planKey] ?? 0) : 0;
                 const target = partitionTarget(annualTarget, period);
-                return <RingCard key={cat.key} cat={cat} actual={actual} target={target} />;
+                return (
+                  <RingCard
+                    key={cat.key}
+                    cat={cat}
+                    actual={actual}
+                    target={target}
+                  />
+                );
               })}
               {/* MQ Ida'ama card */}
               {(() => {
-                const totalActual = MQ_CATS.reduce((s, c) => s + (actuals ? Number(actuals[c.key] ?? 0) : 0), 0);
-                const totalTarget = MQ_CATS.reduce((s, c) => s + partitionTarget(plan ? Number(plan[c.planKey] ?? 0) : 0, period), 0);
-                const pct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                const totalActual = MQ_CATS.reduce(
+                  (s, c) => s + (actuals ? Number(actuals[c.key] ?? 0) : 0),
+                  0,
+                );
+                const totalTarget = MQ_CATS.reduce(
+                  (s, c) =>
+                    s +
+                    partitionTarget(
+                      plan ? Number(plan[c.planKey] ?? 0) : 0,
+                      period,
+                    ),
+                  0,
+                );
+                const pct =
+                  totalTarget > 0
+                    ? Math.round((totalActual / totalTarget) * 100)
+                    : 0;
                 const arcPct = Math.min(pct, 100);
-                const size = 100, sw = 10, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                const size = 100,
+                  sw = 10,
+                  r = (size - sw) / 2,
+                  circ = 2 * Math.PI * r;
                 const offset = circ - (arcPct / 100) * circ;
                 return (
                   <div className="bg-[#f0fdf9] rounded-xl border border-[#99f6e4] p-3 flex flex-col items-center shadow-sm">
-                    <p className="text-xs font-bold text-[#0f766e] mb-1 text-center">Total</p>
-                    <p className="text-[10px] text-[#94a3b8] mb-2 text-center">Mana Qophessaa</p>
-                    <div className="relative" style={{ width: size, height: size }}>
-                      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#d1fae5" strokeWidth={sw} />
-                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#0f766e" strokeWidth={sw}
-                          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                          style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                    <p className="text-xs font-bold text-[#0f766e] mb-1 text-center">
+                      Total
+                    </p>
+                    <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
+                      Mana Qophessaa
+                    </p>
+                    <div
+                      className="relative"
+                      style={{ width: size, height: size }}
+                    >
+                      <svg
+                        width={size}
+                        height={size}
+                        style={{ transform: "rotate(-90deg)" }}
+                      >
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={r}
+                          fill="none"
+                          stroke="#d1fae5"
+                          strokeWidth={sw}
+                        />
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={r}
+                          fill="none"
+                          stroke="#0f766e"
+                          strokeWidth={sw}
+                          strokeLinecap="round"
+                          strokeDasharray={circ}
+                          strokeDashoffset={offset}
+                          style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                        />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-base font-extrabold leading-none text-[#0f766e]">{pct}%</span>
-                        <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                        <span className="text-base font-extrabold leading-none text-[#0f766e]">
+                          {pct}%
+                        </span>
+                        <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                          done
+                        </span>
                       </div>
                     </div>
                     <div className="mt-2 w-full space-y-0.5">
                       <div className="flex justify-between text-[10px] text-[#64748b]">
-                        <span>Actual</span><span className="font-bold text-[#0f766e]">{totalActual.toLocaleString()}</span>
+                        <span>Actual</span>
+                        <span className="font-bold text-[#0f766e]">
+                          {totalActual.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-[10px] text-[#64748b]">
-                        <span>Target</span><span className="font-bold text-[#0f766e]">{totalTarget.toLocaleString()}</span>
+                        <span>Target</span>
+                        <span className="font-bold text-[#0f766e]">
+                          {totalTarget.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3306,48 +3540,115 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
 
           {/* ── Idilee ring charts ── */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}>
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{
+                background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+              }}
+            >
               <p className="text-sm font-semibold text-white">Idilee</p>
-              <p className="text-white/60 text-xs mt-0.5">{periodLabel} Qarshii actuals vs targets</p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {periodLabel} Qarshii actuals vs targets
+              </p>
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {IDILEE_CATS.map((cat) => {
                 const actual = actuals ? Number(actuals[cat.key] ?? 0) : 0;
                 const annualTarget = plan ? Number(plan[cat.planKey] ?? 0) : 0;
                 const target = partitionTarget(annualTarget, period);
-                return <RingCard key={cat.key} cat={cat} actual={actual} target={target} />;
+                return (
+                  <RingCard
+                    key={cat.key}
+                    cat={cat}
+                    actual={actual}
+                    target={target}
+                  />
+                );
               })}
               {/* Idilee Ida'ama card */}
               {(() => {
-                const totalActual = IDILEE_CATS.reduce((s, c) => s + (actuals ? Number(actuals[c.key] ?? 0) : 0), 0);
-                const totalTarget = IDILEE_CATS.reduce((s, c) => s + partitionTarget(plan ? Number(plan[c.planKey] ?? 0) : 0, period), 0);
-                const pct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                const totalActual = IDILEE_CATS.reduce(
+                  (s, c) => s + (actuals ? Number(actuals[c.key] ?? 0) : 0),
+                  0,
+                );
+                const totalTarget = IDILEE_CATS.reduce(
+                  (s, c) =>
+                    s +
+                    partitionTarget(
+                      plan ? Number(plan[c.planKey] ?? 0) : 0,
+                      period,
+                    ),
+                  0,
+                );
+                const pct =
+                  totalTarget > 0
+                    ? Math.round((totalActual / totalTarget) * 100)
+                    : 0;
                 const arcPct = Math.min(pct, 100);
-                const size = 100, sw = 10, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                const size = 100,
+                  sw = 10,
+                  r = (size - sw) / 2,
+                  circ = 2 * Math.PI * r;
                 const offset = circ - (arcPct / 100) * circ;
                 return (
                   <div className="bg-[#eff6ff] rounded-xl border border-[#bfdbfe] p-3 flex flex-col items-center shadow-sm">
-                    <p className="text-xs font-bold text-[#1e40af] mb-1 text-center">Total</p>
-                    <p className="text-[10px] text-[#94a3b8] mb-2 text-center">Idilee</p>
-                    <div className="relative" style={{ width: size, height: size }}>
-                      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#dbeafe" strokeWidth={sw} />
-                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1e40af" strokeWidth={sw}
-                          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                          style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                    <p className="text-xs font-bold text-[#1e40af] mb-1 text-center">
+                      Total
+                    </p>
+                    <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
+                      Idilee
+                    </p>
+                    <div
+                      className="relative"
+                      style={{ width: size, height: size }}
+                    >
+                      <svg
+                        width={size}
+                        height={size}
+                        style={{ transform: "rotate(-90deg)" }}
+                      >
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={r}
+                          fill="none"
+                          stroke="#dbeafe"
+                          strokeWidth={sw}
+                        />
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={r}
+                          fill="none"
+                          stroke="#1e40af"
+                          strokeWidth={sw}
+                          strokeLinecap="round"
+                          strokeDasharray={circ}
+                          strokeDashoffset={offset}
+                          style={{ transition: "stroke-dashoffset 0.7s ease" }}
+                        />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-base font-extrabold leading-none text-[#1e40af]">{pct}%</span>
-                        <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                        <span className="text-base font-extrabold leading-none text-[#1e40af]">
+                          {pct}%
+                        </span>
+                        <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                          done
+                        </span>
                       </div>
                     </div>
                     <div className="mt-2 w-full space-y-0.5">
                       <div className="flex justify-between text-[10px] text-[#64748b]">
-                        <span>Actual</span><span className="font-bold text-[#1e40af]">{totalActual.toLocaleString()}</span>
+                        <span>Actual</span>
+                        <span className="font-bold text-[#1e40af]">
+                          {totalActual.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-[10px] text-[#64748b]">
-                        <span>Target</span><span className="font-bold text-[#1e40af]">{totalTarget.toLocaleString()}</span>
+                        <span>Target</span>
+                        <span className="font-bold text-[#1e40af]">
+                          {totalTarget.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3358,62 +3659,150 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
 
           {/* Summary table — both groups */}
           <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-            <div className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{ background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)` }}>
-              <p className="text-sm font-semibold text-white">{periodLabel} Summary Table</p>
+            <div
+              className="px-5 py-3 border-b border-[#e2e8f0]"
+              style={{
+                background: `linear-gradient(90deg,${accentColor} 0%,${accentColor}cc 100%)`,
+              }}
+            >
+              <p className="text-sm font-semibold text-white">
+                {periodLabel} Summary Table
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    {["Category","Source","Annual Target","Period Target","Actual","Achievement","Remaining"].map((h) => (
-                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    {[
+                      "Category",
+                      "Source",
+                      "Annual Target",
+                      "Period Target",
+                      "Actual",
+                      "Achievement",
+                      "Remaining",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide whitespace-nowrap"
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { groupLabel: "Mana Qophessaa", cats: MQ_CATS, groupColor: "#0f766e" },
-                    { groupLabel: "Idilee", cats: IDILEE_CATS, groupColor: "#1e40af" },
+                    {
+                      groupLabel: "Mana Qophessaa",
+                      cats: MQ_CATS,
+                      groupColor: "#0f766e",
+                    },
+                    {
+                      groupLabel: "Idilee",
+                      cats: IDILEE_CATS,
+                      groupColor: "#1e40af",
+                    },
                   ].map(({ groupLabel, cats: grpCats, groupColor }) =>
                     grpCats.map((cat, fi) => {
-                      const annualTarget = plan ? Number(plan[cat.planKey] ?? 0) : 0;
-                      const periodTarget = partitionTarget(annualTarget, period);
-                      const actual = actuals ? Number(actuals[cat.key] ?? 0) : 0;
-                      const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
-                      const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
-                      const actualYtd = actualsYtd ? Number(actualsYtd[cat.key] ?? 0) : 0;
+                      const annualTarget = plan
+                        ? Number(plan[cat.planKey] ?? 0)
+                        : 0;
+                      const periodTarget = partitionTarget(
+                        annualTarget,
+                        period,
+                      );
+                      const actual = actuals
+                        ? Number(actuals[cat.key] ?? 0)
+                        : 0;
+                      const pct =
+                        periodTarget > 0
+                          ? Math.min(
+                              Math.round((actual / periodTarget) * 100),
+                              999,
+                            )
+                          : 0;
+                      const cumulTarget = Math.round(
+                        (daysElapsed / 365) * annualTarget,
+                      );
+                      const actualYtd = actualsYtd
+                        ? Number(actualsYtd[cat.key] ?? 0)
+                        : 0;
                       const remaining = Math.max(cumulTarget - actualYtd, 0);
                       return (
-                        <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                        <tr
+                          key={cat.key}
+                          className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                        >
                           {fi === 0 ? (
-                            <td className="px-4 py-3 font-bold text-[#1e293b] align-top" rowSpan={grpCats.length}>
+                            <td
+                              className="px-4 py-3 font-bold text-[#1e293b] align-top"
+                              rowSpan={grpCats.length}
+                            >
                               <span className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: groupColor }} />
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: groupColor }}
+                                />
                                 {groupLabel}
                               </span>
                             </td>
                           ) : null}
-                          <td className="px-4 py-3 text-[#475569]">{cat.label}</td>
-                          <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
-                          <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-[#475569]">
+                            {cat.label}
+                          </td>
+                          <td className="px-4 py-3 font-bold text-[#1e293b]">
+                            {annualTarget.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-[#64748b]">
+                            {periodTarget.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-[#1e293b]">
+                            {actual.toLocaleString()}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
-                              style={{ backgroundColor: `${groupColor}22`, color: groupColor }}>{pct}%</span>
+                            <span
+                              className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                              style={{
+                                backgroundColor: `${groupColor}22`,
+                                color: groupColor,
+                              }}
+                            >
+                              {pct}%
+                            </span>
                           </td>
                           <td className="px-4 py-3">
                             {remaining > 0 ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2.5}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 4v16m8-8H4"
+                                  />
                                 </svg>
                                 {remaining.toLocaleString()}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={2.5}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
                                 </svg>
                                 Done
                               </span>
@@ -3421,7 +3810,7 @@ function GaliiAnalysisSection({ fetchPlanFn, accentColor, accentLight, accentBor
                           </td>
                         </tr>
                       );
-                    })
+                    }),
                   )}
                 </tbody>
               </table>
@@ -3572,7 +3961,13 @@ function GenericAnalysisSection({
                     group.push(cats[i]);
                     i++;
                   }
-                  groups.push({ isGroup: true, parent, label: cat._parentLabel, color: cat.color, items: group });
+                  groups.push({
+                    isGroup: true,
+                    parent,
+                    label: cat._parentLabel,
+                    color: cat.color,
+                    items: group,
+                  });
                 } else {
                   groups.push({ isGroup: false, ...cat });
                   i++;
@@ -3583,95 +3978,307 @@ function GenericAnalysisSection({
                   const cat = g;
                   const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
                   const periodTarget = partitionTarget(annualTarget, period);
-                  const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
-                  const pct = periodTarget > 0 ? Math.round((actual / periodTarget) * 100) : 0;
+                  const actual = activeSummary
+                    ? (activeSummary[cat.key] ?? 0)
+                    : 0;
+                  const pct =
+                    periodTarget > 0
+                      ? Math.round((actual / periodTarget) * 100)
+                      : 0;
                   const arcPct = Math.min(pct, 100);
-                  const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                  const size = 110,
+                    sw = 11,
+                    r = (size - sw) / 2,
+                    circ = 2 * Math.PI * r;
                   const offset = circ - (arcPct / 100) * circ;
                   return (
-                    <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
-                      <p className="text-xs font-bold text-[#334155] mb-2 text-center">{cat.label}</p>
-                      <div className="relative" style={{ width: size, height: size }}>
-                        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-                          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                    <div
+                      key={cat.key}
+                      className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm"
+                    >
+                      <p className="text-xs font-bold text-[#334155] mb-2 text-center">
+                        {cat.label}
+                      </p>
+                      <div
+                        className="relative"
+                        style={{ width: size, height: size }}
+                      >
+                        <svg
+                          width={size}
+                          height={size}
+                          style={{ transform: "rotate(-90deg)" }}
+                        >
+                          <circle
+                            cx={size / 2}
+                            cy={size / 2}
+                            r={r}
+                            fill="none"
+                            stroke="#f3f4f6"
+                            strokeWidth={sw}
+                          />
+                          <circle
+                            cx={size / 2}
+                            cy={size / 2}
+                            r={r}
+                            fill="none"
+                            stroke={cat.color}
+                            strokeWidth={sw}
+                            strokeLinecap="round"
+                            strokeDasharray={circ}
+                            strokeDashoffset={offset}
+                            style={{
+                              transition: "stroke-dashoffset 0.7s ease",
+                            }}
+                          />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-lg font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
-                          <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                          <span
+                            className="text-lg font-extrabold leading-none"
+                            style={{ color: cat.color }}
+                          >
+                            {pct}%
+                          </span>
+                          <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                            done
+                          </span>
                         </div>
                       </div>
                       <div className="mt-2 w-full space-y-0.5">
-                        <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span></div>
-                        <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span></div>
-                        <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1"><div className="h-1 rounded-full transition-all duration-700" style={{ width: `${arcPct}%`, backgroundColor: cat.color }} /></div>
+                        <div className="flex justify-between text-[10px] text-[#64748b]">
+                          <span>Actual</span>
+                          <span className="font-semibold text-[#1e293b]">
+                            {actual.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-[#64748b]">
+                          <span>Target</span>
+                          <span className="font-semibold text-[#1e293b]">
+                            {periodTarget.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
+                          <div
+                            className="h-1 rounded-full transition-all duration-700"
+                            style={{
+                              width: `${arcPct}%`,
+                              backgroundColor: cat.color,
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
                 }
                 // Grouped parent: render a parent header + sub ring charts
                 return (
-                  <div key={g.parent} className="col-span-2 sm:col-span-3 lg:col-span-4">
+                  <div
+                    key={g.parent}
+                    className="col-span-2 sm:col-span-3 lg:col-span-4"
+                  >
                     <div className="flex items-center gap-2 mb-3 mt-1">
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
-                      <p className="text-sm font-bold text-[#1e293b]">{g.label}</p>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: g.color }}
+                      />
+                      <p className="text-sm font-bold text-[#1e293b]">
+                        {g.label}
+                      </p>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                       {g.items.map((cat) => {
-                        const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-                        const periodTarget = partitionTarget(annualTarget, period);
-                        const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
-                        const pct = periodTarget > 0 ? Math.round((actual / periodTarget) * 100) : 0;
+                        const annualTarget = plan
+                          ? (plan[cat.planKey] ?? 0)
+                          : 0;
+                        const periodTarget = partitionTarget(
+                          annualTarget,
+                          period,
+                        );
+                        const actual = activeSummary
+                          ? (activeSummary[cat.key] ?? 0)
+                          : 0;
+                        const pct =
+                          periodTarget > 0
+                            ? Math.round((actual / periodTarget) * 100)
+                            : 0;
                         const arcPct = Math.min(pct, 100);
-                        const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                        const size = 110,
+                          sw = 11,
+                          r = (size - sw) / 2,
+                          circ = 2 * Math.PI * r;
                         const offset = circ - (arcPct / 100) * circ;
                         return (
-                          <div key={cat.key} className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm">
-                            <p className="text-xs font-bold mb-1 text-center" style={{ color: cat.color }}>{cat._subLabel}</p>
-                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">{g.label}</p>
-                            <div className="relative" style={{ width: size, height: size }}>
-                              <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={sw} />
-                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={cat.color} strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                          <div
+                            key={cat.key}
+                            className="bg-white rounded-xl border border-[#e2e8f0] p-3 flex flex-col items-center shadow-sm"
+                          >
+                            <p
+                              className="text-xs font-bold mb-1 text-center"
+                              style={{ color: cat.color }}
+                            >
+                              {cat._subLabel}
+                            </p>
+                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
+                              {g.label}
+                            </p>
+                            <div
+                              className="relative"
+                              style={{ width: size, height: size }}
+                            >
+                              <svg
+                                width={size}
+                                height={size}
+                                style={{ transform: "rotate(-90deg)" }}
+                              >
+                                <circle
+                                  cx={size / 2}
+                                  cy={size / 2}
+                                  r={r}
+                                  fill="none"
+                                  stroke="#f3f4f6"
+                                  strokeWidth={sw}
+                                />
+                                <circle
+                                  cx={size / 2}
+                                  cy={size / 2}
+                                  r={r}
+                                  fill="none"
+                                  stroke={cat.color}
+                                  strokeWidth={sw}
+                                  strokeLinecap="round"
+                                  strokeDasharray={circ}
+                                  strokeDashoffset={offset}
+                                  style={{
+                                    transition: "stroke-dashoffset 0.7s ease",
+                                  }}
+                                />
                               </svg>
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-lg font-extrabold leading-none" style={{ color: cat.color }}>{pct}%</span>
-                                <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                                <span
+                                  className="text-lg font-extrabold leading-none"
+                                  style={{ color: cat.color }}
+                                >
+                                  {pct}%
+                                </span>
+                                <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                                  done
+                                </span>
                               </div>
                             </div>
                             <div className="mt-2 w-full space-y-0.5">
-                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-semibold text-[#1e293b]">{actual.toLocaleString()}</span></div>
-                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-semibold text-[#1e293b]">{periodTarget.toLocaleString()}</span></div>
-                              <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1"><div className="h-1 rounded-full" style={{ width: `${arcPct}%`, backgroundColor: cat.color }} /></div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]">
+                                <span>Actual</span>
+                                <span className="font-semibold text-[#1e293b]">
+                                  {actual.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]">
+                                <span>Target</span>
+                                <span className="font-semibold text-[#1e293b]">
+                                  {periodTarget.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="w-full bg-[#f1f5f9] rounded-full h-1 mt-1">
+                                <div
+                                  className="h-1 rounded-full"
+                                  style={{
+                                    width: `${arcPct}%`,
+                                    backgroundColor: cat.color,
+                                  }}
+                                />
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                       {/* Ida'ama summary card */}
                       {(() => {
-                        const totalActual = g.items.reduce((acc, cat) => acc + (activeSummary ? (activeSummary[cat.key] ?? 0) : 0), 0);
-                        const totalTarget = g.items.reduce((acc, cat) => acc + partitionTarget(plan ? (plan[cat.planKey] ?? 0) : 0, period), 0);
-                        const totalPct = totalTarget > 0 ? Math.round((totalActual / totalTarget) * 100) : 0;
+                        const totalActual = g.items.reduce(
+                          (acc, cat) =>
+                            acc +
+                            (activeSummary ? (activeSummary[cat.key] ?? 0) : 0),
+                          0,
+                        );
+                        const totalTarget = g.items.reduce(
+                          (acc, cat) =>
+                            acc +
+                            partitionTarget(
+                              plan ? (plan[cat.planKey] ?? 0) : 0,
+                              period,
+                            ),
+                          0,
+                        );
+                        const totalPct =
+                          totalTarget > 0
+                            ? Math.round((totalActual / totalTarget) * 100)
+                            : 0;
                         const arcPct = Math.min(totalPct, 100);
-                        const size = 110, sw = 11, r = (size - sw) / 2, circ = 2 * Math.PI * r;
+                        const size = 110,
+                          sw = 11,
+                          r = (size - sw) / 2,
+                          circ = 2 * Math.PI * r;
                         const offset = circ - (arcPct / 100) * circ;
                         return (
                           <div className="bg-[#eff6ff] rounded-xl border border-[#bfdbfe] p-3 flex flex-col items-center shadow-sm">
-                            <p className="text-xs font-bold text-[#1e40af] mb-1 text-center">Ida'ama</p>
-                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">{g.label}</p>
-                            <div className="relative" style={{ width: size, height: size }}>
-                              <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#dbeafe" strokeWidth={sw} />
-                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1e40af" strokeWidth={sw} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: "stroke-dashoffset 0.7s ease" }} />
+                            <p className="text-xs font-bold text-[#1e40af] mb-1 text-center">
+                              Ida'ama
+                            </p>
+                            <p className="text-[10px] text-[#94a3b8] mb-2 text-center">
+                              {g.label}
+                            </p>
+                            <div
+                              className="relative"
+                              style={{ width: size, height: size }}
+                            >
+                              <svg
+                                width={size}
+                                height={size}
+                                style={{ transform: "rotate(-90deg)" }}
+                              >
+                                <circle
+                                  cx={size / 2}
+                                  cy={size / 2}
+                                  r={r}
+                                  fill="none"
+                                  stroke="#dbeafe"
+                                  strokeWidth={sw}
+                                />
+                                <circle
+                                  cx={size / 2}
+                                  cy={size / 2}
+                                  r={r}
+                                  fill="none"
+                                  stroke="#1e40af"
+                                  strokeWidth={sw}
+                                  strokeLinecap="round"
+                                  strokeDasharray={circ}
+                                  strokeDashoffset={offset}
+                                  style={{
+                                    transition: "stroke-dashoffset 0.7s ease",
+                                  }}
+                                />
                               </svg>
                               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-lg font-extrabold leading-none text-[#1e40af]">{totalPct}%</span>
-                                <span className="text-[10px] text-[#94a3b8] mt-0.5">done</span>
+                                <span className="text-lg font-extrabold leading-none text-[#1e40af]">
+                                  {totalPct}%
+                                </span>
+                                <span className="text-[10px] text-[#94a3b8] mt-0.5">
+                                  done
+                                </span>
                               </div>
                             </div>
                             <div className="mt-2 w-full space-y-0.5">
-                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Actual</span><span className="font-bold text-[#1e40af]">{totalActual.toLocaleString()}</span></div>
-                              <div className="flex justify-between text-[10px] text-[#64748b]"><span>Target</span><span className="font-bold text-[#1e40af]">{totalTarget.toLocaleString()}</span></div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]">
+                                <span>Actual</span>
+                                <span className="font-bold text-[#1e40af]">
+                                  {totalActual.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-[10px] text-[#64748b]">
+                                <span>Target</span>
+                                <span className="font-bold text-[#1e40af]">
+                                  {totalTarget.toLocaleString()}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         );
@@ -3724,98 +4331,309 @@ function GenericAnalysisSection({
                       const isGrouped = (cat._totalSubs ?? 1) > 1;
                       if (!isGrouped) {
                         // Plain single row
-                        const annualTarget = plan ? (plan[cat.planKey] ?? 0) : 0;
-                        const periodTarget = partitionTarget(annualTarget, period);
-                        const actual = activeSummary ? (activeSummary[cat.key] ?? 0) : 0;
-                        const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
-                        const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
-                        const actualYtd = actualsYtd ? (actualsYtd[cat.key] ?? 0) : 0;
+                        const annualTarget = plan
+                          ? (plan[cat.planKey] ?? 0)
+                          : 0;
+                        const periodTarget = partitionTarget(
+                          annualTarget,
+                          period,
+                        );
+                        const actual = activeSummary
+                          ? (activeSummary[cat.key] ?? 0)
+                          : 0;
+                        const pct =
+                          periodTarget > 0
+                            ? Math.min(
+                                Math.round((actual / periodTarget) * 100),
+                                999,
+                              )
+                            : 0;
+                        const cumulTarget = Math.round(
+                          (daysElapsed / 365) * annualTarget,
+                        );
+                        const actualYtd = actualsYtd
+                          ? (actualsYtd[cat.key] ?? 0)
+                          : 0;
                         const remaining = Math.max(cumulTarget - actualYtd, 0);
                         rows.push(
-                          <tr key={cat.key} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                          <tr
+                            key={cat.key}
+                            className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                          >
                             <td className="px-4 py-3 font-medium text-[#1e293b]">
                               <span className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />{cat.label}
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: cat.color }}
+                                />
+                                {cat.label}
                               </span>
                             </td>
-                            <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
-                            <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
-                            <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
-                            <td className="px-4 py-3"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${cat.color}22`, color: cat.color }}>{pct}%</span></td>
-                            <td className="px-4 py-3">
-                              {remaining > 0
-                                ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>{remaining.toLocaleString()}</span>
-                                : <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Done</span>}
+                            <td className="px-4 py-3 font-bold text-[#1e293b]">
+                              {annualTarget.toLocaleString()}
                             </td>
-                          </tr>
+                            <td className="px-4 py-3 text-[#64748b]">
+                              {periodTarget.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-[#1e293b]">
+                              {actual.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                                style={{
+                                  backgroundColor: `${cat.color}22`,
+                                  color: cat.color,
+                                }}
+                              >
+                                {pct}%
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {remaining > 0 ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M12 4v16m8-8H4"
+                                    />
+                                  </svg>
+                                  {remaining.toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                  Done
+                                </span>
+                              )}
+                            </td>
+                          </tr>,
                         );
                         i++;
                       } else {
                         // Grouped: collect all subs for this parent
                         const parentKey = cat._parent;
                         const group = [];
-                        while (i < cats.length && cats[i]._parent === parentKey) { group.push(cats[i]); i++; }
-                        const hasDhiDub = group.some((c) => c.key.endsWith("_dhi"));
+                        while (
+                          i < cats.length &&
+                          cats[i]._parent === parentKey
+                        ) {
+                          group.push(cats[i]);
+                          i++;
+                        }
+                        const hasDhiDub = group.some((c) =>
+                          c.key.endsWith("_dhi"),
+                        );
 
                         // Sub rows
                         group.forEach((gc) => {
-                          const annualTarget = plan ? (plan[gc.planKey] ?? 0) : 0;
-                          const periodTarget = partitionTarget(annualTarget, period);
-                          const actual = activeSummary ? (activeSummary[gc.key] ?? 0) : 0;
-                          const pct = periodTarget > 0 ? Math.min(Math.round((actual / periodTarget) * 100), 999) : 0;
-                          const cumulTarget = Math.round((daysElapsed / 365) * annualTarget);
-                          const actualYtd = actualsYtd ? (actualsYtd[gc.key] ?? 0) : 0;
-                          const remaining = Math.max(cumulTarget - actualYtd, 0);
+                          const annualTarget = plan
+                            ? (plan[gc.planKey] ?? 0)
+                            : 0;
+                          const periodTarget = partitionTarget(
+                            annualTarget,
+                            period,
+                          );
+                          const actual = activeSummary
+                            ? (activeSummary[gc.key] ?? 0)
+                            : 0;
+                          const pct =
+                            periodTarget > 0
+                              ? Math.min(
+                                  Math.round((actual / periodTarget) * 100),
+                                  999,
+                                )
+                              : 0;
+                          const cumulTarget = Math.round(
+                            (daysElapsed / 365) * annualTarget,
+                          );
+                          const actualYtd = actualsYtd
+                            ? (actualsYtd[gc.key] ?? 0)
+                            : 0;
+                          const remaining = Math.max(
+                            cumulTarget - actualYtd,
+                            0,
+                          );
                           rows.push(
-                            <tr key={gc.key} className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors">
+                            <tr
+                              key={gc.key}
+                              className="border-b border-gray-50 hover:bg-[#f8fafc] transition-colors"
+                            >
                               <td className="px-4 py-3 text-[#1e293b]">
                                 <span className="flex items-center gap-2 pl-4">
                                   <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8] flex-shrink-0" />
-                                  <span className="font-medium">{gc._parentLabel}</span>
-                                  <span className="text-xs font-bold text-[#1e40af] bg-[#eff6ff] px-1.5 py-0.5 rounded">{gc._subLabel}</span>
+                                  <span className="font-medium">
+                                    {gc._parentLabel}
+                                  </span>
+                                  <span className="text-xs font-bold text-[#1e40af] bg-[#eff6ff] px-1.5 py-0.5 rounded">
+                                    {gc._subLabel}
+                                  </span>
                                 </span>
                               </td>
-                              <td className="px-4 py-3 font-bold text-[#1e293b]">{annualTarget.toLocaleString()}</td>
-                              <td className="px-4 py-3 text-[#64748b]">{periodTarget.toLocaleString()}</td>
-                              <td className="px-4 py-3 font-semibold text-[#1e293b]">{actual.toLocaleString()}</td>
-                              <td className="px-4 py-3"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: `${gc.color}22`, color: gc.color }}>{pct}%</span></td>
-                              <td className="px-4 py-3">
-                                {remaining > 0
-                                  ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>{remaining.toLocaleString()}</span>
-                                  : <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]"><svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Done</span>}
+                              <td className="px-4 py-3 font-bold text-[#1e293b]">
+                                {annualTarget.toLocaleString()}
                               </td>
-                            </tr>
+                              <td className="px-4 py-3 text-[#64748b]">
+                                {periodTarget.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-3 font-semibold text-[#1e293b]">
+                                {actual.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className="inline-block px-2 py-0.5 rounded-full text-xs font-bold"
+                                  style={{
+                                    backgroundColor: `${gc.color}22`,
+                                    color: gc.color,
+                                  }}
+                                >
+                                  {pct}%
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                {remaining > 0 ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#dc2626]">
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth={2.5}
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4v16m8-8H4"
+                                      />
+                                    </svg>
+                                    {remaining.toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#d97706]">
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth={2.5}
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Done
+                                  </span>
+                                )}
+                              </td>
+                            </tr>,
                           );
                         });
 
                         // Waliigala combined row for Dhi+Dub gender fields only
                         if (hasDhiDub) {
-                          const totalAnnual = group.reduce((acc, gc) => acc + (plan ? (plan[gc.planKey] ?? 0) : 0), 0);
-                          const totalPeriod = partitionTarget(totalAnnual, period);
-                          const totalActual = group.reduce((acc, gc) => acc + (activeSummary ? (activeSummary[gc.key] ?? 0) : 0), 0);
-                          const totalPct = totalPeriod > 0 ? Math.min(Math.round((totalActual / totalPeriod) * 100), 999) : 0;
-                          const totalCumul = Math.round((daysElapsed / 365) * totalAnnual);
-                          const totalYtd = group.reduce((acc, gc) => acc + (actualsYtd ? (actualsYtd[gc.key] ?? 0) : 0), 0);
-                          const totalRemaining = Math.max(totalCumul - totalYtd, 0);
+                          const totalAnnual = group.reduce(
+                            (acc, gc) =>
+                              acc + (plan ? (plan[gc.planKey] ?? 0) : 0),
+                            0,
+                          );
+                          const totalPeriod = partitionTarget(
+                            totalAnnual,
+                            period,
+                          );
+                          const totalActual = group.reduce(
+                            (acc, gc) =>
+                              acc +
+                              (activeSummary
+                                ? (activeSummary[gc.key] ?? 0)
+                                : 0),
+                            0,
+                          );
+                          const totalPct =
+                            totalPeriod > 0
+                              ? Math.min(
+                                  Math.round((totalActual / totalPeriod) * 100),
+                                  999,
+                                )
+                              : 0;
+                          const totalCumul = Math.round(
+                            (daysElapsed / 365) * totalAnnual,
+                          );
+                          const totalYtd = group.reduce(
+                            (acc, gc) =>
+                              acc +
+                              (actualsYtd ? (actualsYtd[gc.key] ?? 0) : 0),
+                            0,
+                          );
+                          const totalRemaining = Math.max(
+                            totalCumul - totalYtd,
+                            0,
+                          );
                           rows.push(
-                            <tr key={`${parentKey}-waliigala`} className="border-b border-[#e2e8f0] bg-[#eff6ff]">
+                            <tr
+                              key={`${parentKey}-waliigala`}
+                              className="border-b border-[#e2e8f0] bg-[#eff6ff]"
+                            >
                               <td className="px-4 py-2 text-[#1e293b]">
                                 <span className="flex items-center gap-2 pl-4">
-                                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                                  <span className="font-bold">{cat._parentLabel}</span>
-                                  <span className="text-xs font-bold text-[#1e40af] bg-[#dbeafe] px-1.5 py-0.5 rounded">Waliigala</span>
+                                  <span
+                                    className="w-2 h-2 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: cat.color }}
+                                  />
+                                  <span className="font-bold">
+                                    {cat._parentLabel}
+                                  </span>
+                                  <span className="text-xs font-bold text-[#1e40af] bg-[#dbeafe] px-1.5 py-0.5 rounded">
+                                    Waliigala
+                                  </span>
                                 </span>
                               </td>
-                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">{totalAnnual.toLocaleString()}</td>
-                              <td className="px-4 py-2 font-bold text-[#1e40af]">{totalPeriod.toLocaleString()}</td>
-                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">{totalActual.toLocaleString()}</td>
-                              <td className="px-4 py-2"><span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-[#dbeafe] text-[#1e40af]">{totalPct}%</span></td>
-                              <td className="px-4 py-2">
-                                {totalRemaining > 0
-                                  ? <span className="text-xs font-semibold text-[#dc2626]">+{totalRemaining.toLocaleString()}</span>
-                                  : <span className="text-xs font-semibold text-[#d97706]">✓ Done</span>}
+                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">
+                                {totalAnnual.toLocaleString()}
                               </td>
-                            </tr>
+                              <td className="px-4 py-2 font-bold text-[#1e40af]">
+                                {totalPeriod.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-2 font-extrabold text-[#1e40af]">
+                                {totalActual.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-2">
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-[#dbeafe] text-[#1e40af]">
+                                  {totalPct}%
+                                </span>
+                              </td>
+                              <td className="px-4 py-2">
+                                {totalRemaining > 0 ? (
+                                  <span className="text-xs font-semibold text-[#dc2626]">
+                                    +{totalRemaining.toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-semibold text-[#d97706]">
+                                    ✓ Done
+                                  </span>
+                                )}
+                              </td>
+                            </tr>,
                           );
                         }
                       }
@@ -4054,6 +4872,10 @@ function BuusaaSubmitForm({ u, locked, onSubmitSuccess }) {
         horannaa_misensaa: Number(form.hojiiwwanMootummaa || 0),
         buusi_jirataa: Number(form.buuusiJirataa || 0),
         gumaata_jiraataa: Number(form.gumaataJiraataa || 0),
+        // Fields removed from UI but still NOT NULL in DB — send 0
+        buusi_daldalaa: 0,
+        buusi_daldalaa_fi_gumaataa: 0,
+        gumaata_midhaani: 0,
         inisheetivii_buusaa_gonofaa: Number(
           form.inisheetiviiBuusaaGonofaa || 0,
         ),
@@ -4714,7 +5536,8 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
         .then((data) => {
           const rows = Array.isArray(data) ? data : [];
           const todayRows = rows.filter(
-            (r) => (r.report_date ?? r.guyyaa) === today && r._sector === "galii",
+            (r) =>
+              (r.report_date ?? r.guyyaa) === today && r._sector === "galii",
           );
           if (!todayRows.length) return;
           // Rebuild mqForm and idileeForm from existing entries
@@ -4801,7 +5624,11 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
           });
         }
       });
-      await submitRevenueReport({ entries, total: grandTotal, report_date: date });
+      await submitRevenueReport({
+        entries,
+        total: grandTotal,
+        report_date: date,
+      });
       setMqForm(emptyMq());
       setIdileeForm(emptyIdilee());
       setShowModal(true);
@@ -4865,7 +5692,9 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
           <p className="text-white/60 text-xs mt-0.5">
@@ -4874,9 +5703,15 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
         </div>
 
         <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">Source</p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">KG</p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">Qarshii (ETB)</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+            Source
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            KG
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            Qarshii (ETB)
+          </p>
         </div>
 
         <div className="divide-y divide-[#f1f5f9] px-5">
@@ -4894,14 +5729,21 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
                   {src.label}
                 </span>
                 <input
-                  type="number" min="0" value={kg}
+                  type="number"
+                  min="0"
+                  value={kg}
                   onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
                   placeholder="0"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
                 <input
-                  type="number" min="0" step="0.01" value={qarshii}
-                  onChange={(e) => handleMqField(src.key, "qarshii", e.target.value)}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={qarshii}
+                  onChange={(e) =>
+                    handleMqField(src.key, "qarshii", e.target.value)
+                  }
                   placeholder="0.00"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
@@ -4910,9 +5752,13 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
           })}
           {mqTotal > 0 && (
             <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
-              <span className="text-sm font-bold text-[#0f766e]">Mana Qophessaa Total</span>
+              <span className="text-sm font-bold text-[#0f766e]">
+                Mana Qophessaa Total
+              </span>
               <span />
-              <span className="text-right text-sm font-bold text-[#0f766e]">ETB {mqTotal.toLocaleString()}</span>
+              <span className="text-right text-sm font-bold text-[#0f766e]">
+                ETB {mqTotal.toLocaleString()}
+              </span>
             </div>
           )}
         </div>
@@ -4922,15 +5768,23 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{ background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
+          }}
         >
           <p className="text-sm font-semibold text-white">Idilee</p>
-          <p className="text-white/60 text-xs mt-0.5">Enter Qarshii for each source</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Enter Qarshii for each source
+          </p>
         </div>
 
         <div className="grid grid-cols-[1fr_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">Source</p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">Qarshii (ETB)</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
+            Source
+          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
+            Qarshii (ETB)
+          </p>
         </div>
 
         <div className="divide-y divide-[#f1f5f9] px-5">
@@ -4947,7 +5801,10 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
                   {src.label}
                 </span>
                 <input
-                  type="number" min="0" step="0.01" value={qarshii}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={qarshii}
                   onChange={(e) => handleIdileeField(src.key, e.target.value)}
                   placeholder="0.00"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30 focus:border-[#1e40af]"
@@ -4957,8 +5814,12 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
           })}
           {idileeTotal > 0 && (
             <div className="grid grid-cols-[1fr_150px] gap-3 py-3 items-center bg-[#eff6ff]">
-              <span className="text-sm font-bold text-[#1e40af]">Idilee Total</span>
-              <span className="text-right text-sm font-bold text-[#1e40af]">ETB {idileeTotal.toLocaleString()}</span>
+              <span className="text-sm font-bold text-[#1e40af]">
+                Idilee Total
+              </span>
+              <span className="text-right text-sm font-bold text-[#1e40af]">
+                ETB {idileeTotal.toLocaleString()}
+              </span>
             </div>
           )}
         </div>
@@ -4966,7 +5827,13 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
 
       {submitError && (
         <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -4981,7 +5848,9 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
           <p className="text-[#1e293b] text-sm font-semibold">
             Total: ETB {grandTotal.toLocaleString()}
           </p>
-          <p className="text-[#64748b] text-xs mt-0.5">Fill in all values before submitting.</p>
+          <p className="text-[#64748b] text-xs mt-0.5">
+            Fill in all values before submitting.
+          </p>
         </div>
         <button
           onClick={handleSubmit}
@@ -5377,8 +6246,14 @@ const SECTOR_PRINT_FIELDS = {
   // Galii Sassaabu — rows are built dynamically in buildSectorTable.
   // MQ entries come from MANA_QOPHESSAA_SOURCES; idilee from IDILEE_SOURCES.
   galii: [
-    ...MANA_QOPHESSAA_SOURCES.map((s) => ({ key: `mq_${s.key}_qarshii`, label: s.label })),
-    ...IDILEE_SOURCES.map((s) => ({ key: `idilee_${s.key}_qarshii`, label: s.label })),
+    ...MANA_QOPHESSAA_SOURCES.map((s) => ({
+      key: `mq_${s.key}_qarshii`,
+      label: s.label,
+    })),
+    ...IDILEE_SOURCES.map((s) => ({
+      key: `idilee_${s.key}_qarshii`,
+      label: s.label,
+    })),
   ],
 };
 
@@ -5505,7 +6380,9 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
 
       // Helper: build one table block for a group of rows
       const buildGroupTable = (groupLabel, groupColor, rowDefs, showKg) => {
-        const cols = showKg ? subCols : subCols.filter((c) => c !== "plan_kg" && c !== "actual_kg");
+        const cols = showKg
+          ? subCols
+          : subCols.filter((c) => c !== "plan_kg" && c !== "actual_kg");
 
         const thead = `<thead>
           <tr>
@@ -5519,38 +6396,60 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         let groupActualQarshii = 0;
         let groupPlanQarshii = 0;
 
-        const bodyRows = rowDefs.map((row, idx) => {
-          const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
-          const planKg = plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
-          const planQarshii = plan && row.planQarshiiKey ? Number(plan[row.planQarshiiKey] ?? 0) : 0;
-          const pct = planQarshii > 0 ? Math.round((agg.qarshii / planQarshii) * 100) : 0;
-          groupActualQarshii += agg.qarshii;
-          groupPlanQarshii += planQarshii;
+        const bodyRows = rowDefs
+          .map((row, idx) => {
+            const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
+            const planKg =
+              plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
+            const planQarshii =
+              plan && row.planQarshiiKey
+                ? Number(plan[row.planQarshiiKey] ?? 0)
+                : 0;
+            const pct =
+              planQarshii > 0
+                ? Math.round((agg.qarshii / planQarshii) * 100)
+                : 0;
+            groupActualQarshii += agg.qarshii;
+            groupPlanQarshii += planQarshii;
 
-          const cells = cols.map((c) => {
-            if (c === "plan_kg") return `<td class="num plan">${planKg.toLocaleString()}</td>`;
-            if (c === "plan_qarshii") return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
-            if (c === "actual_kg") return `<td class="num">${agg.kg.toLocaleString()}</td>`;
-            if (c === "actual_qarshii") return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
-            return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
-          }).join("");
+            const cells = cols
+              .map((c) => {
+                if (c === "plan_kg")
+                  return `<td class="num plan">${planKg.toLocaleString()}</td>`;
+                if (c === "plan_qarshii")
+                  return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
+                if (c === "actual_kg")
+                  return `<td class="num">${agg.kg.toLocaleString()}</td>`;
+                if (c === "actual_qarshii")
+                  return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
+                return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
+              })
+              .join("");
 
-          return `<tr>
+            return `<tr>
             <td class="rno">${idx + 1}</td>
             <td class="gosa">${row.label}</td>
             ${cells}
             <td class="num total-val">${agg.qarshii.toLocaleString()}</td>
           </tr>`;
-        }).join("");
+          })
+          .join("");
 
-        const totalPct = groupPlanQarshii > 0 ? Math.round((groupActualQarshii / groupPlanQarshii) * 100) : 0;
-        const totalCells = cols.map((c) => {
-          if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
-          if (c === "plan_qarshii") return `<td class="num plan total-val">${groupPlanQarshii.toLocaleString()}</td>`;
-          if (c === "actual_kg") return `<td class="num total-val">—</td>`;
-          if (c === "actual_qarshii") return `<td class="num total-val">${groupActualQarshii.toLocaleString()}</td>`;
-          return `<td class="num pct total-val">${groupPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
-        }).join("");
+        const totalPct =
+          groupPlanQarshii > 0
+            ? Math.round((groupActualQarshii / groupPlanQarshii) * 100)
+            : 0;
+        const totalCells = cols
+          .map((c) => {
+            if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
+            if (c === "plan_qarshii")
+              return `<td class="num plan total-val">${groupPlanQarshii.toLocaleString()}</td>`;
+            if (c === "actual_kg") return `<td class="num total-val">—</td>`;
+            if (c === "actual_qarshii")
+              return `<td class="num total-val">${groupActualQarshii.toLocaleString()}</td>`;
+            return `<td class="num pct total-val">${groupPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
+          })
+          .join("");
 
         const totalRow = `<tr style="background:#eef2ff;font-weight:bold;">
           <td class="rno">—</td>
@@ -5587,12 +6486,23 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         planQarshiiKey: `idilee_${s.key}_qarshii_target`,
       }));
 
-      const mqGroup = buildGroupTable("Mana Qophessaa", "#0f766e", MQ_ROW_DEFS, true);
-      const idileeGroup = buildGroupTable("Idilee", "#1e40af", IDILEE_ROW_DEFS, false);
+      const mqGroup = buildGroupTable(
+        "Mana Qophessaa",
+        "#0f766e",
+        MQ_ROW_DEFS,
+        true,
+      );
+      const idileeGroup = buildGroupTable(
+        "Idilee",
+        "#1e40af",
+        IDILEE_ROW_DEFS,
+        false,
+      );
 
       const grandActual = mqGroup.actualTotal + idileeGroup.actualTotal;
       const grandPlan = mqGroup.planTotal + idileeGroup.planTotal;
-      const grandPct = grandPlan > 0 ? Math.round((grandActual / grandPlan) * 100) : 0;
+      const grandPct =
+        grandPlan > 0 ? Math.round((grandActual / grandPlan) * 100) : 0;
 
       const grandTotalRow = `<div style="background:#1e293b;color:#fff;padding:8px 14px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-top:4px;">
         <span>Grand Total (Mana Qophessaa + Idilee)</span>
@@ -5607,18 +6517,19 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </div>`;
     }
 
-  // ── Carraa Hojii — grouped rows: each parent field as a section with sub-key rows + Ida'ama subtotal
-  if (sectorId === "carraaHojii") {
-    // Build sub-column defs
-    const subCols = [];
-    if (showPlan) subCols.push("plan");
-    subCols.push("actual");
-    if (showPct) subCols.push("pct");
-    const colspan = subCols.length;
+    // ── Carraa Hojii — grouped rows: each parent field as a section with sub-key rows + Ida'ama subtotal
+    if (sectorId === "carraaHojii") {
+      // Build sub-column defs
+      const subCols = [];
+      if (showPlan) subCols.push("plan");
+      subCols.push("actual");
+      if (showPct) subCols.push("pct");
+      const colspan = subCols.length;
 
-    const subColLabel = (c) => c === "plan" ? "Karoora" : c === "actual" ? "Raawwii" : "%";
+      const subColLabel = (c) =>
+        c === "plan" ? "Karoora" : c === "actual" ? "Raawwii" : "%";
 
-    const thead = `<thead>
+      const thead = `<thead>
       <tr>
         <th rowspan="2" class="rno">R.No</th>
         <th rowspan="2" class="date-col">Guyyaa</th>
@@ -5628,66 +6539,85 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </tr>
     </thead>`;
 
-    let rno = 1;
-    const bodyRows = sectorRows.map((row) => {
-      const dateFmt = row.report_date ?? "";
-      const rowsHtml = CARRAA_HOJII_BASE_FIELDS.map((f) => {
-        const planKeyForField = (subSuffix) => `${f.name}${subSuffix}_target`;
-        const subRows = f.subs.map((s) => {
-          const fieldKey = `${f.name}${s.suffix}`;
-          const actual = Number(row[fieldKey] ?? 0);
-          const annualTarget = plan ? Number(plan[planKeyForField(s.suffix)] ?? 0) : 0;
-          const target = printPartitionTarget(annualTarget, period);
-          const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
-          const cells = subCols.map((c) =>
-            c === "plan" ? `<td class="num plan">${target.toLocaleString()}</td>`
-            : c === "actual" ? `<td class="num">${actual.toLocaleString()}</td>`
-            : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
-          ).join("");
-          return `<tr>
+      let rno = 1;
+      const bodyRows = sectorRows
+        .map((row) => {
+          const dateFmt = row.report_date ?? "";
+          const rowsHtml = CARRAA_HOJII_BASE_FIELDS.map((f) => {
+            const planKeyForField = (subSuffix) =>
+              `${f.name}${subSuffix}_target`;
+            const subRows = f.subs.map((s) => {
+              const fieldKey = `${f.name}${s.suffix}`;
+              const actual = Number(row[fieldKey] ?? 0);
+              const annualTarget = plan
+                ? Number(plan[planKeyForField(s.suffix)] ?? 0)
+                : 0;
+              const target = printPartitionTarget(annualTarget, period);
+              const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+              const cells = subCols
+                .map((c) =>
+                  c === "plan"
+                    ? `<td class="num plan">${target.toLocaleString()}</td>`
+                    : c === "actual"
+                      ? `<td class="num">${actual.toLocaleString()}</td>`
+                      : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`,
+                )
+                .join("");
+              return `<tr>
             <td class="rno" rowspan="1"></td>
             <td class="date-col">${dateFmt}</td>
             <td class="gosa">${f.label}</td>
             <td class="gosa" style="color:#1e40af;font-weight:bold;">${s.label}</td>
             ${cells}
           </tr>`;
-        });
+            });
 
-        // Ida'ama subtotal row when more than 1 sub
-        let idaamaRow = "";
-        if (f.subs.length > 1) {
-          const totalActual = f.subs.reduce((acc, s) => acc + Number(row[`${f.name}${s.suffix}`] ?? 0), 0);
-          const totalPlan = f.subs.reduce((acc, s) => {
-            const ann = plan ? Number(plan[`${f.name}${s.suffix}_target`] ?? 0) : 0;
-            return acc + printPartitionTarget(ann, period);
-          }, 0);
-          const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
-          const cells = subCols.map((c) =>
-            c === "plan" ? `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`
-            : c === "actual" ? `<td class="num total-val">${totalActual.toLocaleString()}</td>`
-            : `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`
-          ).join("");
-          idaamaRow = `<tr style="background:#eef2ff;">
+            // Ida'ama subtotal row when more than 1 sub
+            let idaamaRow = "";
+            if (f.subs.length > 1) {
+              const totalActual = f.subs.reduce(
+                (acc, s) => acc + Number(row[`${f.name}${s.suffix}`] ?? 0),
+                0,
+              );
+              const totalPlan = f.subs.reduce((acc, s) => {
+                const ann = plan
+                  ? Number(plan[`${f.name}${s.suffix}_target`] ?? 0)
+                  : 0;
+                return acc + printPartitionTarget(ann, period);
+              }, 0);
+              const totalPct =
+                totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+              const cells = subCols
+                .map((c) =>
+                  c === "plan"
+                    ? `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`
+                    : c === "actual"
+                      ? `<td class="num total-val">${totalActual.toLocaleString()}</td>`
+                      : `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`,
+                )
+                .join("");
+              idaamaRow = `<tr style="background:#eef2ff;">
             <td class="rno"></td>
             <td class="date-col"></td>
             <td class="gosa">${f.label}</td>
             <td class="gosa" style="font-weight:bold;color:#1e40af;">Ida'ama</td>
             ${cells}
           </tr>`;
-        }
+            }
 
-        return subRows.join("") + idaamaRow;
-      }).join("");
+            return subRows.join("") + idaamaRow;
+          }).join("");
 
-      rno++;
-      return rowsHtml;
-    }).join("");
+          rno++;
+          return rowsHtml;
+        })
+        .join("");
 
-    return `<div class="sector-block">
+      return `<div class="sector-block">
       <div class="sector-title">${sectorLabel}</div>
       <table>${thead}<tbody>${bodyRows}</tbody></table>
     </div>`;
-  }
+    }
 
     // Build sub-column definitions based on toggles
     // Raawwii (actual) is always shown
@@ -7702,7 +8632,14 @@ export default function WoRedaDashboard() {
         );
 
         const newLocked = {};
-        const allSectors = ["buusaa", "carraa", "qonna", "galii", "daldala", "atk"];
+        const allSectors = [
+          "buusaa",
+          "carraa",
+          "qonna",
+          "galii",
+          "daldala",
+          "atk",
+        ];
         allSectors.forEach((s) => {
           // Lock if there's a report today and NO approved edit request
           newLocked[s] =
