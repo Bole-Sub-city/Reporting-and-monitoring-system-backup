@@ -7098,10 +7098,6 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         <table>${thead}<tbody>${bodyRows}</tbody></table>
       </div>`;
     }
-    if (showPlan) subCols.push("plan");
-    subCols.push("actual");
-    if (showPct) subCols.push("pct");
-    const colspan = subCols.length;
 
     const fieldHeaders = fields
       .map(
