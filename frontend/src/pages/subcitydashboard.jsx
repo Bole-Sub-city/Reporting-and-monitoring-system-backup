@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
@@ -233,11 +233,19 @@ const EMPTY_FIXED = Object.fromEntries(
 const SECTORS = [
   { id: "buusaa", label: "Buusaa Gonofaa" },
   { id: "qonna", label: "Qonna" },
-  { id: "galii", label: "Galii Sassaabu" },
   { id: "carraa", label: "Carraa Hojii Uumuu" },
   { id: "daldala", label: "Daldala" },
   { id: "atk", label: "ATK" },
   { id: "galii_sassabu", label: "Galii Sassabu" },
+];
+
+// Sectors shown in Work Analysis — galii_sassabu excluded (no analysis for it)
+const ANALYSIS_SECTORS = [
+  { id: "buusaa", label: "Buusaa Gonofaa" },
+  { id: "qonna", label: "Qonna" },
+  { id: "carraa", label: "Carraa Hojii Uumuu" },
+  { id: "daldala", label: "Daldala" },
+  { id: "atk", label: "ATK" },
 ];
 
 // ─── Default woreda percentage split (editable in plan forms) ────────────────
@@ -808,7 +816,9 @@ function PlanUnlockBanner({ sector, onStatusChange }) {
 
       if (mine) {
         const resolved =
-          mine.expires_at && new Date(mine.expires_at) < now && mine.status === "pending"
+          mine.expires_at &&
+          new Date(mine.expires_at) < now &&
+          mine.status === "pending"
             ? "expired"
             : mine.status;
         setStatus(resolved);
@@ -2720,8 +2730,7 @@ function FlatSectorPlanOverview({
     });
   }, [sector]);
 
-  const hasPlanData =
-    plan && fields.some((f) => Number(plan[f.key] || 0) > 0);
+  const hasPlanData = plan && fields.some((f) => Number(plan[f.key] || 0) > 0);
 
   if (!hasPlanData) {
     return (
@@ -3205,10 +3214,18 @@ function OverviewPage({
         gradient="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
         accentColor="#7e22ce"
       />
-      {/* ── Galii Sassaabu plan — per-source KG + Qarshii with woreda columns ── */}
-      <div className="mt-6">
-        <GaliiOverviewPlanTable dbGaliiPlan={dbGaliiPlan} />
-      </div>
+      {/* ── Galii Sassaabu plan — only shown when a plan has been saved ── */}
+      {dbGaliiPlan &&
+        Object.keys(dbGaliiPlan).some(
+          (k) =>
+            ((k.startsWith("mq_") && k.endsWith("_kg")) ||
+              (k.startsWith("mq_") && k.endsWith("_qarshii"))) &&
+            Number(dbGaliiPlan[k] || 0) > 0,
+        ) && (
+          <div className="mt-6">
+            <GaliiOverviewPlanTable dbGaliiPlan={dbGaliiPlan} />
+          </div>
+        )}
 
       {/* ── Galii Sassabu plan (new sector) — Mana Qophessaa Total + Idilee Total ── */}
       <div className="mt-6">
@@ -3715,16 +3732,21 @@ function BuusaaPlanPage({ onSave }) {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
-              <p className="text-[#b45309] text-xs font-medium">
-                Plan is locked. Request edit access above to re-save.
-              </p>
-            )}
-            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
-              <p className="text-[#94a3b8] text-xs">
-                Saving overwrites the current plan.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  Saving overwrites the current plan.
+                </p>
+              )}
           </div>
           <button
             type="submit"
@@ -4386,16 +4408,21 @@ function QonnaPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
-              <p className="text-[#b45309] text-xs font-medium">
-                Plan is locked. Request edit access above to re-save.
-              </p>
-            )}
-            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
-              <p className="text-[#94a3b8] text-xs">
-                Saving distributes targets to all 4 woreda plan tables.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  Saving distributes targets to all 4 woreda plan tables.
+                </p>
+              )}
           </div>
           <button
             type="submit"
@@ -4921,7 +4948,8 @@ function GenericSubcityPlanPage({ sector }) {
   const hasValues =
     WOREDAS.some((w) =>
       cfg.fields.some((f) => Number(woredaForms[w.id][f.key] || 0) > 0),
-    ) && (!planExists || unlockStatus === "approved");
+    ) &&
+    (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5050,16 +5078,21 @@ function GenericSubcityPlanPage({ sector }) {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
-              <p className="text-[#b45309] text-xs font-medium">
-                Plan is locked. Request edit access above to re-save.
-              </p>
-            )}
-            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
-              <p className="text-[#94a3b8] text-xs">
-                This will replace the previous {cfg.label} plan.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  This will replace the previous {cfg.label} plan.
+                </p>
+              )}
           </div>
           <button
             type="submit"
@@ -5129,7 +5162,8 @@ function CarraaSubcityPlanPage() {
   const hasValues =
     WOREDAS.some((w) =>
       Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
-    ) && (!planExists || unlockStatus === "approved");
+    ) &&
+    (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5269,7 +5303,11 @@ function CarraaSubcityPlanPage() {
                                 <input
                                   type="number"
                                   min="0"
-                                  step={subKey === "industrii_godoo_lafa" ? "any" : "1"}
+                                  step={
+                                    subKey === "industrii_godoo_lafa"
+                                      ? "any"
+                                      : "1"
+                                  }
                                   value={woredaForms[w.id][subKey] ?? ""}
                                   onChange={(e) =>
                                     handleField(w.id, subKey, e.target.value)
@@ -5386,16 +5424,21 @@ function CarraaSubcityPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
-              <p className="text-[#b45309] text-xs font-medium">
-                Plan is locked. Request edit access above to re-save.
-              </p>
-            )}
-            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
-              <p className="text-[#94a3b8] text-xs">
-                This will replace the previous Carraa Hojii plan.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  This will replace the previous Carraa Hojii plan.
+                </p>
+              )}
           </div>
           <button
             type="submit"
@@ -5710,7 +5753,8 @@ function GaliiSubcityPlanPage() {
   const hasValues =
     WOREDAS_LIST.some((w) =>
       Object.values(woredaForms[w.id]).some((v) => Number(v || 0) > 0),
-    ) && (!planExists || unlockStatus === "approved");
+    ) &&
+    (!planExists || unlockStatus === "approved");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -6032,16 +6076,21 @@ function GaliiSubcityPlanPage() {
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-            {!saved && !saveError && planExists && unlockStatus !== "approved" && (
-              <p className="text-[#b45309] text-xs font-medium">
-                Plan is locked. Request edit access above to re-save.
-              </p>
-            )}
-            {!saved && !saveError && (!planExists || unlockStatus === "approved") && (
-              <p className="text-[#94a3b8] text-xs">
-                This will replace the previous Galii plan.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  This will replace the previous Galii plan.
+                </p>
+              )}
           </div>
           <button
             type="submit"
@@ -6270,8 +6319,18 @@ function WoredaAnalysisTable({ sector, woredaId, cfg }) {
                     <td key="pct" className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 max-w-[80px] bg-[#f1f5f9] rounded-full h-1.5">
-                          <div className="h-1.5 rounded-full transition-all duration-500"
-                            style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pct >= 100 ? "#d97706" : pct >= 60 ? "#ca8a04" : cfg.color }} />
+                          <div
+                            className="h-1.5 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(pct, 100)}%`,
+                              backgroundColor:
+                                pct >= 100
+                                  ? "#d97706"
+                                  : pct >= 60
+                                    ? "#ca8a04"
+                                    : cfg.color,
+                            }}
+                          />
                         </div>
                         <span
                           className={`text-xs font-bold ${pct >= 100 ? "text-[#d97706]" : pct >= 60 ? "text-[#ca8a04]" : "text-[#dc2626]"}`}
@@ -10223,7 +10282,6 @@ export default function SubCityDashboard({ user: propUser }) {
                   <p className="text-xs text-[#94a3b8] mt-1">
                     {s.id === "buusaa" ||
                     s.id === "qonna" ||
-                    s.id === "galii" ||
                     s.id === "carraa" ||
                     s.id === "daldala" ||
                     s.id === "atk" ||
@@ -10239,7 +10297,6 @@ export default function SubCityDashboard({ user: propUser }) {
       if (activePlanSector === "buusaa")
         return <BuusaaPlanPage onSave={handleSavePlan} />;
       if (activePlanSector === "qonna") return <QonnaPlanPage />;
-      if (activePlanSector === "galii") return <GaliiSubcityPlanPage />;
       if (activePlanSector === "carraa") return <CarraaSubcityPlanPage />;
       if (activePlanSector === "daldala" || activePlanSector === "atk")
         return <GenericSubcityPlanPage sector={activePlanSector} />;
@@ -10262,7 +10319,7 @@ export default function SubCityDashboard({ user: propUser }) {
               Select a sector to view analysis.
             </p>
             <div className="grid grid-cols-2 gap-4">
-              {SECTORS.map((s) => (
+              {ANALYSIS_SECTORS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => {

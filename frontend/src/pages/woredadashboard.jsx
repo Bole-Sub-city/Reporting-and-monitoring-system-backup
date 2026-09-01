@@ -4494,7 +4494,6 @@ function GenericAnalysisSection({
                             </tr>,
                           );
                         });
-
                         // No Waliigala combined row — user requested removal
                       }
                     }
@@ -4571,21 +4570,33 @@ function SuccessModal({ onClose }) {
 }
 
 // ─── LockBanner ──────────────────────────────────────────────────────────────
+// FIXED: added console logs and robust error handling
 function LockBanner({ sector, reportType, onUnlocked }) {
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
   const [reqError, setReqError] = useState("");
 
+  console.log("LockBanner rendered for sector:", sector);
+
   const handleRequest = async () => {
+    console.log("🔑 Request button clicked for sector:", sector);
     setRequesting(true);
     setReqError("");
     try {
       const today = new Date().toISOString().split("T")[0];
+      console.log("Calling requestEditAccess with:", sector, today, reportType);
       await requestEditAccess(sector, today, reportType || "");
+      console.log("✅ requestEditAccess succeeded");
       setRequested(true);
     } catch (err) {
+      console.error("❌ requestEditAccess error:", err);
       const msg = err.response?.data?.message || "Failed to send request.";
-      if (msg.toLowerCase().includes("approved")) {
+      // If the error says "already approved", treat it as success and unlock
+      if (
+        msg.toLowerCase().includes("approved") ||
+        msg.toLowerCase().includes("already")
+      ) {
+        console.log("Request already approved – unlocking");
         onUnlocked && onUnlocked();
       } else {
         setReqError(msg);
@@ -4660,8 +4671,93 @@ function LockBanner({ sector, reportType, onUnlocked }) {
   );
 }
 
-// ─── Galii Sassabu Submit Form ────────────────────────────────────────────────
-function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
+// ─── DetailSubForm ────────────────────────────────────────────────────────────
+// Reusable sub-source breakdown form for GaliiSassabuSubmitForm.
+// Must be a top-level component (not nested) to avoid React remount issues.
+function DetailSubForm({ details, setDetails, sources, accentColor }) {
+  const updateDetail = (idx, field, val) =>
+    setDetails((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
+    );
+  const addRow = () =>
+    setDetails((prev) => [...prev, { source: "", amount: "" }]);
+  const removeRow = (idx) =>
+    setDetails((prev) => prev.filter((_, i) => i !== idx));
+
+  return (
+    <div className="mt-3 space-y-2">
+      {details.map((d, idx) => (
+        <div key={idx} className="flex gap-2 items-start">
+          <div className="flex-1">
+            <select
+              value={d.source}
+              onChange={(e) => updateDetail(idx, "source", e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+              style={{ "--tw-ring-color": accentColor + "33" }}
+            >
+              <option value="">Select source…</option>
+              {sources.map((s) => (
+                <option key={s.key} value={s.label}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="w-36">
+            <input
+              type="number"
+              min="0"
+              placeholder="Amount"
+              value={d.amount}
+              onChange={(e) => updateDetail(idx, "amount", e.target.value)}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+            />
+          </div>
+          {details.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeRow(idx)}
+              className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
+              title="Remove row"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addRow}
+        className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
+        style={{
+          color: accentColor,
+          borderColor: accentColor + "55",
+          background: accentColor + "11",
+        }}
+      >
+        + Add Row
+      </button>
+    </div>
+  );
+}
+
+// ─── GaliiSassabuSubmitForm ──────────────────────────────────────────────────
+// This is the summary form. It contains two totals (Mana Qophessaa and Idilee)
+// and optional breakdowns. The "Details" button toggles the detailed breakdown
+// form (RevenueSubmitForm) which is used to enter per-source values.
+function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
   const ACCENT = "#c2410c";
   const HEADER_GRADIENT = "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)";
 
@@ -4680,7 +4776,52 @@ function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
   const [showModal, setShowModal] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Pre-fill when admin unlocks
+  // Auto-sum MQ detail rows → mqTotal whenever detail rows change
+  useEffect(() => {
+    if (!showMqDetail) return;
+    const sum = mqDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
+    if (sum > 0) setMqTotal(String(sum));
+  }, [mqDetails, showMqDetail]);
+
+  // Auto-sum Idilee detail rows → idTotal whenever detail rows change
+  useEffect(() => {
+    if (!showIdDetail) return;
+    const sum = idDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
+    if (sum > 0) setIdTotal(String(sum));
+  }, [idDetails, showIdDetail]);
+
+  // ── NEW: handle submission from the detailed form ──────────────────────────
+  const handleDetailsSubmit = (
+    computedMqTotal,
+    computedIdTotal,
+    mqDetailRows,
+    idDetailRows,
+  ) => {
+    if (computedMqTotal > 0) setMqTotal(String(computedMqTotal));
+    if (computedIdTotal > 0) setIdTotal(String(computedIdTotal));
+    // Update details arrays with the rows from the detailed form
+    if (mqDetailRows && mqDetailRows.length) {
+      setMqDetails(
+        mqDetailRows.map((d) => ({
+          source: d.source || "",
+          amount: String(d.amount || 0),
+        })),
+      );
+      setShowMqDetail(true);
+    }
+    if (idDetailRows && idDetailRows.length) {
+      setIdDetails(
+        idDetailRows.map((d) => ({
+          source: d.source || "",
+          amount: String(d.amount || 0),
+        })),
+      );
+      setShowIdDetail(true);
+    }
+    setShowDetails(false); // close the detailed page
+  };
+
+  // ── Pre-fill from existing report when lock is cleared ─────────────────────
   const prevLocked = useRef(locked);
   useEffect(() => {
     const wasLocked = prevLocked.current;
@@ -4737,16 +4878,6 @@ function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
     setYaada("");
     setError("");
   };
-
-  // Detail helpers
-  const updateDetail = (setter, idx, field, val) =>
-    setter((prev) =>
-      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
-    );
-  const addDetailRow = (setter) =>
-    setter((prev) => [...prev, { source: "", amount: "" }]);
-  const removeDetailRow = (setter, idx) =>
-    setter((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -4821,84 +4952,11 @@ function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
     }
   };
 
-  // Detail sub-form for one category
-  function DetailSubForm({ details, setDetails, sources, accentColor }) {
-    return (
-      <div className="mt-3 space-y-2">
-        {details.map((d, idx) => (
-          <div key={idx} className="flex gap-2 items-start">
-            <div className="flex-1">
-              <select
-                value={d.source}
-                onChange={(e) =>
-                  updateDetail(setDetails, idx, "source", e.target.value)
-                }
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
-                style={{ "--tw-ring-color": accentColor + "33" }}
-              >
-                <option value="">Select source…</option>
-                {sources.map((s) => (
-                  <option key={s.key} value={s.label}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-36">
-              <input
-                type="number"
-                min="0"
-                placeholder="Amount"
-                value={d.amount}
-                onChange={(e) =>
-                  updateDetail(setDetails, idx, "amount", e.target.value)
-                }
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
-              />
-            </div>
-            {details.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeDetailRow(setDetails, idx)}
-                className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
-                title="Remove row"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => addDetailRow(setDetails)}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
-          style={{
-            color: accentColor,
-            borderColor: accentColor + "55",
-            background: accentColor + "11",
-          }}
-        >
-          + Add Row
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
+
+      {/* Lock banner — same pattern as every other sector */}
       {locked && (
         <div className="mb-5">
           <LockBanner
@@ -4924,11 +4982,25 @@ function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
           style={
             showDetails
               ? { background: "#c2410c", color: "#fff", borderColor: "#c2410c" }
-              : { background: "#fff7ed", color: "#c2410c", borderColor: "#fed7aa" }
+              : {
+                  background: "#fff7ed",
+                  color: "#c2410c",
+                  borderColor: "#fed7aa",
+                }
           }
         >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            />
           </svg>
           {showDetails ? "← Back to Summary" : "Details"}
         </button>
@@ -4938,191 +5010,199 @@ function GaliiSassabuSubmitForm({ u, locked, onSubmitSuccess }) {
       {showDetails ? (
         <RevenueSubmitForm
           u={u}
-          locked={!!locked}
-          onSubmitSuccess={onSubmitSuccess}
+          locked={!!lockedDetails}
+          // Pass a callback to handle the details submission
+          onSubmitDetails={handleDetailsSubmit}
+          // Also pass the current date so the detailed form uses the same date
+          parentDate={todayStr()}
         />
-      ) : (<>
-
-      {/* Report type + date row */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-[#64748b] text-sm font-medium mb-1.5">
-            Report Type
-          </p>
-          <select
-            value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
-          >
-            {REPORT_TYPES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
-            Reporting Period
-          </p>
-          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Mana Qophessaa block */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
-          <div
-            className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{ background: HEADER_GRADIENT }}
-          >
-            <p className="text-white font-bold text-sm">Mana Qophessaa</p>
+      ) : (
+        <>
+          {/* Report type + date row */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-[#64748b] text-sm font-medium mb-1.5">
+                Report Type
+              </p>
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+              >
+                {REPORT_TYPES.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
+                Reporting Period
+              </p>
+              <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
+            </div>
           </div>
-          <div className="px-5 py-4 space-y-3">
-            <div>
-              <label className="block text-sm font-semibold text-[#334155] mb-1.5">
-                Mana Qophessaa Total (Qarshii){" "}
-                <span className="text-red-500">*</span>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Mana Qophessaa block */}
+            <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+              <div
+                className="px-5 py-3 border-b border-[#e2e8f0]"
+                style={{ background: HEADER_GRADIENT }}
+              >
+                <p className="text-white font-bold text-sm">Mana Qophessaa</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-[#334155] mb-1.5">
+                    Mana Qophessaa Total (Qarshii){" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={mqTotal}
+                    onChange={(e) => setMqTotal(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#c2410c]/20"
+                  />
+                </div>
+                {/* Toggle detail */}
+                <button
+                  type="button"
+                  onClick={() => setShowMqDetail((p) => !p)}
+                  className="text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  style={{ color: ACCENT }}
+                >
+                  <ChevronIcon open={showMqDetail} />
+                  {showMqDetail
+                    ? "Hide sub-source breakdown"
+                    : "Add sub-source breakdown (optional)"}
+                </button>
+                {showMqDetail && (
+                  <DetailSubForm
+                    details={mqDetails}
+                    setDetails={setMqDetails}
+                    sources={MANA_QOPHESSAA_SOURCES}
+                    accentColor={ACCENT}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Idilee block */}
+            <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+              <div
+                className="px-5 py-3 border-b border-[#e2e8f0]"
+                style={{
+                  background: "linear-gradient(90deg,#ea580c 0%,#f97316 100%)",
+                }}
+              >
+                <p className="text-white font-bold text-sm">Idilee</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-[#334155] mb-1.5">
+                    Idilee Total (Qarshii){" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={idTotal}
+                    onChange={(e) => setIdTotal(e.target.value)}
+                    placeholder="0"
+                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#ea580c]/20"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowIdDetail((p) => !p)}
+                  className="text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  style={{ color: "#ea580c" }}
+                >
+                  <ChevronIcon open={showIdDetail} />
+                  {showIdDetail
+                    ? "Hide sub-source breakdown"
+                    : "Add sub-source breakdown (optional)"}
+                </button>
+                {showIdDetail && (
+                  <DetailSubForm
+                    details={idDetails}
+                    setDetails={setIdDetails}
+                    sources={IDILEE_SOURCES}
+                    accentColor="#ea580c"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Grand total preview */}
+            {(Number(mqTotal || 0) > 0 || Number(idTotal || 0) > 0) && (
+              <div
+                className="rounded-xl px-4 py-3 flex items-center justify-between"
+                style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
+              >
+                <span className="text-sm font-semibold text-[#c2410c]">
+                  Grand Total
+                </span>
+                <span className="text-xl font-extrabold text-[#c2410c]">
+                  {(
+                    Number(mqTotal || 0) + Number(idTotal || 0)
+                  ).toLocaleString()}
+                </span>
+              </div>
+            )}
+
+            {/* Yaada Gudinaa */}
+            <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+              <label className="block text-[#334155] text-sm font-medium mb-1.5">
+                Yaada Gudinaa
               </label>
-              <input
-                type="number"
-                min="0"
-                required
-                value={mqTotal}
-                onChange={(e) => setMqTotal(e.target.value)}
-                placeholder="0"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#c2410c]/20"
+              <textarea
+                value={yaada}
+                onChange={(e) => setYaada(e.target.value)}
+                placeholder="Yaada Gudinaa…"
+                rows={3}
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none"
               />
             </div>
-            {/* Toggle detail */}
-            <button
-              type="button"
-              onClick={() => setShowMqDetail((p) => !p)}
-              className="text-xs font-semibold flex items-center gap-1.5 transition-all"
-              style={{ color: ACCENT }}
-            >
-              <ChevronIcon open={showMqDetail} />
-              {showMqDetail
-                ? "Hide sub-source breakdown"
-                : "Add sub-source breakdown (optional)"}
-            </button>
-            {showMqDetail && (
-              <DetailSubForm
-                details={mqDetails}
-                setDetails={setMqDetails}
-                sources={MANA_QOPHESSAA_SOURCES}
-                accentColor={ACCENT}
-              />
-            )}
-          </div>
-        </div>
 
-        {/* Idilee block */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
-          <div
-            className="px-5 py-3 border-b border-[#e2e8f0]"
-            style={{
-              background: "linear-gradient(90deg,#ea580c 0%,#f97316 100%)",
-            }}
-          >
-            <p className="text-white font-bold text-sm">Idilee</p>
-          </div>
-          <div className="px-5 py-4 space-y-3">
-            <div>
-              <label className="block text-sm font-semibold text-[#334155] mb-1.5">
-                Idilee Total (Qarshii) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                min="0"
+            {error && (
+              <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+              <p className="text-[#94a3b8] text-xs">
+                Fields marked <span className="text-red-500">*</span> are
                 required
-                value={idTotal}
-                onChange={(e) => setIdTotal(e.target.value)}
-                placeholder="0"
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#ea580c]/20"
-              />
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
+                >
+                  Clear Form
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || locked}
+                  className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: HEADER_GRADIENT }}
+                >
+                  <SubmitIcon />
+                  {saving ? "Submitting…" : "Submit Report"}
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowIdDetail((p) => !p)}
-              className="text-xs font-semibold flex items-center gap-1.5 transition-all"
-              style={{ color: "#ea580c" }}
-            >
-              <ChevronIcon open={showIdDetail} />
-              {showIdDetail
-                ? "Hide sub-source breakdown"
-                : "Add sub-source breakdown (optional)"}
-            </button>
-            {showIdDetail && (
-              <DetailSubForm
-                details={idDetails}
-                setDetails={setIdDetails}
-                sources={IDILEE_SOURCES}
-                accentColor="#ea580c"
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Grand total preview */}
-        {(Number(mqTotal || 0) > 0 || Number(idTotal || 0) > 0) && (
-          <div
-            className="rounded-xl px-4 py-3 flex items-center justify-between"
-            style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
-          >
-            <span className="text-sm font-semibold text-[#c2410c]">
-              Grand Total
-            </span>
-            <span className="text-xl font-extrabold text-[#c2410c]">
-              {(Number(mqTotal || 0) + Number(idTotal || 0)).toLocaleString()}
-            </span>
-          </div>
-        )}
-
-        {/* Yaada Gudinaa */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-          <label className="block text-[#334155] text-sm font-medium mb-1.5">
-            Yaada Gudinaa
-          </label>
-          <textarea
-            value={yaada}
-            onChange={(e) => setYaada(e.target.value)}
-            placeholder="Yaada Gudinaa…"
-            rows={3}
-            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none"
-          />
-        </div>
-
-        {error && (
-          <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-          <p className="text-[#94a3b8] text-xs">
-            Fields marked <span className="text-red-500">*</span> are required
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
-            >
-              Clear Form
-            </button>
-            <button
-              type="submit"
-              disabled={saving || locked}
-              className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: HEADER_GRADIENT }}
-            >
-              <SubmitIcon />
-              {saving ? "Submitting…" : "Submit Report"}
-            </button>
-          </div>
-        </div>
-      </form>
-    </> )}
+          </form>
+        </>
+      )}
     </div>
   );
 }
@@ -5837,7 +5917,18 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 // Mana Qophessaa: 7 sources each with KG + Qarshii.
 // Idilee: 7 sub-sources, Qarshii only (no KG).
-function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
+// This component is used both standalone (subcity) and as a detailed
+// breakdown inside the woreda Galii Sassabu summary. We added props:
+// - parentDate: if provided, use that date instead of internal state.
+// - onSubmitDetails: if provided, calling it will NOT lock the report.
+//   It will pass back computed totals and details to the parent.
+function RevenueSubmitForm({
+  u,
+  locked,
+  onSubmitSuccess,
+  parentDate,
+  onSubmitDetails,
+}) {
   const emptyMq = () =>
     Object.fromEntries(
       MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
@@ -5847,50 +5938,15 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
 
   const [mqForm, setMqForm] = useState(emptyMq());
   const [idileeForm, setIdileeForm] = useState(emptyIdilee());
-  const [date, setDate] = useState(todayStr());
+  const [date, setDate] = useState(() => parentDate || todayStr());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // Pre-fill with today's existing entries when the lock is cleared by admin
-  const prevLocked = useRef(locked);
+  // Use parentDate if provided (reactive)
   useEffect(() => {
-    const wasLocked = prevLocked.current;
-    prevLocked.current = locked;
-    if (wasLocked && !locked) {
-      const today = todayStr();
-      fetchMyReports({ sector: "galii", date_from: today, date_to: today })
-        .then((data) => {
-          const rows = Array.isArray(data) ? data : [];
-          const todayRows = rows.filter(
-            (r) =>
-              (r.report_date ?? r.guyyaa) === today && r._sector === "galii",
-          );
-          if (!todayRows.length) return;
-          // Rebuild mqForm and idileeForm from existing entries
-          const newMq = emptyMq();
-          const newIdilee = emptyIdilee();
-          todayRows.forEach((r) => {
-            const src = r.madda_galii ?? "";
-            if (r.gosa_galii === "Mana Qophessaa") {
-              const mq = MANA_QOPHESSAA_SOURCES.find((s) => s.label === src);
-              if (mq) {
-                newMq[mq.key] = {
-                  kg: String(r.kg ?? ""),
-                  qarshii: String(r.baasii ?? ""),
-                };
-              }
-            } else if (r.gosa_galii === "Idilee") {
-              const id = IDILEE_SOURCES.find((s) => s.label === src);
-              if (id) newIdilee[id.key] = String(r.baasii ?? "");
-            }
-          });
-          setMqForm(newMq);
-          setIdileeForm(newIdilee);
-        })
-        .catch(() => {});
-    }
-  }, [locked]);
+    if (parentDate) setDate(parentDate);
+  }, [parentDate]);
 
   const handleMqField = (key, field, val) =>
     setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
@@ -5922,44 +5978,82 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
     }
     setSubmitting(true);
     setSubmitError("");
+
+    // Build entries from the form
+    const entries = [];
+    MANA_QOPHESSAA_SOURCES.forEach((s) => {
+      const kg = Number(mqForm[s.key]?.kg || 0);
+      const qarshii = Number(mqForm[s.key]?.qarshii || 0);
+      if (kg > 0 || qarshii > 0) {
+        entries.push({
+          category: "Mana Qophessaa",
+          categoryId: "manaQophessaa",
+          source: s.label,
+          kg,
+          amount: qarshii,
+          date,
+        });
+      }
+    });
+    IDILEE_SOURCES.forEach((s) => {
+      const qarshii = Number(idileeForm[s.key] || 0);
+      if (qarshii > 0) {
+        entries.push({
+          category: "Idilee",
+          categoryId: "idilee",
+          source: s.label,
+          kg: 0,
+          amount: qarshii,
+          date,
+        });
+      }
+    });
+
+    // If we have an onSubmitDetails callback, we are in the woreda detailed page.
+    // Do NOT call any API – just pass the computed totals/details back to parent.
+    if (onSubmitDetails) {
+      const mqRows = entries
+        .filter((e) => e.category === "Mana Qophessaa")
+        .map((e) => ({ source: e.source, amount: e.amount }));
+      const idRows = entries
+        .filter((e) => e.category === "Idilee")
+        .map((e) => ({ source: e.source, amount: e.amount }));
+      onSubmitDetails(mqTotal, idileeTotal, mqRows, idRows);
+      setSubmitting(false);
+      setMqForm(emptyMq());
+      setIdileeForm(emptyIdilee());
+      return;
+    }
+
+    // Otherwise (subcity standalone), submit via API.
     try {
-      const entries = [];
-      MANA_QOPHESSAA_SOURCES.forEach((s) => {
-        const kg = Number(mqForm[s.key]?.kg || 0);
-        const qarshii = Number(mqForm[s.key]?.qarshii || 0);
-        if (kg > 0 || qarshii > 0) {
-          entries.push({
-            category: "Mana Qophessaa",
-            categoryId: "manaQophessaa",
-            source: s.label,
-            kg,
-            amount: qarshii,
-            date,
-          });
-        }
-      });
-      IDILEE_SOURCES.forEach((s) => {
-        const qarshii = Number(idileeForm[s.key] || 0);
-        if (qarshii > 0) {
-          entries.push({
-            category: "Idilee",
-            categoryId: "idilee",
-            source: s.label,
-            kg: 0,
-            amount: qarshii,
-            date,
-          });
-        }
-      });
       await submitRevenueReport({
         entries,
         total: grandTotal,
         report_date: date,
       });
+      // Also store in galii_sassabu_reports for subcity analysis
+      try {
+        await submitGaliiSassabuReport({
+          report_date: date,
+          report_type: "Daily Report (Gabaasa Guyyaa)",
+          mana_qophessaa_total: mqTotal,
+          idilee_total: idileeTotal,
+          mana_qophessaa_detail: entries
+            .filter((e) => e.category === "Mana Qophessaa")
+            .map((e) => ({ source: e.source, amount: e.amount })),
+          idilee_detail: entries
+            .filter((e) => e.category === "Idilee")
+            .map((e) => ({ source: e.source, amount: e.amount })),
+          yaada_gudinaa: "",
+        });
+      } catch (_) {
+        // non-fatal
+      }
       setMqForm(emptyMq());
       setIdileeForm(emptyIdilee());
       setShowModal(true);
-      onSubmitSuccess && onSubmitSuccess();
+      if (onSubmitSuccess) onSubmitSuccess(mqTotal, idileeTotal);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message || "Submission failed. Please try again.",
@@ -5972,16 +6066,6 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
-
-      {locked && (
-        <div className="mb-5">
-          <LockBanner
-            sector="galii"
-            reportType="Daily Report (Gabaasa Guyyaa)"
-            onUnlocked={onSubmitSuccess}
-          />
-        </div>
-      )}
 
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
@@ -6061,7 +6145,7 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
                   value={kg}
                   onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
                 />
                 <input
                   type="number"
@@ -6072,7 +6156,7 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
                     handleMqField(src.key, "qarshii", e.target.value)
                   }
                   placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
                 />
               </div>
             );
@@ -6181,7 +6265,7 @@ function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
         </div>
         <button
           onClick={handleSubmit}
-          disabled={submitting || !canSubmit || locked}
+          disabled={submitting || !canSubmit}
           className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
         >
           <SubmitIcon />
@@ -7004,18 +7088,19 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
     </div>`;
     }
 
-  // ── Carraa Hojii — grouped rows: each parent field as a section with sub-key rows + Ida'ama subtotal
-  if (sectorId === "carraaHojii") {
-    // Build sub-column defs
-    const subCols = [];
-    if (showPlan) subCols.push("plan");
-    subCols.push("actual");
-    if (showPct) subCols.push("pct");
-    const colspan = subCols.length;
+    // ── Carraa Hojii — grouped rows: each parent field as a section with sub-key rows + Ida'ama subtotal
+    if (sectorId === "carraaHojii") {
+      // Build sub-column defs
+      const subCols = [];
+      if (showPlan) subCols.push("plan");
+      subCols.push("actual");
+      if (showPct) subCols.push("pct");
+      const colspan = subCols.length;
 
-    const subColLabel = (c) => c === "plan" ? "Karoora" : c === "actual" ? "Raawwii" : "%";
+      const subColLabel = (c) =>
+        c === "plan" ? "Karoora" : c === "actual" ? "Raawwii" : "%";
 
-    const thead = `<thead>
+      const thead = `<thead>
       <tr>
         <th rowspan="2" class="rno">R.No</th>
         <th rowspan="2" class="date-col">Guyyaa</th>
@@ -7025,66 +7110,85 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       </tr>
     </thead>`;
 
-    let rno = 1;
-    const bodyRows = sectorRows.map((row) => {
-      const dateFmt = row.report_date ?? "";
-      const rowsHtml = CARRAA_HOJII_BASE_FIELDS.map((f) => {
-        const planKeyForField = (subSuffix) => `${f.name}${subSuffix}_target`;
-        const subRows = f.subs.map((s) => {
-          const fieldKey = `${f.name}${s.suffix}`;
-          const actual = Number(row[fieldKey] ?? 0);
-          const annualTarget = plan ? Number(plan[planKeyForField(s.suffix)] ?? 0) : 0;
-          const target = printPartitionTarget(annualTarget, period);
-          const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
-          const cells = subCols.map((c) =>
-            c === "plan" ? `<td class="num plan">${target.toLocaleString()}</td>`
-            : c === "actual" ? `<td class="num">${actual.toLocaleString()}</td>`
-            : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`
-          ).join("");
-          return `<tr>
+      let rno = 1;
+      const bodyRows = sectorRows
+        .map((row) => {
+          const dateFmt = row.report_date ?? "";
+          const rowsHtml = CARRAA_HOJII_BASE_FIELDS.map((f) => {
+            const planKeyForField = (subSuffix) =>
+              `${f.name}${subSuffix}_target`;
+            const subRows = f.subs.map((s) => {
+              const fieldKey = `${f.name}${s.suffix}`;
+              const actual = Number(row[fieldKey] ?? 0);
+              const annualTarget = plan
+                ? Number(plan[planKeyForField(s.suffix)] ?? 0)
+                : 0;
+              const target = printPartitionTarget(annualTarget, period);
+              const pct = target > 0 ? Math.round((actual / target) * 100) : 0;
+              const cells = subCols
+                .map((c) =>
+                  c === "plan"
+                    ? `<td class="num plan">${target.toLocaleString()}</td>`
+                    : c === "actual"
+                      ? `<td class="num">${actual.toLocaleString()}</td>`
+                      : `<td class="num pct">${target > 0 ? pct + "%" : "—"}</td>`,
+                )
+                .join("");
+              return `<tr>
             <td class="rno" rowspan="1"></td>
             <td class="date-col">${dateFmt}</td>
             <td class="gosa">${f.label}</td>
             <td class="gosa" style="color:#1e40af;font-weight:bold;">${s.label}</td>
             ${cells}
           </tr>`;
-        });
+            });
 
-        // Ida'ama subtotal row when more than 1 sub
-        let idaamaRow = "";
-        if (f.subs.length > 1) {
-          const totalActual = f.subs.reduce((acc, s) => acc + Number(row[`${f.name}${s.suffix}`] ?? 0), 0);
-          const totalPlan = f.subs.reduce((acc, s) => {
-            const ann = plan ? Number(plan[`${f.name}${s.suffix}_target`] ?? 0) : 0;
-            return acc + printPartitionTarget(ann, period);
-          }, 0);
-          const totalPct = totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
-          const cells = subCols.map((c) =>
-            c === "plan" ? `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`
-            : c === "actual" ? `<td class="num total-val">${totalActual.toLocaleString()}</td>`
-            : `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`
-          ).join("");
-          idaamaRow = `<tr style="background:#eef2ff;">
+            // Ida'ama subtotal row when more than 1 sub
+            let idaamaRow = "";
+            if (f.subs.length > 1) {
+              const totalActual = f.subs.reduce(
+                (acc, s) => acc + Number(row[`${f.name}${s.suffix}`] ?? 0),
+                0,
+              );
+              const totalPlan = f.subs.reduce((acc, s) => {
+                const ann = plan
+                  ? Number(plan[`${f.name}${s.suffix}_target`] ?? 0)
+                  : 0;
+                return acc + printPartitionTarget(ann, period);
+              }, 0);
+              const totalPct =
+                totalPlan > 0 ? Math.round((totalActual / totalPlan) * 100) : 0;
+              const cells = subCols
+                .map((c) =>
+                  c === "plan"
+                    ? `<td class="num plan total-val">${totalPlan.toLocaleString()}</td>`
+                    : c === "actual"
+                      ? `<td class="num total-val">${totalActual.toLocaleString()}</td>`
+                      : `<td class="num pct total-val">${totalPlan > 0 ? totalPct + "%" : "—"}</td>`,
+                )
+                .join("");
+              idaamaRow = `<tr style="background:#eef2ff;">
             <td class="rno"></td>
             <td class="date-col"></td>
             <td class="gosa">${f.label}</td>
             <td class="gosa" style="font-weight:bold;color:#1e40af;">Ida'ama</td>
             ${cells}
           </tr>`;
-        }
+            }
 
-        return subRows.join("") + idaamaRow;
-      }).join("");
+            return subRows.join("") + idaamaRow;
+          }).join("");
 
-      rno++;
-      return rowsHtml;
-    }).join("");
+          rno++;
+          return rowsHtml;
+        })
+        .join("");
 
-    return `<div class="sector-block">
+      return `<div class="sector-block">
       <div class="sector-title">${sectorLabel}</div>
       <table>${thead}<tbody>${bodyRows}</tbody></table>
     </div>`;
-  }
+    }
 
     // Build sub-column definitions based on toggles
     // Raawwii (actual) is always shown
@@ -9136,6 +9240,7 @@ function WoredaPhotoHistoryPage({ u }) {
   );
 }
 
+// ─── Main WoReda Dashboard ───────────────────────────────────────────────────
 export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
@@ -9192,6 +9297,7 @@ export default function WoRedaDashboard() {
           galii: "galii",
           daldala: "daldala",
           atk: "atk",
+          galii_sassabu: "galii_sassabu",
         };
 
         // Compute locked sectors:
@@ -9203,10 +9309,7 @@ export default function WoRedaDashboard() {
 
         // Find approved edit requests for today's sector/date
         const approvedRequests = editRequests.filter(
-          (req) =>
-            req.status === "approved" &&
-            req.report_date === date &&
-            sectorsWithReport.includes(req.sector),
+          (req) => req.status === "approved" && req.report_date === date,
         );
         const approvedSectors = new Set(
           approvedRequests.map((req) => req.sector),
@@ -9220,11 +9323,15 @@ export default function WoRedaDashboard() {
           "galii",
           "daldala",
           "atk",
+          "galii_sassabu",
         ];
         allSectors.forEach((s) => {
-          // Lock if there's a report today and NO approved edit request
-          newLocked[s] =
-            sectorsWithReport.includes(s) && !approvedSectors.has(s);
+          const hasReport = sectorsWithReport.includes(s);
+          // Summary (galii_sassabu) locks the details page (galii) too.
+          // But details (galii) alone does NOT lock the summary (galii_sassabu).
+          const crossLocked =
+            s === "galii" && sectorsWithReport.includes("galii_sassabu");
+          newLocked[s] = (hasReport || crossLocked) && !approvedSectors.has(s);
         });
         setLocked(newLocked);
 
@@ -9807,6 +9914,7 @@ export default function WoRedaDashboard() {
                   <GaliiSassabuSubmitForm
                     u={u}
                     locked={!!locked.galii_sassabu}
+                    lockedDetails={!!locked.galii}
                     onSubmitSuccess={refreshLocks}
                   />
                 );
