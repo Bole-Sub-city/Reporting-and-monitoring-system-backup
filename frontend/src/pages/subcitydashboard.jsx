@@ -2390,6 +2390,26 @@ function AnnouncementsPage() {
   );
 }
 
+// ─── Mana Qophessaa sub-sources (used by Galii plan/report and GaliiOverviewPlanTable) ─
+const SC_MANA_QOPHESSAA_SOURCES = [
+  { id: "liizii", label: "Liizii", key: "liizii" },
+  { id: "kiraa_lafaa", label: "Kiraa Lafaa", key: "kiraa_lafaa" },
+  { id: "kiraa_gare_liizii", label: "Kiraa gare Liizii", key: "kiraa_gare_liizii" },
+  { id: "baaxii_fi_gooroo", label: "Baaxii fi Gooroo", key: "baaxii_fi_gooroo" },
+  { id: "kiraa_mana_daldalaa", label: "Kiraa Mana Daldalaa", key: "kiraa_mana_daldalaa" },
+  { id: "kiraa_mana_jireenyaa", label: "Kiraa Mana Jireenyaa", key: "kiraa_mana_jireenyaa" },
+  { id: "other", label: "Other", key: "other" },
+];
+const SC_IDILEE_SOURCES = [
+  { id: "gibira_mindaa", label: "Gibira mindaa hojjettootaa dhuunfaa", key: "gibira_mindaa" },
+  { id: "galii_kiraa", label: "Galii Kiraa", key: "galii_kiraa" },
+  { id: "gibira_buaa", label: "Gibira bu'aa daldalaa namoota dhuunfaarraa", key: "gibira_buaa" },
+  { id: "qonnaan_bultoota", label: "Qonnaan bultoota dhuunfaarraa", key: "qonnaan_bultoota" },
+  { id: "with_holding", label: "With holding", key: "with_holding" },
+  { id: "vat", label: "VAT", key: "vat" },
+  { id: "tot", label: "TOT", key: "tot" },
+];
+
 // ─── GaliiOverviewPlanTable ───────────────────────────────────────────────────
 // Shows per-source KG + Qarshii targets for each woreda + subcity total.
 // Fetches woreda targets from getWoRedaAnalysis("galii", wId, "annual").
@@ -2449,12 +2469,14 @@ function GaliiOverviewPlanTable({ dbGaliiPlan }) {
       targetKey: `mq_${src.key}_qarshii`,
     },
   ]);
-  const IDILEE_ROW_DEFS = SC_IDILEE_SOURCES.map((src) => ({
-    label: src.label,
-    color: "#1e40af",
-    subcityKey: `idilee_${src.key}_qarshii`,
-    targetKey: `idilee_${src.key}_qarshii`,
-  }));
+  const IDILEE_ROW_DEFS = [
+    {
+      label: "Idilee (Waliigala Qarshii)",
+      color: "#1e40af",
+      subcityKey: "idilee_qarshii",
+      targetKey: "idilee_qarshii",
+    },
+  ];
 
   function PlanTable({ rows, headerColor, headerTitle, headerSub, thColor }) {
     return (
@@ -2559,6 +2581,91 @@ function GaliiOverviewPlanTable({ dbGaliiPlan }) {
 }
 
 // ─── Overview Page ────────────────────────────────────────────────────────────
+// ─── GenericWoredaOverviewTable ───────────────────────────────────────────────
+// Shows a plan table with rows = fields, cols = each of 4 woredas + Waliigala.
+// Fetches each woreda's annual targets via fetchWoRedaAnalysis.
+// For Carraa Hojii fields with Dhi/Dub subs, shows each sub as its own row.
+function GenericWoredaOverviewTable({ sector, fields, label, gradient, subcityPlan, isCarra }) {
+  const [woredaTargets, setWoredaTargets] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all(
+      WOREDAS.map((w) =>
+        fetchWoRedaAnalysis(sector, w.id, "annual")
+          .then((d) => [w.id, d.targets || {}])
+          .catch(() => [w.id, {}]),
+      ),
+    ).then((results) => {
+      setWoredaTargets(Object.fromEntries(results));
+      setLoading(false);
+    });
+  }, [sector]);
+
+  const hasPlanData =
+    subcityPlan && Object.values(subcityPlan).some((v) => typeof v === "number" && v > 0);
+
+  if (!hasPlanData) {
+    return (
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm mt-6">
+        <div className="w-12 h-12 rounded-full bg-[#f8fafc] flex items-center justify-center mb-2 text-[#64748b]">
+          <TargetIcon />
+        </div>
+        <p className="text-[#1e293b] font-semibold text-sm mb-1">Karoora {label} Hin Jiru</p>
+        <p className="text-[#94a3b8] text-xs">Karoora Waggaa irraa {label} filadhu.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mt-6">
+      <div className="px-5 py-3 border-b border-[#e2e8f0]" style={{ background: gradient }}>
+        <p className="text-sm font-semibold text-white">{label} Karoora</p>
+        <p className="text-white/60 text-xs mt-0.5">Waggaa {subcityPlan?.year} · Aanaa hundaaf fi Waliigala</p>
+      </div>
+      {loading ? (
+        <div className="flex items-center justify-center h-20">
+          <div className="w-6 h-6 border-4 border-[#dbeafe] border-t-[#1e40af] rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide min-w-[180px]">Gosa</th>
+                {WOREDAS.map((w) => (
+                  <th key={w.id} className="text-right px-4 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide min-w-[110px]">{w.name}</th>
+                ))}
+                <th className="text-right px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase tracking-wide bg-[#eff6ff] min-w-[90px]">Waliigala</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map(({ key, label: fLabel, color }) => {
+                const woredaValues = WOREDAS.map((w) => Number(woredaTargets[w.id]?.[key] ?? 0));
+                const total = woredaValues.reduce((a, v) => a + v, 0);
+                return (
+                  <tr key={key} className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors">
+                    <td className="px-4 py-2.5 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                        {fLabel}
+                      </span>
+                    </td>
+                    {woredaValues.map((val, i) => (
+                      <td key={WOREDAS[i].id} className="px-4 py-2.5 text-right text-[#475569]">{val.toLocaleString()}</td>
+                    ))}
+                    <td className="px-4 py-2.5 text-right font-bold text-[#0f172a] bg-[#eff6ff]">{total.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OverviewPage({
   dbPlan,
   dbQonnaPlan,
@@ -2916,187 +3023,30 @@ function OverviewPage({
         </div>
       )}
 
-      {/* ── Carraa Hojii plan — per-field cards with dynamic sub-columns ── */}
-      {(() => {
-        const plan = dbCarraPlan;
-        const hasPlanData =
-          plan &&
-          CARRAA_FIELDS.some((f) =>
-            f.subs.length
-              ? f.subs.some((s) => Number(plan[`${f.key}${s.suffix}`] || 0) > 0)
-              : Number(plan[f.key] || 0) > 0,
-          );
-        return (
-          <div className="mt-6">
-            {hasPlanData ? (
-              <div className="space-y-3">
-                {/* Section header */}
-                <div className="rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-                  <div
-                    className="px-5 py-3"
-                    style={{
-                      background:
-                        "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
-                    }}
-                  >
-                    <p className="text-sm font-semibold text-white">
-                      Carraa Hojii Uumuu Karoora
-                    </p>
-                    <p className="text-white/60 text-xs mt-0.5">
-                      Waggaa {plan?.year} · Waliigala Subcity
-                    </p>
-                  </div>
-                </div>
-                {/* One card per field */}
-                {CARRAA_FIELDS.map((f) => (
-                  <div
-                    key={f.key}
-                    className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm"
-                  >
-                    <div className="px-5 py-2.5 border-b border-[#f1f5f9] bg-[#f8fafc] flex items-center gap-2">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: f.color }}
-                      />
-                      <p className="text-sm font-semibold text-[#1e293b]">
-                        {f.label}
-                      </p>
-                    </div>
-                    <div
-                      className={`grid divide-x divide-[#f1f5f9] ${
-                        f.subs.length === 3
-                          ? "grid-cols-3"
-                          : f.subs.length === 2
-                            ? "grid-cols-2"
-                            : "grid-cols-1"
-                      }`}
-                    >
-                      {f.subs.map((s) => (
-                        <div key={s.suffix} className="px-5 py-3 text-center">
-                          <p className="text-[10px] font-bold text-[#1e40af] uppercase tracking-wide mb-1">
-                            {s.label}
-                          </p>
-                          <p className="text-xl font-extrabold text-[#1e293b]">
-                            {Number(
-                              plan[`${f.key}${s.suffix}`] || 0,
-                            ).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <p className="px-2 text-xs text-[#94a3b8]">
-                  Karoora Aanaa hundaa argachuuf Karoora Waggaa irraa ilaalaa.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-[#eff6ff] flex items-center justify-center mb-2 text-[#1e40af]">
-                  <TargetIcon />
-                </div>
-                <p className="text-[#1e293b] font-semibold text-sm mb-1">
-                  Karoora Carraa Hojii Uumuu Hin Jiru
-                </p>
-                <p className="text-[#94a3b8] text-xs">
-                  Karoora Waggaa irraa Carraa Hojii Uumuu filadhu.
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+      {/* ── Carraa Hojii plan — per-woreda table with all 4 woredas ── */}
+      <GenericWoredaOverviewTable
+        sector="carraa"
+        fields={SECTOR_CFG.carraa.fields}
+        label="Carraa Hojii Uumuu"
+        gradient="linear-gradient(90deg,#1e40af 0%,#2563eb 100%)"
+        subcityPlan={dbCarraPlan}
+      />
 
-      {/* ── Generic sector plans (Daldala, ATK) ── */}
-      {[
-        {
-          plan: dbDaldalaPlan,
-          fields: DALDALA_FIELDS_SC,
-          label: "Daldala",
-          gradient: "linear-gradient(90deg,#854d0e 0%,#a16207 100%)",
-        },
-        {
-          plan: dbAtkPlan,
-          fields: ATK_FIELDS_SC,
-          label: "ATK",
-          gradient: "linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)",
-        },
-      ].map(({ plan, fields, label, gradient }) => {
-        const hasPlanData =
-          plan && fields.some((f) => Number(plan[f.key] || 0) > 0);
-        return (
-          <div key={label} className="mt-6">
-            {hasPlanData ? (
-              <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-                <div
-                  className="px-5 py-3 border-b border-[#e2e8f0]"
-                  style={{ background: gradient }}
-                >
-                  <p className="text-sm font-semibold text-white">
-                    {label} Karoora
-                  </p>
-                  <p className="text-white/60 text-xs mt-0.5">
-                    Waggaa {plan.year} · Waliigala Subcity
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                        <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                          Gosa
-                        </th>
-                        <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                          Waliigala Subcity
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {fields.map(({ key, label: fLabel, color }) => {
-                        const total = Number(plan[key] || 0);
-                        return (
-                          <tr
-                            key={key}
-                            className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                          >
-                            <td className="px-5 py-3 font-medium text-[#1e293b]">
-                              <span className="flex items-center gap-2">
-                                <span
-                                  className="w-2 h-2 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: color }}
-                                />
-                                {fLabel}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
-                              {total.toLocaleString()}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="px-5 py-3 text-xs text-[#94a3b8] border-t border-[#f1f5f9]">
-                  Karoora Aanaa hundaa argachuuf Karoora Waggaa irraa ilaalaa.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-[#f8fafc] flex items-center justify-center mb-2 text-[#64748b]">
-                  <TargetIcon />
-                </div>
-                <p className="text-[#1e293b] font-semibold text-sm mb-1">
-                  Karoora {label} Hin Jiru
-                </p>
-                <p className="text-[#94a3b8] text-xs">
-                  Karoora Waggaa irraa {label} filadhu.
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {/* ── Generic sector plans (Daldala, ATK) — per woreda + total ── */}
+      <GenericWoredaOverviewTable
+        sector="daldala"
+        fields={DALDALA_FIELDS_SC}
+        label="Daldala"
+        gradient="linear-gradient(90deg,#854d0e 0%,#a16207 100%)"
+        subcityPlan={dbDaldalaPlan}
+      />
+      <GenericWoredaOverviewTable
+        sector="atk"
+        fields={ATK_FIELDS_SC}
+        label="ATK"
+        gradient="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
+        subcityPlan={dbAtkPlan}
+      />
 
       {/* ── Galii Sassaabu plan — per-source KG + Qarshii with woreda columns ── */}
       <div className="mt-6">
@@ -4270,54 +4220,8 @@ function QonnaPlanPage() {
 
 // ─── Generic sector field definitions ────────────────────────────────────────
 // Mana Qophessaa sub-items shared across plan + report forms
-const SC_MANA_QOPHESSAA_SOURCES = [
-  { id: "liizii", label: "Liizii", key: "liizii" },
-  { id: "kiraa_lafaa", label: "Kiraa Lafaa", key: "kiraa_lafaa" },
-  {
-    id: "kiraa_gare_liizii",
-    label: "Kiraa gare Liizii",
-    key: "kiraa_gare_liizii",
-  },
-  {
-    id: "baaxii_fi_gooroo",
-    label: "Baaxii fi Gooroo",
-    key: "baaxii_fi_gooroo",
-  },
-  {
-    id: "kiraa_mana_daldalaa",
-    label: "Kiraa Mana Daldalaa",
-    key: "kiraa_mana_daldalaa",
-  },
-  {
-    id: "kiraa_mana_jireenyaa",
-    label: "Kiraa Mana Jireenyaa",
-    key: "kiraa_mana_jireenyaa",
-  },
-  { id: "other", label: "Other", key: "other" },
-];
-
-// Idilee sub-sources (Qarshii only, no KG)
-const SC_IDILEE_SOURCES = [
-  {
-    id: "gibira_mindaa",
-    label: "Gibira mindaa hojjettootaa dhuunfaa",
-    key: "gibira_mindaa",
-  },
-  { id: "galii_kiraa", label: "Galii Kiraa", key: "galii_kiraa" },
-  {
-    id: "gibira_buaa",
-    label: "Gibira bu'aa daldalaa namoota dhuunfaarraa",
-    key: "gibira_buaa",
-  },
-  {
-    id: "qonnaan_bultoota",
-    label: "Qonnaan bultoota dhuunfaarraa",
-    key: "qonnaan_bultoota",
-  },
-  { id: "with_holding", label: "With holding", key: "with_holding" },
-  { id: "vat", label: "VAT", key: "vat" },
-  { id: "tot", label: "TOT", key: "tot" },
-];
+// NOTE: SC_MANA_QOPHESSAA_SOURCES and SC_IDILEE_SOURCES are defined earlier
+//       (before GaliiOverviewPlanTable) to avoid reference-before-declaration.
 
 // For analysis/comparison ring-chart views — full per-source breakdown
 const GALII_FIELDS = [
@@ -5093,60 +4997,6 @@ function CarraaSubcityPlanPage() {
                           </tr>
                         );
                       })}
-                      {/* Ida'ama row — only for fields that have Dhi+Dub subs; sums ONLY Dhi+Dub (not Int) */}
-                      {f.subs.some((s) => s.suffix === "_dhi") && (
-                        <tr className="border-b border-[#dbeafe] bg-[#eff6ff]">
-                          <td className="px-4 py-2 font-extrabold text-[#1e40af] text-xs uppercase tracking-wide border-r border-[#bfdbfe]">
-                            Ida'ama
-                          </td>
-                          {WOREDAS.map((w) => {
-                            // Only Dhi+Dub, not Int
-                            const genderSubs = f.subs.filter(
-                              (s) => s.suffix === "_dhi" || s.suffix === "_dub",
-                            );
-                            const woredaGenderTotal = genderSubs.reduce(
-                              (acc, s) =>
-                                acc +
-                                Number(
-                                  woredaForms[w.id][`${f.key}${s.suffix}`] || 0,
-                                ),
-                              0,
-                            );
-                            return (
-                              <td
-                                key={w.id}
-                                className="px-3 py-2 text-right font-extrabold text-[#1e40af] bg-[#dbeafe] border-r border-[#bfdbfe]"
-                              >
-                                {woredaGenderTotal.toLocaleString()}
-                              </td>
-                            );
-                          })}
-                          <td className="px-3 py-2 text-right font-extrabold text-[#1e40af] bg-[#bfdbfe]">
-                            {/* Grand total: Dhi+Dub only, across all woredas */}
-                            {f.subs
-                              .filter(
-                                (s) =>
-                                  s.suffix === "_dhi" || s.suffix === "_dub",
-                              )
-                              .reduce(
-                                (acc, s) =>
-                                  acc +
-                                  WOREDAS.reduce(
-                                    (wa, w) =>
-                                      wa +
-                                      Number(
-                                        woredaForms[w.id][
-                                          `${f.key}${s.suffix}`
-                                        ] || 0,
-                                      ),
-                                    0,
-                                  ),
-                                0,
-                              )
-                              .toLocaleString()}
-                          </td>
-                        </tr>
-                      )}
                     </>
                   ) : (
                     /* No subs — plain single row */
