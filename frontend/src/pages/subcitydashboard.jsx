@@ -958,7 +958,7 @@ function PlanUnlockBanner({ sector }) {
             className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
           >
             <UnlockNavIcon />
-            Gulaala Gaafadhu
+            Request Edit Access
           </button>
         ) : showForm ? (
           <div className="flex flex-col gap-2">
@@ -978,7 +978,7 @@ function PlanUnlockBanner({ sector }) {
                 className="flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
               >
                 <UnlockNavIcon />
-                {requesting ? "Ergaa jira…" : "Gaaffii Ergi"}
+                {requesting ? "Sending..." : "Submit Request"}
               </button>
               <button
                 type="button"
@@ -1694,7 +1694,7 @@ function HistorySection() {
                 disabled={archiving}
                 className="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] disabled:opacity-60 text-white py-2 rounded-xl text-sm font-semibold transition-all"
               >
-                {archiving ? "Olkaa'aa jira…" : "Confirm Archive & Reset"}
+                {archiving ? "Archiving..." : "Confirm Archive & Reset"}
               </button>
             </div>
           ) : (
@@ -1703,7 +1703,7 @@ function HistorySection() {
               disabled={archiving}
               className="w-full bg-[#1a3a5c] hover:bg-[#1e4976] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
             >
-              <ArchiveNavIcon /> Karoora Waggaa {now.getFullYear()} Olkaa'i
+              <ArchiveNavIcon /> Archive Plan {now.getFullYear()}
             </button>
           )}
         </div>
@@ -2304,7 +2304,7 @@ function AnnouncementsPage() {
               className="flex items-center gap-2 bg-[#0f172a] hover:bg-[#1e3a5f] disabled:opacity-60 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
             >
               <MegaphoneIcon />
-              {saving ? "Ergaa jira…" : "Beeksisa Maxxansi"}
+              {saving ? "Publishing..." : "Publish Announcement"}
             </button>
           </div>
         </form>
@@ -2425,107 +2425,93 @@ function GaliiOverviewPlanTable({ dbGaliiPlan }) {
     );
   }
 
-  // Row defs: 7 MQ sources (each KG row + Qarshii row) + Idilee
-  const ROW_DEFS = SC_MANA_QOPHESSAA_SOURCES.flatMap((src) => [
-    {
-      label: `${src.label} KG`,
-      color: "#0f766e",
-      subcityKey: `mq_${src.key}_kg`,
-      targetKey: `mq_${src.key}_kg`,
-    },
-    {
-      label: `${src.label} Qarshii`,
-      color: "#0d9488",
-      subcityKey: `mq_${src.key}_qarshii`,
-      targetKey: `mq_${src.key}_qarshii`,
-    },
-  ]).concat([
-    {
-      label: "Idilee Qarshii",
-      color: "#1e40af",
-      subcityKey: "idilee_qarshii",
-      targetKey: "idilee_qarshii",
-    },
+  // Row defs: 7 MQ sources (each KG row + Qarshii row) + 7 Idilee sources
+  const MQ_ROW_DEFS = SC_MANA_QOPHESSAA_SOURCES.flatMap((src) => [
+    { label: `${src.label} KG`, color: "#0f766e", subcityKey: `mq_${src.key}_kg`, targetKey: `mq_${src.key}_kg` },
+    { label: `${src.label} Qarshii`, color: "#0d9488", subcityKey: `mq_${src.key}_qarshii`, targetKey: `mq_${src.key}_qarshii` },
   ]);
+  const IDILEE_ROW_DEFS = SC_IDILEE_SOURCES.map((src) => ({
+    label: src.label,
+    color: "#1e40af",
+    subcityKey: `idilee_${src.key}_qarshii`,
+    targetKey: `idilee_${src.key}_qarshii`,
+  }));
+
+  function PlanTable({ rows, headerColor, headerTitle, headerSub, thColor }) {
+    return (
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-[#e2e8f0]"
+          style={{ background: headerColor }}>
+          <p className="text-sm font-semibold text-white">{headerTitle}</p>
+          <p className="text-white/60 text-xs mt-0.5">{headerSub}</p>
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center h-16">
+            <div className="w-5 h-5 border-4 border-[#e2e8f0] border-t-[#0f766e] rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide min-w-[200px]"
+                    style={{ color: thColor }}>Source</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">Subcity Total</th>
+                  {WOREDAS.map((w) => (
+                    <th key={w.id} className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">{w.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => {
+                  const subcityTotal = Number(dbGaliiPlan[row.subcityKey] || 0);
+                  return (
+                    <tr key={row.label}
+                      className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}>
+                      <td className="px-5 py-3 font-medium text-[#1e293b]">
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: row.color }} />
+                          {row.label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
+                        {subcityTotal.toLocaleString()}
+                      </td>
+                      {WOREDAS.map((w) => {
+                        const val = Number(woredaTargets[w.id]?.[row.targetKey] ?? 0);
+                        return (
+                          <td key={w.id} className="px-5 py-3 text-right text-[#64748b]">
+                            {val.toLocaleString()}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-      <div
-        className="px-5 py-3 border-b border-[#e2e8f0]"
-        style={{ background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)" }}
-      >
-        <p className="text-sm font-semibold text-white">
-          Karoora Galii Sassaabu
-        </p>
-        <p className="text-white/60 text-xs mt-0.5">
-          Waggaa {dbGaliiPlan.year} · Aanaa hunda karoora isaaf
-        </p>
-      </div>
-      {loading ? (
-        <div className="flex items-center justify-center h-24">
-          <div className="w-6 h-6 border-4 border-[#99f6e4] border-t-[#0f766e] rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#f1f5f9] bg-[#f0fdf9]">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide min-w-[180px]">
-                  Madda Galii
-                </th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                  Waliigala Subcity
-                </th>
-                {WOREDAS.map((w) => (
-                  <th
-                    key={w.id}
-                    className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide"
-                  >
-                    {w.name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ROW_DEFS.map((row, i) => {
-                const subcityTotal = Number(dbGaliiPlan[row.subcityKey] || 0);
-                return (
-                  <tr
-                    key={row.label}
-                    className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors ${i % 2 !== 0 ? "bg-[#f8fafc]" : ""}`}
-                  >
-                    <td className="px-5 py-3 font-medium text-[#1e293b]">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: row.color }}
-                        />
-                        {row.label}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
-                      {subcityTotal.toLocaleString()}
-                    </td>
-                    {WOREDAS.map((w) => {
-                      const val = Number(
-                        woredaTargets[w.id]?.[row.targetKey] ?? 0,
-                      );
-                      return (
-                        <td
-                          key={w.id}
-                          className="px-5 py-3 text-right text-[#64748b]"
-                        >
-                          {val.toLocaleString()}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+    <div className="space-y-4">
+      <PlanTable
+        rows={MQ_ROW_DEFS}
+        headerColor="linear-gradient(90deg,#0f766e 0%,#0d9488 100%)"
+        headerTitle="Mana Qophessaa"
+        headerSub={`Year ${dbGaliiPlan.year} — KG and Qarshii targets per woreda`}
+        thColor="#0f766e"
+      />
+      <PlanTable
+        rows={IDILEE_ROW_DEFS}
+        headerColor="linear-gradient(90deg,#1e40af 0%,#2563eb 100%)"
+        headerTitle="Idilee"
+        headerSub={`Year ${dbGaliiPlan.year} — Qarshii targets per woreda`}
+        thColor="#1e40af"
+      />
     </div>
   );
 }
@@ -3480,11 +3466,11 @@ function BuusaaPlanPage({ onSave }) {
             {saving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Olkaa'aa jira...
+                Saving...
               </>
             ) : (
               <>
-                <CheckIcon /> Karoora Olkaa'i
+                <CheckIcon /> Save Plan
               </>
             )}
           </button>
@@ -4129,11 +4115,11 @@ function QonnaPlanPage() {
             {saving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Olkaa'aa jira...
+                Saving...
               </>
             ) : (
               <>
-                <CheckIcon /> Karoora Qonna Olkaa'i
+                <CheckIcon /> Save Qonna Plan
               </>
             )}
           </button>
@@ -4169,6 +4155,17 @@ const SC_MANA_QOPHESSAA_SOURCES = [
     key: "kiraa_mana_jireenyaa",
   },
   { id: "other", label: "Other", key: "other" },
+];
+
+// Idilee sub-sources (Qarshii only, no KG)
+const SC_IDILEE_SOURCES = [
+  { id: "gibira_mindaa",    label: "Gibira mindaa hojjettootaa dhuunfaa",       key: "gibira_mindaa" },
+  { id: "galii_kiraa",      label: "Galii Kiraa",                               key: "galii_kiraa" },
+  { id: "gibira_buaa",      label: "Gibira bu'aa daldalaa namoota dhuunfaarraa", key: "gibira_buaa" },
+  { id: "qonnaan_bultoota", label: "Qonnaan bultoota dhuunfaarraa",             key: "qonnaan_bultoota" },
+  { id: "with_holding",     label: "With holding",                              key: "with_holding" },
+  { id: "vat",              label: "VAT",                                       key: "vat" },
+  { id: "tot",              label: "TOT",                                       key: "tot" },
 ];
 
 // For analysis/comparison ring-chart views — full per-source breakdown
@@ -4224,8 +4221,12 @@ const GALII_FIELDS = [
   },
   { key: "mq_other_kg", label: "Other KG", color: "#64748b" },
   { key: "mq_other_qarshii", label: "Other Qarshii", color: "#64748b" },
-  // Idilee
-  { key: "idilee_qarshii", label: "Idilee Qarshii", color: "#1e40af" },
+  // Idilee sub-sources
+  ...SC_IDILEE_SOURCES.map((s) => ({
+    key: `idilee_${s.key}_qarshii`,
+    label: s.label,
+    color: "#1e40af",
+  })),
 ];
 
 // Each field carries its own subs array: [{suffix, label}]
@@ -4693,13 +4694,13 @@ function GenericSubcityPlanPage({ sector }) {
           <div>
             {saved && (
               <p className="flex items-center gap-2 text-[#0f766e] text-sm font-semibold">
-                <CheckIcon /> Karoora {cfg.label} Aanaa hundaaf Olkaa'ame.
+                <CheckIcon /> {cfg.label} plan saved for all woredas.
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
               <p className="text-[#94a3b8] text-xs">
-                Karoora {cfg.label} duraani ni bakka bu'a.
+                This will replace the previous {cfg.label} plan.
               </p>
             )}
           </div>
@@ -4712,11 +4713,11 @@ function GenericSubcityPlanPage({ sector }) {
             {saving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Olkaa'aa jira...
+                Saving...
               </>
             ) : (
               <>
-                <CheckIcon /> Karoora {cfg.label} Olkaa'i
+                <CheckIcon /> Save Plan
               </>
             )}
           </button>
@@ -4925,14 +4926,13 @@ function CarraaSubcityPlanPage() {
           <div>
             {saved && (
               <p className="flex items-center gap-2 text-[#0f766e] text-sm font-semibold">
-                <CheckIcon /> Karoora Carraa Hojii Uumuu Aanaa hundaaf
-                Olkaa'ame.
+                <CheckIcon /> Carraa Hojii Uumuu plan saved for all woredas.
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
               <p className="text-[#94a3b8] text-xs">
-                Karoora Carraa Hojii duraani ni bakka bu'a.
+                This will replace the previous Carraa Hojii plan.
               </p>
             )}
           </div>
@@ -4944,11 +4944,11 @@ function CarraaSubcityPlanPage() {
             {saving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Olkaa'aa jira...
+                Saving...
               </>
             ) : (
               <>
-                <CheckIcon /> Karoora Olkaa'i
+                <CheckIcon /> Save Plan
               </>
             )}
           </button>
@@ -4964,7 +4964,7 @@ function GaliiSubcityPlanPage() {
   const WOREDAS_LIST = WOREDAS;
   const gradient = "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)";
 
-  // Form: { [woredaId]: { mq_<key>_kg: string, mq_<key>_qarshii: string, idilee_qarshii: string } }
+  // Form: { [woredaId]: { mq_<key>_kg, mq_<key>_qarshii, idilee_<key>_qarshii per SC_IDILEE_SOURCES } }
   const emptyWoForms = () =>
     Object.fromEntries(
       WOREDAS_LIST.map((w) => [
@@ -4976,7 +4976,9 @@ function GaliiSubcityPlanPage() {
               [`mq_${s.key}_qarshii`, ""],
             ]),
           ),
-          idilee_qarshii: "",
+          ...Object.fromEntries(
+            SC_IDILEE_SOURCES.map((s) => [`idilee_${s.key}_qarshii`, ""]),
+          ),
         },
       ]),
     );
@@ -5043,8 +5045,18 @@ function GaliiSubcityPlanPage() {
       ],
     ]),
   );
-  const idileeTotals = WOREDAS_LIST.reduce(
-    (sum, w) => sum + Number(woredaForms[w.id].idilee_qarshii || 0),
+  // Idilee totals per sub-source
+  const idileeTotals = Object.fromEntries(
+    SC_IDILEE_SOURCES.map((s) => [
+      s.key,
+      WOREDAS_LIST.reduce(
+        (sum, w) => sum + Number(woredaForms[w.id][`idilee_${s.key}_qarshii`] || 0),
+        0,
+      ),
+    ]),
+  );
+  const idileeGrandTotal = SC_IDILEE_SOURCES.reduce(
+    (sum, s) => sum + idileeTotals[s.key],
     0,
   );
 
@@ -5194,16 +5206,17 @@ function GaliiSubcityPlanPage() {
               background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
             }}
           >
-            <p className="text-sm font-semibold text-white">
-              Karoora Idilee (Placeholder)
+            <p className="text-sm font-semibold text-white">Idilee</p>
+            <p className="text-white/60 text-xs mt-0.5">
+              Enter Qarshii for each source (no KG)
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[160px]">
-                    Gosa
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#64748b] uppercase min-w-[200px]">
+                    Source
                   </th>
                   {WOREDAS_LIST.map((w) => (
                     <th
@@ -5214,35 +5227,63 @@ function GaliiSubcityPlanPage() {
                     </th>
                   ))}
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#0f172a] uppercase bg-[#eff6ff] min-w-[100px]">
-                    Waliigala
+                    Total
                   </th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-[#f1f5f9]">
-                  <td className="px-4 py-2 font-medium text-[#1e293b]">
+                {SC_IDILEE_SOURCES.map((src, i) => (
+                  <tr
+                    key={src.key}
+                    className={`border-b border-[#f1f5f9] hover:bg-[#f8fafc] ${i % 2 === 0 ? "" : "bg-[#f8fafc]/50"}`}
+                  >
+                    <td className="px-4 py-2 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
+                        {src.label}
+                      </span>
+                    </td>
+                    {WOREDAS_LIST.map((w) => (
+                      <td key={w.id} className="px-4 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={woredaForms[w.id][`idilee_${src.key}_qarshii`] ?? ""}
+                          onChange={(e) =>
+                            handleField(w.id, `idilee_${src.key}_qarshii`, e.target.value)
+                          }
+                          placeholder="0.00"
+                          className="w-full border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
+                        />
+                      </td>
+                    ))}
+                    <td className="px-4 py-2 text-right font-bold text-[#0f172a] bg-[#eff6ff]">
+                      {idileeTotals[src.key].toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                {/* Ida'ama total row */}
+                <tr className="border-b border-[#e2e8f0] bg-[#eff6ff] font-bold">
+                  <td className="px-4 py-2 text-[#1e40af]">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
-                      Idilee Qarshii
+                      Idilee Total
                     </span>
                   </td>
-                  {WOREDAS_LIST.map((w) => (
-                    <td key={w.id} className="px-4 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={woredaForms[w.id].idilee_qarshii}
-                        onChange={(e) =>
-                          handleField(w.id, "idilee_qarshii", e.target.value)
-                        }
-                        placeholder="0.00"
-                        className="w-full border border-[#e2e8f0] rounded-lg px-2.5 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
-                      />
-                    </td>
-                  ))}
-                  <td className="px-4 py-2 text-right font-bold text-[#0f172a] bg-[#eff6ff]">
-                    {idileeTotals.toLocaleString()}
+                  {WOREDAS_LIST.map((w) => {
+                    const wTotal = SC_IDILEE_SOURCES.reduce(
+                      (sum, s) => sum + Number(woredaForms[w.id][`idilee_${s.key}_qarshii`] || 0),
+                      0,
+                    );
+                    return (
+                      <td key={w.id} className="px-4 py-2 text-right text-[#1e40af]">
+                        {wTotal.toLocaleString()}
+                      </td>
+                    );
+                  })}
+                  <td className="px-4 py-2 text-right text-[#1e40af] bg-[#eff6ff]">
+                    {idileeGrandTotal.toLocaleString()}
                   </td>
                 </tr>
               </tbody>
@@ -5254,13 +5295,13 @@ function GaliiSubcityPlanPage() {
           <div>
             {saved && (
               <p className="flex items-center gap-2 text-[#0f766e] text-sm font-semibold">
-                <CheckIcon /> Karoora Galii Aanaa hundaaf Olkaa'ame.
+                <CheckIcon /> Galii plan saved for all woredas.
               </p>
             )}
             {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
             {!saved && !saveError && (
               <p className="text-[#94a3b8] text-xs">
-                Karoora Galii duraani ni bakka bu'a.
+                This will replace the previous Galii plan.
               </p>
             )}
           </div>
@@ -5272,11 +5313,11 @@ function GaliiSubcityPlanPage() {
             {saving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Olkaa'aa jira...
+                Saving...
               </>
             ) : (
               <>
-                <CheckIcon /> Karoora Galii Olkaa'i
+                <CheckIcon /> Save Galii Plan
               </>
             )}
           </button>
@@ -5664,13 +5705,15 @@ const SUBCITY_REVENUE_CATEGORIES = [
 ];
 
 function SubcityGaliiSubmitForm({ u }) {
-  // mqForm: { [sourceKey]: { kg: string, qarshii: string } }
   const emptyMq = () =>
     Object.fromEntries(
       SC_MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
     );
+  const emptyIdilee = () =>
+    Object.fromEntries(SC_IDILEE_SOURCES.map((s) => [s.key, ""]));
+
   const [mqForm, setMqForm] = useState(emptyMq());
-  const [idileeAmount, setIdileeAmount] = useState("");
+  const [idileeForm, setIdileeForm] = useState(emptyIdilee());
   const [date, setDate] = useState(
     () => new Date().toISOString().split("T")[0],
   );
@@ -5680,24 +5723,30 @@ function SubcityGaliiSubmitForm({ u }) {
 
   const handleMqField = (key, field, val) =>
     setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
+  const handleIdileeField = (key, val) =>
+    setIdileeForm((p) => ({ ...p, [key]: val }));
 
   const hasAnyMq = SC_MANA_QOPHESSAA_SOURCES.some(
     (s) =>
       Number(mqForm[s.key]?.kg || 0) > 0 ||
       Number(mqForm[s.key]?.qarshii || 0) > 0,
   );
-  const hasIdilee = Number(idileeAmount || 0) > 0;
+  const idileeTotal = SC_IDILEE_SOURCES.reduce(
+    (sum, s) => sum + Number(idileeForm[s.key] || 0),
+    0,
+  );
+  const hasIdilee = idileeTotal > 0;
   const canSubmit = (hasAnyMq || hasIdilee) && date;
 
   const mqTotal = SC_MANA_QOPHESSAA_SOURCES.reduce(
     (sum, s) => sum + Number(mqForm[s.key]?.qarshii || 0),
     0,
   );
-  const grandTotal = mqTotal + Number(idileeAmount || 0);
+  const grandTotal = mqTotal + idileeTotal;
 
   const handleSubmitReport = async () => {
     if (!canSubmit) {
-      setSubmitError("Xiqqaatii tokkoo ol galchi.");
+      setSubmitError("Please enter at least one value.");
       return;
     }
     setSubmitting(true);
@@ -5718,26 +5767,29 @@ function SubcityGaliiSubmitForm({ u }) {
           });
         }
       });
-      if (hasIdilee) {
-        entries.push({
-          category: "Idilee",
-          categoryId: "idilee",
-          source: "Idilee",
-          kg: 0,
-          amount: Number(idileeAmount),
-          date,
-        });
-      }
+      SC_IDILEE_SOURCES.forEach((s) => {
+        const qarshii = Number(idileeForm[s.key] || 0);
+        if (qarshii > 0) {
+          entries.push({
+            category: "Idilee",
+            categoryId: "idilee",
+            source: s.label,
+            kg: 0,
+            amount: qarshii,
+            date,
+          });
+        }
+      });
       await submitSubcityRevenueReport({
         entries,
         total: grandTotal,
         report_date: date,
       });
       setMqForm(emptyMq());
-      setIdileeAmount("");
+      setIdileeForm(emptyIdilee());
       setShowModal(true);
     } catch (err) {
-      setSubmitError(err.response?.data?.message || "Failed to submit report.");
+      setSubmitError(err.response?.data?.message || "Submission failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -5748,9 +5800,9 @@ function SubcityGaliiSubmitForm({ u }) {
       {showModal && <SubcitySuccessModal onClose={() => setShowModal(false)} />}
 
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Gabaasa Galchi</h1>
+        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
         <p className="text-[#64748b] text-sm mt-0.5">
-          Galii Sassaabu: Mana Qophessaa KG fi Qarshii Galchi
+          Revenue Collection: Enter KG and Qarshii for each source
         </p>
       </div>
 
@@ -5758,7 +5810,7 @@ function SubcityGaliiSubmitForm({ u }) {
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1">
           <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-            Guyyaa Gabaasaa <span className="text-red-500">*</span>
+            Report Date <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -5770,7 +5822,7 @@ function SubcityGaliiSubmitForm({ u }) {
         {grandTotal > 0 && (
           <div className="text-right flex-shrink-0">
             <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
-              Walii Galii Qarshii
+              Total Qarshii
             </p>
             <p className="text-2xl font-bold text-[#0f766e]">
               ETB {grandTotal.toLocaleString()}
@@ -5779,7 +5831,7 @@ function SubcityGaliiSubmitForm({ u }) {
         )}
       </div>
 
-      {/* Mana Qophessaa grid */}
+      {/* Mana Qophessaa */}
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
         <div
           className="px-5 py-3 border-b border-[#e2e8f0]"
@@ -5789,19 +5841,13 @@ function SubcityGaliiSubmitForm({ u }) {
         >
           <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
           <p className="text-white/60 text-xs mt-0.5">
-            KG (Lakk. kafaltootaa) fi Qarshii galchi
+            Enter KG and Qarshii for each source
           </p>
         </div>
         <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-            Madda Galii
-          </p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
-            KG
-          </p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
-            Qarshii (ETB)
-          </p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">Source</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">KG</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">Qarshii (ETB)</p>
         </div>
         <div className="divide-y divide-[#f1f5f9] px-5">
           {SC_MANA_QOPHESSAA_SOURCES.map((src) => {
@@ -5818,21 +5864,14 @@ function SubcityGaliiSubmitForm({ u }) {
                   {src.label}
                 </span>
                 <input
-                  type="number"
-                  min="0"
-                  value={kg}
+                  type="number" min="0" value={kg}
                   onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
                   placeholder="0"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
                 />
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={qarshii}
-                  onChange={(e) =>
-                    handleMqField(src.key, "qarshii", e.target.value)
-                  }
+                  type="number" min="0" step="0.01" value={qarshii}
+                  onChange={(e) => handleMqField(src.key, "qarshii", e.target.value)}
                   placeholder="0.00"
                   className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
                 />
@@ -5841,13 +5880,9 @@ function SubcityGaliiSubmitForm({ u }) {
           })}
           {mqTotal > 0 && (
             <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
-              <span className="text-sm font-bold text-[#0f766e]">
-                Waliigala MQ
-              </span>
+              <span className="text-sm font-bold text-[#0f766e]">Mana Qophessaa Total</span>
               <span />
-              <span className="text-right text-sm font-bold text-[#0f766e]">
-                ETB {mqTotal.toLocaleString()}
-              </span>
+              <span className="text-right text-sm font-bold text-[#0f766e]">ETB {mqTotal.toLocaleString()}</span>
             </div>
           )}
         </div>
@@ -5862,35 +5897,46 @@ function SubcityGaliiSubmitForm({ u }) {
           }}
         >
           <p className="text-sm font-semibold text-white">Idilee</p>
-          <p className="text-white/60 text-xs mt-0.5">
-            Galii Idilee: Qarshii qofa (placeholder)
-          </p>
+          <p className="text-white/60 text-xs mt-0.5">Enter Qarshii for each source</p>
         </div>
-        <div className="px-5 py-4">
-          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-            Idilee Qarshii (ETB)
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={idileeAmount}
-            onChange={(e) => setIdileeAmount(e.target.value)}
-            placeholder="0.00"
-            className="w-full sm:w-64 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/20"
-          />
+        <div className="grid grid-cols-[1fr_150px] gap-3 px-5 pt-3 pb-1">
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">Source</p>
+          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">Qarshii (ETB)</p>
+        </div>
+        <div className="divide-y divide-[#f1f5f9] px-5">
+          {SC_IDILEE_SOURCES.map((src) => {
+            const qarshii = idileeForm[src.key] ?? "";
+            const hasValue = Number(qarshii) > 0;
+            return (
+              <div
+                key={src.key}
+                className={`grid grid-cols-[1fr_150px] gap-3 py-3 items-center transition-colors ${hasValue ? "bg-[#eff6ff]/50" : ""}`}
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[#1e293b]">
+                  <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
+                  {src.label}
+                </span>
+                <input
+                  type="number" min="0" step="0.01" value={qarshii}
+                  onChange={(e) => handleIdileeField(src.key, e.target.value)}
+                  placeholder="0.00"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30 focus:border-[#1e40af]"
+                />
+              </div>
+            );
+          })}
+          {idileeTotal > 0 && (
+            <div className="grid grid-cols-[1fr_150px] gap-3 py-3 items-center bg-[#eff6ff]">
+              <span className="text-sm font-bold text-[#1e40af]">Idilee Total</span>
+              <span className="text-right text-sm font-bold text-[#1e40af]">ETB {idileeTotal.toLocaleString()}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {submitError && (
         <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -5900,18 +5946,18 @@ function SubcityGaliiSubmitForm({ u }) {
       )}
 
       <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-        <p className="text-[#94a3b8] text-xs">Hunda galchii booda galchi.</p>
+        <p className="text-[#94a3b8] text-xs">Fill in all values before submitting.</p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => {
               setMqForm(emptyMq());
-              setIdileeAmount("");
+              setIdileeForm(emptyIdilee());
               setSubmitError("");
             }}
             className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
           >
-            Haqi
+            Clear
           </button>
           <button
             type="button"
@@ -5919,17 +5965,11 @@ function SubcityGaliiSubmitForm({ u }) {
             disabled={submitting || !canSubmit}
             className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path d="M22 2L11 13" />
               <path d="M22 2L15 22l-4-9-9-4 20-7z" />
             </svg>
-            {submitting ? "Galchaa jira..." : "Gabaasa Galchi"}
+            {submitting ? "Submitting..." : "Submit Report"}
           </button>
         </div>
       </div>
@@ -7169,10 +7209,9 @@ const SECTOR_PRINT_FIELDS = {
     { key: "galii_atk_galchuu", label: "Galii ATK Galchuu" },
   ],
   galii: [
-    // Rows are built dynamically from SC_MANA_QOPHESSAA_SOURCES in buildSubcityPrintTable.
-    // These entries represent the high-level categories used as fallback.
-    { key: "mq_total_qarshii", label: "Mana Qophessaa (Qarshii)" },
-    { key: "idilee_qarshii", label: "Idilee (Qarshii)" },
+    // Rows built dynamically in buildSubcityPrintTable from SC_MANA_QOPHESSAA_SOURCES + SC_IDILEE_SOURCES.
+    ...SC_MANA_QOPHESSAA_SOURCES.map((s) => ({ key: `mq_${s.key}_qarshii`, label: s.label })),
+    ...SC_IDILEE_SOURCES.map((s) => ({ key: `idilee_${s.key}_qarshii`, label: s.label })),
   ],
 };
 
@@ -7210,14 +7249,18 @@ function buildSubcityPrintTable({
         feKey: `mq_${s.key}`,
         planKgKey: `mq_${s.key}_kg`,
         planQarshiiKey: `mq_${s.key}_qarshii`,
+        isIdilee: false,
+        idileeKey: null,
       })),
-      {
-        label: "Idilee",
-        sourceLabel: "Idilee",
-        feKey: "_idilee",
+      ...SC_IDILEE_SOURCES.map((s) => ({
+        label: s.label,
+        sourceLabel: s.label,
+        feKey: `_idilee_${s.key}`,
         planKgKey: null,
-        planQarshiiKey: "idilee_qarshii",
-      },
+        planQarshiiKey: `idilee_${s.key}_qarshii`,
+        isIdilee: true,
+        idileeKey: s.key,
+      })),
     ];
 
     // Build sub-column list: always show Raawwii KG+Qarshii; Karoora optional; % optional
@@ -7269,12 +7312,12 @@ function buildSubcityPrintTable({
       for (const w of WOREDAS_PRINT) {
         const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
         const actKg =
-          row.feKey === "_idilee"
+          row.isIdilee
             ? 0
             : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
         const actQarshii =
-          row.feKey === "_idilee"
-            ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
+          row.isIdilee
+            ? Number(wEntry?.actuals?.[`idilee_${row.idileeKey}_qarshii`] ?? 0)
             : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
         const planKg = row.planKgKey
           ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)
@@ -7630,13 +7673,17 @@ function buildSubcityPrintHTML({
         feKey: `mq_${s.key}`,
         planKgKey: `mq_${s.key}_kg`,
         planQarshiiKey: `mq_${s.key}_qarshii`,
+        isIdilee: false,
+        idileeKey: null,
       })),
-      {
-        label: "Idilee",
-        feKey: "_idilee",
+      ...SC_IDILEE_SOURCES.map((s) => ({
+        label: s.label,
+        feKey: `_idilee_${s.key}`,
         planKgKey: null,
-        planQarshiiKey: "idilee_qarshii",
-      },
+        planQarshiiKey: `idilee_${s.key}_qarshii`,
+        isIdilee: true,
+        idileeKey: s.key,
+      })),
     ];
 
     let grandActualQarshii = 0,
@@ -7650,12 +7697,12 @@ function buildSubcityPrintHTML({
       for (const w of WOREDAS_PRINT) {
         const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
         const actKg =
-          row.feKey === "_idilee"
+          row.isIdilee
             ? 0
             : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
         const actQ =
-          row.feKey === "_idilee"
-            ? Number(wEntry?.actuals?.["idilee_qarshii"] ?? 0)
+          row.isIdilee
+            ? Number(wEntry?.actuals?.[`idilee_${row.idileeKey}_qarshii`] ?? 0)
             : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
         const planKg = row.planKgKey
           ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)

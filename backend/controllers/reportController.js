@@ -469,6 +469,46 @@ const submitRevenueReport = async (req, res) => {
     const user = req.user;
     const username = user?.username || "anonymous";
 
+    // ── Lock check: one galii submission per day per user ────────────────────
+    if (report_date) {
+      const { data: existingEntry } = await supabase
+        .from("revenue_entries")
+        .select("id")
+        .eq("username", username)
+        .eq("report_date", report_date)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingEntry) {
+        // Check for an approved edit token
+        const { data: token } = await supabase
+          .from("edit_requests")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("sector", "galii")
+          .eq("report_date", report_date)
+          .eq("status", "approved")
+          .maybeSingle();
+
+        if (!token) {
+          return res.status(409).json({
+            message:
+              "You have already submitted a report for this date. Request edit access from the admin to resubmit.",
+          });
+        }
+
+        // Delete old entries so the new INSERT replaces them cleanly
+        await supabase
+          .from("revenue_entries")
+          .delete()
+          .eq("username", username)
+          .eq("report_date", report_date);
+
+        // Delete the edit token
+        await supabase.from("edit_requests").delete().eq("id", token.id);
+      }
+    }
+
     const rows = entries.map((entry) => ({
       username,
       gosa_galii: entry.category,
@@ -701,6 +741,17 @@ const getLockStatus = async (req, res) => {
         .maybeSingle();
       results[sector] = !!data;
     }
+
+    // Galii uses revenue_entries (keyed by username + report_date, no user_id column)
+    const username = req.user.username;
+    const { data: galiiEntry } = await supabase
+      .from("revenue_entries")
+      .select("id")
+      .eq("username", username)
+      .eq("report_date", date)
+      .limit(1)
+      .maybeSingle();
+    results["galii"] = !!galiiEntry;
 
     res.json({ locked: results, date });
   } catch (err) {
