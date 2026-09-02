@@ -4494,6 +4494,7 @@ function GenericAnalysisSection({
                             </tr>,
                           );
                         });
+
                         // No Waliigala combined row — user requested removal
                       }
                     }
@@ -4570,33 +4571,21 @@ function SuccessModal({ onClose }) {
 }
 
 // ─── LockBanner ──────────────────────────────────────────────────────────────
-// FIXED: added console logs and robust error handling
 function LockBanner({ sector, reportType, onUnlocked }) {
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
   const [reqError, setReqError] = useState("");
 
-  console.log("LockBanner rendered for sector:", sector);
-
   const handleRequest = async () => {
-    console.log("🔑 Request button clicked for sector:", sector);
     setRequesting(true);
     setReqError("");
     try {
       const today = new Date().toISOString().split("T")[0];
-      console.log("Calling requestEditAccess with:", sector, today, reportType);
       await requestEditAccess(sector, today, reportType || "");
-      console.log("✅ requestEditAccess succeeded");
       setRequested(true);
     } catch (err) {
-      console.error("❌ requestEditAccess error:", err);
       const msg = err.response?.data?.message || "Failed to send request.";
-      // If the error says "already approved", treat it as success and unlock
-      if (
-        msg.toLowerCase().includes("approved") ||
-        msg.toLowerCase().includes("already")
-      ) {
-        console.log("Request already approved – unlocking");
+      if (msg.toLowerCase().includes("approved")) {
         onUnlocked && onUnlocked();
       } else {
         setReqError(msg);
@@ -4671,93 +4660,129 @@ function LockBanner({ sector, reportType, onUnlocked }) {
   );
 }
 
-// ─── DetailSubForm ────────────────────────────────────────────────────────────
-// Reusable sub-source breakdown form for GaliiSassabuSubmitForm.
-// Must be a top-level component (not nested) to avoid React remount issues.
-function DetailSubForm({ details, setDetails, sources, accentColor }) {
-  const updateDetail = (idx, field, val) =>
-    setDetails((prev) =>
-      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
+// ─── LockBannerDual ──────────────────────────────────────────────────────────
+// Unified lock banner for Galii Sassabu — requests edit access for BOTH
+// galii_sassabu (summary) and galii (details) simultaneously.
+function LockBannerDual({ onUnlocked }) {
+  const [requesting, setRequesting] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [reqError, setReqError] = useState("");
+
+  const handleRequest = async () => {
+    setRequesting(true);
+    setReqError("");
+    const today = new Date().toISOString().split("T")[0];
+
+    // Request for each sector independently — don't let one failure block the other
+    const results = await Promise.allSettled([
+      requestEditAccess(
+        "galii_sassabu",
+        today,
+        "Daily Report (Gabaasa Guyyaa)",
+      ),
+      requestEditAccess("galii", today, "Daily Report (Gabaasa Guyyaa)"),
+    ]);
+
+    setRequesting(false);
+
+    // If any result indicates an already-approved token, unlock immediately
+    const anyApproved = results.some(
+      (r) =>
+        r.status === "rejected" &&
+        r.reason?.response?.data?.message?.toLowerCase().includes("approved"),
     );
-  const addRow = () =>
-    setDetails((prev) => [...prev, { source: "", amount: "" }]);
-  const removeRow = (idx) =>
-    setDetails((prev) => prev.filter((_, i) => i !== idx));
+    if (anyApproved) {
+      onUnlocked && onUnlocked();
+      return;
+    }
+
+    // If at least one succeeded or is already pending, show success state
+    const anySucceeded = results.some((r) => r.status === "fulfilled");
+    const anyPending = results.some((r) =>
+      r.reason?.response?.data?.message?.toLowerCase().includes("pending"),
+    );
+    if (anySucceeded || anyPending) {
+      setRequested(true);
+      return;
+    }
+
+    // All failed with an unexpected error — show the first error message
+    const firstErr =
+      results.find((r) => r.status === "rejected")?.reason?.response?.data
+        ?.message || "Failed to send request.";
+    setReqError(firstErr);
+  };
 
   return (
-    <div className="mt-3 space-y-2">
-      {details.map((d, idx) => (
-        <div key={idx} className="flex gap-2 items-start">
-          <div className="flex-1">
-            <select
-              value={d.source}
-              onChange={(e) => updateDetail(idx, "source", e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
-              style={{ "--tw-ring-color": accentColor + "33" }}
-            >
-              <option value="">Select source…</option>
-              {sources.map((s) => (
-                <option key={s.key} value={s.label}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="w-36">
-            <input
-              type="number"
-              min="0"
-              placeholder="Amount"
-              value={d.amount}
-              onChange={(e) => updateDetail(idx, "amount", e.target.value)}
-              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
-            />
-          </div>
-          {details.length > 1 && (
-            <button
-              type="button"
-              onClick={() => removeRow(idx)}
-              className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
-              title="Remove row"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          )}
+    <div className="rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <svg
+          className="w-5 h-5 text-[#b45309] flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <div>
+          <p className="text-sm font-semibold text-[#b45309]">
+            Report already submitted for today
+          </p>
+          <p className="text-xs text-[#92400e] mt-0.5">
+            You can only submit once per day. Request edit access from the admin
+            to resubmit.
+          </p>
         </div>
-      ))}
-      <button
-        type="button"
-        onClick={addRow}
-        className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
-        style={{
-          color: accentColor,
-          borderColor: accentColor + "55",
-          background: accentColor + "11",
-        }}
-      >
-        + Add Row
-      </button>
+      </div>
+      {reqError && <p className="text-xs text-[#dc2626]">{reqError}</p>}
+      {requested ? (
+        <div className="flex items-center gap-2 bg-white border border-[#fde68a] rounded-lg px-3 py-2">
+          <svg
+            className="w-4 h-4 text-[#92400e] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          <p className="text-xs text-[#92400e] font-medium">
+            Edit request sent — waiting for admin approval.
+          </p>
+        </div>
+      ) : (
+        <button
+          onClick={handleRequest}
+          disabled={requesting}
+          className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+        >
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+          {requesting ? "Requesting…" : "Request Edit Access"}
+        </button>
+      )}
     </div>
   );
 }
-
-// ─── GaliiSassabuSubmitForm ──────────────────────────────────────────────────
-// This is the summary form. It contains two totals (Mana Qophessaa and Idilee)
-// and optional breakdowns. The "Details" button toggles the detailed breakdown
-// form (RevenueSubmitForm) which is used to enter per-source values.
-function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
+// ─── Galii Sassabu Submit Form ────────────────────────────────────────────────
+function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
   const ACCENT = "#c2410c";
   const HEADER_GRADIENT = "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)";
 
@@ -4776,53 +4801,20 @@ function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
   const [showModal, setShowModal] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Auto-sum MQ detail rows → mqTotal whenever detail rows change
-  useEffect(() => {
-    if (!showMqDetail) return;
-    const sum = mqDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
-    if (sum > 0) setMqTotal(String(sum));
-  }, [mqDetails, showMqDetail]);
-
-  // Auto-sum Idilee detail rows → idTotal whenever detail rows change
-  useEffect(() => {
-    if (!showIdDetail) return;
-    const sum = idDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
-    if (sum > 0) setIdTotal(String(sum));
-  }, [idDetails, showIdDetail]);
-
-  // ── NEW: handle submission from the detailed form ──────────────────────────
-  const handleDetailsSubmit = (
-    computedMqTotal,
-    computedIdTotal,
-    mqDetailRows,
-    idDetailRows,
-  ) => {
-    if (computedMqTotal > 0) setMqTotal(String(computedMqTotal));
-    if (computedIdTotal > 0) setIdTotal(String(computedIdTotal));
-    // Update details arrays with the rows from the detailed form
-    if (mqDetailRows && mqDetailRows.length) {
-      setMqDetails(
-        mqDetailRows.map((d) => ({
-          source: d.source || "",
-          amount: String(d.amount || 0),
-        })),
-      );
-      setShowMqDetail(true);
-    }
-    if (idDetailRows && idDetailRows.length) {
-      setIdDetails(
-        idDetailRows.map((d) => ({
-          source: d.source || "",
-          amount: String(d.amount || 0),
-        })),
-      );
-      setShowIdDetail(true);
-    }
-    setShowDetails(false); // close the detailed page
-  };
-
-  // ── Pre-fill from existing report when lock is cleared ─────────────────────
+  // Pending totals from Details page submission — applied on next render
+  // to survive the re-render caused by onSubmitSuccess → refreshLocks
+  const pendingTotals = useRef(null);
   const prevLocked = useRef(locked);
+  // Apply pending totals from Details page after each render cycle
+  useEffect(() => {
+    if (pendingTotals.current) {
+      const { mq, id } = pendingTotals.current;
+      pendingTotals.current = null;
+      if (mq > 0) setMqTotal(String(mq));
+      if (id > 0) setIdTotal(String(id));
+    }
+  });
+
   useEffect(() => {
     const wasLocked = prevLocked.current;
     prevLocked.current = locked;
@@ -4878,6 +4870,16 @@ function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
     setYaada("");
     setError("");
   };
+
+  // Detail helpers
+  const updateDetail = (setter, idx, field, val) =>
+    setter((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
+    );
+  const addDetailRow = (setter) =>
+    setter((prev) => [...prev, { source: "", amount: "" }]);
+  const removeDetailRow = (setter, idx) =>
+    setter((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -4952,18 +4954,90 @@ function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
     }
   };
 
+  // Detail sub-form for one category
+  function DetailSubForm({ details, setDetails, sources, accentColor }) {
+    return (
+      <div className="mt-3 space-y-2">
+        {details.map((d, idx) => (
+          <div key={idx} className="flex gap-2 items-start">
+            <div className="flex-1">
+              <select
+                value={d.source}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "source", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+                style={{ "--tw-ring-color": accentColor + "33" }}
+              >
+                <option value="">Select source…</option>
+                {sources.map((s) => (
+                  <option key={s.key} value={s.label}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-36">
+              <input
+                type="number"
+                min="0"
+                placeholder="Amount"
+                value={d.amount}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "amount", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+              />
+            </div>
+            {details.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeDetailRow(setDetails, idx)}
+                className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
+                title="Remove row"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => addDetailRow(setDetails)}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
+          style={{
+            color: accentColor,
+            borderColor: accentColor + "55",
+            background: accentColor + "11",
+          }}
+        >
+          + Add Row
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
       {showModal && <SuccessModal onClose={() => setShowModal(false)} />}
 
-      {/* Lock banner — same pattern as every other sector */}
-      {locked && (
+      {/* Single unified lock banner — shown for both summary and details page.
+          Requests permission for both galii_sassabu AND galii simultaneously. */}
+      {(locked || lockedGalii) && (
         <div className="mb-5">
-          <LockBanner
-            sector="galii_sassabu"
-            reportType={reportType}
-            onUnlocked={onSubmitSuccess}
-          />
+          <LockBannerDual onUnlocked={onSubmitSuccess} />
         </div>
       )}
 
@@ -5010,11 +5084,16 @@ function GaliiSassabuSubmitForm({ u, locked, lockedDetails, onSubmitSuccess }) {
       {showDetails ? (
         <RevenueSubmitForm
           u={u}
-          locked={!!lockedDetails}
-          // Pass a callback to handle the details submission
-          onSubmitDetails={handleDetailsSubmit}
-          // Also pass the current date so the detailed form uses the same date
-          parentDate={todayStr()}
+          locked={!!lockedGalii}
+          onSubmitSuccess={(computedMqTotal, computedIdTotal) => {
+            // Store totals in ref — applied after the re-render from refreshLocks
+            pendingTotals.current = {
+              mq: typeof computedMqTotal === "number" ? computedMqTotal : 0,
+              id: typeof computedIdTotal === "number" ? computedIdTotal : 0,
+            };
+            // Do NOT setShowDetails(false) — stay on Details page
+            onSubmitSuccess && onSubmitSuccess();
+          }}
         />
       ) : (
         <>
@@ -5917,18 +5996,7 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
 // ─── Revenue Submit Form ──────────────────────────────────────────────────────
 // Mana Qophessaa: 7 sources each with KG + Qarshii.
 // Idilee: 7 sub-sources, Qarshii only (no KG).
-// This component is used both standalone (subcity) and as a detailed
-// breakdown inside the woreda Galii Sassabu summary. We added props:
-// - parentDate: if provided, use that date instead of internal state.
-// - onSubmitDetails: if provided, calling it will NOT lock the report.
-//   It will pass back computed totals and details to the parent.
-function RevenueSubmitForm({
-  u,
-  locked,
-  onSubmitSuccess,
-  parentDate,
-  onSubmitDetails,
-}) {
+function RevenueSubmitForm({ u, locked, onSubmitSuccess }) {
   const emptyMq = () =>
     Object.fromEntries(
       MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
@@ -5938,15 +6006,50 @@ function RevenueSubmitForm({
 
   const [mqForm, setMqForm] = useState(emptyMq());
   const [idileeForm, setIdileeForm] = useState(emptyIdilee());
-  const [date, setDate] = useState(() => parentDate || todayStr());
+  const [date, setDate] = useState(todayStr());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // Use parentDate if provided (reactive)
+  // Pre-fill with today's existing entries when the lock is cleared by admin
+  const prevLocked = useRef(locked);
   useEffect(() => {
-    if (parentDate) setDate(parentDate);
-  }, [parentDate]);
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      const today = todayStr();
+      fetchMyReports({ sector: "galii", date_from: today, date_to: today })
+        .then((data) => {
+          const rows = Array.isArray(data) ? data : [];
+          const todayRows = rows.filter(
+            (r) =>
+              (r.report_date ?? r.guyyaa) === today && r._sector === "galii",
+          );
+          if (!todayRows.length) return;
+          // Rebuild mqForm and idileeForm from existing entries
+          const newMq = emptyMq();
+          const newIdilee = emptyIdilee();
+          todayRows.forEach((r) => {
+            const src = r.madda_galii ?? "";
+            if (r.gosa_galii === "Mana Qophessaa") {
+              const mq = MANA_QOPHESSAA_SOURCES.find((s) => s.label === src);
+              if (mq) {
+                newMq[mq.key] = {
+                  kg: String(r.kg ?? ""),
+                  qarshii: String(r.baasii ?? ""),
+                };
+              }
+            } else if (r.gosa_galii === "Idilee") {
+              const id = IDILEE_SOURCES.find((s) => s.label === src);
+              if (id) newIdilee[id.key] = String(r.baasii ?? "");
+            }
+          });
+          setMqForm(newMq);
+          setIdileeForm(newIdilee);
+        })
+        .catch(() => {});
+    }
+  }, [locked]);
 
   const handleMqField = (key, field, val) =>
     setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
@@ -5978,82 +6081,66 @@ function RevenueSubmitForm({
     }
     setSubmitting(true);
     setSubmitError("");
-
-    // Build entries from the form
-    const entries = [];
-    MANA_QOPHESSAA_SOURCES.forEach((s) => {
-      const kg = Number(mqForm[s.key]?.kg || 0);
-      const qarshii = Number(mqForm[s.key]?.qarshii || 0);
-      if (kg > 0 || qarshii > 0) {
-        entries.push({
-          category: "Mana Qophessaa",
-          categoryId: "manaQophessaa",
-          source: s.label,
-          kg,
-          amount: qarshii,
-          date,
-        });
-      }
-    });
-    IDILEE_SOURCES.forEach((s) => {
-      const qarshii = Number(idileeForm[s.key] || 0);
-      if (qarshii > 0) {
-        entries.push({
-          category: "Idilee",
-          categoryId: "idilee",
-          source: s.label,
-          kg: 0,
-          amount: qarshii,
-          date,
-        });
-      }
-    });
-
-    // If we have an onSubmitDetails callback, we are in the woreda detailed page.
-    // Do NOT call any API – just pass the computed totals/details back to parent.
-    if (onSubmitDetails) {
-      const mqRows = entries
-        .filter((e) => e.category === "Mana Qophessaa")
-        .map((e) => ({ source: e.source, amount: e.amount }));
-      const idRows = entries
-        .filter((e) => e.category === "Idilee")
-        .map((e) => ({ source: e.source, amount: e.amount }));
-      onSubmitDetails(mqTotal, idileeTotal, mqRows, idRows);
-      setSubmitting(false);
-      setMqForm(emptyMq());
-      setIdileeForm(emptyIdilee());
-      return;
-    }
-
-    // Otherwise (subcity standalone), submit via API.
     try {
+      const entries = [];
+      MANA_QOPHESSAA_SOURCES.forEach((s) => {
+        const kg = Number(mqForm[s.key]?.kg || 0);
+        const qarshii = Number(mqForm[s.key]?.qarshii || 0);
+        if (kg > 0 || qarshii > 0) {
+          entries.push({
+            category: "Mana Qophessaa",
+            categoryId: "manaQophessaa",
+            source: s.label,
+            kg,
+            amount: qarshii,
+            date,
+          });
+        }
+      });
+      IDILEE_SOURCES.forEach((s) => {
+        const qarshii = Number(idileeForm[s.key] || 0);
+        if (qarshii > 0) {
+          entries.push({
+            category: "Idilee",
+            categoryId: "idilee",
+            source: s.label,
+            kg: 0,
+            amount: qarshii,
+            date,
+          });
+        }
+      });
       await submitRevenueReport({
         entries,
         total: grandTotal,
         report_date: date,
       });
-      // Also store in galii_sassabu_reports for subcity analysis
-      try {
-        await submitGaliiSassabuReport({
-          report_date: date,
-          report_type: "Daily Report (Gabaasa Guyyaa)",
-          mana_qophessaa_total: mqTotal,
-          idilee_total: idileeTotal,
-          mana_qophessaa_detail: entries
-            .filter((e) => e.category === "Mana Qophessaa")
-            .map((e) => ({ source: e.source, amount: e.amount })),
-          idilee_detail: entries
-            .filter((e) => e.category === "Idilee")
-            .map((e) => ({ source: e.source, amount: e.amount })),
-          yaada_gudinaa: "",
-        });
-      } catch (_) {
-        // non-fatal
+      // Also store totals in galii_sassabu_reports so work analysis picks them up
+      // Only do this when called from within GaliiSassabuSubmitForm (onSubmitSuccess receives totals)
+      if (mqTotal > 0 || idileeTotal > 0) {
+        try {
+          await submitGaliiSassabuReport({
+            report_date: date,
+            report_type: "Daily Report (Gabaasa Guyyaa)",
+            mana_qophessaa_total: mqTotal,
+            idilee_total: idileeTotal,
+            mana_qophessaa_detail: entries
+              .filter((e) => e.category === "Mana Qophessaa")
+              .map((e) => ({ source: e.source, amount: e.amount })),
+            idilee_detail: entries
+              .filter((e) => e.category === "Idilee")
+              .map((e) => ({ source: e.source, amount: e.amount })),
+            yaada_gudinaa: "",
+          });
+        } catch (_) {
+          // galii_sassabu insert failing (e.g. already locked) is non-fatal
+          // The revenue report was already saved successfully
+        }
       }
       setMqForm(emptyMq());
       setIdileeForm(emptyIdilee());
       setShowModal(true);
-      if (onSubmitSuccess) onSubmitSuccess(mqTotal, idileeTotal);
+      onSubmitSuccess && onSubmitSuccess(mqTotal, idileeTotal);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message || "Submission failed. Please try again.",
@@ -6145,7 +6232,7 @@ function RevenueSubmitForm({
                   value={kg}
                   onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
                   placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
                 <input
                   type="number"
@@ -6156,7 +6243,7 @@ function RevenueSubmitForm({
                     handleMqField(src.key, "qarshii", e.target.value)
                   }
                   placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
+                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30 focus:border-[#0f766e]"
                 />
               </div>
             );
@@ -6265,7 +6352,7 @@ function RevenueSubmitForm({
         </div>
         <button
           onClick={handleSubmit}
-          disabled={submitting || !canSubmit}
+          disabled={submitting || !canSubmit || locked}
           className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
         >
           <SubmitIcon />
@@ -9240,7 +9327,6 @@ function WoredaPhotoHistoryPage({ u }) {
   );
 }
 
-// ─── Main WoReda Dashboard ───────────────────────────────────────────────────
 export default function WoRedaDashboard() {
   const navigate = useNavigate();
   const loggedUser = JSON.parse(localStorage.getItem("user"));
@@ -9309,7 +9395,10 @@ export default function WoRedaDashboard() {
 
         // Find approved edit requests for today's sector/date
         const approvedRequests = editRequests.filter(
-          (req) => req.status === "approved" && req.report_date === date,
+          (req) =>
+            req.status === "approved" &&
+            req.report_date === date &&
+            sectorsWithReport.includes(req.sector),
         );
         const approvedSectors = new Set(
           approvedRequests.map((req) => req.sector),
@@ -9326,11 +9415,14 @@ export default function WoRedaDashboard() {
           "galii_sassabu",
         ];
         allSectors.forEach((s) => {
+          // Lock if there's a report today and NO approved edit request.
+          // galii and galii_sassabu share a lock: if either has a report today,
+          // both are locked unless an approved edit token exists for that sector.
           const hasReport = sectorsWithReport.includes(s);
-          // Summary (galii_sassabu) locks the details page (galii) too.
-          // But details (galii) alone does NOT lock the summary (galii_sassabu).
+          // Also check cross-lock: galii_sassabu submission locks galii and vice-versa
           const crossLocked =
-            s === "galii" && sectorsWithReport.includes("galii_sassabu");
+            (s === "galii" && sectorsWithReport.includes("galii_sassabu")) ||
+            (s === "galii_sassabu" && sectorsWithReport.includes("galii"));
           newLocked[s] = (hasReport || crossLocked) && !approvedSectors.has(s);
         });
         setLocked(newLocked);
@@ -9914,7 +10006,7 @@ export default function WoRedaDashboard() {
                   <GaliiSassabuSubmitForm
                     u={u}
                     locked={!!locked.galii_sassabu}
-                    lockedDetails={!!locked.galii}
+                    lockedGalii={!!locked.galii}
                     onSubmitSuccess={refreshLocks}
                   />
                 );
