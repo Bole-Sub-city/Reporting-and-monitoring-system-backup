@@ -2834,6 +2834,156 @@ function FlatSectorPlanOverview({
   );
 }
 
+// ─── GaliiSassabuOverviewPlanTable ───────────────────────────────────────────
+// Shows Mana Qophessaa Total + Idilee Total targets per woreda + subcity total.
+// Fetches per-woreda targets from getWoRedaAnalysis("galii_sassabu", wId, "annual").
+function GaliiSassabuOverviewPlanTable({ dbGaliiSassabuPlan }) {
+  const ACCENT = "#c2410c";
+  const GRADIENT = "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)";
+
+  const [woredaTargets, setWoredaTargets] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all(
+      WOREDAS.map((w) =>
+        fetchWoRedaAnalysis("galii_sassabu", w.id, "annual")
+          .then((d) => [w.id, d.targets || {}])
+          .catch(() => [w.id, {}]),
+      ),
+    ).then((results) => {
+      setWoredaTargets(Object.fromEntries(results));
+      setLoading(false);
+    });
+  }, []);
+
+  const hasPlanData =
+    dbGaliiSassabuPlan &&
+    (Number(dbGaliiSassabuPlan.mana_qophessaa_total || 0) > 0 ||
+      Number(dbGaliiSassabuPlan.idilee_total || 0) > 0);
+
+  if (!hasPlanData) {
+    return (
+      <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-[#fff7ed] flex items-center justify-center mb-2 text-[#c2410c]">
+          <TargetIcon />
+        </div>
+        <p className="text-[#1e293b] font-semibold text-sm mb-1">
+          Karoora Galii Sassabu Hin Jiru
+        </p>
+        <p className="text-[#94a3b8] text-xs">
+          Karoora Waggaa irraa Galii Sassabu filadhu.
+        </p>
+      </div>
+    );
+  }
+
+  const fields = [
+    {
+      key: "mana_qophessaa_total",
+      targetKey: "mana_qophessaa_total",
+      label: "Mana Qophessaa Total",
+      color: "#c2410c",
+    },
+    {
+      key: "idilee_total",
+      targetKey: "idilee_total",
+      label: "Idilee Total",
+      color: "#ea580c",
+    },
+  ];
+
+  return (
+    <div className="mt-6 bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      <div
+        className="px-5 py-3 border-b border-[#e2e8f0]"
+        style={{ background: GRADIENT }}
+      >
+        <p className="text-sm font-semibold text-white">
+          Galii Sassabu Karoora
+        </p>
+        <p className="text-white/60 text-xs mt-0.5">
+          Waggaa {dbGaliiSassabuPlan.year} · Subcity + Aanaalee 4
+        </p>
+      </div>
+      {loading ? (
+        <div className="flex items-center justify-center h-16">
+          <div
+            className="w-5 h-5 border-4 border-[#e2e8f0] rounded-full animate-spin"
+            style={{ borderTopColor: ACCENT }}
+          />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide min-w-[200px]">
+                  Gosa
+                </th>
+                <th
+                  className="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide bg-[#fff7ed] min-w-[100px]"
+                  style={{ color: ACCENT }}
+                >
+                  Subcity
+                </th>
+                {WOREDAS.map((w) => (
+                  <th
+                    key={w.id}
+                    className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide min-w-[140px]"
+                  >
+                    {w.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map(({ key, targetKey, label, color }) => {
+                const subcityVal = WOREDAS.reduce(
+                  (s, w) => s + Number(woredaTargets[w.id]?.[targetKey] ?? 0),
+                  0,
+                );
+                return (
+                  <tr
+                    key={key}
+                    className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
+                  >
+                    <td className="px-5 py-3 font-medium text-[#1e293b]">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        {label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#1e293b] bg-[#fff7ed]">
+                      {subcityVal.toLocaleString()}
+                    </td>
+                    {WOREDAS.map((w) => (
+                      <td
+                        key={w.id}
+                        className="px-5 py-3 text-right text-[#475569]"
+                      >
+                        {Number(
+                          woredaTargets[w.id]?.[targetKey] ?? 0,
+                        ).toLocaleString()}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="px-5 py-3 text-xs text-[#94a3b8] border-t border-[#f1f5f9]">
+        Karoora Aanaa hundaa argachuuf Karoora Waggaa irraa ilaalaa.
+      </p>
+    </div>
+  );
+}
+
 // ─── Overview Page ────────────────────────────────────────────────────────────
 function OverviewPage({
   dbPlan,
@@ -3214,113 +3364,8 @@ function OverviewPage({
         gradient="linear-gradient(90deg,#7e22ce 0%,#9333ea 100%)"
         accentColor="#7e22ce"
       />
-      {/* ── Galii Sassaabu plan — only shown when a plan has been saved ── */}
-      {dbGaliiPlan &&
-        Object.keys(dbGaliiPlan).some(
-          (k) =>
-            ((k.startsWith("mq_") && k.endsWith("_kg")) ||
-              (k.startsWith("mq_") && k.endsWith("_qarshii"))) &&
-            Number(dbGaliiPlan[k] || 0) > 0,
-        ) && (
-          <div className="mt-6">
-            <GaliiOverviewPlanTable dbGaliiPlan={dbGaliiPlan} />
-          </div>
-        )}
-
-      {/* ── Galii Sassabu plan (new sector) — Mana Qophessaa Total + Idilee Total ── */}
-      <div className="mt-6">
-        {dbGaliiSassabuPlan &&
-        (Number(dbGaliiSassabuPlan.mana_qophessaa_total || 0) > 0 ||
-          Number(dbGaliiSassabuPlan.idilee_total || 0) > 0) ? (
-          <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-            <div
-              className="px-5 py-3 border-b border-[#e2e8f0]"
-              style={{
-                background: "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)",
-              }}
-            >
-              <p className="text-sm font-semibold text-white">
-                Galii Sassabu Karoora
-              </p>
-              <p className="text-white/60 text-xs mt-0.5">
-                Waggaa {dbGaliiSassabuPlan.year} · Waliigala Subcity
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                      Gosa
-                    </th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-                      Waliigala Subcity
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    {
-                      label: "Mana Qophessaa Total",
-                      key: "mana_qophessaa_total",
-                      color: "#c2410c",
-                    },
-                    {
-                      label: "Idilee Total",
-                      key: "idilee_total",
-                      color: "#ea580c",
-                    },
-                  ].map(({ label, key, color }) => (
-                    <tr
-                      key={key}
-                      className="border-b border-[#f1f5f9] hover:bg-[#f8fafc] transition-colors"
-                    >
-                      <td className="px-5 py-3 font-medium text-[#1e293b]">
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: color }}
-                          />
-                          {label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-right font-semibold text-[#1e293b]">
-                        {Number(dbGaliiSassabuPlan[key] || 0).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="bg-[#fff7ed]">
-                    <td className="px-5 py-3 font-extrabold text-[#c2410c]">
-                      Waliigala
-                    </td>
-                    <td className="px-5 py-3 text-right font-extrabold text-[#c2410c]">
-                      {(
-                        Number(dbGaliiSassabuPlan.mana_qophessaa_total || 0) +
-                        Number(dbGaliiSassabuPlan.idilee_total || 0)
-                      ).toLocaleString()}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="px-5 py-3 text-xs text-[#94a3b8] border-t border-[#f1f5f9]">
-              Karoora Aanaa hundaa argachuuf Karoora Waggaa irraa ilaalaa.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-[#e2e8f0] px-6 py-6 flex flex-col items-center text-center shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-[#fff7ed] flex items-center justify-center mb-2 text-[#c2410c]">
-              <TargetIcon />
-            </div>
-            <p className="text-[#1e293b] font-semibold text-sm mb-1">
-              Karoora Galii Sassabu Hin Jiru
-            </p>
-            <p className="text-[#94a3b8] text-xs">
-              Karoora Waggaa irraa Galii Sassabu filadhu.
-            </p>
-          </div>
-        )}
-      </div>
+      {/* ── Galii Sassabu plan — Mana Qophessaa + Idilee with per-woreda columns ── */}
+      <GaliiSassabuOverviewPlanTable dbGaliiSassabuPlan={dbGaliiSassabuPlan} />
     </div>
   );
 }
@@ -5481,10 +5526,23 @@ function GaliiSassabuSubcityPlanPage() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [existing, setExisting] = useState(null);
+  const [planExists, setPlanExists] = useState(false);
+  const [unlockStatus, setUnlockStatus] = useState(null);
 
   useEffect(() => {
     fetchSubcityGaliiSassabuPlan()
-      .then((d) => d.plan && setExisting(d.plan))
+      .then((d) => {
+        if (d.plan) {
+          setExisting(d.plan);
+          // Plan exists if any value > 0
+          if (
+            Number(d.plan.mana_qophessaa_total || 0) > 0 ||
+            Number(d.plan.idilee_total || 0) > 0
+          ) {
+            setPlanExists(true);
+          }
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -5503,8 +5561,17 @@ function GaliiSassabuSubcityPlanPage() {
   };
   const grandTotal = totals.mana_qophessaa_total + totals.idilee_total;
 
+  // Only allow submit if no plan exists yet, or admin has approved unlock
+  const hasValues = WOREDAS.some(
+    (w) =>
+      Number(woredaForms[w.id].mana_qophessaa_total || 0) > 0 ||
+      Number(woredaForms[w.id].idilee_total || 0) > 0,
+  );
+  const canSubmit = hasValues && (!planExists || unlockStatus === "approved");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setSaving(true);
     setSaveError("");
     setSaved(false);
@@ -5522,6 +5589,8 @@ function GaliiSassabuSubcityPlanPage() {
     try {
       await saveSubcityGaliiSassabuPlan(woredaPlans);
       setSaved(true);
+      setPlanExists(true);
+      setUnlockStatus(null);
       setWoredaForms(emptyForms());
       setTimeout(() => setSaved(false), 4000);
       fetchSubcityGaliiSassabuPlan()
@@ -5553,7 +5622,10 @@ function GaliiSassabuSubcityPlanPage() {
           Enter fixed Mana Qophessaa Total and Idilee Total for each woreda.
         </p>
       </div>
-      <PlanUnlockBanner sector="galii_sassabu" />
+      <PlanUnlockBanner
+        sector="galii_sassabu"
+        onStatusChange={setUnlockStatus}
+      />
       {existing && (
         <div
           className="mb-5 rounded-xl border px-5 py-4"
@@ -5675,15 +5747,25 @@ function GaliiSassabuSubcityPlanPage() {
                 <CheckIcon /> Plan saved successfully.
               </p>
             )}
-            {!saved && !saveError && (
-              <p className="text-[#94a3b8] text-xs">
-                Each woreda gets its own fixed target.
-              </p>
-            )}
+            {!saved &&
+              !saveError &&
+              planExists &&
+              unlockStatus !== "approved" && (
+                <p className="text-[#b45309] text-xs font-medium">
+                  Plan is locked. Request edit access above to re-save.
+                </p>
+              )}
+            {!saved &&
+              !saveError &&
+              (!planExists || unlockStatus === "approved") && (
+                <p className="text-[#94a3b8] text-xs">
+                  Each woreda gets its own fixed target.
+                </p>
+              )}
           </div>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || !canSubmit}
             className="flex items-center gap-2 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: ACCENT }}
           >
