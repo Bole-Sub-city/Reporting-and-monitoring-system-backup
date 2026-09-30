@@ -4789,12 +4789,12 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
   const emptyDetail = () => [{ source: "", amount: "" }];
 
   const [reportType, setReportType] = useState(REPORT_TYPES[0]);
-  const [mqTotal, setMqTotal] = useState("");
-  const [idTotal, setIdTotal] = useState("");
   const [mqDetails, setMqDetails] = useState(emptyDetail());
   const [idDetails, setIdDetails] = useState(emptyDetail());
-  const [showMqDetail, setShowMqDetail] = useState(false);
-  const [showIdDetail, setShowIdDetail] = useState(false);
+
+  // Totals are derived from the detail rows — not entered manually
+  const mqTotal = mqDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const idTotal = idDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
   const [yaada, setYaada] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -4806,12 +4806,10 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
   const pendingTotals = useRef(null);
   const prevLocked = useRef(locked);
   // Apply pending totals from Details page after each render cycle
+  // (totals are now auto-calculated from mqDetails/idDetails so no action needed here)
   useEffect(() => {
     if (pendingTotals.current) {
-      const { mq, id } = pendingTotals.current;
       pendingTotals.current = null;
-      if (mq > 0) setMqTotal(String(mq));
-      if (id > 0) setIdTotal(String(id));
     }
   });
 
@@ -4831,9 +4829,8 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
           );
           if (!row) return;
           setReportType(row.report_type || REPORT_TYPES[0]);
-          setMqTotal(String(row.mana_qophessaa_total ?? ""));
-          setIdTotal(String(row.idilee_total ?? ""));
           setYaada(row.yaada_gudinaa || "");
+          // Pre-fill sub-source details (totals are auto-calculated from these)
           if (
             Array.isArray(row.mana_qophessaa_detail) &&
             row.mana_qophessaa_detail.length
@@ -4844,7 +4841,6 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
                 amount: String(d.amount ?? ""),
               })),
             );
-            setShowMqDetail(true);
           }
           if (Array.isArray(row.idilee_detail) && row.idilee_detail.length) {
             setIdDetails(
@@ -4853,7 +4849,6 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
                 amount: String(d.amount ?? ""),
               })),
             );
-            setShowIdDetail(true);
           }
         })
         .catch(() => {});
@@ -4861,12 +4856,8 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
   }, [locked]);
 
   const handleClear = () => {
-    setMqTotal("");
-    setIdTotal("");
     setMqDetails(emptyDetail());
     setIdDetails(emptyDetail());
-    setShowMqDetail(false);
-    setShowIdDetail(false);
     setYaada("");
     setError("");
   };
@@ -4887,58 +4878,26 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
     setError("");
     setSaving(true);
 
-    const mqNum = Number(mqTotal || 0);
-    const idNum = Number(idTotal || 0);
-
-    // Validate: if detail is shown, detail sum should not exceed total
-    if (showMqDetail) {
-      const detailSum = mqDetails.reduce(
-        (s, d) => s + Number(d.amount || 0),
-        0,
-      );
-      if (detailSum > mqNum) {
-        setError(
-          `Mana Qophessaa detail sum (${detailSum.toLocaleString()}) exceeds total (${mqNum.toLocaleString()}).`,
-        );
-        setSaving(false);
-        return;
-      }
-    }
-    if (showIdDetail) {
-      const detailSum = idDetails.reduce(
-        (s, d) => s + Number(d.amount || 0),
-        0,
-      );
-      if (detailSum > idNum) {
-        setError(
-          `Idilee detail sum (${detailSum.toLocaleString()}) exceeds total (${idNum.toLocaleString()}).`,
-        );
-        setSaving(false);
-        return;
-      }
-    }
+    const mqNum = mqTotal;   // auto-calculated from mqDetails
+    const idNum = idTotal;   // auto-calculated from idDetails
 
     const payload = {
       report_date: todayStr(),
       report_type: reportType,
       mana_qophessaa_total: mqNum,
       idilee_total: idNum,
-      mana_qophessaa_detail: showMqDetail
-        ? mqDetails
-            .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
-            .map((d) => ({
-              source: d.source.trim(),
-              amount: Number(d.amount || 0),
-            }))
-        : null,
-      idilee_detail: showIdDetail
-        ? idDetails
-            .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
-            .map((d) => ({
-              source: d.source.trim(),
-              amount: Number(d.amount || 0),
-            }))
-        : null,
+      mana_qophessaa_detail: mqDetails
+          .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+          .map((d) => ({
+            source: d.source.trim(),
+            amount: Number(d.amount || 0),
+          })),
+      idilee_detail: idDetails
+          .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+          .map((d) => ({
+            source: d.source.trim(),
+            amount: Number(d.amount || 0),
+          })),
       yaada_gudinaa: yaada,
     };
 
@@ -5131,41 +5090,21 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
                 <p className="text-white font-bold text-sm">Mana Qophessaa</p>
               </div>
               <div className="px-5 py-4 space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-[#334155] mb-1.5">
-                    Mana Qophessaa Total (Qarshii){" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={mqTotal}
-                    onChange={(e) => setMqTotal(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#c2410c]/20"
-                  />
+                <div className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2.5 border border-[#fed7aa]">
+                  <span className="text-sm font-semibold text-[#334155]">
+                    Mana Qophessaa Total (Qarshii)
+                  </span>
+                  <span className="text-xl font-extrabold text-[#c2410c]">
+                    {mqTotal.toLocaleString()}
+                  </span>
                 </div>
-                {/* Toggle detail */}
-                <button
-                  type="button"
-                  onClick={() => setShowMqDetail((p) => !p)}
-                  className="text-xs font-semibold flex items-center gap-1.5 transition-all"
-                  style={{ color: ACCENT }}
-                >
-                  <ChevronIcon open={showMqDetail} />
-                  {showMqDetail
-                    ? "Hide sub-source breakdown"
-                    : "Add sub-source breakdown (optional)"}
-                </button>
-                {showMqDetail && (
-                  <DetailSubForm
-                    details={mqDetails}
-                    setDetails={setMqDetails}
-                    sources={MANA_QOPHESSAA_SOURCES}
-                    accentColor={ACCENT}
-                  />
-                )}
+                {/* Sub-source breakdown — required */}
+                <DetailSubForm
+                  details={mqDetails}
+                  setDetails={setMqDetails}
+                  sources={MANA_QOPHESSAA_SOURCES}
+                  accentColor={ACCENT}
+                />
               </div>
             </div>
 
@@ -5180,45 +5119,26 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
                 <p className="text-white font-bold text-sm">Idilee</p>
               </div>
               <div className="px-5 py-4 space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-[#334155] mb-1.5">
-                    Idilee Total (Qarshii){" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={idTotal}
-                    onChange={(e) => setIdTotal(e.target.value)}
-                    placeholder="0"
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#ea580c]/20"
-                  />
+                <div className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2.5 border border-[#fed7aa]">
+                  <span className="text-sm font-semibold text-[#334155]">
+                    Idilee Total (Qarshii)
+                  </span>
+                  <span className="text-xl font-extrabold text-[#ea580c]">
+                    {idTotal.toLocaleString()}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowIdDetail((p) => !p)}
-                  className="text-xs font-semibold flex items-center gap-1.5 transition-all"
-                  style={{ color: "#ea580c" }}
-                >
-                  <ChevronIcon open={showIdDetail} />
-                  {showIdDetail
-                    ? "Hide sub-source breakdown"
-                    : "Add sub-source breakdown (optional)"}
-                </button>
-                {showIdDetail && (
-                  <DetailSubForm
-                    details={idDetails}
-                    setDetails={setIdDetails}
-                    sources={IDILEE_SOURCES}
-                    accentColor="#ea580c"
-                  />
-                )}
+                {/* Sub-source breakdown — required */}
+                <DetailSubForm
+                  details={idDetails}
+                  setDetails={setIdDetails}
+                  sources={IDILEE_SOURCES}
+                  accentColor="#ea580c"
+                />
               </div>
             </div>
 
             {/* Grand total preview */}
-            {(Number(mqTotal || 0) > 0 || Number(idTotal || 0) > 0) && (
+            {(mqTotal > 0 || idTotal > 0) && (
               <div
                 className="rounded-xl px-4 py-3 flex items-center justify-between"
                 style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
@@ -5227,9 +5147,7 @@ function GaliiSassabuSubmitForm({ u, locked, lockedGalii, onSubmitSuccess }) {
                   Grand Total
                 </span>
                 <span className="text-xl font-extrabold text-[#c2410c]">
-                  {(
-                    Number(mqTotal || 0) + Number(idTotal || 0)
-                  ).toLocaleString()}
+                  {(mqTotal + idTotal).toLocaleString()}
                 </span>
               </div>
             )}
@@ -5771,7 +5689,7 @@ function CarraaSubmitForm({ u, locked, onSubmitSuccess }) {
         .then((data) => {
           const rows = Array.isArray(data) ? data : [];
           const row = rows.find(
-            (r) => r.report_date === today && r._sector === "carraa",
+            (r) => r.report_date === today && r._sector === "carraaHojii",
           );
           if (!row) return;
           setReportType(row.report_type || REPORT_TYPES[0]);
@@ -6879,6 +6797,8 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
   const [combined, setCombined] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
   const [showPct, setShowPct] = useState(true);
+  const [showGsDetail, setShowGsDetail] = useState(true);
+  const [showGaliiDetail, setShowGaliiDetail] = useState(true);
   const [loading, setLoading] = useState(false);
   // Preview count is loaded fresh so it always matches what handlePrint will generate.
   const [previewCount, setPreviewCount] = useState(null);
@@ -6944,41 +6864,30 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
       const aggBySource = {};
       for (const row of sectorRows) {
         const src = row.madda_galii ?? row.source ?? "";
-        if (!aggBySource[src]) aggBySource[src] = { kg: 0, qarshii: 0 };
-        aggBySource[src].kg += Number(row.kg ?? 0);
+        if (!aggBySource[src]) aggBySource[src] = { qarshii: 0 };
         aggBySource[src].qarshii += Number(row.baasii ?? 0);
       }
 
-      // Build sub-column list: always show Raawwii; Karoora optional; % optional
+      // Build sub-column list: Karoora Qarshii (optional), Raawwii Qarshii, % (optional)
+      // KG columns are removed — only Qarshii is tracked for Galii
       const subCols = [];
-      if (showPlan) {
-        subCols.push("plan_kg");
-        subCols.push("plan_qarshii");
-      }
-      subCols.push("actual_kg");
+      if (showPlan) subCols.push("plan_qarshii");
       subCols.push("actual_qarshii");
       if (showPct) subCols.push("pct");
 
       const subColLabel = (c) => {
-        if (c === "plan_kg") return "Plan KG";
-        if (c === "plan_qarshii") return "Plan Qarshii";
-        if (c === "actual_kg") return "Actual KG";
-        if (c === "actual_qarshii") return "Actual Qarshii";
+        if (c === "plan_qarshii") return "Karoora (ETB)";
+        if (c === "actual_qarshii") return "Raawwii (ETB)";
         return "%";
       };
 
       // Helper: build one table block for a group of rows
-      const buildGroupTable = (groupLabel, groupColor, rowDefs, showKg) => {
-        const cols = showKg
-          ? subCols
-          : subCols.filter((c) => c !== "plan_kg" && c !== "actual_kg");
-
+      const buildGroupTable = (groupLabel, groupColor, rowDefs) => {
         const thead = `<thead>
           <tr>
             <th rowspan="2" class="rno" style="width:36px">R.No</th>
-            <th rowspan="2" class="gosa">Source</th>
-            ${cols.map((c) => `<th class="sub-col">${subColLabel(c)}</th>`).join("")}
-            <th class="sub-col total-hdr">Actual Qarshii</th>
+            <th rowspan="2" class="gosa">Madda Galii</th>
+            ${subCols.map((c) => `<th class="sub-col">${subColLabel(c)}</th>`).join("")}
           </tr>
         </thead>`;
 
@@ -6987,13 +6896,13 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
 
         const bodyRows = rowDefs
           .map((row, idx) => {
-            const agg = aggBySource[row.sourceLabel] ?? { kg: 0, qarshii: 0 };
-            const planKg =
-              plan && row.planKgKey ? Number(plan[row.planKgKey] ?? 0) : 0;
-            const planQarshii =
+            const agg = aggBySource[row.sourceLabel] ?? { qarshii: 0 };
+            const annualPlan =
               plan && row.planQarshiiKey
                 ? Number(plan[row.planQarshiiKey] ?? 0)
                 : 0;
+            // Partition the annual plan to the selected period
+            const planQarshii = printPartitionTarget(annualPlan, period);
             const pct =
               planQarshii > 0
                 ? Math.round((agg.qarshii / planQarshii) * 100)
@@ -7001,14 +6910,10 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
             groupActualQarshii += agg.qarshii;
             groupPlanQarshii += planQarshii;
 
-            const cells = cols
+            const cells = subCols
               .map((c) => {
-                if (c === "plan_kg")
-                  return `<td class="num plan">${planKg.toLocaleString()}</td>`;
                 if (c === "plan_qarshii")
                   return `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
-                if (c === "actual_kg")
-                  return `<td class="num">${agg.kg.toLocaleString()}</td>`;
                 if (c === "actual_qarshii")
                   return `<td class="num">${agg.qarshii.toLocaleString()}</td>`;
                 return `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
@@ -7019,7 +6924,6 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
             <td class="rno">${idx + 1}</td>
             <td class="gosa">${row.label}</td>
             ${cells}
-            <td class="num total-val">${agg.qarshii.toLocaleString()}</td>
           </tr>`;
           })
           .join("");
@@ -7028,12 +6932,10 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
           groupPlanQarshii > 0
             ? Math.round((groupActualQarshii / groupPlanQarshii) * 100)
             : 0;
-        const totalCells = cols
+        const totalCells = subCols
           .map((c) => {
-            if (c === "plan_kg") return `<td class="num plan total-val">—</td>`;
             if (c === "plan_qarshii")
               return `<td class="num plan total-val">${groupPlanQarshii.toLocaleString()}</td>`;
-            if (c === "actual_kg") return `<td class="num total-val">—</td>`;
             if (c === "actual_qarshii")
               return `<td class="num total-val">${groupActualQarshii.toLocaleString()}</td>`;
             return `<td class="num pct total-val">${groupPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
@@ -7042,9 +6944,8 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
 
         const totalRow = `<tr style="background:#eef2ff;font-weight:bold;">
           <td class="rno">—</td>
-          <td class="gosa">Total</td>
+          <td class="gosa">Waliigala</td>
           ${totalCells}
-          <td class="num total-val">${groupActualQarshii.toLocaleString()}</td>
         </tr>`;
 
         return {
@@ -7062,31 +6963,53 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
         };
       };
 
-      const MQ_ROW_DEFS = MANA_QOPHESSAA_SOURCES.map((s) => ({
-        label: s.label,
-        sourceLabel: s.label,
-        planKgKey: `mq_${s.key}_kg_target`,
-        planQarshiiKey: `mq_${s.key}_qarshii_target`,
-      }));
-      const IDILEE_ROW_DEFS = IDILEE_SOURCES.map((s) => ({
-        label: s.label,
-        sourceLabel: s.label,
-        planKgKey: null,
-        planQarshiiKey: `idilee_${s.key}_qarshii_target`,
-      }));
+      // When showGaliiDetail is true: show each sub-source row
+      // When false: show only Mana Qophessaa Total + Idilee Total
+      const MQ_ROW_DEFS = showGaliiDetail
+        ? MANA_QOPHESSAA_SOURCES.map((s) => ({
+            label: s.label,
+            sourceLabel: s.label,
+            // DB column is mq_${key}_qarshii (no _target suffix)
+            planQarshiiKey: `mq_${s.key}_qarshii`,
+          }))
+        : [
+            {
+              label: "Mana Qophessaa",
+              sourceLabel: "__mq_total__",
+              planQarshiiKey: null,
+            },
+          ];
+      const IDILEE_ROW_DEFS = showGaliiDetail
+        ? IDILEE_SOURCES.map((s) => ({
+            label: s.label,
+            sourceLabel: s.label,
+            // DB column is idilee_${key}_qarshii (no _target suffix)
+            planQarshiiKey: `idilee_${s.key}_qarshii`,
+          }))
+        : [
+            {
+              label: "Idilee",
+              sourceLabel: "__id_total__",
+              planQarshiiKey: null,
+            },
+          ];
 
-      const mqGroup = buildGroupTable(
-        "Mana Qophessaa",
-        "#0f766e",
-        MQ_ROW_DEFS,
-        true,
-      );
-      const idileeGroup = buildGroupTable(
-        "Idilee",
-        "#1e40af",
-        IDILEE_ROW_DEFS,
-        false,
-      );
+      // If not showing detail, aggregate totals manually
+      if (!showGaliiDetail) {
+        const mqTotal = MANA_QOPHESSAA_SOURCES.reduce(
+          (s, src) => s + (aggBySource[src.label]?.qarshii ?? 0),
+          0,
+        );
+        const idTotal = IDILEE_SOURCES.reduce(
+          (s, src) => s + (aggBySource[src.label]?.qarshii ?? 0),
+          0,
+        );
+        aggBySource["__mq_total__"] = { qarshii: mqTotal };
+        aggBySource["__id_total__"] = { qarshii: idTotal };
+      }
+
+      const mqGroup = buildGroupTable("Mana Qophessaa", "#0f766e", MQ_ROW_DEFS);
+      const idileeGroup = buildGroupTable("Idilee", "#1e40af", IDILEE_ROW_DEFS);
 
       const grandActual = mqGroup.actualTotal + idileeGroup.actualTotal;
       const grandPlan = mqGroup.planTotal + idileeGroup.planTotal;
@@ -7340,34 +7263,38 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
           };
 
           const mqTotalRow = `<tr>
-          <td class="rno" rowspan="${Math.max(1, mqDetail.length) + 1}">${gsRno}</td>
-          <td class="date-col" rowspan="${Math.max(1, mqDetail.length) + 1}">${date}</td>
-          <td class="gosa" style="font-weight:bold;color:#c2410c;" rowspan="${Math.max(1, mqDetail.length) + 1}">Mana Qophessaa</td>
+          <td class="rno" rowspan="${showGsDetail ? Math.max(1, mqDetail.length) + 1 : 1}">${gsRno}</td>
+          <td class="date-col" rowspan="${showGsDetail ? Math.max(1, mqDetail.length) + 1 : 1}">${date}</td>
+          <td class="gosa" style="font-weight:bold;color:#c2410c;" rowspan="${showGsDetail ? Math.max(1, mqDetail.length) + 1 : 1}">Mana Qophessaa</td>
           <td class="gosa" style="font-weight:bold;">Total</td>
           ${buildCell(mqTotal, mqPlanTarget)}
         </tr>`;
-          const mqDetailRows = mqDetail
-            .map(
-              (d) => `<tr>
+          const mqDetailRows = showGsDetail
+            ? mqDetail
+                .map(
+                  (d) => `<tr>
           <td class="gosa" style="padding-left:18px;color:#64748b;">${d.source ?? ""}</td>
           ${buildCell(Number(d.amount ?? 0), 0)}
         </tr>`,
-            )
-            .join("");
+                )
+                .join("")
+            : "";
 
           const idTotalRow = `<tr>
-          <td class="gosa" style="font-weight:bold;color:#ea580c;" rowspan="${Math.max(1, idDetail.length) + 1}">Idilee</td>
+          <td class="gosa" style="font-weight:bold;color:#ea580c;" rowspan="${showGsDetail ? Math.max(1, idDetail.length) + 1 : 1}">Idilee</td>
           <td class="gosa" style="font-weight:bold;">Total</td>
           ${buildCell(idTotal, idPlanTarget)}
         </tr>`;
-          const idDetailRows = idDetail
-            .map(
-              (d) => `<tr>
+          const idDetailRows = showGsDetail
+            ? idDetail
+                .map(
+                  (d) => `<tr>
           <td class="gosa" style="padding-left:18px;color:#64748b;">${d.source ?? ""}</td>
           ${buildCell(Number(d.amount ?? 0), 0)}
         </tr>`,
-            )
-            .join("");
+                )
+                .join("")
+            : "";
 
           const grandTotal = mqTotal + idTotal;
           const grandPlan = mqPlanTarget + idPlanTarget;
@@ -7779,6 +7706,55 @@ function WoRedaPrintModal({ totalCount, woredaName, onClose }) {
             </p>
           </div>
 
+          {/* Galii Sassabu detail toggle — only shown when that sector is explicitly selected */}
+          {sector === "galii_sassabu" && (
+            <div className="rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 space-y-2">
+              <p className="text-xs font-semibold text-[#c2410c] uppercase tracking-wide">
+                Galii Sassabu Options
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowGsDetail((v) => !v)}
+                  className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showGsDetail ? "bg-[#c2410c]" : "bg-[#e2e8f0]"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showGsDetail ? "left-5" : "left-0.5"}`}
+                  />
+                </button>
+                <span className="text-sm text-[#1e293b]">
+                  Show <strong>sub-source breakdown</strong> (Liizii, Kiraa Lafaa, Idilee…)
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Galii (Revenue) source toggle — only shown when galii sector is selected */}
+          {sector === "galii" && (
+            <div className="rounded-xl border border-[#99f6e4] bg-[#f0fdf9] px-4 py-3 space-y-2">
+              <p className="text-xs font-semibold text-[#0f766e] uppercase tracking-wide">
+                Galii Sassaabu Options
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowGaliiDetail((v) => !v)}
+                  className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showGaliiDetail ? "bg-[#0f766e]" : "bg-[#e2e8f0]"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showGaliiDetail ? "left-5" : "left-0.5"}`}
+                  />
+                </button>
+                <span className="text-sm text-[#1e293b]">
+                  Show <strong>each sub-source</strong> (Liizii, Kiraa Lafaa, Idilee…)
+                </span>
+              </div>
+              <p className="text-xs text-[#64748b]">
+                Off = totals only (Mana Qophessaa + Idilee)
+              </p>
+            </div>
+          )}
+
           <div className="bg-[#eff6ff] border border-[#dbeafe] rounded-xl px-4 py-3">
             <p className="text-sm font-semibold text-[#0f172a]">
               {selectedSectorLabel}
@@ -7924,20 +7900,65 @@ function ReportDetailModal({ row, onClose }) {
             <p className="text-sm text-[#94a3b8]">No numeric data recorded.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {displayFields.map(([k, v]) => (
-                <div
-                  key={k}
-                  className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
-                >
-                  <span className="text-xs font-medium text-[#475569]">
-                    {fieldLabel(k)}
-                  </span>
-                  <span className="text-sm font-bold text-[#1e293b] ml-2">
-                    {typeof v === "number" ? v.toLocaleString() : v}
-                  </span>
-                </div>
-              ))}
+              {displayFields
+                .filter(([k]) => k !== "mana_qophessaa_detail" && k !== "idilee_detail")
+                .map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
+                  >
+                    <span className="text-xs font-medium text-[#475569]">
+                      {fieldLabel(k)}
+                    </span>
+                    <span className="text-sm font-bold text-[#1e293b] ml-2">
+                      {typeof v === "number" ? v.toLocaleString() : v}
+                    </span>
+                  </div>
+                ))}
             </div>
+          )}
+
+          {/* Galii Sassabu — sub-source detail breakdown */}
+          {row._sector === "galii_sassabu" && (
+            (() => {
+              const mqDetail = Array.isArray(row.mana_qophessaa_detail) ? row.mana_qophessaa_detail : [];
+              const idDetail = Array.isArray(row.idilee_detail) ? row.idilee_detail : [];
+              if (mqDetail.length === 0 && idDetail.length === 0) return null;
+              return (
+                <div className="mt-4 space-y-3">
+                  {mqDetail.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-[#c2410c] uppercase tracking-wide mb-2">
+                        Mana Qophessaa — Sub-sources
+                      </p>
+                      <div className="space-y-1">
+                        {mqDetail.map((d, i) => (
+                          <div key={i} className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2 border border-[#fed7aa]">
+                            <span className="text-xs font-medium text-[#7c2d12]">{d.source || "—"}</span>
+                            <span className="text-sm font-bold text-[#c2410c] ml-2">{Number(d.amount || 0).toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {idDetail.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-[#ea580c] uppercase tracking-wide mb-2">
+                        Idilee — Sub-sources
+                      </p>
+                      <div className="space-y-1">
+                        {idDetail.map((d, i) => (
+                          <div key={i} className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2 border border-[#fed7aa]">
+                            <span className="text-xs font-medium text-[#7c2d12]">{d.source || "—"}</span>
+                            <span className="text-sm font-bold text-[#ea580c] ml-2">{Number(d.amount || 0).toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
           )}
         </div>
 
@@ -9457,6 +9478,16 @@ export default function WoRedaDashboard() {
   useEffect(() => {
     refreshLocks();
   }, [refreshLocks]);
+
+  // ── Poll refreshLocks every 15 s while any sector is locked ──
+  // This lets the form detect when the admin approves an edit request
+  // without requiring a page reload.
+  useEffect(() => {
+    const anyLocked = Object.values(locked).some(Boolean);
+    if (!anyLocked) return;
+    const id = setInterval(refreshLocks, 15000);
+    return () => clearInterval(id);
+  }, [locked, refreshLocks]);
 
   // ── Unread announcements badge ──
   const [unreadCount, setUnreadCount] = useState(0);

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/adamalogo.png";
 import RingChart from "../components/ui/RingChart";
@@ -28,6 +28,10 @@ import {
 import {
   fetchAllWoredaReports,
   submitSubcityRevenueReport,
+  submitGaliiSassabuReport,
+  fetchLockStatus,
+  requestEditAccess,
+  fetchMyReports,
   fetchAllWoredaReportsByFiscalYear,
   currentFiscalYear,
 } from "../api/reportApi";
@@ -6610,320 +6614,495 @@ const SUBCITY_REVENUE_CATEGORIES = [
 ];
 
 function SubcityGaliiSubmitForm({ u }) {
-  const emptyMq = () =>
-    Object.fromEntries(
-      SC_MANA_QOPHESSAA_SOURCES.map((s) => [s.key, { kg: "", qarshii: "" }]),
-    );
-  const emptyIdilee = () =>
-    Object.fromEntries(SC_IDILEE_SOURCES.map((s) => [s.key, ""]));
+  const ACCENT = "#c2410c";
+  const HEADER_GRADIENT = "linear-gradient(90deg,#c2410c 0%,#ea580c 100%)";
+  const SC_REPORT_TYPES = [
+    "Daily Report (Gabaasa Guyyaa)",
+    "Weekly Report (Gabaasa Torban)",
+    "Monthly Report (Gabaasa Ji'aa)",
+    "Quarterly Report (Gabaasa Kurmaana)",
+    "Annual Report (Gabaasa Waggaa)",
+  ];
 
-  const [mqForm, setMqForm] = useState(emptyMq());
-  const [idileeForm, setIdileeForm] = useState(emptyIdilee());
-  const [date, setDate] = useState(
-    () => new Date().toISOString().split("T")[0],
-  );
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
+  const todayStr = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const emptyDetail = () => [{ source: "", amount: "" }];
+
+  const [reportType, setReportType] = useState(SC_REPORT_TYPES[0]);
+  const [mqDetails, setMqDetails] = useState(emptyDetail());
+  const [idDetails, setIdDetails] = useState(emptyDetail());
+
+  // Totals are derived from detail rows — not entered manually
+  const mqTotal = mqDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const idTotal = idDetails.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const [yaada, setYaada] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [lockChecked, setLockChecked] = useState(false);
+  const [requesting, setRequesting] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [reqError, setReqError] = useState("");
 
-  const handleMqField = (key, field, val) =>
-    setMqForm((p) => ({ ...p, [key]: { ...p[key], [field]: val } }));
-  const handleIdileeField = (key, val) =>
-    setIdileeForm((p) => ({ ...p, [key]: val }));
+  // Check lock on mount; also periodically re-poll so admin approval is detected
+  useEffect(() => {
+    const checkLock = () => {
+      fetchLockStatus(todayStr())
+        .then((d) => {
+          setLocked(!!(d?.locked?.galii_sassabu));
+          setLockChecked(true);
+        })
+        .catch(() => setLockChecked(true));
+    };
+    checkLock();
+    // Poll every 15 s so the form reacts when admin approves edit without page reload
+    const id = setInterval(checkLock, 15000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hasAnyMq = SC_MANA_QOPHESSAA_SOURCES.some(
-    (s) =>
-      Number(mqForm[s.key]?.kg || 0) > 0 ||
-      Number(mqForm[s.key]?.qarshii || 0) > 0,
-  );
-  const idileeTotal = SC_IDILEE_SOURCES.reduce(
-    (sum, s) => sum + Number(idileeForm[s.key] || 0),
-    0,
-  );
-  const hasIdilee = idileeTotal > 0;
-  const canSubmit = (hasAnyMq || hasIdilee) && date;
-
-  const mqTotal = SC_MANA_QOPHESSAA_SOURCES.reduce(
-    (sum, s) => sum + Number(mqForm[s.key]?.qarshii || 0),
-    0,
-  );
-  const grandTotal = mqTotal + idileeTotal;
-
-  const handleSubmitReport = async () => {
-    if (!canSubmit) {
-      setSubmitError("Please enter at least one value.");
-      return;
+  // Pre-fill form with today's existing report when lock is cleared (admin approved edit)
+  const prevLocked = useRef(locked);
+  useEffect(() => {
+    const wasLocked = prevLocked.current;
+    prevLocked.current = locked;
+    if (wasLocked && !locked) {
+      const today = todayStr();
+      fetchMyReports({
+        sector: "galii_sassabu",
+        date_from: today,
+        date_to: today,
+      })
+        .then((data) => {
+          const row = (Array.isArray(data) ? data : []).find(
+            (r) => r.report_date === today && r._sector === "galii_sassabu",
+          );
+          if (!row) return;
+          setReportType(row.report_type || SC_REPORT_TYPES[0]);
+          setYaada(row.yaada_gudinaa || "");
+          if (
+            Array.isArray(row.mana_qophessaa_detail) &&
+            row.mana_qophessaa_detail.length
+          ) {
+            setMqDetails(
+              row.mana_qophessaa_detail.map((d) => ({
+                source: d.source ?? "",
+                amount: String(d.amount ?? ""),
+              })),
+            );
+          }
+          if (
+            Array.isArray(row.idilee_detail) &&
+            row.idilee_detail.length
+          ) {
+            setIdDetails(
+              row.idilee_detail.map((d) => ({
+                source: d.source ?? "",
+                amount: String(d.amount ?? ""),
+              })),
+            );
+          }
+        })
+        .catch(() => {});
     }
-    setSubmitting(true);
-    setSubmitError("");
+  }, [locked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRequestEdit = async () => {
+    setRequesting(true);
+    setReqError("");
     try {
-      const entries = [];
-      SC_MANA_QOPHESSAA_SOURCES.forEach((s) => {
-        const kg = Number(mqForm[s.key]?.kg || 0);
-        const qarshii = Number(mqForm[s.key]?.qarshii || 0);
-        if (kg > 0 || qarshii > 0) {
-          entries.push({
-            category: "Mana Qophessaa",
-            categoryId: "manaQophessaa",
-            source: s.label,
-            kg,
-            amount: qarshii,
-            date,
-          });
-        }
-      });
-      SC_IDILEE_SOURCES.forEach((s) => {
-        const qarshii = Number(idileeForm[s.key] || 0);
-        if (qarshii > 0) {
-          entries.push({
-            category: "Idilee",
-            categoryId: "idilee",
-            source: s.label,
-            kg: 0,
-            amount: qarshii,
-            date,
-          });
-        }
-      });
-      await submitSubcityRevenueReport({
-        entries,
-        total: grandTotal,
-        report_date: date,
-      });
-      setMqForm(emptyMq());
-      setIdileeForm(emptyIdilee());
-      setShowModal(true);
+      await requestEditAccess("galii_sassabu", todayStr(), reportType);
+      setRequested(true);
     } catch (err) {
-      setSubmitError(
-        err.response?.data?.message || "Submission failed. Please try again.",
-      );
+      const msg = err?.response?.data?.message?.toLowerCase() ?? "";
+      if (msg.includes("approved")) {
+        setLocked(false);
+        setRequested(false);
+      } else if (msg.includes("pending")) {
+        setRequested(true);
+      } else {
+        setReqError(err?.response?.data?.message || "Failed to send request.");
+      }
     } finally {
-      setSubmitting(false);
+      setRequesting(false);
+    }
+  };
+
+  const handleClear = () => {
+    setMqDetails(emptyDetail());
+    setIdDetails(emptyDetail());
+    setYaada("");
+    setError("");
+  };
+
+  // Detail helpers
+  const updateDetail = (setter, idx, field, val) =>
+    setter((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, [field]: val } : d)),
+    );
+  const addDetailRow = (setter) =>
+    setter((prev) => [...prev, { source: "", amount: "" }]);
+  const removeDetailRow = (setter, idx) =>
+    setter((prev) => prev.filter((_, i) => i !== idx));
+
+  // Inline detail sub-form
+  function DetailSubForm({ details, setDetails, sources, accentColor }) {
+    return (
+      <div className="mt-3 space-y-2">
+        {details.map((d, idx) => (
+          <div key={idx} className="flex gap-2 items-start">
+            <div className="flex-1">
+              <select
+                value={d.source}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "source", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+              >
+                <option value="">Select source…</option>
+                {sources.map((s) => (
+                  <option key={s.key} value={s.label}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-36">
+              <input
+                type="number"
+                min="0"
+                placeholder="Amount"
+                value={d.amount}
+                onChange={(e) =>
+                  updateDetail(setDetails, idx, "amount", e.target.value)
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm bg-[#f8fafc] focus:outline-none focus:ring-2"
+              />
+            </div>
+            {details.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeDetailRow(setDetails, idx)}
+                className="text-[#94a3b8] hover:text-[#dc2626] mt-1.5"
+                title="Remove row"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => addDetailRow(setDetails)}
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all"
+          style={{
+            color: accentColor,
+            borderColor: accentColor + "55",
+            background: accentColor + "11",
+          }}
+        >
+          + Add Row
+        </button>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (locked) return;
+    setError("");
+    setSaving(true);
+
+    const mqNum = mqTotal;   // auto-calculated from mqDetails
+    const idNum = idTotal;   // auto-calculated from idDetails
+
+    const payload = {
+      report_date: todayStr(),
+      report_type: reportType,
+      mana_qophessaa_total: mqNum,
+      idilee_total: idNum,
+      mana_qophessaa_detail: mqDetails
+        .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+        .map((d) => ({
+          source: d.source.trim(),
+          amount: Number(d.amount || 0),
+        })),
+      idilee_detail: idDetails
+        .filter((d) => d.source.trim() || Number(d.amount || 0) > 0)
+        .map((d) => ({
+          source: d.source.trim(),
+          amount: Number(d.amount || 0),
+        })),
+      yaada_gudinaa: yaada,
+    };
+
+    try {
+      await submitGaliiSassabuReport(payload);
+      setShowModal(true);
+      handleClear();
+      setLocked(true);
+    } catch (err) {
+      const msg = err?.response?.data?.message || "";
+      if (msg.toLowerCase().includes("already submitted")) {
+        setLocked(true);
+        setError(msg);
+      } else {
+        setError(msg || "Failed to submit report.");
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div>
-      {showModal && <SubcitySuccessModal onClose={() => setShowModal(false)} />}
-
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
-        <p className="text-[#64748b] text-sm mt-0.5">
-          Revenue Collection: Enter KG and Qarshii for each source
-        </p>
-      </div>
-
-      {/* Date */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <label className="block text-xs font-semibold text-[#64748b] uppercase tracking-wide mb-1.5">
-            Report Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full sm:w-56 border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/20"
-          />
-        </div>
-        {grandTotal > 0 && (
-          <div className="text-right flex-shrink-0">
-            <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
-              Total Qarshii
-            </p>
-            <p className="text-2xl font-bold text-[#0f766e]">
-              ETB {grandTotal.toLocaleString()}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Mana Qophessaa */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
-        <div
-          className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{
-            background: "linear-gradient(90deg,#0f766e 0%,#0d9488 100%)",
-          }}
-        >
-          <p className="text-sm font-semibold text-white">Mana Qophessaa</p>
-          <p className="text-white/60 text-xs mt-0.5">
-            Enter KG and Qarshii for each source
-          </p>
-        </div>
-        <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-            Source
-          </p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
-            KG
-          </p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
-            Qarshii (ETB)
-          </p>
-        </div>
-        <div className="divide-y divide-[#f1f5f9] px-5">
-          {SC_MANA_QOPHESSAA_SOURCES.map((src) => {
-            const kg = mqForm[src.key]?.kg ?? "";
-            const qarshii = mqForm[src.key]?.qarshii ?? "";
-            const hasSomeValue = Number(kg) > 0 || Number(qarshii) > 0;
-            return (
-              <div
-                key={src.key}
-                className={`grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center transition-colors ${hasSomeValue ? "bg-[#f0fdf9]/60" : ""}`}
-              >
-                <span className="flex items-center gap-2 text-sm font-medium text-[#1e293b]">
-                  <span className="w-2 h-2 rounded-full bg-[#0f766e] flex-shrink-0" />
-                  {src.label}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  value={kg}
-                  onChange={(e) => handleMqField(src.key, "kg", e.target.value)}
-                  placeholder="0"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={qarshii}
-                  onChange={(e) =>
-                    handleMqField(src.key, "qarshii", e.target.value)
-                  }
-                  placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/30"
-                />
-              </div>
-            );
-          })}
-          {mqTotal > 0 && (
-            <div className="grid grid-cols-[1fr_100px_120px] sm:grid-cols-[1fr_120px_150px] gap-3 py-3 items-center bg-[#f0fdf9]">
-              <span className="text-sm font-bold text-[#0f766e]">
-                Mana Qophessaa Total
-              </span>
-              <span />
-              <span className="text-right text-sm font-bold text-[#0f766e]">
-                ETB {mqTotal.toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Idilee */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-5">
-        <div
-          className="px-5 py-3 border-b border-[#e2e8f0]"
-          style={{
-            background: "linear-gradient(90deg,#1e40af 0%,#2563eb 100%)",
-          }}
-        >
-          <p className="text-sm font-semibold text-white">Idilee</p>
-          <p className="text-white/60 text-xs mt-0.5">
-            Enter Qarshii for each source
-          </p>
-        </div>
-        <div className="grid grid-cols-[1fr_150px] gap-3 px-5 pt-3 pb-1">
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide">
-            Source
-          </p>
-          <p className="text-xs font-semibold text-[#64748b] uppercase tracking-wide text-right">
-            Qarshii (ETB)
-          </p>
-        </div>
-        <div className="divide-y divide-[#f1f5f9] px-5">
-          {SC_IDILEE_SOURCES.map((src) => {
-            const qarshii = idileeForm[src.key] ?? "";
-            const hasValue = Number(qarshii) > 0;
-            return (
-              <div
-                key={src.key}
-                className={`grid grid-cols-[1fr_150px] gap-3 py-3 items-center transition-colors ${hasValue ? "bg-[#eff6ff]/50" : ""}`}
-              >
-                <span className="flex items-center gap-2 text-sm font-medium text-[#1e293b]">
-                  <span className="w-2 h-2 rounded-full bg-[#1e40af] flex-shrink-0" />
-                  {src.label}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={qarshii}
-                  onChange={(e) => handleIdileeField(src.key, e.target.value)}
-                  placeholder="0.00"
-                  className="w-full border border-[#e2e8f0] rounded-lg px-2 py-2 text-sm text-right text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#1e40af]/30 focus:border-[#1e40af]"
-                />
-              </div>
-            );
-          })}
-          {idileeTotal > 0 && (
-            <div className="grid grid-cols-[1fr_150px] gap-3 py-3 items-center bg-[#eff6ff]">
-              <span className="text-sm font-bold text-[#1e40af]">
-                Idilee Total
-              </span>
-              <span className="text-right text-sm font-bold text-[#1e40af]">
-                ETB {idileeTotal.toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {submitError && (
-        <div className="flex items-center gap-2 bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 mb-4 text-[#991b1b] text-sm">
-          <svg
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          {submitError}
-        </div>
+      {showModal && (
+        <SubcitySuccessModal onClose={() => setShowModal(false)} />
       )}
 
-      <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
-        <p className="text-[#94a3b8] text-xs">
-          Fill in all values before submitting.
-        </p>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setMqForm(emptyMq());
-              setIdileeForm(emptyIdilee());
-              setSubmitError("");
-            }}
-            className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all"
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmitReport}
-            disabled={submitting || !canSubmit}
-            className="flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] disabled:opacity-60 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
-          >
+      <div className="flex items-start justify-between mb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e293b]">Submit Report</h1>
+          <p className="text-[#64748b] text-sm mt-0.5">
+            Galii Sassabu — Mana Qophessaa fi Idilee
+          </p>
+        </div>
+      </div>
+
+      {/* Lock banner */}
+      {lockChecked && locked && (
+        <div className="mb-5 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
             <svg
-              className="w-4 h-4"
+              className="w-5 h-5 text-[#b45309] flex-shrink-0"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
               viewBox="0 0 24 24"
             >
-              <path d="M22 2L11 13" />
-              <path d="M22 2L15 22l-4-9-9-4 20-7z" />
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            {submitting ? "Submitting..." : "Submit Report"}
-          </button>
+            <div>
+              <p className="text-sm font-semibold text-[#b45309]">
+                Report already submitted for today
+              </p>
+              <p className="text-xs text-[#92400e] mt-0.5">
+                You can only submit once per day. Request edit access from the
+                admin to resubmit.
+              </p>
+            </div>
+          </div>
+          {reqError && <p className="text-xs text-[#dc2626]">{reqError}</p>}
+          {requested ? (
+            <div className="flex items-center gap-2 bg-white border border-[#fde68a] rounded-lg px-3 py-2">
+              <svg
+                className="w-4 h-4 text-[#92400e] flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <p className="text-xs text-[#92400e] font-medium">
+                Edit request sent — waiting for admin approval.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleRequestEdit}
+              disabled={requesting}
+              className="self-start flex items-center gap-2 bg-[#b45309] hover:bg-[#92400e] disabled:opacity-60 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+            >
+              {requesting ? "Requesting…" : "Request Edit Access"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Report type + date row */}
+      <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-[#64748b] text-sm font-medium mb-1.5">
+            Report Type
+          </p>
+          <select
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20"
+          >
+            {SC_REPORT_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[10px] font-bold tracking-widest text-[#64748b] uppercase mb-1">
+            Reporting Period
+          </p>
+          <p className="text-2xl font-bold text-[#1e293b]">{todayStr()}</p>
         </div>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Mana Qophessaa block */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{ background: HEADER_GRADIENT }}
+          >
+            <p className="text-white font-bold text-sm">Mana Qophessaa</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2.5 border border-[#fed7aa]">
+              <span className="text-sm font-semibold text-[#334155]">
+                Mana Qophessaa Total (Qarshii)
+              </span>
+              <span className="text-xl font-extrabold text-[#c2410c]">
+                {mqTotal.toLocaleString()}
+              </span>
+            </div>
+            {/* Sub-source breakdown — required */}
+            <p className="text-xs font-semibold text-[#334155]">
+              Sub-source breakdown{" "}
+              <span className="text-red-500">*</span>
+            </p>
+            <DetailSubForm
+              details={mqDetails}
+              setDetails={setMqDetails}
+              sources={SC_MANA_QOPHESSAA_SOURCES}
+              accentColor={ACCENT}
+            />
+          </div>
+        </div>
+
+        {/* Idilee block */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden">
+          <div
+            className="px-5 py-3 border-b border-[#e2e8f0]"
+            style={{
+              background: "linear-gradient(90deg,#ea580c 0%,#f97316 100%)",
+            }}
+          >
+            <p className="text-white font-bold text-sm">Idilee</p>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <div className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2.5 border border-[#fed7aa]">
+              <span className="text-sm font-semibold text-[#334155]">
+                Idilee Total (Qarshii)
+              </span>
+              <span className="text-xl font-extrabold text-[#ea580c]">
+                {idTotal.toLocaleString()}
+              </span>
+            </div>
+            {/* Sub-source breakdown — required */}
+            <p className="text-xs font-semibold text-[#334155]">
+              Sub-source breakdown{" "}
+              <span className="text-red-500">*</span>
+            </p>
+            <DetailSubForm
+              details={idDetails}
+              setDetails={setIdDetails}
+              sources={SC_IDILEE_SOURCES}
+              accentColor="#ea580c"
+            />
+          </div>
+        </div>
+
+        {/* Grand total preview */}
+        {(mqTotal > 0 || idTotal > 0) && (
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
+          >
+            <span className="text-sm font-semibold text-[#c2410c]">
+              Grand Total
+            </span>
+            <span className="text-xl font-extrabold text-[#c2410c]">
+              {(mqTotal + idTotal).toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        {/* Yaada Gudinaa */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <label className="block text-[#334155] text-sm font-medium mb-1.5">
+            Yaada Gudinaa
+          </label>
+          <textarea
+            value={yaada}
+            onChange={(e) => setYaada(e.target.value)}
+            placeholder="Yaada Gudinaa…"
+            rows={3}
+            disabled={locked}
+            className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2.5 text-sm text-[#1e293b] bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#0f172a]/20 resize-none disabled:opacity-50"
+          />
+        </div>
+
+        {error && (
+          <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between bg-white rounded-xl border border-[#e2e8f0] px-5 py-4">
+          <p className="text-[#94a3b8] text-xs">
+            Fields marked <span className="text-red-500">*</span> are required
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={locked}
+              className="border border-gray-300 text-[#64748b] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-all disabled:opacity-40"
+            >
+              Clear Form
+            </button>
+            <button
+              type="submit"
+              disabled={saving || locked}
+              className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: HEADER_GRADIENT }}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path d="M22 2L11 13" />
+                <path d="M22 2L15 22l-4-9-9-4 20-7z" />
+              </svg>
+              {saving ? "Submitting…" : "Submit Report"}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
@@ -8192,21 +8371,64 @@ function SCReportDetailModal({ row, onClose }) {
             <p className="text-sm text-[#94a3b8]">No numeric data recorded.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {displayFields.map(([k, v]) => (
-                <div
-                  key={k}
-                  className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
-                >
-                  <span className="text-xs font-medium text-[#475569]">
-                    {scFieldLabel(k)}
-                  </span>
-                  <span className="text-sm font-bold text-[#1e293b] ml-2">
-                    {typeof v === "number" ? v.toLocaleString() : v}
-                  </span>
-                </div>
-              ))}
+              {displayFields
+                .filter(([k]) => k !== "mana_qophessaa_detail" && k !== "idilee_detail")
+                .map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-center justify-between bg-[#f8fafc] rounded-lg px-4 py-2.5 border border-[#f1f5f9]"
+                  >
+                    <span className="text-xs font-medium text-[#475569]">
+                      {scFieldLabel(k)}
+                    </span>
+                    <span className="text-sm font-bold text-[#1e293b] ml-2">
+                      {typeof v === "number" ? v.toLocaleString() : v}
+                    </span>
+                  </div>
+                ))}
             </div>
           )}
+
+          {/* Galii Sassabu — sub-source detail breakdown */}
+          {row._sector === "galii_sassabu" && (() => {
+            const mqDetail = Array.isArray(row.mana_qophessaa_detail) ? row.mana_qophessaa_detail : [];
+            const idDetail = Array.isArray(row.idilee_detail) ? row.idilee_detail : [];
+            if (mqDetail.length === 0 && idDetail.length === 0) return null;
+            return (
+              <div className="mt-4 space-y-3">
+                {mqDetail.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-[#c2410c] uppercase tracking-wide mb-2">
+                      Mana Qophessaa — Sub-sources
+                    </p>
+                    <div className="space-y-1">
+                      {mqDetail.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2 border border-[#fed7aa]">
+                          <span className="text-xs font-medium text-[#7c2d12]">{d.source || "—"}</span>
+                          <span className="text-sm font-bold text-[#c2410c] ml-2">{Number(d.amount || 0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {idDetail.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-[#ea580c] uppercase tracking-wide mb-2">
+                      Idilee — Sub-sources
+                    </p>
+                    <div className="space-y-1">
+                      {idDetail.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between bg-[#fff7ed] rounded-lg px-4 py-2 border border-[#fed7aa]">
+                          <span className="text-xs font-medium text-[#7c2d12]">{d.source || "—"}</span>
+                          <span className="text-sm font-bold text-[#ea580c] ml-2">{Number(d.amount || 0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Footer */}
@@ -8314,6 +8536,9 @@ function buildSubcityPrintTable({
   period,
   showPct,
   showPlan,
+  showGsDetail = false,
+  showGaliiDetail = true,
+  gsRows = [],
   woredaData,
   planData,
   selectedWoreda,
@@ -8333,161 +8558,340 @@ function buildSubcityPrintTable({
       : ALL_WOREDAS_PRINT.filter((w) => w.id === selectedWoreda);
   const showTotal = selectedWoreda === "all";
 
-  // ── Galii Sassabu: structured KG+Qarshii table ──────────────────────────────
-  if (sector === "galii") {
-    const ROW_DEFS = [
-      ...SC_MANA_QOPHESSAA_SOURCES.map((s) => ({
-        label: s.label,
-        sourceLabel: s.label,
-        feKey: `mq_${s.key}`,
-        planKgKey: `mq_${s.key}_kg`,
-        planQarshiiKey: `mq_${s.key}_qarshii`,
-        isIdilee: false,
-        idileeKey: null,
-      })),
-      ...SC_IDILEE_SOURCES.map((s) => ({
-        label: s.label,
-        sourceLabel: s.label,
-        feKey: `_idilee_${s.key}`,
-        planKgKey: null,
-        planQarshiiKey: `idilee_${s.key}_qarshii`,
-        isIdilee: true,
-        idileeKey: s.key,
-      })),
+  // ── Galii Sassabu: totals per woreda + optional sub-source breakdown ─────────
+  if (sector === "galii_sassabu") {
+    // WOREDA_USERNAME_MAP — same as backend
+    const WOREDA_USERNAME_MAP = {
+      w1: "Aanaa Gooroo",
+      w2: "Aanaa Dhadacha Araaraa",
+      w3: "Aanaa Dhakaa Adii",
+      w4: "Aanaa Andoodee",
+    };
+    const subCols = [];
+    if (showPlan) subCols.push({ key: "plan", label: "Karoora" });
+    subCols.push({ key: "actual", label: "Raawwii" });
+    if (showPct) subCols.push({ key: "pct", label: "%" });
+    const numSubCols = subCols.length;
+
+    // Build per-woreda aggregates from raw gsRows
+    const woredaAgg = {};
+    for (const w of ALL_WOREDAS_PRINT) {
+      const uname = WOREDA_USERNAME_MAP[w.id];
+      const wRows = gsRows.filter((r) => r.username === uname);
+      const mqTotal = wRows.reduce((s, r) => s + Number(r.mana_qophessaa_total ?? 0), 0);
+      const idTotal = wRows.reduce((s, r) => s + Number(r.idilee_total ?? 0), 0);
+      // Aggregate sub-source details
+      const mqSources = {};
+      const idSources = {};
+      for (const r of wRows) {
+        (r.mana_qophessaa_detail ?? []).forEach((d) => {
+          mqSources[d.source ?? ""] = (mqSources[d.source ?? ""] || 0) + Number(d.amount ?? 0);
+        });
+        (r.idilee_detail ?? []).forEach((d) => {
+          idSources[d.source ?? ""] = (idSources[d.source ?? ""] || 0) + Number(d.amount ?? 0);
+        });
+      }
+      woredaAgg[w.id] = { mqTotal, idTotal, mqSources, idSources };
+    }
+
+    const planFieldMap = {
+      mana_qophessaa_total: "mana_qophessaa_total",
+      idilee_total: "idilee_total",
+    };
+
+    const buildCell = (actual, plan, subCols) => {
+      const pct = plan > 0 ? Math.round((actual / plan) * 100) : 0;
+      return subCols.map((sc) => {
+        if (sc.key === "plan") return `<td class="num plan">${plan.toLocaleString()}</td>`;
+        if (sc.key === "actual") return `<td class="num">${actual.toLocaleString()}</td>`;
+        return `<td class="num pct">${plan > 0 ? pct + "%" : "—"}</td>`;
+      }).join("");
+    };
+
+    // Two summary rows: Mana Qophessaa Total + Idilee Total
+    const SUMMARY_ROWS = [
+      { key: "mana_qophessaa_total", label: "Mana Qophessaa Total", color: "#c2410c" },
+      { key: "idilee_total", label: "Idilee Total", color: "#ea580c" },
     ];
 
-    // Build sub-column list: always show Raawwii KG+Qarshii; Karoora optional; % optional
-    const subCols = [];
-    if (showPlan) {
-      subCols.push("plan_kg");
-      subCols.push("plan_qarshii");
+    if (!showGsDetail) {
+      // Simple two-row table
+      let thead = `<thead><tr class="top-header">
+        <th rowspan="2" class="rno">R.No</th>
+        <th rowspan="2" class="gosa">Gosa</th>`;
+      for (const w of WOREDAS_PRINT) {
+        thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
+      }
+      if (showTotal) thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+      thead += `</tr><tr class="sub-header">`;
+      const grpCount = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
+      for (let i = 0; i < grpCount; i++) {
+        for (const sc of subCols) thead += `<th class="sub-col">${sc.label}</th>`;
+      }
+      thead += `</tr></thead>`;
+
+      let tbody = "<tbody>";
+      SUMMARY_ROWS.forEach(({ key, label }, idx) => {
+        tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa" style="color:${SUMMARY_ROWS[idx].color};font-weight:bold;">${label}</td>`;
+        let totAct = 0, totPlan = 0;
+        for (const w of WOREDAS_PRINT) {
+          const actual = woredaAgg[w.id]?.[key === "mana_qophessaa_total" ? "mqTotal" : "idTotal"] ?? 0;
+          const plan = Number(planData?.[w.id]?.[planFieldMap[key]] ?? 0);
+          totAct += actual; totPlan += plan;
+          tbody += buildCell(actual, plan, subCols);
+        }
+        if (showTotal) tbody += buildCell(totAct, totPlan, subCols).replace(/class="num/g, 'class="num total-val');
+        tbody += `</tr>`;
+      });
+      tbody += "</tbody>";
+      return `<div class="sector-block"><h2 class="sector-title">${sectorLabel}</h2><table>${thead}${tbody}</table></div>`;
     }
-    subCols.push("actual_kg");
+
+    // Detailed table: rows = sub-sources per category
+    const ALL_MQ_SOURCES = SC_MANA_QOPHESSAA_SOURCES.map((s) => s.label);
+    const ALL_ID_SOURCES = SC_IDILEE_SOURCES.map((s) => s.label);
+
+    // Collect all source labels actually present in any woreda's data
+    const mqSourcesPresent = Array.from(new Set([
+      ...ALL_MQ_SOURCES,
+      ...Object.values(woredaAgg).flatMap((a) => Object.keys(a.mqSources)),
+    ]));
+    const idSourcesPresent = Array.from(new Set([
+      ...ALL_ID_SOURCES,
+      ...Object.values(woredaAgg).flatMap((a) => Object.keys(a.idSources)),
+    ]));
+
+    let thead = `<thead><tr class="top-header">
+      <th rowspan="2" class="rno">R.No</th>
+      <th rowspan="2" class="gosa">Gosa</th>
+      <th rowspan="2" class="gosa">Madda Galii</th>`;
+    for (const w of WOREDAS_PRINT) {
+      thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
+    }
+    if (showTotal) thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+    thead += `</tr><tr class="sub-header">`;
+    const grpCount2 = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
+    for (let i = 0; i < grpCount2; i++) {
+      for (const sc of subCols) thead += `<th class="sub-col">${sc.label}</th>`;
+    }
+    thead += `</tr></thead>`;
+
+    let tbody = "<tbody>";
+    let rno = 1;
+
+    // Mana Qophessaa sub-sources
+    const mqTotals = {};
+    WOREDAS_PRINT.forEach((w) => { mqTotals[w.id] = { act: 0, plan: 0 }; });
+    let mqGrandAct = 0, mqGrandPlan = 0;
+    mqSourcesPresent.forEach((src) => {
+      tbody += `<tr><td class="rno">${rno++}</td><td class="gosa" style="color:#c2410c;font-weight:bold;">Mana Qophessaa</td><td class="gosa">${src}</td>`;
+      let totAct = 0, totPlan = 0;
+      for (const w of WOREDAS_PRINT) {
+        const actual = woredaAgg[w.id]?.mqSources[src] ?? 0;
+        totAct += actual; mqTotals[w.id].act += actual;
+        tbody += buildCell(actual, 0, subCols);
+      }
+      if (showTotal) tbody += buildCell(totAct, 0, subCols).replace(/class="num/g, 'class="num total-val');
+      tbody += `</tr>`;
+    });
+    // MQ subtotal row
+    tbody += `<tr style="background:#fff7ed;font-weight:bold;"><td class="rno">—</td><td class="gosa" style="color:#c2410c;">Mana Qophessaa</td><td class="gosa" style="font-weight:bold;">Total</td>`;
+    let mqTotRow_act = 0, mqTotRow_plan = 0;
+    for (const w of WOREDAS_PRINT) {
+      const actual = woredaAgg[w.id]?.mqTotal ?? 0;
+      const plan = Number(planData?.[w.id]?.mana_qophessaa_total ?? 0);
+      mqTotRow_act += actual; mqTotRow_plan += plan;
+      tbody += buildCell(actual, plan, subCols).replace(/class="num/g, 'class="num total-val');
+    }
+    if (showTotal) tbody += buildCell(mqTotRow_act, mqTotRow_plan, subCols).replace(/class="num/g, 'class="num total-val');
+    tbody += `</tr>`;
+
+    // Idilee sub-sources
+    idSourcesPresent.forEach((src) => {
+      tbody += `<tr><td class="rno">${rno++}</td><td class="gosa" style="color:#ea580c;font-weight:bold;">Idilee</td><td class="gosa">${src}</td>`;
+      let totAct = 0;
+      for (const w of WOREDAS_PRINT) {
+        const actual = woredaAgg[w.id]?.idSources[src] ?? 0;
+        totAct += actual;
+        tbody += buildCell(actual, 0, subCols);
+      }
+      if (showTotal) tbody += buildCell(totAct, 0, subCols).replace(/class="num/g, 'class="num total-val');
+      tbody += `</tr>`;
+    });
+    // Idilee subtotal row
+    tbody += `<tr style="background:#fff7ed;font-weight:bold;"><td class="rno">—</td><td class="gosa" style="color:#ea580c;">Idilee</td><td class="gosa" style="font-weight:bold;">Total</td>`;
+    let idTotRow_act = 0, idTotRow_plan = 0;
+    for (const w of WOREDAS_PRINT) {
+      const actual = woredaAgg[w.id]?.idTotal ?? 0;
+      const plan = Number(planData?.[w.id]?.idilee_total ?? 0);
+      idTotRow_act += actual; idTotRow_plan += plan;
+      tbody += buildCell(actual, plan, subCols).replace(/class="num/g, 'class="num total-val');
+    }
+    if (showTotal) tbody += buildCell(idTotRow_act, idTotRow_plan, subCols).replace(/class="num/g, 'class="num total-val');
+    tbody += `</tr>`;
+
+    // Grand total
+    const grandAct = mqTotRow_act + idTotRow_act;
+    const grandPlan = mqTotRow_plan + idTotRow_plan;
+    tbody += `<tr style="background:#1e293b;color:#fff;font-weight:bold;"><td class="rno">—</td><td class="gosa" colspan="2">Waliigala</td>`;
+    for (const w of WOREDAS_PRINT) {
+      const act = (woredaAgg[w.id]?.mqTotal ?? 0) + (woredaAgg[w.id]?.idTotal ?? 0);
+      const pl = Number((planData?.[w.id]?.mana_qophessaa_total ?? 0)) + Number((planData?.[w.id]?.idilee_total ?? 0));
+      tbody += buildCell(act, pl, subCols).replace(/class="num/g, 'class="num total-val');
+    }
+    if (showTotal) tbody += buildCell(grandAct, grandPlan, subCols).replace(/class="num/g, 'class="num total-val');
+    tbody += `</tr>`;
+    tbody += "</tbody>";
+
+    return `<div class="sector-block"><h2 class="sector-title">${sectorLabel}</h2><table>${thead}${tbody}</table></div>`;
+  }
+
+  // ── Galii Sassabu: separate MQ + Idilee tables, Qarshii-only, plan partitioned ─
+  if (sector === "galii") {
+    const MQ_SOURCES = SC_MANA_QOPHESSAA_SOURCES;
+    const ID_SOURCES = SC_IDILEE_SOURCES;
+
+    // Sub-columns per woreda: Karoora (optional), Raawwii, % (optional)
+    const subCols = [];
+    if (showPlan) subCols.push("plan_qarshii");
     subCols.push("actual_qarshii");
     if (showPct) subCols.push("pct");
     const numSubCols = subCols.length;
 
     const scLabel = (c) => {
-      if (c === "plan_kg") return "Karoora KG";
-      if (c === "plan_qarshii") return "Karoora Qarshii";
-      if (c === "actual_kg") return "Raawwii KG";
-      if (c === "actual_qarshii") return "Raawwii Qarshii";
+      if (c === "plan_qarshii") return "Karoora (ETB)";
+      if (c === "actual_qarshii") return "Raawwii (ETB)";
       return "%";
     };
 
-    let thead = `<thead><tr class="top-header">
-      <th rowspan="2" class="rno">R.No</th>
-      <th rowspan="2" class="gosa">Madda Galii</th>`;
-    for (const w of WOREDAS_PRINT) {
-      thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
-    }
-    if (showTotal)
-      thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
-    thead += `</tr><tr class="sub-header">`;
-    const totalGroupCount = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
-    for (let i = 0; i < totalGroupCount; i++) {
-      for (const sc of subCols)
-        thead += `<th class="sub-col">${scLabel(sc)}</th>`;
-    }
-    thead += `</tr></thead>`;
-
-    let tbody = "<tbody>";
-    let grandActualQarshii = 0,
-      grandPlanQarshii = 0;
-
-    ROW_DEFS.forEach((row, idx) => {
-      // Aggregate actuals from all woreda rows where madda_galii matches
-      // woredaData.woredas[i].actuals already keyed by source via subcityReportController
-      tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${row.label}</td>`;
-      let rowTotalActualQarshii = 0,
-        rowTotalPlanQarshii = 0;
-
+    // Helper: build a complete sector table for one group (MQ or Idilee)
+    const buildGroupBlock = (groupLabel, groupColor, rowDefs) => {
+      let thead = `<thead><tr class="top-header">
+        <th rowspan="2" class="rno">R.No</th>
+        <th rowspan="2" class="gosa">Madda Galii</th>`;
       for (const w of WOREDAS_PRINT) {
-        const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
-        const actKg = row.isIdilee
-          ? 0
-          : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
-        const actQarshii = row.isIdilee
-          ? Number(wEntry?.actuals?.[`idilee_${row.idileeKey}_qarshii`] ?? 0)
-          : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
-        const planKg = row.planKgKey
-          ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)
-          : 0;
-        const planQarshii = row.planQarshiiKey
-          ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0)
-          : 0;
-        const pct =
-          planQarshii > 0 ? Math.round((actQarshii / planQarshii) * 100) : 0;
-        rowTotalActualQarshii += actQarshii;
-        rowTotalPlanQarshii += planQarshii;
-
-        for (const sc of subCols) {
-          if (sc === "plan_kg")
-            tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
-          if (sc === "plan_qarshii")
-            tbody += `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
-          if (sc === "actual_kg")
-            tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
-          if (sc === "actual_qarshii")
-            tbody += `<td class="num">${actQarshii.toLocaleString()}</td>`;
-          if (sc === "pct")
-            tbody += `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
-        }
+        thead += `<th colspan="${numSubCols}" class="woreda-header">${w.name}</th>`;
       }
+      if (showTotal)
+        thead += `<th colspan="${numSubCols}" class="woreda-header total-header">Waliigala</th>`;
+      thead += `</tr><tr class="sub-header">`;
+      const grpCount = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
+      for (let i = 0; i < grpCount; i++) {
+        for (const sc of subCols) thead += `<th class="sub-col">${scLabel(sc)}</th>`;
+      }
+      thead += `</tr></thead>`;
 
-      grandActualQarshii += rowTotalActualQarshii;
-      grandPlanQarshii += rowTotalPlanQarshii;
+      let tbody = "<tbody>";
+      let grandActual = 0, grandPlan = 0;
 
-      if (showTotal) {
-        const totalPct =
-          rowTotalPlanQarshii > 0
-            ? Math.round((rowTotalActualQarshii / rowTotalPlanQarshii) * 100)
+      rowDefs.forEach((rowDef, idx) => {
+        tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${rowDef.label}</td>`;
+        let rowTotalActual = 0, rowTotalPlan = 0;
+
+        for (const w of WOREDAS_PRINT) {
+          const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
+          let actQarshii = 0;
+          if (rowDef.isTotal && !rowDef.isIdilee) {
+            actQarshii = MQ_SOURCES.reduce(
+              (s, src) => s + Number(wEntry?.actuals?.[`mq_${src.key}_qarshii`] ?? 0), 0);
+          } else if (rowDef.isTotal && rowDef.isIdilee) {
+            actQarshii = ID_SOURCES.reduce(
+              (s, src) => s + Number(wEntry?.actuals?.[`idilee_${src.key}_qarshii`] ?? 0), 0);
+          } else if (rowDef.isIdilee) {
+            actQarshii = Number(wEntry?.actuals?.[`idilee_${rowDef.idileeKey}_qarshii`] ?? 0);
+          } else {
+            actQarshii = Number(wEntry?.actuals?.[rowDef.feQarshiiKey] ?? 0);
+          }
+          // Partition the annual plan target to the selected period
+          const annualPlan = rowDef.planQarshiiKey
+            ? Number(planData?.[w.id]?.[rowDef.planQarshiiKey] ?? 0)
             : 0;
-        for (const sc of subCols) {
-          if (sc === "plan_kg")
-            tbody += `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii")
-            tbody += `<td class="num plan total-val">${rowTotalPlanQarshii.toLocaleString()}</td>`;
-          if (sc === "actual_kg") tbody += `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii")
-            tbody += `<td class="num total-val">${rowTotalActualQarshii.toLocaleString()}</td>`;
-          if (sc === "pct")
-            tbody += `<td class="num pct total-val">${rowTotalPlanQarshii > 0 ? totalPct + "%" : "—"}</td>`;
-        }
-      }
-      tbody += `</tr>`;
-    });
+          const planQarshii = annualPlan > 0
+            ? Math.round(annualPlan / { daily: 365, weekly: 52, monthly: 12, quarterly: 4, annual: 1 }[period] || 1)
+            : 0;
+          const pct = planQarshii > 0 ? Math.round((actQarshii / planQarshii) * 100) : 0;
+          rowTotalActual += actQarshii;
+          rowTotalPlan += planQarshii;
 
-    // Grand total row
-    if (showTotal) {
-      const grandPct =
-        grandPlanQarshii > 0
-          ? Math.round((grandActualQarshii / grandPlanQarshii) * 100)
-          : 0;
-      const emptyWoredaCells = WOREDAS_PRINT.map(() =>
-        subCols.map(() => `<td class="num total-val">—</td>`).join(""),
-      ).join("");
-      const grandTotalCells = subCols
-        .map((sc) => {
-          if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii")
-            return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
-          if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii")
-            return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
-          return `<td class="num pct total-val">${grandPlanQarshii > 0 ? grandPct + "%" : "—"}</td>`;
-        })
-        .join("");
-      tbody += `<tr style="background:#eef2ff;font-weight:bold;">
-        <td class="rno">—</td><td class="gosa">Waliigala</td>
-        ${emptyWoredaCells}${grandTotalCells}
-      </tr>`;
-    }
-    tbody += "</tbody>";
+          for (const sc of subCols) {
+            if (sc === "plan_qarshii") tbody += `<td class="num plan">${planQarshii.toLocaleString()}</td>`;
+            if (sc === "actual_qarshii") tbody += `<td class="num">${actQarshii.toLocaleString()}</td>`;
+            if (sc === "pct") tbody += `<td class="num pct">${planQarshii > 0 ? pct + "%" : "—"}</td>`;
+          }
+        }
+
+        grandActual += rowTotalActual;
+        grandPlan += rowTotalPlan;
+
+        if (showTotal) {
+          const totalPct = rowTotalPlan > 0 ? Math.round((rowTotalActual / rowTotalPlan) * 100) : 0;
+          for (const sc of subCols) {
+            if (sc === "plan_qarshii") tbody += `<td class="num plan total-val">${rowTotalPlan.toLocaleString()}</td>`;
+            if (sc === "actual_qarshii") tbody += `<td class="num total-val">${rowTotalActual.toLocaleString()}</td>`;
+            if (sc === "pct") tbody += `<td class="num pct total-val">${rowTotalPlan > 0 ? totalPct + "%" : "—"}</td>`;
+          }
+        }
+        tbody += `</tr>`;
+      });
+
+      // Group total row
+      if (showTotal) {
+        const gPct = grandPlan > 0 ? Math.round((grandActual / grandPlan) * 100) : 0;
+        const emptyCells = WOREDAS_PRINT.map(() =>
+          subCols.map(() => `<td class="num total-val">—</td>`).join("")).join("");
+        const totCells = subCols.map((sc) => {
+          if (sc === "plan_qarshii") return `<td class="num plan total-val">${grandPlan.toLocaleString()}</td>`;
+          if (sc === "actual_qarshii") return `<td class="num total-val">${grandActual.toLocaleString()}</td>`;
+          return `<td class="num pct total-val">${grandPlan > 0 ? gPct + "%" : "—"}</td>`;
+        }).join("");
+        tbody += `<tr style="background:#eef2ff;font-weight:bold;">
+          <td class="rno">—</td><td class="gosa">Waliigala</td>${emptyCells}${totCells}
+        </tr>`;
+      }
+      tbody += "</tbody>";
+
+      return {
+        html: `<div style="margin-bottom:18px;">
+          <div style="background:${groupColor};color:#fff;font-weight:700;font-size:11px;padding:6px 12px;border-radius:6px 6px 0 0;letter-spacing:0.05em;text-transform:uppercase;">${groupLabel}</div>
+          <table style="border-radius:0 0 6px 6px;overflow:hidden;">${thead}${tbody}</table>
+        </div>`,
+        actualTotal: grandActual,
+        planTotal: grandPlan,
+      };
+    };
+
+    // When detail on: one row per source; when off: one row per group (total only)
+    const MQ_ROW_DEFS = showGaliiDetail
+      ? MQ_SOURCES.map((s) => ({
+          label: s.label, feQarshiiKey: `mq_${s.key}_qarshii`,
+          planQarshiiKey: `mq_${s.key}_qarshii`, isIdilee: false, idileeKey: null,
+        }))
+      : [{ label: "Mana Qophessaa Total", feQarshiiKey: "__mq__", planQarshiiKey: null, isIdilee: false, idileeKey: null, isTotal: true }];
+
+    const ID_ROW_DEFS = showGaliiDetail
+      ? ID_SOURCES.map((s) => ({
+          label: s.label, feQarshiiKey: null,
+          planQarshiiKey: `idilee_${s.key}_qarshii`, isIdilee: true, idileeKey: s.key,
+        }))
+      : [{ label: "Idilee Total", feQarshiiKey: null, planQarshiiKey: null, isIdilee: true, idileeKey: "__id__", isTotal: true }];
+
+    const mqBlock = buildGroupBlock("Mana Qophessaa", "#0f766e", MQ_ROW_DEFS);
+    const idBlock = buildGroupBlock("Idilee", "#1e40af", ID_ROW_DEFS);
+
+    const grandActual = mqBlock.actualTotal + idBlock.actualTotal;
+    const grandPlan = mqBlock.planTotal + idBlock.planTotal;
+    const grandPct = grandPlan > 0 ? Math.round((grandActual / grandPlan) * 100) : 0;
+
+    const grandTotalRow = `<div style="background:#1e293b;color:#fff;padding:7px 14px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;margin-top:4px;">
+      <span>Grand Total (Mana Qophessaa + Idilee)</span>
+      <span>ETB ${grandActual.toLocaleString()}${grandPlan > 0 ? ` · ${grandPct}%` : ""}</span>
+    </div>`;
 
     return `<div class="sector-block">
       <h2 class="sector-title">${sectorLabel}</h2>
-      <table>${thead}${tbody}</table>
+      ${mqBlock.html}
+      ${idBlock.html}
+      ${grandTotalRow}
     </div>`;
   }
 
@@ -8656,6 +9060,9 @@ function buildSubcityPrintHTML({
   period,
   showPct,
   showPlan,
+  showGsDetail = false,
+  showGaliiDetail = true,
+  gsRows = [],
   woredaData, // { woredas: [{woredaId, name, actuals}] }
   planData, // { w1: {targets}, w2: ..., w3: ..., w4: ... }
   generatedDate,
@@ -8717,151 +9124,146 @@ function buildSubcityPrintHTML({
   }
   thead += `</tr></thead>`;
 
-  // ── Body rows — galii uses a special KG+Qarshii layout
+  // ── Body rows — galii uses a special Qarshii-only layout; galii_sassabu uses its own branch
   let tbody = "<tbody>";
 
-  if (sector === "galii") {
-    // Build sub-columns for galii: always Raawwii KG+Qarshii; Karoora optional; % optional
-    const galiiSubCols = [];
-    if (showPlan) {
-      galiiSubCols.push("plan_kg");
-      galiiSubCols.push("plan_qarshii");
-    }
-    galiiSubCols.push("actual_kg");
-    galiiSubCols.push("actual_qarshii");
-    if (showPct) galiiSubCols.push("pct");
-    const numGaliiSubCols = galiiSubCols.length;
-
-    const scLabel = (c) => {
-      if (c === "plan_kg") return "Karoora KG";
-      if (c === "plan_qarshii") return "Karoora Qarshii";
-      if (c === "actual_kg") return "Raawwii KG";
-      if (c === "actual_qarshii") return "Raawwii Qarshii";
-      return "%";
-    };
-
-    // Rebuild thead for galii with correct sub-cols
-    thead = `<thead>
-      <tr class="top-header">
-        <th rowspan="2" class="rno">R.No</th>
-        <th rowspan="2" class="gosa">Madda Galii</th>`;
-    for (const w of WOREDAS_PRINT) {
-      thead += `<th colspan="${numGaliiSubCols}" class="woreda-header">${w.name}</th>`;
-    }
-    if (showTotal)
-      thead += `<th colspan="${numGaliiSubCols}" class="woreda-header total-header">Waliigala</th>`;
-    thead += `</tr><tr class="sub-header">`;
-    const gTotalGroups = WOREDAS_PRINT.length + (showTotal ? 1 : 0);
-    for (let i = 0; i < gTotalGroups; i++) {
-      for (const sc of galiiSubCols)
-        thead += `<th class="sub-col">${scLabel(sc)}</th>`;
-    }
-    thead += `</tr></thead>`;
-
-    const ROW_DEFS = [
-      ...SC_MANA_QOPHESSAA_SOURCES.map((s) => ({
-        label: s.label,
-        feKey: `mq_${s.key}`,
-        planKgKey: `mq_${s.key}_kg`,
-        planQarshiiKey: `mq_${s.key}_qarshii`,
-        isIdilee: false,
-        idileeKey: null,
-      })),
-      ...SC_IDILEE_SOURCES.map((s) => ({
-        label: s.label,
-        feKey: `_idilee_${s.key}`,
-        planKgKey: null,
-        planQarshiiKey: `idilee_${s.key}_qarshii`,
-        isIdilee: true,
-        idileeKey: s.key,
-      })),
-    ];
-
-    let grandActualQarshii = 0,
-      grandPlanQarshii = 0;
-
-    ROW_DEFS.forEach((row, idx) => {
-      tbody += `<tr><td class="rno">${idx + 1}</td><td class="gosa">${row.label}</td>`;
-      let rowTotalActQ = 0,
-        rowTotalPlanQ = 0;
-
-      for (const w of WOREDAS_PRINT) {
-        const wEntry = woredaData?.woredas?.find((d) => d.woredaId === w.id);
-        const actKg = row.isIdilee
-          ? 0
-          : Number(wEntry?.actuals?.[`${row.feKey}_kg`] ?? 0);
-        const actQ = row.isIdilee
-          ? Number(wEntry?.actuals?.[`idilee_${row.idileeKey}_qarshii`] ?? 0)
-          : Number(wEntry?.actuals?.[`${row.feKey}_qarshii`] ?? 0);
-        const planKg = row.planKgKey
-          ? Number(planData?.[w.id]?.[row.planKgKey] ?? 0)
-          : 0;
-        const planQ = row.planQarshiiKey
-          ? Number(planData?.[w.id]?.[row.planQarshiiKey] ?? 0)
-          : 0;
-        const pct = planQ > 0 ? Math.round((actQ / planQ) * 100) : 0;
-        rowTotalActQ += actQ;
-        rowTotalPlanQ += planQ;
-        for (const sc of galiiSubCols) {
-          if (sc === "plan_kg")
-            tbody += `<td class="num plan">${planKg.toLocaleString()}</td>`;
-          if (sc === "plan_qarshii")
-            tbody += `<td class="num plan">${planQ.toLocaleString()}</td>`;
-          if (sc === "actual_kg")
-            tbody += `<td class="num">${actKg.toLocaleString()}</td>`;
-          if (sc === "actual_qarshii")
-            tbody += `<td class="num">${actQ.toLocaleString()}</td>`;
-          if (sc === "pct")
-            tbody += `<td class="num pct">${planQ > 0 ? pct + "%" : "—"}</td>`;
-        }
-      }
-
-      grandActualQarshii += rowTotalActQ;
-      grandPlanQarshii += rowTotalPlanQ;
-
-      if (showTotal) {
-        const rPct =
-          rowTotalPlanQ > 0
-            ? Math.round((rowTotalActQ / rowTotalPlanQ) * 100)
-            : 0;
-        for (const sc of galiiSubCols) {
-          if (sc === "plan_kg")
-            tbody += `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii")
-            tbody += `<td class="num plan total-val">${rowTotalPlanQ.toLocaleString()}</td>`;
-          if (sc === "actual_kg") tbody += `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii")
-            tbody += `<td class="num total-val">${rowTotalActQ.toLocaleString()}</td>`;
-          if (sc === "pct")
-            tbody += `<td class="num pct total-val">${rowTotalPlanQ > 0 ? rPct + "%" : "—"}</td>`;
-        }
-      }
-      tbody += `</tr>`;
+  if (sector === "galii_sassabu") {
+    // Delegate to the table builder and wrap in HTML shell
+    const tableFragment = buildSubcityPrintTable({
+      sector,
+      period,
+      showPct,
+      showPlan,
+      showGsDetail,
+      showGaliiDetail,
+      gsRows,
+      woredaData,
+      planData,
+      selectedWoreda,
+      subcityGaliiActuals: null,
     });
+    const woredaLabel =
+      selectedWoreda === "all"
+        ? "All Woredas"
+        : (ALL_WOREDAS_PRINT.find((w) => w.id === selectedWoreda)?.name ?? selectedWoreda);
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+    <title>${sectorLabel} Report</title>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html,body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff;
+                  display:flex; flex-direction:column; min-height:100vh; padding:14px 16px 0; }
+      .page-body { flex:1; }
+      .report-header { display:flex; justify-content:space-between; align-items:flex-start;
+                       margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:8px; }
+      .report-header h1 { font-size:13pt; font-weight:bold; }
+      .report-header .meta-right { text-align:right; font-size:8pt; color:#555; line-height:1.6; }
+      .sector-block { margin-bottom:24px; }
+      .sector-title { font-size:11pt; font-weight:bold; margin-bottom:5px; padding:3px 0;
+                      border-bottom:1px solid #666; }
+      table { width:100%; border-collapse:collapse; table-layout:auto; margin-bottom:4px; }
+      th,td { border:1px solid #bbb; padding:4px 6px; vertical-align:middle; }
+      thead tr.top-header th { background:#dce8f4; color:#000; text-align:center; font-size:9pt; font-weight:bold; }
+      thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center; font-size:8pt; font-weight:bold; }
+      th.rno,td.rno { text-align:center; width:32px; font-size:8pt; }
+      th.gosa { text-align:left; min-width:130px; }
+      td.gosa { text-align:left; font-weight:500; }
+      td.num  { text-align:right; font-variant-numeric:tabular-nums; }
+      td.pct  { text-align:right; }
+      td.plan { text-align:right; color:#444; }
+      td.total-val { font-weight:bold; background:#eef2ff; }
+      th.total-header { background:#dce8f4 !important; }
+      tbody tr:nth-child(even) { background:#f7f9fb; }
+      .page-footer { border-top:1px solid #bbb; padding:6px 0 10px; font-size:8pt; color:#555;
+                     display:flex; justify-content:space-between; margin-top:16px; }
+      @media print { body { padding:0; } @page { size:landscape; margin:10mm; } }
+    </style></head><body>
+    <div class="page-body">
+      <div class="report-header">
+        <h1>${sectorLabel} Report</h1>
+        <div class="meta-right">
+          <div>Adama Bole Sub-City</div>
+          <div>Period: ${period} · Woreda: ${woredaLabel}</div>
+          <div>Generated: ${generatedDate}</div>
+        </div>
+      </div>
+      ${tableFragment}
+    </div>
+    <div class="page-footer">
+      <span>Generated: ${generatedDate}</span>
+      <span>Adama Bole Sub-City Reporting System</span>
+    </div>
+    <script>window.onload = function() { window.print(); };<\/script>
+    </body></html>`;
+  }
 
-    if (showTotal) {
-      const gPct =
-        grandPlanQarshii > 0
-          ? Math.round((grandActualQarshii / grandPlanQarshii) * 100)
-          : 0;
-      const emptyCells = WOREDAS_PRINT.map(() =>
-        galiiSubCols.map(() => `<td class="num total-val">—</td>`).join(""),
-      ).join("");
-      const totCells = galiiSubCols
-        .map((sc) => {
-          if (sc === "plan_kg") return `<td class="num plan total-val">—</td>`;
-          if (sc === "plan_qarshii")
-            return `<td class="num plan total-val">${grandPlanQarshii.toLocaleString()}</td>`;
-          if (sc === "actual_kg") return `<td class="num total-val">—</td>`;
-          if (sc === "actual_qarshii")
-            return `<td class="num total-val">${grandActualQarshii.toLocaleString()}</td>`;
-          return `<td class="num pct total-val">${grandPlanQarshii > 0 ? gPct + "%" : "—"}</td>`;
-        })
-        .join("");
-      tbody += `<tr style="background:#eef2ff;font-weight:bold;">
-        <td class="rno">—</td><td class="gosa">Waliigala</td>${emptyCells}${totCells}</tr>`;
-    }
-  } else {
+  if (sector === "galii") {
+    // Delegate to buildSubcityPrintTable (Qarshii-only, showGaliiDetail toggle)
+    const tableFragment = buildSubcityPrintTable({
+      sector,
+      period,
+      showPct,
+      showPlan,
+      showGsDetail: false,
+      showGaliiDetail,
+      gsRows: [],
+      woredaData,
+      planData,
+      selectedWoreda,
+      subcityGaliiActuals,
+    });
+    const woredaLabelGalii =
+      selectedWoreda === "all"
+        ? "All Woredas"
+        : (WOREDAS_PRINT[0]?.name ?? selectedWoreda);
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+    <title>${sectorLabel} Report</title>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html,body { font-family:Arial,sans-serif; font-size:10pt; color:#000; background:#fff;
+                  display:flex; flex-direction:column; min-height:100vh; padding:14px 16px 0; }
+      .page-body { flex:1; }
+      .report-header { display:flex; justify-content:space-between; align-items:flex-start;
+                       margin-bottom:10px; border-bottom:2px solid #000; padding-bottom:8px; }
+      .report-header h1 { font-size:13pt; font-weight:bold; }
+      .report-header .meta-right { text-align:right; font-size:8pt; color:#555; line-height:1.6; }
+      .sector-block { margin-bottom:24px; }
+      .sector-title { font-size:11pt; font-weight:bold; margin-bottom:5px; padding:3px 0;
+                      border-bottom:1px solid #666; }
+      table { width:100%; border-collapse:collapse; table-layout:auto; margin-bottom:4px; }
+      th,td { border:1px solid #bbb; padding:4px 6px; vertical-align:middle; }
+      thead tr.top-header th { background:#dce8f4; color:#000; text-align:center; font-size:9pt; font-weight:bold; }
+      thead tr.sub-header th { background:#f0f0f0; color:#000; text-align:center; font-size:8pt; font-weight:bold; }
+      th.rno,td.rno { text-align:center; width:32px; font-size:8pt; }
+      th.gosa { text-align:left; min-width:130px; }
+      td.gosa { text-align:left; font-weight:500; }
+      td.num  { text-align:right; font-variant-numeric:tabular-nums; }
+      td.pct  { text-align:right; }
+      td.plan { text-align:right; color:#444; }
+      td.total-val { font-weight:bold; background:#eef2ff; }
+      th.total-header { background:#dce8f4 !important; }
+      tbody tr:nth-child(even) { background:#f7f9fb; }
+      .page-footer { border-top:1px solid #bbb; padding:6px 0 10px; font-size:8pt; color:#555;
+                     display:flex; justify-content:space-between; margin-top:16px; }
+      @media print { body { padding:0; } @page { size:landscape; margin:10mm; } }
+    </style></head><body>
+    <div class="page-body">
+      <div class="report-header">
+        <h1>${sectorLabel} Report</h1>
+        <div class="meta-right">
+          <div>Adama Bole Sub-City</div>
+          <div>Period: ${period} · Woreda: ${woredaLabelGalii}</div>
+          <div>Generated: ${generatedDate}</div>
+        </div>
+      </div>
+      ${tableFragment}
+    </div>
+    <div class="page-footer">
+      <span>Generated: ${generatedDate}</span>
+      <span>Adama Bole Sub-City Reporting System</span>
+    </div>
+    <script>window.onload = function() { window.print(); };<\/script>
+    </body></html>`;
+  } else if (sector !== "galii_sassabu") {
     // ── All other sectors ───────────────────────────────────────────────────
     fields.forEach(({ key, label }, idx) => {
       tbody += `<tr>`;
@@ -8993,6 +9395,8 @@ function SubcityPrintModal({ rows, onClose }) {
   const [selectedWoreda, setSelectedWoreda] = useState("all"); // NEW
   const [showPct, setShowPct] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
+  const [showGsDetail, setShowGsDetail] = useState(true);
+  const [showGaliiDetail, setShowGaliiDetail] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -9059,6 +9463,9 @@ function SubcityPrintModal({ rows, onClose }) {
           period,
           showPct,
           showPlan,
+          showGsDetail,
+          showGaliiDetail,
+          gsRows: rows.filter((r) => r._sector === "galii_sassabu"),
           woredaData,
           planData,
           generatedDate,
@@ -9083,6 +9490,9 @@ function SubcityPrintModal({ rows, onClose }) {
             period,
             showPct,
             showPlan,
+            showGsDetail,
+            showGaliiDetail,
+            gsRows: rows.filter((r) => r._sector === "galii_sassabu"),
             woredaData,
             planData,
             selectedWoreda,
@@ -9255,6 +9665,55 @@ function SubcityPrintModal({ rows, onClose }) {
             </p>
           </div>
 
+          {/* Galii Sassabu detail toggle — only shown when that sector is explicitly selected */}
+          {sector === "galii_sassabu" && (
+            <div className="rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-4 py-3 space-y-2">
+              <p className="text-xs font-semibold text-[#c2410c] uppercase tracking-wide">
+                Galii Sassabu Options
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowGsDetail((v) => !v)}
+                  className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showGsDetail ? "bg-[#c2410c]" : "bg-[#e2e8f0]"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showGsDetail ? "left-5" : "left-0.5"}`}
+                  />
+                </button>
+                <span className="text-sm text-[#1e293b]">
+                  Show <strong>sub-source breakdown</strong> (Liizii, Kiraa Lafaa, Idilee…)
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Galii (Revenue) source toggle — only shown when galii sector is selected */}
+          {sector === "galii" && (
+            <div className="rounded-xl border border-[#99f6e4] bg-[#f0fdf9] px-4 py-3 space-y-2">
+              <p className="text-xs font-semibold text-[#0f766e] uppercase tracking-wide">
+                Galii Sassaabu Options
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowGaliiDetail((v) => !v)}
+                  className={`w-10 h-5 rounded-full transition-all relative flex-shrink-0 ${showGaliiDetail ? "bg-[#0f766e]" : "bg-[#e2e8f0]"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${showGaliiDetail ? "left-5" : "left-0.5"}`}
+                  />
+                </button>
+                <span className="text-sm text-[#1e293b]">
+                  Show <strong>each sub-source</strong> (Liizii, Kiraa Lafaa, Idilee…)
+                </span>
+              </div>
+              <p className="text-xs text-[#64748b]">
+                Off = totals only (Mana Qophessaa + Idilee)
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="bg-[#fef2f2] border border-[#fecaca] rounded-xl px-4 py-3 text-[#991b1b] text-sm">
               {error}
@@ -9325,26 +9784,34 @@ function ReportsPage() {
   const todayStr = now.toISOString().split("T")[0];
 
   const getPeriodRange = (p) => {
-    if (p === "Daily") return { from: todayStr, to: todayStr };
+    // Use local date to avoid UTC midnight shifting (important for EAT UTC+3)
+    const localDate = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+    const todayLocal = localDate(now);
+    if (p === "Daily") return { from: todayLocal, to: todayLocal };
     if (p === "Weekly") {
       const d = new Date(now);
       d.setDate(d.getDate() - 6);
-      return { from: d.toISOString().split("T")[0], to: todayStr };
+      return { from: localDate(d), to: todayLocal };
     }
     if (p === "Monthly")
       return {
         from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
-        to: todayStr,
+        to: todayLocal,
       };
     if (p === "Quarterly") {
       const qs = Math.floor(now.getMonth() / 3) * 3;
       return {
         from: `${now.getFullYear()}-${String(qs + 1).padStart(2, "0")}-01`,
-        to: todayStr,
+        to: todayLocal,
       };
     }
     if (p === "Annual")
-      return { from: `${now.getFullYear()}-01-01`, to: todayStr };
+      return { from: `${now.getFullYear()}-01-01`, to: todayLocal };
     return null;
   };
 

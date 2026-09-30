@@ -683,8 +683,9 @@ const getMyReports = async (req, res) => {
       // revenue_entries uses user_id indirectly via username — filter by username
       if (table === "revenue_entries") {
         q = q.eq("username", req.user.username);
-        if (date_from) q = q.gte("guyyaa", date_from);
-        if (date_to) q = q.lte("guyyaa", date_to);
+        // Filter by report_date (submission date), not guyyaa (individual entry date)
+        if (date_from) q = q.gte("report_date", date_from);
+        if (date_to) q = q.lte("report_date", date_to);
       } else {
         q = q.eq("user_id", userId);
         if (report_type) q = q.eq("report_type", report_type);
@@ -706,7 +707,8 @@ const getMyReports = async (req, res) => {
     // Normalize revenue_entries rows to match the standard report shape
     const normalizeGalii = (row) => ({
       ...row,
-      report_date: row.guyyaa ?? null,
+      // Use report_date (submission date) if available, fall back to guyyaa for legacy rows
+      report_date: row.report_date ?? row.guyyaa ?? null,
       report_type: "Daily Report (Gabaasa Guyyaa)",
     });
 
@@ -739,8 +741,9 @@ const getAllWoredaReports = async (req, res) => {
       let q = supabase.from(table).select("*");
       if (table === "revenue_entries") {
         if (username) q = q.eq("username", username);
-        if (date_from) q = q.gte("guyyaa", date_from);
-        if (date_to) q = q.lte("guyyaa", date_to);
+        // Filter by report_date (submission date), not guyyaa (individual entry date)
+        if (date_from) q = q.gte("report_date", date_from);
+        if (date_to) q = q.lte("report_date", date_to);
       } else {
         if (username) q = q.eq("username", username);
         if (report_type) q = q.eq("report_type", report_type);
@@ -784,7 +787,8 @@ const getAllWoredaReports = async (req, res) => {
 
     const normalizeGalii = (row) => ({
       ...row,
-      report_date: row.guyyaa ?? null,
+      // Use report_date (submission date) if available, fall back to guyyaa for legacy rows
+      report_date: row.report_date ?? row.guyyaa ?? null,
       report_type: "Daily Report (Gabaasa Guyyaa)",
     });
 
